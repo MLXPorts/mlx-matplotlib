@@ -54,7 +54,7 @@ jobs:
       (false && github.event_name == 'schedule') ||
       (
         false &&
-        github.repository == 'matplotlib/matplotlib' &&
+        github.repository == 'MLXPorts/mlx-matplotlib' &&
         !contains(github.event.head_commit.message, '[ci skip]') &&
         !contains(github.event.head_commit.message, '[skip ci]') &&
         !contains(github.event.head_commit.message, '[skip github]') &&
@@ -125,10 +125,10 @@ jobs:
       - name: Mark test repo safe
         shell: bash.exe -eo pipefail -o igncr "{0}"
         run: |
-          git.exe config --global --add safe.directory /proc/cygdrive/d/a/matplotlib/matplotlib
-          git config --global --add safe.directory /cygdrive/d/a/matplotlib/matplotlib
-          C:/cygwin/bin/git.exe config --global --add safe.directory D:/a/matplotlib/matplotlib
-          /usr/bin/git config --global --add safe.directory /cygdrive/d/a/matplotlib/matplotlib
+          git.exe config --global --add safe.directory /proc/cygdrive/d/a/mlx-matplotlib/mlx-matplotlib
+          git config --global --add safe.directory /cygdrive/d/a/mlx-matplotlib/mlx-matplotlib
+          C:/cygwin/bin/git.exe config --global --add safe.directory D:/a/mlx-matplotlib/mlx-matplotlib
+          /usr/bin/git config --global --add safe.directory /cygdrive/d/a/mlx-matplotlib/mlx-matplotlib
 
       - name: Use dash for /bin/sh
         shell: bash.exe -eo pipefail -o igncr "{0}"

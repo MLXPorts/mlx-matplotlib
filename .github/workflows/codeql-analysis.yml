@@ -12,7 +12,7 @@ on:
 
 jobs:
   analyze:
-    if: github.repository == 'matplotlib/matplotlib'
+    if: github.repository == 'MLXPorts/mlx-matplotlib'
     name: Analyze
     runs-on: ubuntu-latest
     permissions:
