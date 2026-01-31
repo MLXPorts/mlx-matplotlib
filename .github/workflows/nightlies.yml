@@ -21,7 +21,7 @@ jobs:
         # to work in subsequent jobs.
         # https://github.com/mamba-org/setup-micromamba#about-login-shells
         shell: bash -e -l {0}
-    if: github.repository_owner == 'matplotlib'
+    if: github.repository_owner == 'MLXPorts'
 
     steps:
       # https://github.com/actions/download-artifact/issues/3#issuecomment-1017141067
@@ -29,7 +29,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          PROJECT_REPO="matplotlib/matplotlib"
+          PROJECT_REPO="MLXPorts/mlx-matplotlib"
           BRANCH="main"
           WORKFLOW_NAME="cibuildwheel.yml"
           ARTIFACT_PATTERN="cibw-wheels-*"

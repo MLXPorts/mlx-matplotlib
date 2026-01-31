@@ -11,7 +11,7 @@ on:
 
 jobs:
   main:
-    if: github.repository == 'matplotlib/matplotlib'
+    if: github.repository == 'MLXPorts/mlx-matplotlib'
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
