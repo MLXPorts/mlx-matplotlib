@@ -21,9 +21,8 @@ import traceback
 import types
 import weakref
 from matplotlib import _mlx_numpy as np
-try:
-    from numpy.exceptions import VisibleDeprecationWarning  # numpy >= 1.25
-except ImportError:
+# NumPy's VisibleDeprecationWarning is used by Matplotlib for user-facing warnings.
+# In this MLX fork, import the compatibility version from our shim.
 from matplotlib._mlx_numpy import VisibleDeprecationWarning
 
 import matplotlib

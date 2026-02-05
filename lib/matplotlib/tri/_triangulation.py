@@ -96,7 +96,9 @@ class Triangulation:
         position in triangle tri to be calculated using
         ``z = array[tri, 0] * x  + array[tri, 1] * y + array[tri, 2]``.
         """
-        return self.get_cpp_triangulation().calculate_plane_coefficients(z)
+        # C++ returns a shaped memoryview; convert to an MLX array for downstream ops.
+        return np.asarray(self.get_cpp_triangulation().calculate_plane_coefficients(z),
+                          dtype=np.float64)
 
     @property
     def edges(self):
@@ -109,7 +111,10 @@ class Triangulation:
         *i*  and *j*, there will only be either *(i, j)* or *(j, i)*.
         """
         if self._edges is None:
-            self._edges = self.get_cpp_triangulation().get_edges()
+            # C++ returns a shaped memoryview; convert to an MLX array so it can
+            # be used for advanced indexing (e.g. x[edges]).
+            self._edges = np.asarray(self.get_cpp_triangulation().get_edges(),
+                                     dtype=np.int32)
         return self._edges
 
     def get_cpp_triangulation(self):
@@ -212,7 +217,9 @@ class Triangulation:
         ``triangles[i, (j+1)%3]``.
         """
         if self._neighbors is None:
-            self._neighbors = self.get_cpp_triangulation().get_neighbors()
+            # C++ returns a shaped memoryview; convert to an MLX array for consistency.
+            self._neighbors = np.asarray(self.get_cpp_triangulation().get_neighbors(),
+                                         dtype=np.int32)
         return self._neighbors
 
     def set_mask(self, mask):
