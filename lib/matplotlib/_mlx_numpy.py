@@ -1271,6 +1271,19 @@ class _Random:
             size = ()
         return mx.random.randint(low, high, size)
 
+    def multivariate_normal(self, mean: Any, cov: Any, size: Any | None = None):
+        # MLX currently only supports float32 for multivariate normals.
+        if size is None:
+            shape = ()
+        elif isinstance(size, int):
+            shape = (size,)
+        else:
+            shape = tuple(size)
+
+        mean_arr = asarray(mean, dtype=float32)
+        cov_arr = asarray(cov, dtype=float32)
+        return mx.random.multivariate_normal(mean_arr, cov_arr, shape=shape, dtype=float32)
+
     def random(self, size: Any | None = None):
         if size is None:
             size = ()
