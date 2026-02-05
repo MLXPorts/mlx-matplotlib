@@ -15,8 +15,7 @@ how to create such animations and the different options available.  More informa
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.animation as animation
 
 # %%

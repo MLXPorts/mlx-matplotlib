@@ -6,8 +6,7 @@ XKCD
 Shows how to create an xkcd-like plot.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # %%
 
 with plt.xkcd():

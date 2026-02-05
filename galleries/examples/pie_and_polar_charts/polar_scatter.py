@@ -7,8 +7,7 @@ Size increases radially in this example and color increases with angle
 (just to verify the symbols are being scattered correctly).
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # Fixing random state for reproducibility
 np.random.seed(19680801)
 

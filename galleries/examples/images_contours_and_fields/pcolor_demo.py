@@ -7,8 +7,7 @@ pcolor images
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.colors import LogNorm
 
 # Fixing random state for reproducibility

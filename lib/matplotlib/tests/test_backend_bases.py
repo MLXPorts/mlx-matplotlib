@@ -8,8 +8,7 @@ from matplotlib.backend_tools import RubberbandBase
 from matplotlib.figure import Figure
 from matplotlib.testing._markers import needs_pgf_xelatex
 import matplotlib.pyplot as plt
-
-import numpy as np
+from matplotlib import _mlx_numpy as np
 import pytest
 
 

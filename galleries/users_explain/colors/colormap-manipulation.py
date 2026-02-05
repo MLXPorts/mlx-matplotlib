@@ -33,8 +33,7 @@ Below we use a modest value of 8 so there are not a lot of values to look at.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib.colors import LinearSegmentedColormap, ListedColormap
 

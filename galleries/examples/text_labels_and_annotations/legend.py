@@ -8,8 +8,7 @@ Defining legend labels with plots.
 
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # Make some fake data.
 a = b = np.arange(0, 3, .02)
 c = np.exp(a)

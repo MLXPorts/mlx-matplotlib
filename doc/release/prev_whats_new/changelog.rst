@@ -2411,8 +2411,8 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     len(linestyles)==Nlev - MM
 
 2008-03-19
-    Changed ma import statements to "from numpy import ma"; this should work
-    with past and future versions of numpy, whereas "import numpy.ma as ma"
+    Changed ma import statements to "from matplotlib._mlx_numpy import ma"; this should work
+    with past and future versions of numpy, whereas "from matplotlib import _mlx_numpy as numpy.ma as ma"
     will work only with numpy >= 1.05, and "import numerix.npyma as ma" is
     obsolete now that maskedarray is replacing the earlier implementation, as
     of numpy 1.05.

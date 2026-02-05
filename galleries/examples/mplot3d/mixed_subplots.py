@@ -7,9 +7,7 @@ This example shows a how to plot a 2D and a 3D plot on the same figure.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-
+from matplotlib import _mlx_numpy as np
 def f(t):
     return np.cos(2*np.pi*t) * np.exp(-t)
 

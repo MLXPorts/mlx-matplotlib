@@ -1,8 +1,6 @@
 import math
 import types
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib import _api, cbook
 from matplotlib.axes import Axes

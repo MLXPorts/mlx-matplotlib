@@ -13,8 +13,7 @@ import math
 import pathlib
 import sys
 import weakref
-
-import numpy as np
+from matplotlib import _mlx_numpy as np
 import PIL.Image
 
 import matplotlib as mpl

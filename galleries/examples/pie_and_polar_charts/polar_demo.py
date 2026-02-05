@@ -11,8 +11,7 @@ the origin of the radial axis to 0 allows the radial ticks to be placed at the
 same location as the first plot.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 r = np.arange(0, 2, 0.01)
 theta = 2 * np.pi * r
 

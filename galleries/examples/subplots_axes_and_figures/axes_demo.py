@@ -13,8 +13,7 @@ examples:
 - :doc:`/gallery/axes_grid1/inset_locator_demo2`
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 np.random.seed(19680801)  # Fixing random state for reproducibility.
 
 # create some data to use for the plot

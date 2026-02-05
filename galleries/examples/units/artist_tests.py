@@ -19,8 +19,7 @@ import random
 from basic_units import cm, inch
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.collections as collections
 import matplotlib.lines as lines
 import matplotlib.patches as patches

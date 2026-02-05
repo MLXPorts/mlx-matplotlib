@@ -17,9 +17,7 @@ the time placed in the title of the figure.
 from datetime import datetime
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-
+from matplotlib import _mlx_numpy as np
 def update_title(axes):
     axes.set_title(datetime.now())
     axes.figure.canvas.draw()

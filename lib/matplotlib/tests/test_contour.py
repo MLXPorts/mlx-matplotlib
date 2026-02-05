@@ -4,8 +4,8 @@ import re
 from unittest import mock
 
 import contourpy
-import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_array_almost_equal_nulp
+from matplotlib import _mlx_numpy as np
+from matplotlib.mlx_testing import assert_array_almost_equal, assert_array_almost_equal_nulp
 import matplotlib as mpl
 from matplotlib import pyplot as plt, rc_context, ticker
 from matplotlib.colors import LogNorm, same_color

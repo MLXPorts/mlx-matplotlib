@@ -24,8 +24,7 @@ Other attributes of the dash may also be set either with the relevant method
 function.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 x = np.linspace(0, 10, 500)
 y = np.sin(x)
 

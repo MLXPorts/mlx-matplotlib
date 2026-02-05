@@ -13,8 +13,7 @@ Although this is a simple example, it demonstrates some important tweaks:
 * Custom tick placement and labels.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.patches import Polygon
 
 

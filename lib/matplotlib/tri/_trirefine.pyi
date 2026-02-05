@@ -1,7 +1,6 @@
 from typing import Literal, overload
-
-import numpy as np
-from numpy.typing import ArrayLike
+import matplotlib._mlx_numpy as np
+from matplotlib._mlx_typing import ArrayLike
 
 from matplotlib.tri._triangulation import Triangulation
 from matplotlib.tri._triinterpolate import TriInterpolator

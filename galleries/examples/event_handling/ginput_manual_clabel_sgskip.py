@@ -18,9 +18,7 @@ waitforbuttonpress and manual clabel placement.
 import time
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-
+from matplotlib import _mlx_numpy as np
 def tellme(s):
     print(s)
     plt.title(s, fontsize=16)

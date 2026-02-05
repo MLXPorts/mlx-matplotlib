@@ -6,8 +6,7 @@ import shutil
 import subprocess
 import sys
 import weakref
-
-import numpy as np
+from matplotlib import _mlx_numpy as np
 import pytest
 
 import matplotlib as mpl

@@ -11,8 +11,7 @@ shown in all Axes.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.widgets import MultiCursor
 
 t = np.arange(0.0, 2.0, 0.01)

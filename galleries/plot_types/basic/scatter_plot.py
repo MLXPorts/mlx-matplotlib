@@ -7,8 +7,7 @@ A scatter plot of y versus x with varying marker size and/or color.
 See `~matplotlib.axes.Axes.scatter`.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 plt.style.use('_mpl-gallery')
 
 # make the data

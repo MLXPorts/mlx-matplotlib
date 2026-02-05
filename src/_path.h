@@ -18,6 +18,7 @@
 
 #include "path_converters.h"
 #include "_backend_agg_basic_types.h"
+#include "py_buffer.h"
 
 const size_t NUM_VERTICES[] = { 1, 1, 1, 2, 3 };
 
@@ -271,11 +272,15 @@ template <class PathIterator>
 inline bool point_in_path(
     double x, double y, const double r, PathIterator &path, agg::trans_affine &trans)
 {
-    py::ssize_t shape[] = {1, 2};
-    py::array_t<double> points_arr(shape);
-    *points_arr.mutable_data(0, 0) = x;
-    *points_arr.mutable_data(0, 1) = y;
-    auto points = points_arr.mutable_unchecked<2>();
+    struct SinglePoint {
+        double x;
+        double y;
+
+        py::ssize_t ndim() const { return 2; }
+        py::ssize_t shape(py::ssize_t i) const { return i == 0 ? 1 : 2; }
+        py::ssize_t size() const { return 2; }
+        double operator()(py::ssize_t, py::ssize_t j) const { return j == 0 ? x : y; }
+    } points{x, y};
 
     int result[1];
     result[0] = 0;
@@ -294,11 +299,15 @@ inline bool point_on_path(
     typedef agg::conv_curve<no_nans_t> curve_t;
     typedef agg::conv_stroke<curve_t> stroke_t;
 
-    py::ssize_t shape[] = {1, 2};
-    py::array_t<double> points_arr(shape);
-    *points_arr.mutable_data(0, 0) = x;
-    *points_arr.mutable_data(0, 1) = y;
-    auto points = points_arr.mutable_unchecked<2>();
+    struct SinglePoint {
+        double x;
+        double y;
+
+        py::ssize_t ndim() const { return 2; }
+        py::ssize_t shape(py::ssize_t i) const { return i == 0 ? 1 : 2; }
+        py::ssize_t size() const { return 2; }
+        double operator()(py::ssize_t, py::ssize_t j) const { return j == 0 ? x : y; }
+    } points{x, y};
 
     int result[1];
     result[0] = 0;
@@ -1203,7 +1212,7 @@ bool convert_to_string(PathIterator &path,
 }
 
 template<class T>
-bool is_sorted_and_has_non_nan(py::array_t<T> array)
+bool is_sorted_and_has_non_nan(const mpl::BufferView<T, 1> &array)
 {
     auto size = array.shape(0);
     using limits = std::numeric_limits<T>;
@@ -1211,7 +1220,7 @@ bool is_sorted_and_has_non_nan(py::array_t<T> array)
     bool found_non_nan = false;
 
     for (auto i = 0; i < size; ++i) {
-        T current = *array.data(i);
+        T current = array(i);
         // The following tests !isnan(current), but also works for integral
         // types.  (The isnan(IntegralType) overload is absent on MSVC.)
         if (current == current) {

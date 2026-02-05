@@ -109,7 +109,7 @@ can now be expressed with units.
     :include-source: true
 
     import matplotlib.pyplot as plt
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
 
     fig, ax = plt.subplots(layout='constrained')
     date_first = np.datetime64('2020-01-01', 'D')
@@ -138,7 +138,7 @@ with a shape of ``(M, N, [3, 4])``.
     :include-source: true
 
     import matplotlib.pyplot as plt
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
 
     colors = np.linspace(0, 1, 90).reshape((5, 6, 3))
     plt.pcolormesh(colors)
@@ -216,7 +216,7 @@ either the data limits or the bounding box in parity with 2D Axes.
     :include-source: true
 
     import matplotlib.pyplot as plt
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
     from itertools import combinations, product
 
     aspects = ('auto', 'equal', 'equalxy', 'equalyz', 'equalxz')
@@ -251,7 +251,7 @@ polygons are obtained from e.g. a 3D model.
 .. plot::
     :include-source: true
 
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
@@ -321,7 +321,7 @@ An example is:
     :include-source: true
 
     import matplotlib.pyplot as plt
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
     rng = np.random.default_rng(19680801)
     imdata = rng.random((10, 10))
     fig, ax = plt.subplots(layout='constrained')

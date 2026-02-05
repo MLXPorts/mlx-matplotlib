@@ -42,9 +42,7 @@ import sys
 import time
 import weakref
 from weakref import WeakKeyDictionary
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib import (
     _api, backend_tools as tools, cbook, colors, _docstring, text,

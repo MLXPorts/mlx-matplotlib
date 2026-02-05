@@ -33,9 +33,7 @@ import functools
 import logging
 from numbers import Integral
 import threading
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib import _blocking_input, backend_bases, _docstring, projections
 from matplotlib.artist import (

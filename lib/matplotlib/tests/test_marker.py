@@ -1,4 +1,4 @@
-import numpy as np
+from matplotlib import _mlx_numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import markers
 from matplotlib.path import Path

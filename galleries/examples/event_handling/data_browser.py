@@ -17,9 +17,7 @@ data of that point on the other axis.
     You can copy and paste individual parts, or download the entire example
     using the link at the bottom of the page.
 """
-import numpy as np
-
-
+from matplotlib import _mlx_numpy as np
 class PointBrowser:
     """
     Click on a point to select and highlight it -- the data that

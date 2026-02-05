@@ -10,8 +10,7 @@ OffsetBoxes: `.TextArea`, `.DrawingArea`, and `.OffsetImage`.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.cbook import get_sample_data
 from matplotlib.offsetbox import AnnotationBbox, DrawingArea, OffsetImage, TextArea
 from matplotlib.patches import Circle

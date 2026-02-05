@@ -8,8 +8,7 @@ to the :doc:`Ellipse collection example
 </gallery/shapes_and_collections/ellipse_collection>`.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.patches import Ellipse
 
 # Fixing random state for reproducibility

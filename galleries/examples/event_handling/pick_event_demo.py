@@ -72,7 +72,7 @@ The examples below illustrate each of these methods.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
+from matplotlib import _mlx_numpy as np
 from numpy.random import rand
 
 from matplotlib.image import AxesImage

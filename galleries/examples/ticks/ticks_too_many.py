@@ -19,8 +19,7 @@ a numeric type as in the following examples.
 # ------------------------------------------------------------------
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 fig, ax = plt.subplots(1, 2, layout='constrained', figsize=(6, 2.5))
 x = ['1', '5', '2', '3']
 y = [1, 4, 2, 3]

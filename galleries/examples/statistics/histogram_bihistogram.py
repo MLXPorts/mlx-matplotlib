@@ -7,8 +7,7 @@ How to plot a bihistogram with Matplotlib.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # Create a random number generator with a fixed seed for reproducibility
 rng = np.random.default_rng(19680801)
 

@@ -14,8 +14,7 @@ Unicode input is supported, e.g. for the y-axis label in this example.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 plt.rcParams['text.usetex'] = True
 
 

@@ -6,8 +6,7 @@ voxels([x, y, z], filled)
 See `~mpl_toolkits.mplot3d.axes3d.Axes3D.voxels`.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 plt.style.use('_mpl-gallery')
 
 # Prepare some coordinates

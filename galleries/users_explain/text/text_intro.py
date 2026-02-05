@@ -114,8 +114,7 @@ plt.show()
 # methods.
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 x1 = np.linspace(0.0, 5.0, 100)
 y1 = np.cos(2 * np.pi * x1) * np.exp(-x1)
 

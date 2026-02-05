@@ -14,8 +14,7 @@ Output generated via `matplotlib.animation.Animation.to_jshtml`.
 import math
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.animation import FuncAnimation
 
 

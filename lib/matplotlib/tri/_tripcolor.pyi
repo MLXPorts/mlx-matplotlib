@@ -3,7 +3,7 @@ from matplotlib.collections import PolyCollection, TriMesh
 from matplotlib.colors import Normalize, Colormap
 from matplotlib.tri._triangulation import Triangulation
 
-from numpy.typing import ArrayLike
+from matplotlib._mlx_typing import ArrayLike
 
 from typing import overload, Literal
 

@@ -6,8 +6,7 @@ fill_between(x1, y1, z1, x2, y2, z2)
 See `~mpl_toolkits.mplot3d.axes3d.Axes3D.fill_between`.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 plt.style.use('_mpl-gallery')
 
 # Make data for a double helix

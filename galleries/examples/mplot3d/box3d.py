@@ -12,8 +12,7 @@ parameters *zdir* and *offset*.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # Define dimensions
 Nx, Ny, Nz = 100, 300, 500
 X, Y, Z = np.meshgrid(np.arange(Nx), np.arange(Ny), -np.arange(Nz))

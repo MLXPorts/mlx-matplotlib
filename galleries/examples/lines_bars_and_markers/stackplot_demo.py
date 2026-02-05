@@ -14,8 +14,7 @@ Stackplots and streamgraphs
 
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.ticker as mticker
 
 # data from United Nations World Population Prospects (Revision 2019)

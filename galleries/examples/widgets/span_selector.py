@@ -16,8 +16,7 @@ selected range is then plotted on the lower axis.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.widgets import SpanSelector
 
 # Fixing random state for reproducibility

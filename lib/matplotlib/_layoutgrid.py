@@ -19,8 +19,7 @@ its column(s) and row(s) specified when it is created.
 import itertools
 import kiwisolver as kiwi
 import logging
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 import matplotlib.patches as mpatches
 from matplotlib.transforms import Bbox

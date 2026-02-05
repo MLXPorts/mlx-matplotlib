@@ -15,9 +15,7 @@ Flow"`_ in a 3-dimensional space using mplot3d.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-
+from matplotlib import _mlx_numpy as np
 def lorenz(xyz, *, s=10, r=28, b=2.667):
     """
     Parameters

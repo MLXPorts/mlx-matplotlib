@@ -7,9 +7,7 @@ Demonstrates using `.Axes3D.voxels` to visualize parts of a color space.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-
+from matplotlib import _mlx_numpy as np
 def midpoints(x):
     sl = ()
     for _ in range(x.ndim):

@@ -9,8 +9,7 @@ functionality of imshow and the many images you can create.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.cbook as cbook
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path

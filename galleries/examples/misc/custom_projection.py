@@ -5,9 +5,7 @@ Custom projection
 
 Showcase Hammer projection by alleviating many features of Matplotlib.
 """
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib
 from matplotlib.axes import Axes
 import matplotlib.axis as maxis

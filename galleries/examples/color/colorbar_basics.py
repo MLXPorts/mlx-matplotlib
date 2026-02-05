@@ -9,8 +9,7 @@ and the Axes to attach the colorbar to.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # setup some generic data
 N = 37
 x, y = np.mgrid[:N, :N]

@@ -15,8 +15,7 @@ import json
 import logging
 import os
 from pathlib import Path
-
-import numpy as np
+from matplotlib import _mlx_numpy as np
 from PIL import Image
 
 from matplotlib import _api, backend_bases, backend_tools

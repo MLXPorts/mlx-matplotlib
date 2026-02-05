@@ -1,8 +1,6 @@
 import datetime
 from unittest.mock import Mock
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.path import Path
 from matplotlib.table import CustomCell, Table

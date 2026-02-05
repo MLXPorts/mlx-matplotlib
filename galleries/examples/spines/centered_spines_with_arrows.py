@@ -9,8 +9,7 @@ their ends.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 fig, ax = plt.subplots()
 # Move the left and bottom spines to x = 0 and y = 0, respectively.
 ax.spines[["left", "bottom"]].set_position(("data", 0))

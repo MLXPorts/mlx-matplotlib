@@ -129,7 +129,7 @@ for color vision deficiency to enable accurate interpretation of scientific data
 .. plot::
 
     import matplotlib.pyplot as plt
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
 
     fig, ax = plt.subplots()
     pcm = ax.pcolormesh(np.random.rand(32,32), cmap='cividis')

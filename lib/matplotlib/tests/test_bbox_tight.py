@@ -1,8 +1,6 @@
 from io import BytesIO
 import platform
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.testing.decorators import image_comparison
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath

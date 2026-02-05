@@ -8,8 +8,7 @@ and y data points on the respective Axes for each curve.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.collections import EventCollection
 
 # Fixing random state for reproducibility

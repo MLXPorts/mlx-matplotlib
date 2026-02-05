@@ -12,8 +12,7 @@ share with.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 t = np.arange(0, 10, 0.01)
 
 ax1 = plt.subplot(211)

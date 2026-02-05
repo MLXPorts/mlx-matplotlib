@@ -20,8 +20,7 @@ The following lists a few use cases for `~.Axes.set_box_aspect`.
 # Produce a square Axes, no matter what the data limits are.
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 fig1, ax = plt.subplots()
 
 ax.set_xlim(300, 400)

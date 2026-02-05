@@ -13,8 +13,7 @@ the statistics that they use to summarize the data.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.patches import Polygon
 
 # Fixing random state for reproducibility

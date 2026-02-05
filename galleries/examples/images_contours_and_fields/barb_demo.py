@@ -6,8 +6,7 @@ Wind barbs
 Demonstration of wind barb plots.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 x = np.linspace(-5, 5, 5)
 X, Y = np.meshgrid(x, x)
 U, V = 12 * X, 12 * Y

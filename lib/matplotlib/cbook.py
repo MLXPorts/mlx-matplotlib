@@ -20,13 +20,11 @@ import time
 import traceback
 import types
 import weakref
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 try:
     from numpy.exceptions import VisibleDeprecationWarning  # numpy >= 1.25
 except ImportError:
-    from numpy import VisibleDeprecationWarning
+from matplotlib._mlx_numpy import VisibleDeprecationWarning
 
 import matplotlib
 from matplotlib import _api, _c_internal_utils, mlab

@@ -8,9 +8,7 @@ artists into 3D versions which can be added to an Axes3D.
 """
 
 import math
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from contextlib import contextmanager
 
 from matplotlib import (

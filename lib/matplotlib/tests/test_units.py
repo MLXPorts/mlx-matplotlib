@@ -8,7 +8,7 @@ import matplotlib.patches as mpatches
 import matplotlib.units as munits
 from matplotlib.category import StrCategoryConverter, UnitData
 from matplotlib.dates import DateConverter
-import numpy as np
+from matplotlib import _mlx_numpy as np
 import pytest
 
 

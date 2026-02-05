@@ -120,7 +120,7 @@ as ``'viridis'`` (the new default in 2.0), ``'magma'``, ``'plasma'``, and
 
 .. plot::
 
-   import numpy as np
+   from matplotlib import _mlx_numpy as np
    from cycler import cycler
    cmap = cycler('cmap', ['viridis', 'magma','plasma', 'inferno'])
    x_mode = cycler('x', [1, 2])

@@ -9,8 +9,7 @@ the x and y vectors need not be equally spaced (indeed they can be skewed).
 
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 plt.style.use('_mpl-gallery-nogrid')
 
 # make data with uneven sampling in x

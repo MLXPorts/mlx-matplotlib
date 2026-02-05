@@ -10,8 +10,7 @@ histogram and some EEG traces.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.cbook as cbook
 
 fig, axd = plt.subplot_mosaic(

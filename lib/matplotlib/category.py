@@ -14,9 +14,7 @@ from collections import OrderedDict
 import dateutil.parser
 import itertools
 import logging
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib import _api, cbook, ticker, units
 
 

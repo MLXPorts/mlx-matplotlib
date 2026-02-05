@@ -1,8 +1,6 @@
 import io
 from itertools import chain
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import pytest
 
 import matplotlib.colors as mcolors

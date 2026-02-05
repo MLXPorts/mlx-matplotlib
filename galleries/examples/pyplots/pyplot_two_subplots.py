@@ -7,9 +7,7 @@ Create a figure with two subplots using `.pyplot.subplot`.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-
+from matplotlib import _mlx_numpy as np
 def f(t):
     return np.exp(-t) * np.cos(2*np.pi*t)
 

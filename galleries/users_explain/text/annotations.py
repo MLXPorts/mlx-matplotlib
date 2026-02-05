@@ -41,8 +41,7 @@ provide as much flexibility in positioning and styling as `~.Axes.annotate`.
 # of these arguments are ``(x, y)`` tuples:
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 fig, ax = plt.subplots(figsize=(3, 3))
 
 t = np.arange(0.0, 5.0, 0.01)

@@ -1,8 +1,7 @@
 from collections.abc import Callable, Iterable, Sequence
 from typing import Literal
-
-import numpy as np
-from numpy.typing import ArrayLike, NDArray
+import matplotlib._mlx_numpy as np
+from matplotlib._mlx_typing import ArrayLike, NDArray
 
 from . import colorizer, transforms
 from .backend_bases import MouseEvent

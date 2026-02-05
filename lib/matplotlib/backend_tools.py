@@ -18,9 +18,7 @@ import time
 from types import SimpleNamespace
 import uuid
 from weakref import WeakKeyDictionary
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib._pylab_helpers import Gcf
 from matplotlib import _api, cbook

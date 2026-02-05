@@ -9,10 +9,7 @@ This examples plots a scatter plot. You can then select a few points by drawing
 a lasso loop around the points on the graph. To draw, just click
 on the graph, hold, and drag it around the points you need to select.
 """
-
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.path import Path
 from matplotlib.widgets import LassoSelector
 

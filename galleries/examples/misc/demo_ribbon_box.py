@@ -6,8 +6,7 @@ Ribbon box
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib import cbook
 from matplotlib import colors as mcolors
 from matplotlib.image import AxesImage

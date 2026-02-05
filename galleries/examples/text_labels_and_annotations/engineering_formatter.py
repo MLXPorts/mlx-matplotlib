@@ -7,8 +7,7 @@ Use of the engineering Formatter.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.ticker import EngFormatter
 
 # Fixing random state for reproducibility

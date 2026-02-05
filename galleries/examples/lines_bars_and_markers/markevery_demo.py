@@ -20,8 +20,7 @@ In short:
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # define a list of markevery cases to plot
 cases = [
     None,

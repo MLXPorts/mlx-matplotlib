@@ -11,8 +11,7 @@ z axis tick labels.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.ticker import LinearLocator
 
 fig, ax = plt.subplots(subplot_kw={"projection": "3d"})

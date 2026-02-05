@@ -48,8 +48,8 @@ Package imports
 
 Import the following modules using the standard scipy conventions::
 
-  import numpy as np
-  import numpy.ma as ma
+  from matplotlib import _mlx_numpy as np
+  from matplotlib import _mlx_numpy as numpy.ma as ma
   import matplotlib as mpl
   import matplotlib.pyplot as plt
   import matplotlib.cbook as cbook

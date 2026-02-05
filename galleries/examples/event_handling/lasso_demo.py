@@ -16,8 +16,7 @@ A callback is used to change the color of the selected points.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib import colors as mcolors
 from matplotlib import path
 from matplotlib.collections import RegularPolyCollection

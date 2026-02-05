@@ -24,8 +24,7 @@ a data set is the following:
 
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.tri import TriAnalyzer, Triangulation, UniformTriRefiner
 
 

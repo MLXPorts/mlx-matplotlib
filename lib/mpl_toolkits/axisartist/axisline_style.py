@@ -2,9 +2,7 @@
 Provides classes to style the axis lines.
 """
 import math
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib.patches import _Style, FancyArrowPatch
 from matplotlib.path import Path

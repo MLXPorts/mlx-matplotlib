@@ -11,8 +11,7 @@ to plot_trisurf.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.tri as mtri
 
 fig = plt.figure(figsize=plt.figaspect(0.5))

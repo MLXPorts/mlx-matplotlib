@@ -12,8 +12,7 @@ explicitly add it to the Axes using `.Axes.add_image`.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.image import NonUniformImage
 
 interp = 'nearest'

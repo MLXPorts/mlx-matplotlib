@@ -14,8 +14,7 @@ a ``RangeSlider`` to define a range of values.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.widgets import Button, Slider
 
 

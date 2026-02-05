@@ -9,8 +9,7 @@ of an `~.collections.EllipseCollection` allows for much shorter code.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.collections import EllipseCollection
 
 x = np.arange(10)

@@ -20,8 +20,7 @@ import textwrap
 import time
 
 import fontTools
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib import _api, cbook, _path, _text_helpers
 from matplotlib.backend_bases import (

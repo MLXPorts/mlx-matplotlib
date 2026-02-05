@@ -16,8 +16,7 @@ If one wants to set Axes sizes and pads relative to the main Figure, see the
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # Fixing random state for reproducibility

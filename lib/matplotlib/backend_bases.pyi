@@ -20,7 +20,7 @@ from matplotlib.transforms import Bbox, BboxBase, Transform, TransformedPath
 
 from collections.abc import Callable, Iterable, Sequence
 from typing import Any, IO, Literal, NamedTuple, TypeVar, overload
-from numpy.typing import ArrayLike
+from matplotlib._mlx_typing import ArrayLike
 from .typing import (
     CapStyleType,
     CloseEventType,

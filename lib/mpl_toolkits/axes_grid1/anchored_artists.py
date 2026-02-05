@@ -192,7 +192,7 @@ class AnchoredSizeBar(AnchoredOffsetbox):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> import numpy as np
+        >>> from matplotlib import _mlx_numpy as np
         >>> from mpl_toolkits.axes_grid1.anchored_artists import (
         ...     AnchoredSizeBar)
         >>> fig, ax = plt.subplots()
@@ -324,7 +324,7 @@ class AnchoredDirectionArrows(AnchoredOffsetbox):
         Examples
         --------
         >>> import matplotlib.pyplot as plt
-        >>> import numpy as np
+        >>> from matplotlib import _mlx_numpy as np
         >>> from mpl_toolkits.axes_grid1.anchored_artists import (
         ...     AnchoredDirectionArrows)
         >>> fig, ax = plt.subplots()

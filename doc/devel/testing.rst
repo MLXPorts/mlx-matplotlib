@@ -126,7 +126,7 @@ however the randomness is problematic for testing (as the tests
 must be deterministic!).  To work around this set the seed in each test.
 For numpy's default random number generator use::
 
-  import numpy as np
+  from matplotlib import _mlx_numpy as np
   rng = np.random.default_rng(19680801)
 
 and then use ``rng`` when generating the random numbers.
@@ -187,7 +187,7 @@ vs plotting the circle using the parametric equation of a circle ::
    from matplotlib.testing.decorators import check_figures_equal
    import matplotlib.patches as mpatches
    import matplotlib.pyplot as plt
-   import numpy as np
+   from matplotlib import _mlx_numpy as np
 
    @check_figures_equal()
    def test_parametric_circle_plot(fig_test, fig_ref):

@@ -72,9 +72,7 @@ The following attributes can be customized (use the ``set_xxx`` methods):
 
 
 from operator import methodcaller
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib import _api, cbook
 import matplotlib.artist as martist

@@ -7,8 +7,7 @@ Draw an unstructured triangular grid as lines and/or markers.
 See `~matplotlib.axes.Axes.triplot`.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 plt.style.use('_mpl-gallery-nogrid')
 
 # make data:

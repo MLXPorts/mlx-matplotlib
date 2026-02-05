@@ -189,7 +189,7 @@ for out-of-range values with colors that differ from adjacent in-range colors.
 
     import matplotlib.pyplot as plt
     from matplotlib.colors import BoundaryNorm
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
 
     # Make the data
     dx, dy = 0.05, 0.05

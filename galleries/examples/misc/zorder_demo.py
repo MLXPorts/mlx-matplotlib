@@ -33,8 +33,7 @@ their relative zorder.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 r = np.linspace(0.3, 1, 30)
 theta = np.linspace(0, 4*np.pi, 30)
 x = r * np.sin(theta)

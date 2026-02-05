@@ -15,8 +15,7 @@ These settings were shamelessly stolen from [1]_ (with permission).
 
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 plt.style.use('ggplot')
 
 # Fixing random state for reproducibility

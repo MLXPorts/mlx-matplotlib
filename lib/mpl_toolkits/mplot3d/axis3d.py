@@ -3,9 +3,7 @@
 # Parts rewritten by Reinier Heeres <reinier@heeres.eu>
 
 import inspect
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib import (
     _api, artist, lines as mlines, axis as maxis, patches as mpatches,

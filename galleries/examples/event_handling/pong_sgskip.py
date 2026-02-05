@@ -18,7 +18,7 @@ animations that are easily ported to multiple backends.
 import time
 
 import matplotlib.pyplot as plt
-import numpy as np
+from matplotlib import _mlx_numpy as np
 from numpy.random import randint, randn
 
 from matplotlib.font_manager import FontProperties

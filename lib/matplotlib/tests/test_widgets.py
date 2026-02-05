@@ -9,9 +9,8 @@ import matplotlib.widgets as widgets
 import matplotlib.pyplot as plt
 from matplotlib.testing.decorators import check_figures_equal, image_comparison
 from matplotlib.testing.widgets import click_and_drag, get_ax, noop
-
-import numpy as np
-from numpy.testing import assert_allclose
+from matplotlib import _mlx_numpy as np
+from matplotlib.mlx_testing import assert_allclose
 
 import pytest
 

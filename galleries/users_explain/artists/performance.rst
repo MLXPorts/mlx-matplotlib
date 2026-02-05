@@ -30,7 +30,7 @@ The following script will first display the data without any
 simplification, and then display the same data with simplification.
 Try interacting with both of them::
 
-  import numpy as np
+  from matplotlib import _mlx_numpy as np
   import matplotlib.pyplot as plt
   import matplotlib as mpl
 
@@ -103,7 +103,7 @@ a chunk size of 10,000. The difference can best be seen when
 the figures are large, try maximizing the GUI and then
 interacting with them::
 
-  import numpy as np
+  from matplotlib import _mlx_numpy as np
   import matplotlib.pyplot as plt
   import matplotlib as mpl
   mpl.rcParams['path.simplify_threshold'] = 1.0

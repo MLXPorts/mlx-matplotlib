@@ -12,9 +12,7 @@ In Matplotlib they are drawn into a dedicated `~.axes.Axes`.
 """
 
 import logging
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib import _api, cbook, collections, colors, contour, ticker
 import matplotlib.artist as martist

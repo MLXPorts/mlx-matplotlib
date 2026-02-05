@@ -7,8 +7,7 @@ Using a legend on a polar-axis plot.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 fig = plt.figure()
 ax = fig.add_subplot(projection="polar", facecolor="lightgoldenrodyellow")
 

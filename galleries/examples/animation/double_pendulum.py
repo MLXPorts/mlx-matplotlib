@@ -12,8 +12,8 @@ Output generated via `matplotlib.animation.Animation.to_jshtml`.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-from numpy import cos, sin
+from matplotlib import _mlx_numpy as np
+from matplotlib._mlx_numpy import cos, sin
 
 import matplotlib.animation as animation
 

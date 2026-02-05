@@ -20,8 +20,7 @@ zero and 180 degrees.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib import patheffects
 
 fig, ax = plt.subplots(figsize=(6, 6))

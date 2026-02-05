@@ -11,8 +11,7 @@ of 'jagged stained glass' effect.
 import math
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 gamma = np.vectorize(math.gamma)
 N = 31
 x = np.linspace(0., 10., N)

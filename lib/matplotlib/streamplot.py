@@ -2,9 +2,7 @@
 Streamline plotting for 2D vector fields.
 
 """
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib import _api, cm, patches
 import matplotlib.colors as mcolors

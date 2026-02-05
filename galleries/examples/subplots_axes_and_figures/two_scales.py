@@ -19,8 +19,7 @@ in two different units).
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # Create some mock data
 t = np.arange(0.01, 10.0, 0.01)
 data1 = np.exp(t)

@@ -17,8 +17,7 @@ where two scales are not related to one another, but independent.
 import datetime
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.dates as mdates
 
 fig, ax = plt.subplots(layout='constrained')

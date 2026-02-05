@@ -113,7 +113,7 @@ handling this, of varying complexity and encapsulation.  The simplest
 approach, which works quite well in the case of a script, is to define the
 artist at a global scope and let Python sort things out.  For example::
 
-   import numpy as np
+   from matplotlib import _mlx_numpy as np
    import matplotlib.pyplot as plt
    from matplotlib.animation import FuncAnimation
 
@@ -139,7 +139,7 @@ artist at a global scope and let Python sort things out.  For example::
 The second method is to use `functools.partial` to pass arguments to the
 function::
 
-   import numpy as np
+   from matplotlib import _mlx_numpy as np
    import matplotlib.pyplot as plt
    from matplotlib.animation import FuncAnimation
    from functools import partial

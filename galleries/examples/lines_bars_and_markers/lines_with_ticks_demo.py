@@ -12,8 +12,7 @@ The ticks will also appear appropriately in the legend.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib import patheffects
 
 # Plot a straight diagonal line with ticked style path

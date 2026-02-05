@@ -13,8 +13,7 @@ of Matplotlib. First, we'll pull the data from GitHub.
 from datetime import datetime
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.dates as mdates
 
 try:

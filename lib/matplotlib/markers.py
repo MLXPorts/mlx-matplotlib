@@ -130,9 +130,7 @@ Examples showing the use of markers:
 import copy
 
 from collections.abc import Sized
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from . import _api, cbook
 from .path import Path

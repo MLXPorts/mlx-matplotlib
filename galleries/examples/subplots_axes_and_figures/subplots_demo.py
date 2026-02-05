@@ -13,8 +13,7 @@ within the figure.
 # sphinx_gallery_thumbnail_number = 11
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # Some example data to display
 x = np.linspace(0, 2 * np.pi, 400)
 y = np.sin(x ** 2)

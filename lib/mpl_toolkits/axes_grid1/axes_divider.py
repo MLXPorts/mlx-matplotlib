@@ -3,9 +3,7 @@ Helper classes to adjust the positions of multiple axes at drawing time.
 """
 
 import functools
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib import _api
 from matplotlib.gridspec import SubplotSpec

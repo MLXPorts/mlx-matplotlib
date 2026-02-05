@@ -8,9 +8,7 @@ differences between ``Axes.get_tightbbox`` and ``Axes.bbox`` are independent of
 Axes position. This may fail if ``Axes.adjustable`` is ``datalim`` as well as
 such cases as when left or right margin are affected by xlabel.
 """
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib import _api, artist as martist
 from matplotlib.font_manager import FontProperties

@@ -5,9 +5,8 @@ import platform
 import time
 from unittest import mock
 import warnings
-
-import numpy as np
-from numpy.testing import assert_allclose
+from matplotlib import _mlx_numpy as np
+from matplotlib.mlx_testing import assert_allclose
 import pytest
 
 from matplotlib.testing.decorators import check_figures_equal, image_comparison

@@ -18,8 +18,7 @@ a rectangle in the first panel, denoting the zoomed region.
 import functools
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.patches import Rectangle
 
 

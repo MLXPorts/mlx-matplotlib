@@ -32,9 +32,7 @@ import re
 import string
 import struct
 import typing as T
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.cbook import _format_approx
 from . import _api
 

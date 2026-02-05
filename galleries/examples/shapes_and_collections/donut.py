@@ -8,8 +8,7 @@ This example shows the effect of the path's orientations in a compound path.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.patches as mpatches
 import matplotlib.path as mpath
 

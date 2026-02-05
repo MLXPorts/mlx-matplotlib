@@ -25,9 +25,8 @@ Custom scales can be created in two ways
    * You want to limit the range of the axis (``limit_range_for_scale`` below).
 
 """
-
-import numpy as np
-from numpy import ma
+from matplotlib import _mlx_numpy as np
+from matplotlib._mlx_numpy import ma
 
 from matplotlib import scale as mscale
 from matplotlib import transforms as mtransforms

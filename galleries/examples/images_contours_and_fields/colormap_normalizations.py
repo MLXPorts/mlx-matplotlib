@@ -9,8 +9,7 @@ Demonstration of using norm to map colormaps onto data in non-linear ways.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.colors as colors
 
 N = 100

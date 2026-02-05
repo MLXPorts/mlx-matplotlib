@@ -10,8 +10,7 @@ First we'll show off how to make a legend for specific lines.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.collections as mcol
 from matplotlib.legend_handler import HandlerLineCollection, HandlerTuple
 from matplotlib.lines import Line2D

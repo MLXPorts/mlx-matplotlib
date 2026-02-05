@@ -1,7 +1,5 @@
 from types import MethodType
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from .axes_divider import make_axes_locatable, Size
 from .mpl_axes import Axes, SimpleAxisArtist
 

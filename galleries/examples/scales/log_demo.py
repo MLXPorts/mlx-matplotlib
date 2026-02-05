@@ -17,8 +17,7 @@ for setting the scale and plotting data; e.g. ``ax.semilogx(x, y)`` is equivalen
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 fig, (ax1, ax2, ax3) = plt.subplots(1, 3, layout='constrained', figsize=(7, 7/3))
 # log x axis
 t = np.arange(0.01, 10.0, 0.01)

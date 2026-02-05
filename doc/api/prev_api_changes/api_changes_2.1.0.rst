@@ -211,7 +211,7 @@ behavior is consistent with :func:`matplotlib.pyplot.psd()` and
 new and old scaling::
 
     import matplotlib.pyplot as plt
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
 
     tau, n = 10, 1024  # 10 second signal with 1024 points
     T = tau/n  # sampling interval

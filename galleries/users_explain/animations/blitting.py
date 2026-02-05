@@ -59,8 +59,7 @@ uses blitting to accelerate rendering
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 x = np.linspace(0, 2 * np.pi, 100)
 
 fig, ax = plt.subplots()

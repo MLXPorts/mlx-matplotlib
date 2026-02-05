@@ -14,8 +14,7 @@ The example shows how to use an 'index formatter' to achieve the desired plot.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.cbook as cbook
 from matplotlib.dates import DateFormatter, DayLocator
 import matplotlib.lines as ml

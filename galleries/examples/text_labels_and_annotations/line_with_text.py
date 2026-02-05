@@ -7,8 +7,7 @@ Override basic methods so an artist can contain another
 artist.  In this case, the line contains a Text instance to label it.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.lines as lines
 import matplotlib.text as mtext
 import matplotlib.transforms as mtransforms

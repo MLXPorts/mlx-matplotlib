@@ -25,9 +25,7 @@ any format supported by Pillow.
 """
 
 from PIL import Image
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.figure import Figure
 

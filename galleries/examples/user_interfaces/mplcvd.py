@@ -11,9 +11,7 @@ import functools
 from pathlib import Path
 
 import colorspacious
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 _BUTTON_NAME = "Filter"
 _BUTTON_HELP = "Simulate color vision deficiencies"
 _MENU_ENTRIES = {

@@ -12,8 +12,7 @@ intentionally takes a long time to run.)
 import time
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 fig = plt.figure()
 ax = fig.add_subplot(projection='3d')
 

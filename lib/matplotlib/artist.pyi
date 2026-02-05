@@ -11,12 +11,10 @@ from .transforms import (
     TransformedPatchPath,
     TransformedPath,
 )
-
-import numpy as np
-
+import matplotlib._mlx_numpy as np
 from collections.abc import Callable, Iterable
 from typing import Any, Literal, NamedTuple, TextIO, overload, TypeVar
-from numpy.typing import ArrayLike
+from matplotlib._mlx_typing import ArrayLike
 
 _T_Artist = TypeVar("_T_Artist", bound=Artist)
 

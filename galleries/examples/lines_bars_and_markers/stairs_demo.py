@@ -10,8 +10,7 @@ visualization.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.patches import StepPatch
 
 np.random.seed(0)

@@ -7,8 +7,7 @@ Broken horizontal bars
 a timing diagram.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # data is a sequence of (start, duration) tuples
 cpu_1 = [(0, 3), (3.5, 1), (5, 5)]
 cpu_2 = np.column_stack([np.linspace(0, 9, 10), np.full(10, 0.5)])

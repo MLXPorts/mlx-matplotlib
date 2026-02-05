@@ -9,8 +9,7 @@ This example shows how to create the Firefox logo with path and patches.
 import re
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.patches as patches
 from matplotlib.path import Path
 

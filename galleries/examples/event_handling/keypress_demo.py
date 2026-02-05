@@ -16,9 +16,7 @@ Show how to connect to keypress events.
 import sys
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-
+from matplotlib import _mlx_numpy as np
 def on_press(event):
     print('press', event.key)
     sys.stdout.flush()

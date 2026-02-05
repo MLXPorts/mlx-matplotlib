@@ -7,8 +7,7 @@ Align multiple images using `~mpl_toolkits.axes_grid1.axes_grid.ImageGrid`.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from mpl_toolkits.axes_grid1 import ImageGrid
 
 im1 = np.arange(100).reshape((10, 10))

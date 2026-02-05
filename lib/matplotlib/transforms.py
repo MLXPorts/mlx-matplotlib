@@ -40,9 +40,9 @@ import itertools
 import textwrap
 import weakref
 import math
-
-import numpy as np
-from numpy.linalg import inv
+from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_numpy as np
+inv = np.linalg.inv
 
 from matplotlib import _api
 from matplotlib._path import affine_transform, count_bboxes_overlapping_bbox

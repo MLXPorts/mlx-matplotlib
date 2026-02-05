@@ -11,8 +11,7 @@ As showcase on the plot, a 5x5 matrix is displayed on the Axes.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from mpl_toolkits.axisartist.axislines import Axes
 from mpl_toolkits.axisartist.grid_finder import ExtremeFinderSimple, MaxNLocator
 from mpl_toolkits.axisartist.grid_helper_curvelinear import GridHelperCurveLinear

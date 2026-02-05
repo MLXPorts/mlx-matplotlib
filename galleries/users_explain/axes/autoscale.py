@@ -16,9 +16,7 @@ There are a number of options to this autoscaling behaviour, discussed below.
 # extends the axis limits 5% beyond the data limits (-2π, 2π).
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-
+from matplotlib import _mlx_numpy as np
 x = np.linspace(-2 * np.pi, 2 * np.pi, 100)
 y = np.sinc(x)
 

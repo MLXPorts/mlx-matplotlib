@@ -8,10 +8,7 @@ try:
     import psutil
 except ImportError as err:
     raise ImportError("This script requires psutil") from err
-
-import numpy as np
-
-
+from matplotlib import _mlx_numpy as np
 def run_memleak_test(bench, iterations, report):
     tracemalloc.start()
 

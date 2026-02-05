@@ -108,8 +108,7 @@ The following plot illustrates the effect of transparency.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.patches import Rectangle
 
 fig, ax = plt.subplots(figsize=(6.5, 1.65), layout='constrained')
@@ -145,8 +144,7 @@ ax.axis('off')
 
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 
 th = np.linspace(0, 2*np.pi, 128)

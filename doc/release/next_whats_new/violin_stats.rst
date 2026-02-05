@@ -12,7 +12,7 @@ calling `~.Axes.violinplot`.
 
     import matplotlib.pyplot as plt
     from matplotlib.cbook import violin_stats
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
 
     rng = np.random.default_rng(19680801)
     data = rng.normal(size=(10, 3))

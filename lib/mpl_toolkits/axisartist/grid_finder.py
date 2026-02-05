@@ -1,5 +1,4 @@
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib import ticker as mticker, _api
 from matplotlib.transforms import Bbox, Transform
 
