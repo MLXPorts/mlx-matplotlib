@@ -18,8 +18,7 @@ animations that are easily ported to multiple backends.
 import time
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
-from numpy.random import randint, randn
+import mlx.core as mx
 
 from matplotlib.font_manager import FontProperties
 
@@ -105,7 +104,7 @@ class Puck:
         if self.y < -1 + fudge or self.y > 1 - fudge:
             self.vy *= -1.0
             # add some randomness, just to make it interesting
-            self.vy -= (randn()/300.0 + 1/300.0) * np.sign(self.vy)
+            self.vy -= (mx.random.normal().item()/300.0 + 1/300.0) * (1.0 if self.vy >= 0 else -1.0)
         self._speedlimit()
         return False
 
@@ -153,14 +152,14 @@ class Game:
                            animated=True)
 
         # distractors
-        self.x = np.arange(0, 2.22*np.pi, 0.01)
-        self.line, = self.ax.plot(self.x, np.sin(self.x), "r",
+        self.x = mx.arange(0, 2.22 * mx.pi, 0.01)
+        self.line, = self.ax.plot(self.x, mx.sin(self.x), "r",
                                   animated=True, lw=4)
-        self.line2, = self.ax.plot(self.x, np.cos(self.x), "g",
+        self.line2, = self.ax.plot(self.x, mx.cos(self.x), "g",
                                    animated=True, lw=4)
-        self.line3, = self.ax.plot(self.x, np.cos(self.x), "g",
+        self.line3, = self.ax.plot(self.x, mx.cos(self.x), "g",
                                    animated=True, lw=4)
-        self.line4, = self.ax.plot(self.x, np.cos(self.x), "r",
+        self.line4, = self.ax.plot(self.x, mx.cos(self.x), "r",
                                    animated=True, lw=4)
 
         # center line
@@ -201,10 +200,10 @@ class Game:
 
         # show the distractors
         if self.distract:
-            self.line.set_ydata(np.sin(self.x + self.cnt/self.res))
-            self.line2.set_ydata(np.cos(self.x - self.cnt/self.res))
-            self.line3.set_ydata(np.tan(self.x + self.cnt/self.res))
-            self.line4.set_ydata(np.tan(self.x - self.cnt/self.res))
+            self.line.set_ydata(mx.sin(self.x + self.cnt/self.res))
+            self.line2.set_ydata(mx.cos(self.x - self.cnt/self.res))
+            self.line3.set_ydata(mx.tan(self.x + self.cnt/self.res))
+            self.line4.set_ydata(mx.tan(self.x - self.cnt/self.res))
             draw_artist(self.line)
             draw_artist(self.line2)
             draw_artist(self.line3)
@@ -270,12 +269,12 @@ class Game:
 
         if event.key == 'a':
             self.pucks.append(Puck(self.puckdisp,
-                                   self.pads[randint(2)],
+                                   self.pads[mx.random.randint(0, 2).item()],
                                    self.ax.bbox))
         if event.key == 'A' and len(self.pucks):
             self.pucks.pop()
         if event.key == ' ' and len(self.pucks):
-            self.pucks[0]._reset(self.pads[randint(2)])
+            self.pucks[0]._reset(self.pads[mx.random.randint(0, 2).item()])
         if event.key == '1':
             for p in self.pucks:
                 p._slower()

@@ -8,18 +8,27 @@ Various normalization on a multivariate normal distribution.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
-from numpy.random import multivariate_normal
+import mlx.core as mx
 
 import matplotlib.colors as mcolors
 
 # Fixing random state for reproducibility.
-np.random.seed(19680801)
+mx.random.seed(19680801)
 
-data = np.vstack([
-    multivariate_normal([10, 10], [[3, 2], [2, 3]], size=100000),
-    multivariate_normal([30, 20], [[3, 1], [1, 3]], size=1000)
-])
+data = mx.concatenate([
+    mx.random.multivariate_normal(
+        mx.array([10, 10], dtype=mx.float32),
+        mx.array([[3, 2], [2, 3]], dtype=mx.float32),
+        shape=(100000,),
+        dtype=mx.float32,
+    ),
+    mx.random.multivariate_normal(
+        mx.array([30, 20], dtype=mx.float32),
+        mx.array([[3, 1], [1, 3]], dtype=mx.float32),
+        shape=(1000,),
+        dtype=mx.float32,
+    ),
+], axis=0)
 
 gammas = [0.8, 0.5, 0.3]
 
