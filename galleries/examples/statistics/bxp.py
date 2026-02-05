@@ -26,8 +26,7 @@ The following code demonstrates the equivalence between the two methods.
 # sphinx_gallery_thumbnail_number = 2
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib import cbook
 
 np.random.seed(19680801)

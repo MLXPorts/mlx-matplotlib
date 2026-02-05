@@ -9,8 +9,7 @@ For more advanced options refer to
 :doc:`/gallery/images_contours_and_fields/quiver_demo`.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 X = np.arange(-10, 10, 1)
 Y = np.arange(-10, 10, 1)
 U, V = np.meshgrid(X, Y)

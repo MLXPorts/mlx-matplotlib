@@ -7,9 +7,7 @@ An example of how to use wxagg in a wx application with a custom toolbar.
 """
 
 import wx
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wxagg import \
     NavigationToolbar2WxAgg as NavigationToolbar

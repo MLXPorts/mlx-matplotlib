@@ -6,8 +6,7 @@ Hillshading
 Demonstrates a few common tricks with shaded plots.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.colors import LightSource, Normalize
 
 

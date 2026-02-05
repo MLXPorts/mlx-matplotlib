@@ -8,8 +8,7 @@ This figure shows the name of several matplotlib elements composing a figure
 
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.patches import Circle
 from matplotlib.patheffects import withStroke
 from matplotlib.ticker import AutoMinorLocator, MultipleLocator

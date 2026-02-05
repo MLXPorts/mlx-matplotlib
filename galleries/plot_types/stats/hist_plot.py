@@ -7,8 +7,7 @@ Compute and plot a histogram.
 See `~matplotlib.axes.Axes.hist`.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 plt.style.use('_mpl-gallery')
 
 # make data

@@ -10,8 +10,7 @@ to what kind of units client packages use.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.ticker as ticker
 import matplotlib.units as units
 

@@ -53,8 +53,7 @@ can sometimes go outside the figure area, and thus get clipped.
 
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.colors as mcolors
 import matplotlib.gridspec as gridspec
 

@@ -89,8 +89,7 @@ Colormaps are often split into several categories based on their function (see,
 from colorspacious import cspace_converter
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 
 # %%

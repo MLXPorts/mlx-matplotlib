@@ -10,9 +10,7 @@ import textwrap
 from types import SimpleNamespace
 from collections import namedtuple
 from matplotlib.transforms import Affine2D
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from . import (_api, artist, cbook, colors, _docstring, hatch as mhatch,
                lines as mlines, transforms)

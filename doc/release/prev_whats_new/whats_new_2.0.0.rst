@@ -218,7 +218,7 @@ demonstrated on the right.
 
 .. plot::
 
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
     import matplotlib.pyplot as plt
 
     data = np.arange(30).reshape(5, 6)

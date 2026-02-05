@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from typing import Literal, overload
 
-from numpy.typing import NDArray
+from matplotlib._mlx_typing import NDArray
 
 __all__ = ["calculate_rms", "comparable_formats", "compare_images"]
 

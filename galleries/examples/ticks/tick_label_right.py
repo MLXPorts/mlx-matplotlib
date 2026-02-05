@@ -9,8 +9,7 @@ appear. These properties can also be set in ``.matplotlib/matplotlibrc``.
 
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 plt.rcParams['ytick.right'] = plt.rcParams['ytick.labelright'] = True
 plt.rcParams['ytick.left'] = plt.rcParams['ytick.labelleft'] = False
 

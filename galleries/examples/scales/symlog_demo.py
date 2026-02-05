@@ -11,8 +11,7 @@ are significant differences between the magnitudes of the numbers involved.
 Example use of symlog (symmetric log) axis scaling.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 dt = 0.01
 x = np.arange(-50.0, 50.0, dt)
 y = np.arange(0, 100.0, dt)

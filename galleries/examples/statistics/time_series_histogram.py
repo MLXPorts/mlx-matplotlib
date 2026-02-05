@@ -27,8 +27,7 @@ histogram, with optional interpolation between data points, by using
 import time
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 fig, axes = plt.subplots(nrows=3, figsize=(6, 8), layout='constrained')
 
 # Fix random state for reproducibility

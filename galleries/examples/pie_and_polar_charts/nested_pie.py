@@ -10,8 +10,7 @@ See also the :doc:`/gallery/specialty_plots/leftventricle_bullseye` example.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # %%
 # The most straightforward way to build a pie chart is to use the
 # `~matplotlib.axes.Axes.pie` method.

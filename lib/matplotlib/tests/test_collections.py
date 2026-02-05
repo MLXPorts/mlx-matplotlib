@@ -4,9 +4,8 @@ import itertools
 import platform
 import re
 from types import SimpleNamespace
-
-import numpy as np
-from numpy.testing import assert_array_equal, assert_array_almost_equal
+from matplotlib import _mlx_numpy as np
+from matplotlib.mlx_testing import assert_array_equal, assert_array_almost_equal
 import pytest
 
 import matplotlib as mpl

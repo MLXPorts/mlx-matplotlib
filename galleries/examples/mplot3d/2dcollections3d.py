@@ -8,8 +8,7 @@ selective axes of a 3D plot.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 ax = plt.figure().add_subplot(projection='3d')
 
 # Plot a sin curve using the x and y axes.

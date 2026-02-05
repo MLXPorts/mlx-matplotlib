@@ -17,8 +17,7 @@ the ``Slider`` snap to discrete values.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.widgets import RangeSlider
 
 # generate a fake image

@@ -30,8 +30,7 @@ from functools import cache, cached_property, lru_cache, partial, wraps
 from pathlib import Path
 
 import fontTools.agl
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib import _api, cbook, font_manager
 from matplotlib.ft2font import LoadFlags

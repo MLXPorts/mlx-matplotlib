@@ -7,8 +7,7 @@ import re
 import textwrap
 from typing import Any
 from xml.etree import ElementTree as ET
-
-import numpy as np
+from matplotlib import _mlx_numpy as np
 from packaging.version import parse as parse_version
 import pyparsing
 import pytest

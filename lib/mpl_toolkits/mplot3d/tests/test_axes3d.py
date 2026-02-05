@@ -20,9 +20,7 @@ from matplotlib.text import Text
 from matplotlib import  _api
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-
+from matplotlib import _mlx_numpy as np
 mpl3d_image_comparison = functools.partial(
     image_comparison, remove_text=True, style='default')
 

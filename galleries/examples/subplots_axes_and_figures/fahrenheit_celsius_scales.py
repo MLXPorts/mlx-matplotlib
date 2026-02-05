@@ -8,9 +8,7 @@ Demo of how to display two scales on the left and right y-axis.
 This example uses the Fahrenheit and Celsius scales.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
-
+from matplotlib import _mlx_numpy as np
 def fahrenheit2celsius(temp):
     """
     Returns temperature in Celsius given Fahrenheit temperature.

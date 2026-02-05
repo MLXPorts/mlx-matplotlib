@@ -1,7 +1,5 @@
 """UnitDblConverter module containing class UnitDblConverter."""
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib import cbook, units
 import matplotlib.projections.polar as polar
 

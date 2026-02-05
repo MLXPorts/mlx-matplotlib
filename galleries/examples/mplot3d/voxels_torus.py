@@ -7,8 +7,7 @@ Demonstrates using the *x*, *y*, *z* parameters of `.Axes3D.voxels`.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.colors
 
 

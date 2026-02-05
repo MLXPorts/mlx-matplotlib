@@ -21,8 +21,7 @@ using style sheets<customizing-with-style-sheets>`.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.colors as mcolors
 from matplotlib.patches import Rectangle
 

@@ -72,7 +72,7 @@ to 'patch.edgecolor' with the alpha value of the collection.
     :alt: A random scatter plot with hatches on the markers. The hatches are colored in blue, orange, and green, respectively. After the first three markers, the colors are cycled through again.
 
     import matplotlib.pyplot as plt
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
 
     np.random.seed(19680801)
 

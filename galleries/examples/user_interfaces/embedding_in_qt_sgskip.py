@@ -11,9 +11,7 @@ the binding name, or by first importing it.
 
 import sys
 import time
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvas
 from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.backends.qt_compat import QtWidgets

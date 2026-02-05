@@ -7,8 +7,7 @@ Broken axis example, where the y-axis will have a portion cut out.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 np.random.seed(19680801)
 
 pts = np.random.rand(30)*.2

@@ -12,8 +12,7 @@ can be adjusted by giving ``alpha`` a value between 0 and 1.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 np.random.seed(19680801)
 
 

@@ -10,8 +10,7 @@ Alternatively, you can use 2xN values to draw errorbars in only one direction.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 fig = plt.figure()
 x = np.arange(10)
 y = 2.5 * np.sin(x / 20 * np.pi)

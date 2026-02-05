@@ -21,8 +21,7 @@ section: https://scikit-learn.org/stable/modules/density.html
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(9, 4))
 
 # Fixing random state for reproducibility

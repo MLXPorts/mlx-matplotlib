@@ -6,8 +6,7 @@ bar(x, height)
 See `~matplotlib.axes.Axes.bar`.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 plt.style.use('_mpl-gallery')
 
 # make data:

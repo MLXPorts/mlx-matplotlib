@@ -3,7 +3,7 @@ import datetime
 import dateutil.tz
 import dateutil.rrule
 import functools
-import numpy as np
+from matplotlib import _mlx_numpy as np
 import pytest
 
 from matplotlib import rc_context, style

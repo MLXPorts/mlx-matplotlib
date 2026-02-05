@@ -6,8 +6,7 @@ Color by y-value
 Use masked arrays to plot a line with different colors by y-value.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 t = np.arange(0.0, 2.0, 0.01)
 s = np.sin(2 * np.pi * t)
 

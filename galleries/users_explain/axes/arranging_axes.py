@@ -98,8 +98,7 @@ location:
 # sphinx_gallery_thumbnail_number = 2
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 w, h = 4, 3
 margin = 0.5
 fig = plt.figure(figsize=(w, h), facecolor='lightblue')

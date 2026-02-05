@@ -25,8 +25,7 @@ This example demonstrates two different APIs:
 from cycler import cycler
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # %%
 # First we'll generate some sample data, in this case, four offset sine
 # curves.

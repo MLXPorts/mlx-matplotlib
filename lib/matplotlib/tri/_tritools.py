@@ -1,9 +1,7 @@
 """
 Tools for triangular grids.
 """
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib import _api
 from matplotlib.tri import Triangulation
 

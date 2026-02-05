@@ -10,8 +10,8 @@ from matplotlib.text import Text
 from matplotlib.transforms import Transform, TransformedPatchPath, TransformedPath
 from matplotlib.ticker import Locator, Formatter
 
-from numpy.typing import ArrayLike
-import numpy as np
+from matplotlib._mlx_typing import ArrayLike
+import matplotlib._mlx_numpy as np
 from collections.abc import Callable, Iterable, Sequence
 from typing import Literal
 from .typing import ColorType

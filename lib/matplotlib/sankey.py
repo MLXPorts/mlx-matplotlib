@@ -4,9 +4,7 @@ Module for creating Sankey diagrams using Matplotlib.
 
 import logging
 from types import SimpleNamespace
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib.path import Path
 from matplotlib.patches import PathPatch

@@ -7,8 +7,7 @@ Plot a pie chart.
 See `~matplotlib.axes.Axes.pie`.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 plt.style.use('_mpl-gallery-nogrid')
 
 

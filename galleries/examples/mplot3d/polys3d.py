@@ -7,8 +7,7 @@ Demonstrate how to create polygons in 3D. Here we stack 3 hexagons.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 # Coordinates of a hexagon

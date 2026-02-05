@@ -17,8 +17,7 @@ The simplest case is just attaching a colorbar to each Axes.  Note in this
 example that the colorbars steal some space from the parent Axes.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # Fixing random state for reproducibility
 np.random.seed(19680801)
 

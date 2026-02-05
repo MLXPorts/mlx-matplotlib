@@ -3,9 +3,7 @@ An experimental support for curvilinear grid.
 """
 
 import functools
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib.path import Path
 from matplotlib.transforms import Affine2D, Bbox, IdentityTransform

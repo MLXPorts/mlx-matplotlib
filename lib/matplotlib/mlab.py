@@ -50,9 +50,7 @@ Spectral functions
 import functools
 from numbers import Integral, Number
 import sys
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib import _api, _docstring, cbook
 
 

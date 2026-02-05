@@ -3,9 +3,7 @@ from matplotlib.axes import Axes
 from collections.abc import Callable, Iterable
 from typing import Any
 from typing import Self
-
-import numpy as np
-
+import matplotlib._mlx_numpy as np
 __license__: str
 __credits__: list[str]
 __author__: str

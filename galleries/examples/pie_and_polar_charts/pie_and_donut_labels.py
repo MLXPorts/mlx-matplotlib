@@ -29,8 +29,7 @@ as well as with `annotations <matplotlib.axes.Axes.annotate>`.
 # spanning from ``(1, 0)`` to ``(1.5, 1)`` in axes coordinates.
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 fig, ax = plt.subplots(figsize=(6, 3), subplot_kw=dict(aspect="equal"))
 
 recipe = ["375 g flour",

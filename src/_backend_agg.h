@@ -1152,7 +1152,7 @@ inline void RendererAgg::draw_quad_mesh(GCAgg &gc,
     array::scalar<double, 1> linewidths(gc.linewidth);
     array::scalar<uint8_t, 1> antialiaseds(antialiased);
     DashesVector linestyles;
-    ColorArray hatchcolors = py::array_t<double>().reshape({0, 4}).unchecked<double, 2>();
+    auto &hatchcolors = facecolors;
 
     _draw_path_collection_generic(gc,
                                   master_transform,

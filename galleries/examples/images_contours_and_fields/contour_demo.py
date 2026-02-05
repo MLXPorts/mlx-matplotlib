@@ -11,8 +11,7 @@ See also the :doc:`contour image example
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 delta = 0.025
 x = np.arange(-3.0, 3.0, delta)
 y = np.arange(-2.0, 2.0, delta)

@@ -3,7 +3,7 @@ from matplotlib.collections import PolyCollection
 
 from collections.abc import Iterable
 from typing import Literal
-from numpy.typing import ArrayLike
+from matplotlib._mlx_typing import ArrayLike
 from matplotlib.typing import ColorType
 
 def stackplot(

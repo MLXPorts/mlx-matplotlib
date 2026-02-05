@@ -2,9 +2,8 @@ from enum import Enum, Flag
 import sys
 from typing import BinaryIO, Literal, TypedDict, final, overload, cast
 from typing_extensions import Buffer  # < Py 3.12
-
-import numpy as np
-from numpy.typing import NDArray
+import matplotlib._mlx_numpy as np
+from matplotlib._mlx_typing import NDArray
 
 __freetype_build_type__: str
 __freetype_version__: str

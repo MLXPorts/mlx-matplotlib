@@ -1,9 +1,7 @@
 from .backend_bases import RendererBase
 
 from matplotlib.typing import ColorType
-
-import numpy as np
-
+import matplotlib._mlx_numpy as np
 class TexManager:
     texcache: str
     @classmethod

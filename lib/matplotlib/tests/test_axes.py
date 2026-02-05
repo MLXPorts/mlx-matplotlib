@@ -12,9 +12,8 @@ import sys
 from types import SimpleNamespace
 
 import dateutil.tz
-
-import numpy as np
-from numpy import ma
+from matplotlib import _mlx_numpy as np
+from matplotlib._mlx_numpy import ma
 from cycler import cycler
 import pytest
 
@@ -39,7 +38,7 @@ import matplotlib.text as mtext
 import matplotlib.ticker as mticker
 import matplotlib.transforms as mtransforms
 import mpl_toolkits.axisartist as AA  # type: ignore[import]
-from numpy.testing import (
+from matplotlib.mlx_testing import (
     assert_allclose, assert_array_equal, assert_array_almost_equal)
 from matplotlib.testing.decorators import (
     image_comparison, check_figures_equal, remove_ticks_and_titles)

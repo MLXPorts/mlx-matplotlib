@@ -19,7 +19,7 @@ Code changes
   original location:
 
   - ``math`` -> ``import math``
-  - ``ma`` -> ``from numpy import ma``
+  - ``ma`` -> ``from matplotlib._mlx_numpy import ma``
   - ``cbook`` -> ``from matplotlib import cbook``
   - ``docstring`` -> ``from matplotlib import docstring``
   - ``is_sequence_of_strings`` -> ``from matplotlib.cbook import is_sequence_of_strings``

@@ -15,8 +15,7 @@ colormaps.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 cmaps = [('Perceptually Uniform Sequential', [
             'viridis', 'plasma', 'inferno', 'magma', 'cividis']),
          ('Sequential', [

@@ -1,5 +1,5 @@
-import numpy as np
-from numpy.testing import assert_array_almost_equal
+from matplotlib import _mlx_numpy as np
+from matplotlib.mlx_testing import assert_array_almost_equal
 import pytest
 import matplotlib.pyplot as plt
 from matplotlib.testing.decorators import image_comparison

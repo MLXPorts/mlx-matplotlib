@@ -6,8 +6,7 @@ bar3d(x, y, z, dx, dy, dz)
 See `~mpl_toolkits.mplot3d.axes3d.Axes3D.bar3d`.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 plt.style.use('_mpl-gallery')
 
 # Make data

@@ -9,8 +9,7 @@ in both the x- and y-directions.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # example data
 x = np.arange(0.1, 4, 0.5)
 y = np.exp(-x)

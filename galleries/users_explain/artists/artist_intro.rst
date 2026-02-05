@@ -38,7 +38,7 @@ As an example, we can save the Line2D Artist returned from `.axes.Axes.plot`:
 
     In [209]: import matplotlib.pyplot as plt
     In [210]: import matplotlib.artist as martist
-    In [211]: import numpy as np
+    In [211]: from matplotlib import _mlx_numpy as np
 
     In [212]: fig, ax = plt.subplots()
     In [213]: x, y = np.random.rand(2, 100)

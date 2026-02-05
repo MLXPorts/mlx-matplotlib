@@ -945,7 +945,7 @@ like:
     Create a simple plot.
     """
     import matplotlib.pyplot as plt
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
 
     # Data for plotting
     t = np.arange(0.0, 2.0, 0.01)

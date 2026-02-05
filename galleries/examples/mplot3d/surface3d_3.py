@@ -7,8 +7,7 @@ Demonstrates plotting a 3D surface colored in a checkerboard pattern.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.ticker import LinearLocator
 
 ax = plt.figure().add_subplot(projection='3d')

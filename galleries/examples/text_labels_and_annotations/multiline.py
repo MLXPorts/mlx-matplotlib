@@ -5,8 +5,7 @@ Multiline
 
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 fig, (ax0, ax1) = plt.subplots(ncols=2, figsize=(7, 4))
 
 ax0.set_aspect(1)

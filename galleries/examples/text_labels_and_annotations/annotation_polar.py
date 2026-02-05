@@ -11,8 +11,7 @@ For a complete overview of the annotation capabilities, also see the
 .. redirect-from:: /gallery/pyplots/annotation_polar
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 fig = plt.figure()
 ax = fig.add_subplot(projection='polar')
 r = np.arange(0, 1, 0.001)

@@ -10,8 +10,7 @@ get a filled contour effect.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.colors as colors
 
 # compute some interesting data

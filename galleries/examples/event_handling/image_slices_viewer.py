@@ -16,9 +16,7 @@ In this example a scroll wheel event is used to scroll through 2D slices of
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-
+from matplotlib import _mlx_numpy as np
 class IndexTracker:
     def __init__(self, ax, X):
         self.index = 0

@@ -33,7 +33,7 @@ supplied.
     :align: center
 
     import matplotlib.pyplot as plt
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
 
     fig, ax = plt.subplots(1, 2, layout='constrained', figsize=(6, 2))
 
@@ -253,7 +253,7 @@ locators as desired because the two axes are independent.
 
 .. plot::
 
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
     import matplotlib.pyplot as plt
 
     fig = plt.figure()

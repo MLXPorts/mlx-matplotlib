@@ -9,8 +9,7 @@ data points with similar errors.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # example data
 x = np.arange(0.1, 4, 0.1)
 y1 = np.exp(-1.0 * x)

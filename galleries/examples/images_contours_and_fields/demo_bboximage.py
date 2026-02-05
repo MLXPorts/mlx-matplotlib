@@ -9,8 +9,7 @@ bounding box as well as how to manually create a bounding box for the image.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.image import BboxImage
 from matplotlib.transforms import Bbox, TransformedBbox
 

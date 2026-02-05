@@ -29,7 +29,7 @@ concise.
     import datetime
     import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
 
     # make a timeseries...
     base = datetime.datetime(2005, 2, 1)
@@ -207,7 +207,7 @@ this affects the output.
 .. plot::
 
 	import matplotlib.pyplot as plt
-	import numpy as np
+	from matplotlib import _mlx_numpy as np
 
 	# prepare some coordinates
 	x, y, z = np.indices((8, 8, 8))

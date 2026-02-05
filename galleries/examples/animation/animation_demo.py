@@ -15,8 +15,7 @@ Output generated via `matplotlib.animation.Animation.to_jshtml`.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 np.random.seed(19680801)
 data = np.random.random((50, 50, 50))
 

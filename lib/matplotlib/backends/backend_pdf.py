@@ -21,8 +21,7 @@ import time
 import types
 import warnings
 import zlib
-
-import numpy as np
+from matplotlib import _mlx_numpy as np
 from PIL import Image
 
 import matplotlib as mpl

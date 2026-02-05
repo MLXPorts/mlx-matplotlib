@@ -96,8 +96,7 @@ the interpolation is between ``y1[i]`` and ``y0[i+1]``.  So, ``y0[0]`` and
 
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib.colors import LinearSegmentedColormap
 

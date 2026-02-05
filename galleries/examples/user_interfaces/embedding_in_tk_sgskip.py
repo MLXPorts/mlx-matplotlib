@@ -6,9 +6,7 @@ Embed in Tk
 """
 
 import tkinter
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # Implement the default Matplotlib key bindings.
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk

@@ -7,8 +7,7 @@ Grid of images with shared xaxis and yaxis.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib import cbook
 from mpl_toolkits.axes_grid1 import ImageGrid
 

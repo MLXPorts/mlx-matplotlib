@@ -7,9 +7,7 @@ https://stackoverflow.com/q/2225995/
 """
 
 import itertools
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib import _api
 
 __all__ = ['stackplot']

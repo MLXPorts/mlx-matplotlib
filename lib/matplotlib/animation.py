@@ -12,8 +12,7 @@ import sys
 from tempfile import TemporaryDirectory
 import uuid
 import warnings
-
-import numpy as np
+from matplotlib import _mlx_numpy as np
 from PIL import Image
 
 import matplotlib as mpl

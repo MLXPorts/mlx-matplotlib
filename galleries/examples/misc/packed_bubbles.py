@@ -12,8 +12,7 @@ browsers.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 browser_market_share = {
     'browsers': ['firefox', 'chrome', 'safari', 'edge', 'ie', 'opera'],
     'market_share': [8.61, 69.55, 8.36, 4.12, 2.76, 2.43],

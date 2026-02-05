@@ -1,8 +1,7 @@
 from matplotlib import _tri
 from matplotlib.tri._trifinder import TriFinder
-
-import numpy as np
-from numpy.typing import ArrayLike
+import matplotlib._mlx_numpy as np
+from matplotlib._mlx_typing import ArrayLike
 from typing import Any
 
 class Triangulation:

@@ -16,8 +16,7 @@ to correct units.
 from basic_units import cm, inch
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 cms = cm * np.arange(0, 10, 2)
 
 fig, axs = plt.subplots(2, 2, layout='constrained')

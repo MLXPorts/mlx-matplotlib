@@ -25,8 +25,7 @@ approximation of the E(C)CDF, whereas `.Axes.ecdf` is exact.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 np.random.seed(19680801)
 
 mu = 200

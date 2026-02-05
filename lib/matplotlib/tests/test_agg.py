@@ -1,7 +1,6 @@
 import io
-
-import numpy as np
-from numpy.testing import assert_array_almost_equal
+from matplotlib import _mlx_numpy as np
+from matplotlib.mlx_testing import assert_array_almost_equal
 from PIL import features, Image, TiffTags
 import pytest
 

@@ -1,5 +1,5 @@
-import numpy as np
-from numpy.typing import NDArray
+import matplotlib._mlx_numpy as np
+from matplotlib._mlx_typing import NDArray
 
 TK_PHOTO_COMPOSITE_OVERLAY: int
 TK_PHOTO_COMPOSITE_SET: int

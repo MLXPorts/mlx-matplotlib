@@ -7,8 +7,8 @@ Demonstrate use of a log color scale in contourf
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-from numpy import ma
+from matplotlib import _mlx_numpy as np
+from matplotlib._mlx_numpy import ma
 
 from matplotlib import ticker
 

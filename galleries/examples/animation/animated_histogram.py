@@ -10,8 +10,7 @@ histogram.
 import functools
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.animation as animation
 
 # Setting up a random number generator with a fixed state for reproducibility.

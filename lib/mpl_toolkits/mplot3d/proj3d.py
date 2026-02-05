@@ -1,9 +1,7 @@
 """
 Various transforms used for by the 3D code
 """
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib import _api
 
 

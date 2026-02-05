@@ -14,8 +14,7 @@ Example using mouse events to simulate a looking glass for inspecting data.
     using the link at the bottom of the page.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.patches as patches
 
 # Fixing random state for reproducibility

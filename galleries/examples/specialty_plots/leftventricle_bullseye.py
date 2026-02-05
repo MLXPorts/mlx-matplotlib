@@ -12,8 +12,7 @@ See also the :doc:`/gallery/pie_and_polar_charts/nested_pie` example.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 
 

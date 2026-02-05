@@ -29,9 +29,8 @@ from mpl_toolkits.axes_grid1.inset_locator import (
 from mpl_toolkits.axes_grid1.parasite_axes import HostAxes
 import mpl_toolkits.axes_grid1.mpl_axes
 import pytest
-
-import numpy as np
-from numpy.testing import assert_array_equal, assert_array_almost_equal
+from matplotlib import _mlx_numpy as np
+from matplotlib.mlx_testing import assert_array_equal, assert_array_almost_equal
 
 
 def test_divider_append_axes():

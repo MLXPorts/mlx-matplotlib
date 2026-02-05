@@ -1,5 +1,4 @@
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import pytest
 
 from matplotlib.testing.decorators import check_figures_equal

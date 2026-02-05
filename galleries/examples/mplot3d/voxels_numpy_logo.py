@@ -7,9 +7,7 @@ Demonstrates using `.Axes3D.voxels` with uneven coordinates.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-
+from matplotlib import _mlx_numpy as np
 def explode(data):
     size = np.array(data.shape)*2
     data_e = np.zeros(size - 1, dtype=data.dtype)

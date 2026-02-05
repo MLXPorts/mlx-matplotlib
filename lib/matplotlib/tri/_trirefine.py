@@ -1,9 +1,7 @@
 """
 Mesh refinement for triangular grids.
 """
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib import _api
 from matplotlib.tri._triangulation import Triangulation
 import matplotlib.tri._triinterpolate

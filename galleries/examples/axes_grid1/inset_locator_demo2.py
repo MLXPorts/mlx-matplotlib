@@ -13,8 +13,7 @@ A version of the second subplot, not using the toolkit, is available in
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib import cbook
 from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
 from mpl_toolkits.axes_grid1.inset_locator import mark_inset, zoomed_inset_axes

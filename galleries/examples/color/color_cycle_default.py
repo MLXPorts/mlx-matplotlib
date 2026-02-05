@@ -7,8 +7,7 @@ Display the colors from the default prop_cycle, which is obtained from the
 :ref:`rc parameters<customizing>`.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.colors import TABLEAU_COLORS, same_color
 
 

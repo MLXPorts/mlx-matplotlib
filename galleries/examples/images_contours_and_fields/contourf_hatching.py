@@ -6,8 +6,7 @@ Contourf hatching
 Demo filled contour plots with hatched patterns.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # invent some numbers, turning the x and y arrays into simple
 # 2d arrays, which make combining them together easier.
 x = np.linspace(-3, 5, 150).reshape(1, -1)

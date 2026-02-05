@@ -39,8 +39,7 @@ import json
 import xml.etree.ElementTree as ET
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 plt.rcParams['svg.fonttype'] = 'none'
 
 # Apparently, this `register_namespace` method is necessary to avoid garbling

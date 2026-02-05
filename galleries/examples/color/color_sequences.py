@@ -12,8 +12,7 @@ User-defined sequences can be added via `.ColorSequenceRegistry.register`.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 
 

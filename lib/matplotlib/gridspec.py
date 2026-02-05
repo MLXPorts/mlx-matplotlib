@@ -13,9 +13,7 @@ methods like `~.pyplot.subplots`, `~.pyplot.subplot_mosaic` and
 import copy
 import logging
 from numbers import Integral
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib import _api, _pylab_helpers, _tight_layout
 from matplotlib._api import UNSET as _UNSET

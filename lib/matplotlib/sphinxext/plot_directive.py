@@ -103,8 +103,7 @@ plot_html_show_source_link
 plot_pre_code
     Code that should be executed before each plot. If None (the default),
     it will default to a string containing::
-
-        import numpy as np
+from matplotlib import _mlx_numpy as np
         from matplotlib import pyplot as plt
 
 plot_basedir
@@ -576,7 +575,7 @@ def _run_code(code, code_path, ns=None, function_name=None):
                 ns = {}
             if not ns:
                 if setup.config.plot_pre_code is None:
-                    exec('import numpy as np\n'
+                    exec('from matplotlib import _mlx_numpy as np\n'
                          'from matplotlib import pyplot as plt\n', ns)
                 else:
                     exec(str(setup.config.plot_pre_code), ns)

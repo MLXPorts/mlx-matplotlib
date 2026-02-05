@@ -10,8 +10,7 @@ See `matplotlib.scale` for a full list of built-in scales, and
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 x = np.arange(400)
 y = np.linspace(0.002, 1, 400)
 

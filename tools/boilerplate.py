@@ -31,7 +31,7 @@ import subprocess
 
 
 # This line imports the installed copy of matplotlib, and not the local copy.
-import numpy as np
+from matplotlib import _mlx_numpy as np
 from matplotlib import _api, mlab
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure

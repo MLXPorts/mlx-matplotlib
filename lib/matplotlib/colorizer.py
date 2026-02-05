@@ -20,9 +20,8 @@ normalization and a colormap.
 """
 
 import functools
-
-import numpy as np
-from numpy import ma
+from matplotlib import _mlx_numpy as np
+from matplotlib._mlx_numpy import ma
 
 from matplotlib import _api, colors, cbook, scale, artist
 import matplotlib as mpl

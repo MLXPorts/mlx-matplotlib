@@ -19,8 +19,7 @@ want a legend item to show up for each one. If you simply plot the lines
 and call ``ax.legend()``, you will get the following:
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # sphinx_gallery_thumbnail_number = 2
 import matplotlib as mpl
 from matplotlib import cycler

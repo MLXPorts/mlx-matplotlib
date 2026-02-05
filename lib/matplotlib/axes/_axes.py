@@ -5,8 +5,7 @@ import math
 from numbers import Integral, Number, Real
 
 import re
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 import matplotlib.category  # Register category unit converter as side effect.
 import matplotlib.cbook as cbook
@@ -5394,8 +5393,7 @@ or pandas.DataFrame
             following illustration.
 
             .. plot::
-
-               import numpy
+from matplotlib import _mlx_numpy as numpy
                import matplotlib.pyplot as plt
 
                np.random.seed(19680801)

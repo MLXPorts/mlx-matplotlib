@@ -7,8 +7,7 @@ Plot a 2D field of wind barbs.
 See `~matplotlib.axes.Axes.barbs`.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 plt.style.use('_mpl-gallery-nogrid')
 
 # make data:

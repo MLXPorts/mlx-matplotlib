@@ -10,8 +10,7 @@ To color each box of a box plot individually:
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 np.random.seed(19680801)
 fruit_weights = [
     np.random.normal(130, 10, size=100),

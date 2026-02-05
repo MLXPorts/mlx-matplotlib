@@ -10,9 +10,7 @@ probabilities in a Markov model) using arrow length, width, or alpha (opacity).
 import itertools
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-
+from matplotlib import _mlx_numpy as np
 def make_arrow_graph(ax, data, size=4, display='length', shape='right',
                      max_arrow_width=0.03, arrow_sep=0.02, alpha=0.5,
                      normalize_data=False, ec=None, labelcolor=None,

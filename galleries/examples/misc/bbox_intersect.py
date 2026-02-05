@@ -9,8 +9,7 @@ are left as blue lines. This example showcases the `.intersects_bbox` function.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.path import Path
 from matplotlib.transforms import Bbox
 

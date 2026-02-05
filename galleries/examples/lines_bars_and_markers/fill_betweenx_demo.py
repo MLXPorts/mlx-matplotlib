@@ -7,8 +7,7 @@ Using `~.Axes.fill_betweenx` to color along the horizontal direction between
 two curves.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 y = np.arange(0.0, 2, 0.01)
 x1 = np.sin(2 * np.pi * y)
 x2 = 1.2 * np.sin(4 * np.pi * y)

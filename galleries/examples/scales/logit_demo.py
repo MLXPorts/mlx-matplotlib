@@ -23,8 +23,7 @@ regression, classification models, and cumulative distribution functions.
 import math
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 xmax = 10
 x = np.linspace(-xmax, xmax, 10000)
 cdf_norm = [math.erf(w / np.sqrt(2)) / 2 + 1 / 2 for w in x]

@@ -7,8 +7,7 @@ Plot three datasets with a single call to `~matplotlib.pyplot.plot`.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # evenly sampled time at 200ms intervals
 t = np.arange(0., 5., 0.2)
 

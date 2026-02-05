@@ -23,9 +23,7 @@ The cell (0, 0) is positioned at the top left.
 
 Thanks to John Gill for providing the class and table.
 """
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from . import _api, _docstring
 from .artist import Artist, allow_rasterization
 from .patches import Rectangle

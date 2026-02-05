@@ -5,9 +5,8 @@ import re
 
 from typing import Any, Literal, overload
 from .typing import ColorType
-
-import numpy as np
-from numpy.typing import ArrayLike
+import matplotlib._mlx_numpy as np
+from matplotlib._mlx_typing import ArrayLike
 
 # Explicitly export colors dictionaries which are imported in the impl
 BASE_COLORS: dict[str, ColorType]

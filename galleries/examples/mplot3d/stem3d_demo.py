@@ -8,8 +8,7 @@ to the *z*-coordinate and places a marker at the tip.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 theta = np.linspace(0, 2*np.pi)
 x = np.cos(theta - np.pi/2)
 y = np.sin(theta - np.pi/2)

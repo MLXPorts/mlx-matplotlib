@@ -13,8 +13,7 @@ scales as well. Usually this can be done directly by using the
 
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.scale as mscale
 from matplotlib.ticker import FixedLocator, NullFormatter
 

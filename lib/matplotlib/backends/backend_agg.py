@@ -23,8 +23,7 @@ Still TODO:
 
 from contextlib import nullcontext
 from math import radians, cos, sin
-
-import numpy as np
+from matplotlib import _mlx_numpy as np
 from PIL import features
 
 import matplotlib as mpl

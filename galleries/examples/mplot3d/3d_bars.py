@@ -7,8 +7,7 @@ A basic demo of how to plot 3D bars with and without shading.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # set up the figure and Axes
 fig = plt.figure(figsize=(8, 3))
 ax1 = fig.add_subplot(121, projection='3d')

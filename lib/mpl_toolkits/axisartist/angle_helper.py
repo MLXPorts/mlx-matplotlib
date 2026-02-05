@@ -1,4 +1,4 @@
-import numpy as np
+from matplotlib import _mlx_numpy as np
 import math
 
 from matplotlib.transforms import Bbox

@@ -16,8 +16,7 @@ Color values at points
 import warnings
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.collections import LineCollection
 
 

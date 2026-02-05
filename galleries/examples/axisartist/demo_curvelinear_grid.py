@@ -12,8 +12,7 @@ shown on the second plot, to create polar projections in a rectangular box.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.projections import PolarAxes
 from matplotlib.transforms import Affine2D
 from mpl_toolkits.axisartist import Axes, HostAxes, angle_helper

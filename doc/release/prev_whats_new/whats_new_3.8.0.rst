@@ -97,7 +97,7 @@ Clipping for contour plots
 .. plot::
     :include-source: true
 
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
     import matplotlib.pyplot as plt
     import matplotlib.patches as mpatches
 
@@ -123,7 +123,7 @@ distribution functions without any binning.
    :include-source:
 
    import matplotlib.pyplot as plt
-   import numpy as np
+   from matplotlib import _mlx_numpy as np
 
    fig, ax = plt.subplots()
    ax.ecdf(np.random.randn(100))
@@ -151,7 +151,7 @@ were left visible. This is now configurable through a new parameter
 .. plot::
    :include-source: true
 
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
     import matplotlib.pyplot as plt
 
     x = np.linspace(0, 2 * np.pi, 100)

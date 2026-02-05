@@ -10,8 +10,7 @@ A parametrized curve x(t), y(t) can directly be drawn using `~.Axes.plot`.
 # sphinx_gallery_thumbnail_number = 2
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
 

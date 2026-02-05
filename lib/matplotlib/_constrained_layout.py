@@ -48,9 +48,7 @@ for more discussion of the algorithm with examples.
 """
 
 import logging
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib import _api, artist as martist
 import matplotlib.transforms as mtransforms
 import matplotlib._layoutgrid as mlayoutgrid

@@ -1,7 +1,6 @@
 import difflib
 import inspect
-
-import numpy as np
+from matplotlib import _mlx_numpy as np
 import sys
 from pathlib import Path
 

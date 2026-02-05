@@ -5,8 +5,7 @@ Fill spiral
 
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 theta = np.arange(0, 8*np.pi, 0.1)
 a = 1
 b = .2

@@ -1,9 +1,9 @@
 #include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
 #include <pybind11/stl.h>
 #include "mplutils.h"
 #include "py_converters.h"
 #include "_backend_agg.h"
+#include "py_buffer.h"
 
 namespace py = pybind11;
 using namespace pybind11::literals;
@@ -57,7 +57,7 @@ PyRendererAgg_draw_path(RendererAgg *self,
 
 static void
 PyRendererAgg_draw_text_image(RendererAgg *self,
-                              py::array_t<agg::int8u, py::array::c_style | py::array::forcecast> image_obj,
+                              const py::buffer &image_obj,
                               std::variant<double, int> vx,
                               std::variant<double, int> vy,
                               double angle,
@@ -90,7 +90,7 @@ PyRendererAgg_draw_text_image(RendererAgg *self,
     }
 
     // TODO: This really shouldn't be mutable, but Agg's renderer buffers aren't const.
-    auto image = image_obj.mutable_unchecked<2>();
+    mpl::BufferView<agg::int8u, 2> image(image_obj, true);
 
     self->draw_text_image(gc, image, x, y, angle);
 }
@@ -119,10 +119,10 @@ PyRendererAgg_draw_image(RendererAgg *self,
                          GCAgg &gc,
                          double x,
                          double y,
-                         py::array_t<agg::int8u, py::array::c_style | py::array::forcecast> image_obj)
+                         const py::buffer &image_obj)
 {
     // TODO: This really shouldn't be mutable, but Agg's renderer buffers aren't const.
-    auto image = image_obj.mutable_unchecked<3>();
+    mpl::BufferView<agg::int8u, 3> image(image_obj, true);
 
     x = mpl_round(x);
     y = mpl_round(y);
@@ -136,26 +136,37 @@ PyRendererAgg_draw_path_collection(RendererAgg *self,
                                    GCAgg &gc,
                                    agg::trans_affine master_transform,
                                    mpl::PathGenerator paths,
-                                   py::array_t<double> transforms_obj,
-                                   py::array_t<double> offsets_obj,
+                                   const py::buffer &transforms_obj,
+                                   const py::buffer &offsets_obj,
                                    agg::trans_affine offset_trans,
-                                   py::array_t<double> facecolors_obj,
-                                   py::array_t<double> edgecolors_obj,
-                                   py::array_t<double> linewidths_obj,
+                                   const py::buffer &facecolors_obj,
+                                   const py::buffer &edgecolors_obj,
+                                   const py::buffer &linewidths_obj,
                                    DashesVector dashes,
-                                   py::array_t<uint8_t> antialiaseds_obj,
+                                   const py::buffer &antialiaseds_obj,
                                    py::object Py_UNUSED(ignored_obj),
                                    // offset position is no longer used
                                    py::object Py_UNUSED(offset_position_obj),
-                                   py::array_t<double> hatchcolors_obj)
+                                   py::object hatchcolors_obj)
 {
     auto transforms = convert_transforms(transforms_obj);
     auto offsets = convert_points(offsets_obj);
     auto facecolors = convert_colors(facecolors_obj);
     auto edgecolors = convert_colors(edgecolors_obj);
-    auto hatchcolors = convert_colors(hatchcolors_obj);
-    auto linewidths = linewidths_obj.unchecked<1>();
-    auto antialiaseds = antialiaseds_obj.unchecked<1>();
+    py::buffer hatch_buf;
+    if (hatchcolors_obj.is_none()) {
+        static double dummy = 0.0;
+        hatch_buf = py::memoryview::from_buffer(
+            &dummy,
+            {static_cast<py::ssize_t>(0), static_cast<py::ssize_t>(4)},
+            {static_cast<py::ssize_t>(4 * sizeof(double)), static_cast<py::ssize_t>(sizeof(double))},
+            true);
+    } else {
+        hatch_buf = py::reinterpret_borrow<py::buffer>(hatchcolors_obj);
+    }
+    auto hatchcolors = convert_colors(hatch_buf);
+    mpl::BufferView<double, 1> linewidths(linewidths_obj);
+    mpl::BufferView<uint8_t, 1> antialiaseds(antialiaseds_obj);
 
     self->draw_path_collection(gc,
             master_transform,
@@ -177,14 +188,14 @@ PyRendererAgg_draw_quad_mesh(RendererAgg *self,
                              agg::trans_affine master_transform,
                              unsigned int mesh_width,
                              unsigned int mesh_height,
-                             py::array_t<double, py::array::c_style | py::array::forcecast> coordinates_obj,
-                             py::array_t<double> offsets_obj,
+                             const py::buffer &coordinates_obj,
+                             const py::buffer &offsets_obj,
                              agg::trans_affine offset_trans,
-                             py::array_t<double> facecolors_obj,
+                             const py::buffer &facecolors_obj,
                              bool antialiased,
-                             py::array_t<double> edgecolors_obj)
+                             const py::buffer &edgecolors_obj)
 {
-    auto coordinates = coordinates_obj.mutable_unchecked<3>();
+    mpl::BufferView<double, 3> coordinates(coordinates_obj, true);
     auto offsets = convert_points(offsets_obj);
     auto facecolors = convert_colors(facecolors_obj);
     auto edgecolors = convert_colors(edgecolors_obj);
@@ -204,12 +215,12 @@ PyRendererAgg_draw_quad_mesh(RendererAgg *self,
 static void
 PyRendererAgg_draw_gouraud_triangles(RendererAgg *self,
                                      GCAgg &gc,
-                                     py::array_t<double> points_obj,
-                                     py::array_t<double> colors_obj,
+                                     const py::buffer &points_obj,
+                                     const py::buffer &colors_obj,
                                      agg::trans_affine trans)
 {
-    auto points = points_obj.unchecked<3>();
-    auto colors = colors_obj.unchecked<3>();
+    mpl::BufferView<double, 3> points(points_obj);
+    mpl::BufferView<double, 3> colors(colors_obj);
 
     self->draw_gouraud_triangles(gc, points, colors, trans);
 }
@@ -233,7 +244,7 @@ PYBIND11_MODULE(_backend_agg, m, py::mod_gil_not_used())
              "gc"_a, "master_transform"_a, "paths"_a, "transforms"_a, "offsets"_a,
              "offset_trans"_a, "facecolors"_a, "edgecolors"_a, "linewidths"_a,
              "dashes"_a, "antialiaseds"_a, "ignored"_a, "offset_position"_a,
-             py::kw_only(), "hatchcolors"_a = py::array_t<double>().reshape({0, 4}))
+             py::kw_only(), "hatchcolors"_a = py::none())
         .def("draw_quad_mesh", &PyRendererAgg_draw_quad_mesh,
              "gc"_a, "master_transform"_a, "mesh_width"_a, "mesh_height"_a,
              "coordinates"_a, "offsets"_a, "offset_trans"_a, "facecolors"_a,

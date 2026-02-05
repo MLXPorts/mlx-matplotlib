@@ -8,9 +8,7 @@ from numbers import Number, Real
 import operator
 import re
 import warnings
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from . import _api, cbook
 from .path import Path

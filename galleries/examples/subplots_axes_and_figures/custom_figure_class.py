@@ -14,8 +14,7 @@ constructor.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.figure import Figure
 
 

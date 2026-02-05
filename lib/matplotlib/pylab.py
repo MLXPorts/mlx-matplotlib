@@ -43,14 +43,9 @@ from matplotlib.mlab import (
 
 from matplotlib import cbook, mlab, pyplot as plt
 from matplotlib.pyplot import *
-
-from numpy import *
-from numpy.fft import *
-from numpy.random import *
-from numpy.linalg import *
-
-import numpy as np
-import numpy.ma as ma
+from matplotlib._mlx_numpy import *
+from matplotlib import _mlx_numpy as np
+ma = np.ma
 
 # don't let numpy's datetime hide stdlib
 import datetime

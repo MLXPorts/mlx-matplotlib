@@ -10,8 +10,7 @@ formatters.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # While these appear unused directly, they are used from eval'd strings.
 from matplotlib.dates import (FR, MO, MONTHLY, SA, SU, TH, TU, WE, AutoDateFormatter,
                               AutoDateLocator, ConciseDateFormatter, DateFormatter,

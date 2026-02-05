@@ -14,8 +14,7 @@ where you'd normally pass in your data.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 np.random.seed(19680801)
 
 data = {'a': np.arange(50),

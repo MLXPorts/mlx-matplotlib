@@ -47,8 +47,7 @@ can clearly be seen:
 
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.cbook as cbook
 import matplotlib.colors as colors
 

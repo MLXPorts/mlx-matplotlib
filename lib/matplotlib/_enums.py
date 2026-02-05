@@ -76,7 +76,7 @@ class JoinStyle(str, Enum):
     @staticmethod
     def demo():
         """Demonstrate how each JoinStyle looks for various join angles."""
-        import numpy as np
+from matplotlib import _mlx_numpy as np
         import matplotlib.pyplot as plt
 
         def plot_angle(ax, x, y, angle, style):

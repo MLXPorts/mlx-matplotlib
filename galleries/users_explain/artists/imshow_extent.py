@@ -27,8 +27,7 @@ by the axes limits.
    directly continue with the discussion of the results.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.gridspec import GridSpec
 
 

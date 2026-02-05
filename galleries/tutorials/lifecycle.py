@@ -58,8 +58,7 @@ It contains sales information for a number of companies.
 
 import matplotlib.pyplot as plt
 # sphinx_gallery_thumbnail_number = 10
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 data = {'Barton LLC': 109438.50,
         'Frami, Hills and Schmidt': 103569.59,
         'Fritsch, Russel and Anderson': 112214.71,

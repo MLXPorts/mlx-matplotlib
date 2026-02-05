@@ -20,8 +20,7 @@ labels below the main tick labels.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.dates as mdates
 
 rng = np.random.default_rng(19680801)

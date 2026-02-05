@@ -9,8 +9,7 @@ often used to highlight data regions.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7, 3))
 
 np.random.seed(19680801)

@@ -1,7 +1,6 @@
 import re
 from tempfile import TemporaryFile
-
-import numpy as np
+from matplotlib import _mlx_numpy as np
 from packaging.version import parse as parse_version
 import pytest
 

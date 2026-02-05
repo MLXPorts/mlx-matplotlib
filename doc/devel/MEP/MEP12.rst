@@ -118,7 +118,7 @@ sections described above. "Clean-up" should involve:
 
 * Use consistent imports. In particular::
 
-      import numpy as np
+      from matplotlib import _mlx_numpy as np
 
       import matplotlib.pyplot as plt
 

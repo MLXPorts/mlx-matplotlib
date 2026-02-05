@@ -6,7 +6,7 @@ from matplotlib.transforms import Transform
 
 from typing import TypeVar
 
-from numpy.typing import ArrayLike
+from matplotlib._mlx_typing import ArrayLike
 
 def update_from_first_child(tgt: Artist, src: Artist) -> None: ...
 

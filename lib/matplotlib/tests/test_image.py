@@ -6,9 +6,8 @@ from pathlib import Path
 import platform
 import sys
 import urllib.request
-
-import numpy as np
-from numpy.testing import assert_allclose, assert_array_equal
+from matplotlib import _mlx_numpy as np
+from matplotlib.mlx_testing import assert_allclose, assert_array_equal
 from PIL import Image
 
 import matplotlib as mpl

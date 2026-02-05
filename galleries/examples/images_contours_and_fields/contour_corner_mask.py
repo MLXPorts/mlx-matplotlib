@@ -9,8 +9,7 @@ Illustrate the difference between ``corner_mask=False`` and
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # Data to plot.
 x, y = np.meshgrid(np.arange(7), np.arange(10))
 z = np.sin(0.5 * x) * np.cos(0.52 * y)

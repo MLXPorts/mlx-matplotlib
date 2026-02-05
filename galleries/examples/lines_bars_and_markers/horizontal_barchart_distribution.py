@@ -14,8 +14,7 @@ already drawn bars via the parameter ``left``.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 category_names = ['Strongly disagree', 'Disagree',
                   'Neither agree nor disagree', 'Agree', 'Strongly agree']
 results = {

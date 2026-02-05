@@ -8,8 +8,7 @@ tries to replicate the styles from FiveThirtyEight.com.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 plt.style.use('fivethirtyeight')
 
 x = np.linspace(0, 10)

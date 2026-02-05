@@ -7,9 +7,7 @@ import logging
 import math
 from numbers import Real
 import weakref
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from . import _api, artist, cbook, _docstring
 from .artist import Artist

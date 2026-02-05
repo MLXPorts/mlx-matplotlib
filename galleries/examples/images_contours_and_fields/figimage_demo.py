@@ -7,8 +7,7 @@ This illustrates placing images directly in the figure, with no Axes objects.
 
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 fig = plt.figure()
 Z = np.arange(10000).reshape((100, 100))
 Z[:, 50:] = 1

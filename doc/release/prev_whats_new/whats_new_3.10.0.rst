@@ -49,7 +49,7 @@ colour maps version 8.0.1 (DOI: https://doi.org/10.5281/zenodo.1243862).
     :include-source: true
     :alt: Example figures using "imshow" with dark-mode diverging colormaps on positive and negative data. First panel: "berlin" (blue to red with a black center); second panel: "managua" (orange to cyan with a dark purple center); third panel: "vanimo" (pink to green with a black center).
 
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
     import matplotlib.pyplot as plt
 
     vals = np.linspace(-5, 5, 100)
@@ -109,7 +109,7 @@ when the input *x* has multiple datasets.
     :alt: Four charts, each displaying stacked histograms of three Poisson distributions. Each chart differentiates the histograms using various parameters: top left uses different linewidths, top right uses different hatches, bottom left uses different edgecolors, and bottom right uses different facecolors. Each histogram on the left side also has a different edgecolor.
 
     import matplotlib.pyplot as plt
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
     np.random.seed(19680801)
 
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(9, 9))
@@ -243,7 +243,7 @@ to change the orientation of the plot. This replaces the deprecated
     :alt: Example of creating 4 horizontal boxplots.
 
     import matplotlib.pyplot as plt
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
 
     fig, ax = plt.subplots()
     np.random.seed(19680801)
@@ -266,7 +266,7 @@ to change the orientation of the plot. This will replace the deprecated
     :alt: Example of creating 4 horizontal violinplots.
 
     import matplotlib.pyplot as plt
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
 
     fig, ax = plt.subplots()
     np.random.seed(19680801)
@@ -286,7 +286,7 @@ the ``set_data`` method, enabling e.g. resampling
 
 .. code-block:: python
 
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
     from matplotlib import pyplot as plt
 
     t = np.linspace(0, 1)
@@ -313,7 +313,7 @@ In the following example the norm and cmap are changed on multiple plots simulta
 
     import matplotlib.pyplot as plt
     import matplotlib as mpl
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
 
     x = np.linspace(-2, 2, 50)[np.newaxis, :]
     y = np.linspace(-2, 2, 50)[:, np.newaxis]
@@ -341,7 +341,7 @@ a single data-to-color pipeline:
 
     import matplotlib.pyplot as plt
     import matplotlib as mpl
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
 
     x = np.linspace(-2, 2, 50)[np.newaxis, :]
     y = np.linspace(-2, 2, 50)[:, np.newaxis]
@@ -411,7 +411,7 @@ To try out one of the various mouse rotation styles:
     import matplotlib as mpl
     mpl.rcParams['axes3d.mouserotationstyle'] = 'trackball'  # 'azel', 'trackball', 'sphere', or 'arcball'
 
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
     import matplotlib.pyplot as plt
     from matplotlib import cm
 
@@ -453,7 +453,7 @@ view box is a limitation of the current renderer.
     :alt: Example of default behavior (blue) and axlim_clip=True (orange)
 
     import matplotlib.pyplot as plt
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
 
     fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
     x = np.arange(-5, 5, 0.5)

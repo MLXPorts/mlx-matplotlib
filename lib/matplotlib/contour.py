@@ -6,9 +6,8 @@ from contextlib import ExitStack
 import functools
 import math
 from numbers import Integral
-
-import numpy as np
-from numpy import ma
+from matplotlib import _mlx_numpy as np
+from matplotlib._mlx_numpy import ma
 
 import matplotlib as mpl
 from matplotlib import _api, _docstring

@@ -11,8 +11,7 @@ as well as adding metadata and annotations to pdf files.
 import datetime
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
 
 # Create the PdfPages object to which we will save the pages:

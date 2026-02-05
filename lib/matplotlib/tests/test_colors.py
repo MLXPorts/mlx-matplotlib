@@ -3,14 +3,14 @@ import itertools
 import unittest.mock
 
 from io import BytesIO
-import numpy as np
+from matplotlib import _mlx_numpy as np
 from PIL import Image
 import pytest
 import base64
 import platform
 
-from numpy.lib import recfunctions as rfn
-from numpy.testing import assert_array_equal, assert_array_almost_equal
+from matplotlib import mlx_recfunctions as rfn
+from matplotlib.mlx_testing import assert_array_equal, assert_array_almost_equal
 
 from matplotlib import cbook, cm
 import matplotlib

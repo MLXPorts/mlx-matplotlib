@@ -5,8 +5,7 @@ Patheffect Demo
 
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib import patheffects
 
 fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(8, 3))

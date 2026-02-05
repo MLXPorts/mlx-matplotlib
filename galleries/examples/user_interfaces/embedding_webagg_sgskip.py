@@ -27,9 +27,7 @@ import tornado.httpserver
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib.backends.backend_webagg import (FigureManagerWebAgg,
                                                 new_figure_manager_given_figure)

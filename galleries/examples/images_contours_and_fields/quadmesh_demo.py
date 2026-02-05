@@ -8,9 +8,7 @@ a faster generalization of `~.axes.Axes.pcolor`, but with some restrictions.
 
 This demo illustrates a bug in quadmesh with masked data.
 """
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib import pyplot as plt
 
 n = 12

@@ -23,8 +23,7 @@ But this approach is not suitable if the planes intersect.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.colors import Normalize
 
 

@@ -1,8 +1,7 @@
 # This is a private module implemented in C++
 from typing import final
-
-import numpy as np
-import numpy.typing as npt
+import matplotlib._mlx_numpy as np
+import matplotlib._mlx_typing as npt
 
 @final
 class TrapezoidMapTriFinder:

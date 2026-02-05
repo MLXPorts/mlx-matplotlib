@@ -30,8 +30,7 @@ can sometimes go outside the figure area, and thus get clipped.
 # sphinx_gallery_thumbnail_number = 7
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 plt.rcParams['savefig.facecolor'] = "0.8"
 
 

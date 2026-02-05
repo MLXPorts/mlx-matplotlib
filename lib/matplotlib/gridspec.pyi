@@ -1,8 +1,7 @@
 from typing import Any, Literal, overload
 
-from numpy.typing import ArrayLike
-import numpy as np
-
+from matplotlib._mlx_typing import ArrayLike
+import matplotlib._mlx_numpy as np
 from matplotlib._api import _Unset
 from matplotlib.axes import Axes
 from matplotlib.backend_bases import RendererBase

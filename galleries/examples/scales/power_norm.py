@@ -8,7 +8,7 @@ Various normalization on a multivariate normal distribution.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
+from matplotlib import _mlx_numpy as np
 from numpy.random import multivariate_normal
 
 import matplotlib.colors as mcolors

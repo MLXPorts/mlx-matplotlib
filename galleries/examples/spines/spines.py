@@ -16,8 +16,7 @@ via the container ``ax.spines``.
 
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 x = np.linspace(0, 2 * np.pi, 100)
 y = 2 * np.sin(x)
 

@@ -89,9 +89,7 @@ plt.show()
 # converted to numpy arrays internally.  The example below illustrates
 # plotting several lines with different format styles in one function call
 # using arrays.
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # evenly sampled time at 200ms intervals
 t = np.arange(0., 5., 0.2)
 

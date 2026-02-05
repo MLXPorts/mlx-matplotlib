@@ -55,8 +55,7 @@ For now, let's get on with the implicit approach:
 from PIL import Image
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # %%
 # .. _importing_data:
 #

@@ -12,8 +12,7 @@ We can also add figure-level x- and y-labels using `.Figure.supxlabel` and
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.cbook import get_sample_data
 
 x = np.linspace(0.0, 5.0, 501)

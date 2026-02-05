@@ -9,8 +9,7 @@ and nodes using the `~.path.Path`, `~.patches.PathPatch` and
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.patches import Circle, PathPatch
 from matplotlib.path import Path
 from matplotlib.transforms import Affine2D

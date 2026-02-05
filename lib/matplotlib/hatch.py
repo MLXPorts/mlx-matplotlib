@@ -16,9 +16,7 @@ The following hatching patterns are available, shown here at level 2 density:
         'O' makes large unfilled circles, '.' makes small filled circles, and '*' makes
         a star with 5 points
 """
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib import _api
 from matplotlib.path import Path
 

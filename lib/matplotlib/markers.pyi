@@ -3,7 +3,7 @@ from typing import Literal
 from .path import Path
 from .transforms import Affine2D, Transform
 
-from numpy.typing import ArrayLike
+from matplotlib._mlx_typing import ArrayLike
 from .typing import CapStyleType, FillStyleType, JoinStyleType
 
 TICKLEFT: int

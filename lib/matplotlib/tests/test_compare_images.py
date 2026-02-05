@@ -1,7 +1,6 @@
 from pathlib import Path
 import shutil
-
-import numpy as np
+from matplotlib import _mlx_numpy as np
 import pytest
 from pytest import approx
 

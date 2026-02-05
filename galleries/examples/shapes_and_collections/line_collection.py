@@ -7,8 +7,7 @@ Matplotlib can efficiently draw multiple lines at once using a `~.LineCollection
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.collections import LineCollection
 
 colors = ["indigo", "blue", "green", "yellow", "orange", "red"]
