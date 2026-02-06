@@ -733,7 +733,12 @@ PyFT2Font_set_text(PyFT2Font *self, std::u32string_view text, double angle = 0.0
     self->x->set_text(text, angle, static_cast<FT_Int32>(flags), xys);
 
     auto n = static_cast<py::ssize_t>(xys.size() / 2);
-    py::bytearray ba(n * 2 * static_cast<py::ssize_t>(sizeof(double)));
+    auto ba_size = n * 2 * static_cast<py::ssize_t>(sizeof(double));
+    py::bytearray ba = py::reinterpret_steal<py::bytearray>(
+        PyByteArray_FromStringAndSize(nullptr, ba_size));
+    if (!ba) {
+        throw py::error_already_set();
+    }
     if (!xys.empty()) {
         std::memcpy(PyByteArray_AsString(ba.ptr()), xys.data(), xys.size() * sizeof(double));
     }
@@ -1412,14 +1417,24 @@ PyFT2Font_get_path(PyFT2Font *self)
 
     auto length = static_cast<py::ssize_t>(codes.size());
 
-    py::bytearray v_ba(length * 2 * static_cast<py::ssize_t>(sizeof(double)));
+    auto v_ba_size = length * 2 * static_cast<py::ssize_t>(sizeof(double));
+    py::bytearray v_ba = py::reinterpret_steal<py::bytearray>(
+        PyByteArray_FromStringAndSize(nullptr, v_ba_size));
+    if (!v_ba) {
+        throw py::error_already_set();
+    }
     if (!vertices.empty()) {
         std::memcpy(PyByteArray_AsString(v_ba.ptr()), vertices.data(), vertices.size() * sizeof(double));
     }
     py::object v_mv = py::module_::import("builtins").attr("memoryview")(v_ba);
     v_mv = v_mv.attr("cast")("d", py::make_tuple(length, 2));
 
-    py::bytearray c_ba(length * static_cast<py::ssize_t>(sizeof(unsigned char)));
+    auto c_ba_size = length * static_cast<py::ssize_t>(sizeof(unsigned char));
+    py::bytearray c_ba = py::reinterpret_steal<py::bytearray>(
+        PyByteArray_FromStringAndSize(nullptr, c_ba_size));
+    if (!c_ba) {
+        throw py::error_already_set();
+    }
     if (!codes.empty()) {
         std::memcpy(PyByteArray_AsString(c_ba.ptr()), codes.data(), codes.size() * sizeof(unsigned char));
     }
@@ -1772,7 +1787,9 @@ PYBIND11_MODULE(ft2font, m, py::mod_gil_not_used())
           "The original filename for this object.")
 
         .def_buffer([](PyFT2Font &self) -> py::buffer_info {
-            return self.x->get_image().request();
+            py::object image = self.x->get_image();
+            py::buffer buf = py::reinterpret_borrow<py::buffer>(image);
+            return buf.request();
         });
 
     m.attr("__freetype_version__") = version_string;

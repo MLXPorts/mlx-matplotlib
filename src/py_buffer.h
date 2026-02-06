@@ -58,6 +58,28 @@ public:
     [[nodiscard]] T *data() { return reinterpret_cast<T *>(base_); }
     [[nodiscard]] const T *data() const { return reinterpret_cast<const T *>(base_); }
 
+    // Pointer access at an index (strided). This is mainly used by the C++ Agg code
+    // which expects a mutable pointer to the underlying image buffer.
+    [[nodiscard]] T *mutable_data(py::ssize_t i)
+    {
+        static_assert(ND == 1, "mutable_data(i) only available for 1D views");
+        return reinterpret_cast<T *>(base_ + i * strides_[0] * sizeof(T));
+    }
+
+    [[nodiscard]] T *mutable_data(py::ssize_t i, py::ssize_t j)
+    {
+        static_assert(ND == 2, "mutable_data(i, j) only available for 2D views");
+        auto offset = (i * strides_[0] + j * strides_[1]) * sizeof(T);
+        return reinterpret_cast<T *>(base_ + offset);
+    }
+
+    [[nodiscard]] T *mutable_data(py::ssize_t i, py::ssize_t j, py::ssize_t k)
+    {
+        static_assert(ND == 3, "mutable_data(i, j, k) only available for 3D views");
+        auto offset = (i * strides_[0] + j * strides_[1] + k * strides_[2]) * sizeof(T);
+        return reinterpret_cast<T *>(base_ + offset);
+    }
+
     // Element access (strided). Only valid for the matching dimensionality.
     T &operator()(py::ssize_t i)
     {
@@ -69,6 +91,19 @@ public:
     {
         static_assert(ND == 1, "operator()(i) only available for 1D views");
         return *reinterpret_cast<const T *>(base_ + i * strides_[0] * sizeof(T));
+    }
+
+    // Some of the legacy Matplotlib C++ code uses result[i] instead of result(i).
+    T &operator[](py::ssize_t i)
+    {
+        static_assert(ND == 1, "operator[](i) only available for 1D views");
+        return (*this)(i);
+    }
+
+    const T &operator[](py::ssize_t i) const
+    {
+        static_assert(ND == 1, "operator[](i) only available for 1D views");
+        return (*this)(i);
     }
 
     T &operator()(py::ssize_t i, py::ssize_t j)

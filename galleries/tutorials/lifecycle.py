@@ -58,7 +58,7 @@ It contains sales information for a number of companies.
 
 import matplotlib.pyplot as plt
 # sphinx_gallery_thumbnail_number = 10
-from matplotlib import _mlx_numpy as np
+import mlx.core as mx
 data = {'Barton LLC': 109438.50,
         'Frami, Hills and Schmidt': 103569.59,
         'Fritsch, Russel and Anderson': 112214.71,
@@ -71,7 +71,7 @@ data = {'Barton LLC': 109438.50,
         'Will LLC': 104437.60}
 group_data = list(data.values())
 group_names = list(data.keys())
-group_mean = np.mean(group_data)
+group_mean = mx.mean(mx.array(group_data))
 
 # %%
 # Getting started

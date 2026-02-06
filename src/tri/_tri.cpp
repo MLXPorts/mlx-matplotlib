@@ -56,6 +56,16 @@ py::memoryview make_view_from_bytearray(const py::bytearray &ba, const char *for
     return mv.attr("cast")(format, shape).cast<py::memoryview>();
 }
 
+py::bytearray bytearray_of_size(py::ssize_t nbytes)
+{
+    py::bytearray ba = py::reinterpret_steal<py::bytearray>(
+        PyByteArray_FromStringAndSize(nullptr, nbytes));
+    if (!ba) {
+        throw py::error_already_set();
+    }
+    return ba;
+}
+
 }  // namespace
 
 
@@ -507,7 +517,8 @@ py::memoryview Triangulation::calculate_plane_coefficients(const py::buffer& z)
         }
     }
 
-    py::bytearray ba(static_cast<py::ssize_t>(planes_vec.size() * sizeof(double)));
+    py::bytearray ba = bytearray_of_size(
+        static_cast<py::ssize_t>(planes_vec.size() * sizeof(double)));
     std::memcpy(PyByteArray_AsString(ba.ptr()), planes_vec.data(), planes_vec.size() * sizeof(double));
     return make_view_from_bytearray(ba, "d", py::make_tuple(static_cast<py::ssize_t>(get_ntri()), 3));
 }
@@ -568,7 +579,8 @@ py::memoryview Triangulation::get_edges()
         calculate_edges();
     }
 
-    py::bytearray ba(static_cast<py::ssize_t>(_edges.size() * sizeof(std::int32_t)));
+    py::bytearray ba = bytearray_of_size(
+        static_cast<py::ssize_t>(_edges.size() * sizeof(std::int32_t)));
     if (!_edges.empty()) {
         std::memcpy(PyByteArray_AsString(ba.ptr()), _edges.data(), _edges.size() * sizeof(std::int32_t));
     }
@@ -602,7 +614,8 @@ py::memoryview Triangulation::get_neighbors()
         calculate_neighbors();
     }
 
-    py::bytearray ba(static_cast<py::ssize_t>(_neighbors.size() * sizeof(std::int32_t)));
+    py::bytearray ba = bytearray_of_size(
+        static_cast<py::ssize_t>(_neighbors.size() * sizeof(std::int32_t)));
     if (!_neighbors.empty()) {
         std::memcpy(PyByteArray_AsString(ba.ptr()), _neighbors.data(), _neighbors.size() * sizeof(std::int32_t));
     }
@@ -759,10 +772,12 @@ py::tuple TriContourGenerator::contour_line_to_segs_and_kinds(const Contour& con
         const ContourLine& contour_line = contour[i];
         py::ssize_t npoints = static_cast<py::ssize_t>(contour_line.size());
 
-        py::bytearray segs_ba(static_cast<py::ssize_t>(npoints * 2 * sizeof(double)));
+        py::bytearray segs_ba = bytearray_of_size(
+            static_cast<py::ssize_t>(npoints * 2 * sizeof(double)));
         auto *segs_ptr = reinterpret_cast<double *>(PyByteArray_AsString(segs_ba.ptr()));
 
-        py::bytearray codes_ba(static_cast<py::ssize_t>(npoints * sizeof(unsigned char)));
+        py::bytearray codes_ba = bytearray_of_size(
+            static_cast<py::ssize_t>(npoints * sizeof(unsigned char)));
         auto *codes_ptr = reinterpret_cast<unsigned char *>(PyByteArray_AsString(codes_ba.ptr()));
 
         for (const auto & point : contour_line) {
@@ -808,10 +823,12 @@ py::tuple TriContourGenerator::contour_to_segs_and_kinds(const Contour& contour)
         n_points += static_cast<py::ssize_t>(line.size());
     }
 
-    py::bytearray segs_ba(static_cast<py::ssize_t>(n_points * 2 * sizeof(double)));
+    py::bytearray segs_ba = bytearray_of_size(
+        static_cast<py::ssize_t>(n_points * 2 * sizeof(double)));
     auto *segs_ptr = reinterpret_cast<double *>(PyByteArray_AsString(segs_ba.ptr()));
 
-    py::bytearray codes_ba(static_cast<py::ssize_t>(n_points * sizeof(unsigned char)));
+    py::bytearray codes_ba = bytearray_of_size(
+        static_cast<py::ssize_t>(n_points * sizeof(unsigned char)));
     auto *codes_ptr = reinterpret_cast<unsigned char *>(PyByteArray_AsString(codes_ba.ptr()));
 
     for (const auto & line : contour) {
@@ -1411,7 +1428,8 @@ py::memoryview TrapezoidMapTriFinder::find_many(const py::buffer& x,
             static_cast<std::int32_t>(find_one(XY(x_view(i), y_view(i))));
     }
 
-    py::bytearray ba(static_cast<py::ssize_t>(tri_indices_vec.size() * sizeof(std::int32_t)));
+    py::bytearray ba = bytearray_of_size(
+        static_cast<py::ssize_t>(tri_indices_vec.size() * sizeof(std::int32_t)));
     if (!tri_indices_vec.empty()) {
         std::memcpy(PyByteArray_AsString(ba.ptr()),
                     tri_indices_vec.data(),

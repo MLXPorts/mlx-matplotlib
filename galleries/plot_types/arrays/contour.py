@@ -7,13 +7,13 @@ Plot contour lines.
 See `~matplotlib.axes.Axes.contour`.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+import mlx.core as mx
 plt.style.use('_mpl-gallery-nogrid')
 
 # make data
-X, Y = np.meshgrid(np.linspace(-3, 3, 256), np.linspace(-3, 3, 256))
-Z = (1 - X/2 + X**5 + Y**3) * np.exp(-X**2 - Y**2)
-levels = np.linspace(np.min(Z), np.max(Z), 7)
+X, Y = mx.meshgrid(mx.linspace(-3, 3, 256), mx.linspace(-3, 3, 256))
+Z = (1 - X/2 + X**5 + Y**3) * mx.exp(-X**2 - Y**2)
+levels = mx.linspace(mx.min(Z), mx.max(Z), 7)
 
 # plot
 fig, ax = plt.subplots()

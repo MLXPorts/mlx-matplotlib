@@ -63,7 +63,12 @@ std::vector<double> get_transform_mesh(const py::object &transform,
     }
 
     // Wrap as a shaped memoryview (N, 2) of doubles so Python code can consume it.
-    py::bytearray ba(static_cast<py::ssize_t>(input_mesh.size() * sizeof(double)));
+    py::bytearray ba = py::reinterpret_steal<py::bytearray>(
+        PyByteArray_FromStringAndSize(nullptr,
+                                      static_cast<py::ssize_t>(input_mesh.size() * sizeof(double))));
+    if (!ba) {
+        throw py::error_already_set();
+    }
     std::memcpy(PyByteArray_AsString(ba.ptr()), input_mesh.data(), input_mesh.size() * sizeof(double));
     py::object mv = py::module_::import("builtins").attr("memoryview")(ba);
     mv = mv.attr("cast")("d", py::make_tuple(n, 2));
@@ -265,7 +270,11 @@ static py::tuple calculate_rms_and_diff(const py::buffer &expected_image,
     double rms = std::sqrt(sum_sq / static_cast<double>(height * width * depth));
 
     // Return diff as a shaped memoryview so callers can wrap it into an MLX array.
-    py::bytearray ba(static_cast<py::ssize_t>(diff.size()));
+    py::bytearray ba = py::reinterpret_steal<py::bytearray>(
+        PyByteArray_FromStringAndSize(nullptr, static_cast<py::ssize_t>(diff.size())));
+    if (!ba) {
+        throw py::error_already_set();
+    }
     std::memcpy(PyByteArray_AsString(ba.ptr()), diff.data(), diff.size());
     py::object mv = py::module_::import("builtins").attr("memoryview")(ba);
     mv = mv.attr("cast")("B", py::make_tuple(height, width, depth));
@@ -291,21 +300,21 @@ PYBIND11_MODULE(_image, m)
           "actual"_a);
 
     // Export interpolation enum values.
-    m.attr("NEAREST") = py::int_(NEAREST);
-    m.attr("BILINEAR") = py::int_(BILINEAR);
-    m.attr("BICUBIC") = py::int_(BICUBIC);
-    m.attr("SPLINE16") = py::int_(SPLINE16);
-    m.attr("SPLINE36") = py::int_(SPLINE36);
-    m.attr("HANNING") = py::int_(HANNING);
-    m.attr("HAMMING") = py::int_(HAMMING);
-    m.attr("HERMITE") = py::int_(HERMITE);
-    m.attr("KAISER") = py::int_(KAISER);
-    m.attr("QUADRIC") = py::int_(QUADRIC);
-    m.attr("CATROM") = py::int_(CATROM);
-    m.attr("GAUSSIAN") = py::int_(GAUSSIAN);
-    m.attr("BESSEL") = py::int_(BESSEL);
-    m.attr("MITCHELL") = py::int_(MITCHELL);
-    m.attr("SINC") = py::int_(SINC);
-    m.attr("LANCZOS") = py::int_(LANCZOS);
-    m.attr("BLACKMAN") = py::int_(BLACKMAN);
+    m.attr("NEAREST") = py::int_(static_cast<int>(NEAREST));
+    m.attr("BILINEAR") = py::int_(static_cast<int>(BILINEAR));
+    m.attr("BICUBIC") = py::int_(static_cast<int>(BICUBIC));
+    m.attr("SPLINE16") = py::int_(static_cast<int>(SPLINE16));
+    m.attr("SPLINE36") = py::int_(static_cast<int>(SPLINE36));
+    m.attr("HANNING") = py::int_(static_cast<int>(HANNING));
+    m.attr("HAMMING") = py::int_(static_cast<int>(HAMMING));
+    m.attr("HERMITE") = py::int_(static_cast<int>(HERMITE));
+    m.attr("KAISER") = py::int_(static_cast<int>(KAISER));
+    m.attr("QUADRIC") = py::int_(static_cast<int>(QUADRIC));
+    m.attr("CATROM") = py::int_(static_cast<int>(CATROM));
+    m.attr("GAUSSIAN") = py::int_(static_cast<int>(GAUSSIAN));
+    m.attr("BESSEL") = py::int_(static_cast<int>(BESSEL));
+    m.attr("MITCHELL") = py::int_(static_cast<int>(MITCHELL));
+    m.attr("SINC") = py::int_(static_cast<int>(SINC));
+    m.attr("LANCZOS") = py::int_(static_cast<int>(LANCZOS));
+    m.attr("BLACKMAN") = py::int_(static_cast<int>(BLACKMAN));
 }
