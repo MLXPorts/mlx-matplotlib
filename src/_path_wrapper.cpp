@@ -23,7 +23,11 @@ static py::memoryview make_memoryview(const void *data,
                                       const char *format,
                                       py::tuple shape)
 {
-    py::bytearray ba(nbytes);
+    py::bytearray ba = py::reinterpret_steal<py::bytearray>(
+        PyByteArray_FromStringAndSize(nullptr, nbytes));
+    if (!ba) {
+        throw py::error_already_set();
+    }
     if (nbytes > 0 && data != nullptr) {
         std::memcpy(PyByteArray_AsString(ba.ptr()), data, static_cast<size_t>(nbytes));
     }
@@ -71,7 +75,8 @@ static py::memoryview Py_points_in_path(const py::buffer &points_obj,
         py::ssize_t ndim() const { return 1; }
         py::ssize_t shape(py::ssize_t i) const { return i == 0 ? n : 0; }
         py::ssize_t size() const { return n; }
-        uint8_t &operator()(py::ssize_t i) { return ptr[i]; }
+        uint8_t &operator[](py::ssize_t i) { return ptr[i]; }
+        const uint8_t &operator[](py::ssize_t i) const { return ptr[i]; }
     } results_view{results.data(), n};
 
     points_in_path(points, r, path, trans, results_view);

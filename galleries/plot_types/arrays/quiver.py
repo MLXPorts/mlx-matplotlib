@@ -7,13 +7,13 @@ Plot a 2D field of arrows.
 See `~matplotlib.axes.Axes.quiver`.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+import mlx.core as mx
 plt.style.use('_mpl-gallery-nogrid')
 
 # make data
-x = np.linspace(-4, 4, 6)
-y = np.linspace(-4, 4, 6)
-X, Y = np.meshgrid(x, y)
+x = mx.linspace(-4, 4, 6)
+y = mx.linspace(-4, 4, 6)
+X, Y = mx.meshgrid(x, y)
 U = X + Y
 V = Y - X
 

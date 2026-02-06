@@ -8,26 +8,51 @@ from __future__ import annotations
 import math
 import itertools
 import operator
+import builtins as _builtins
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any, Iterable, Iterator, List, Sequence, Tuple
 
 import mlx.core as mx
 
-# Public dtypes
-bool_ = mx.bool_
-float16 = mx.float16
-float32 = mx.float32
-float64 = mx.float64
-bfloat16 = mx.bfloat16
-int8 = mx.int8
-int16 = mx.int16
-int32 = mx.int32
-int64 = mx.int64
-uint8 = mx.uint8
-uint16 = mx.uint16
-uint32 = mx.uint32
-uint64 = mx.uint64
+@dataclass(frozen=True)
+class DType:
+    """A small callable dtype wrapper (NumPy-style) around an MLX dtype.
+
+    In NumPy, dtypes like ``np.uint8`` are both valid ``dtype=`` values and
+    callable scalar/array constructors (e.g. ``np.uint8(0)``). MLX exposes dtype
+    objects but they are not callable, so we wrap them here.
+    """
+
+    mx_dtype: Any
+    name: str
+
+    def __call__(self, x: Any) -> Any:
+        arr = mx.array(x, dtype=self.mx_dtype)
+        return arr.item() if arr.size == 1 else arr
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"np.{self.name}"
+
+
+def _unwrap_dtype(dtype: Any | None) -> Any | None:
+    return dtype.mx_dtype if isinstance(dtype, DType) else dtype
+
+
+# Public dtypes (NumPy-like: usable as dtype= and callable constructors).
+bool_ = DType(mx.bool_, "bool_")
+float16 = DType(mx.float16, "float16")
+float32 = DType(mx.float32, "float32")
+float64 = DType(mx.float64, "float64")
+bfloat16 = DType(mx.bfloat16, "bfloat16")
+int8 = DType(mx.int8, "int8")
+int16 = DType(mx.int16, "int16")
+int32 = DType(mx.int32, "int32")
+int64 = DType(mx.int64, "int64")
+uint8 = DType(mx.uint8, "uint8")
+uint16 = DType(mx.uint16, "uint16")
+uint32 = DType(mx.uint32, "uint32")
+uint64 = DType(mx.uint64, "uint64")
 
 # NumPy-like scalars/constants
 pi = math.pi
@@ -38,10 +63,14 @@ newaxis = None
 
 ndarray = mx.array
 
+_py_min = _builtins.min
+_py_max = _builtins.max
+
 
 def _to_mx(x: Any, dtype: Any | None = None) -> mx.array:
     if isinstance(x, mx.array) and dtype is None:
         return x
+    dtype = _unwrap_dtype(dtype)
     if dtype is None:
         return mx.array(x)
     return mx.array(x, dtype=dtype)
@@ -102,20 +131,20 @@ def atleast_3d(*arys: Any) -> Tuple[mx.array, ...] | mx.array:
 
 
 def zeros(shape: Any, dtype: Any | None = None) -> mx.array:
-    return mx.zeros(shape, dtype=dtype)
+    return mx.zeros(shape, dtype=_unwrap_dtype(dtype))
 
 
 def ones(shape: Any, dtype: Any | None = None) -> mx.array:
-    return mx.ones(shape, dtype=dtype)
+    return mx.ones(shape, dtype=_unwrap_dtype(dtype))
 
 
 def full(shape: Any, fill_value: Any, dtype: Any | None = None) -> mx.array:
-    return mx.full(shape, fill_value, dtype=dtype)
+    return mx.full(shape, fill_value, dtype=_unwrap_dtype(dtype))
 
 
 def empty(shape: Any, dtype: Any | None = None) -> mx.array:
     # MLX does not expose uninitialized arrays; use zeros as a safe fallback.
-    return mx.zeros(shape, dtype=dtype)
+    return mx.zeros(shape, dtype=_unwrap_dtype(dtype))
 
 
 def zeros_like(a: Any, dtype: Any | None = None) -> mx.array:
@@ -192,9 +221,15 @@ def concatenate(arrays: Sequence[Any], axis: int = 0) -> mx.array:
 
 
 def column_stack(tup: Sequence[Any]) -> mx.array:
-    arrays = [atleast_2d(a) for a in tup]
-    arrays = [a.T if a.ndim == 1 else a for a in arrays]
-    return concatenate(arrays, axis=1)
+    arrays: List[mx.array] = []
+    for a in tup:
+        arr = _to_mx(a)
+        if arr.ndim == 1:
+            arr = mx.reshape(arr, (arr.shape[0], 1))
+        elif arr.ndim != 2:
+            raise ValueError("column_stack expects 1D or 2D arrays")
+        arrays.append(arr)
+    return mx.concatenate(arrays, axis=1)
 
 
 def row_stack(tup: Sequence[Any]) -> mx.array:
@@ -561,7 +596,7 @@ def diag(v: Any, k: int = 0) -> mx.array:
             out[idx - k, idx] = arr
         return out
     if arr.ndim == 2:
-        idx = mx.arange(min(arr.shape))
+        idx = mx.arange(_py_min(arr.shape))
         if k >= 0:
             return arr[idx, idx + k]
         return arr[idx - k, idx]
@@ -571,8 +606,8 @@ def diag(v: Any, k: int = 0) -> mx.array:
 def eye(n: int, m: int | None = None, k: int = 0, dtype: Any | None = None) -> mx.array:
     if m is None:
         m = n
-    out = mx.zeros((n, m), dtype=dtype or float32)
-    idx = mx.arange(min(n, m))
+    out = mx.zeros((n, m), dtype=_unwrap_dtype(dtype) or float32.mx_dtype)
+    idx = mx.arange(_py_min(n, m))
     if k >= 0:
         out[idx, idx + k] = 1
     else:
@@ -640,13 +675,13 @@ def vectorize(pyfunc):
 
 def fromiter(iterable_obj: Iterable[Any], dtype: Any | None = None, count: int | None = None) -> mx.array:
     items = list(iterable_obj) if count is None else list(itertools.islice(iterable_obj, count))
-    return mx.array(items, dtype=dtype)
+    return mx.array(items, dtype=_unwrap_dtype(dtype))
 
 
 def frombuffer(buffer_obj: bytes, dtype: Any | None = None) -> mx.array:
     # Interpret buffer as uint8 unless dtype provided
     data = list(buffer_obj)
-    return mx.array(data, dtype=dtype or uint8)
+    return mx.array(data, dtype=_unwrap_dtype(dtype) or uint8.mx_dtype)
 
 
 def fromfile(*args: Any, **kwargs: Any) -> mx.array:
@@ -664,8 +699,8 @@ def loadtxt(*args: Any, **kwargs: Any) -> mx.array:
 def histogram(a: Any, bins: int = 10, range: Tuple[float, float] | None = None):
     arr = _to_mx(a).tolist()
     if range is None:
-        min_v = min(arr)
-        max_v = max(arr)
+        min_v = _py_min(arr)
+        max_v = _py_max(arr)
     else:
         min_v, max_v = range
     bin_edges = [min_v + (max_v - min_v) * i / bins for i in range(bins + 1)]
@@ -673,7 +708,7 @@ def histogram(a: Any, bins: int = 10, range: Tuple[float, float] | None = None):
     for v in arr:
         if v < min_v or v > max_v:
             continue
-        idx = min(int((v - min_v) / (max_v - min_v) * bins), bins - 1)
+        idx = _py_min(int((v - min_v) / (max_v - min_v) * bins), bins - 1)
         counts[idx] += 1
     return mx.array(counts), mx.array(bin_edges)
 
@@ -682,8 +717,8 @@ def histogram2d(x: Any, y: Any, bins: int = 10, range: Tuple[Tuple[float, float]
     x_list = _to_mx(x).tolist()
     y_list = _to_mx(y).tolist()
     if range is None:
-        x_min, x_max = min(x_list), max(x_list)
-        y_min, y_max = min(y_list), max(y_list)
+        x_min, x_max = _py_min(x_list), _py_max(x_list)
+        y_min, y_max = _py_min(y_list), _py_max(y_list)
     else:
         (x_min, x_max), (y_min, y_max) = range
     x_edges = [x_min + (x_max - x_min) * i / bins for i in range(bins + 1)]
@@ -692,17 +727,17 @@ def histogram2d(x: Any, y: Any, bins: int = 10, range: Tuple[Tuple[float, float]
     for xv, yv in zip(x_list, y_list):
         if xv < x_min or xv > x_max or yv < y_min or yv > y_max:
             continue
-        xi = min(int((xv - x_min) / (x_max - x_min) * bins), bins - 1)
-        yi = min(int((yv - y_min) / (y_max - y_min) * bins), bins - 1)
+        xi = _py_min(int((xv - x_min) / (x_max - x_min) * bins), bins - 1)
+        yi = _py_min(int((yv - y_min) / (y_max - y_min) * bins), bins - 1)
         counts[xi][yi] += 1
     return mx.array(counts), mx.array(x_edges), mx.array(y_edges)
 
 
 def bincount(x: Any, minlength: int | None = None):
     xs = [int(v) for v in _flatten(_to_mx(x).tolist())]
-    size = max(xs) + 1 if xs else 0
+    size = _py_max(xs) + 1 if xs else 0
     if minlength is not None:
-        size = max(size, minlength)
+        size = _py_max(size, minlength)
     counts = [0] * size
     for v in xs:
         counts[v] += 1

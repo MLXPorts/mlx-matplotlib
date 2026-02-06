@@ -217,7 +217,12 @@ static py::tuple delaunay_impl(py::ssize_t npoints,
     }
 
     auto make_view = [&](const std::vector<std::int32_t> &v) {
-        py::bytearray ba(static_cast<py::ssize_t>(v.size() * sizeof(std::int32_t)));
+        auto ba_size = static_cast<py::ssize_t>(v.size() * sizeof(std::int32_t));
+        py::bytearray ba = py::reinterpret_steal<py::bytearray>(
+            PyByteArray_FromStringAndSize(nullptr, ba_size));
+        if (!ba) {
+            throw py::error_already_set();
+        }
         std::memcpy(PyByteArray_AsString(ba.ptr()), v.data(), v.size() * sizeof(std::int32_t));
         py::object mv = py::module_::import("builtins").attr("memoryview")(ba);
         return mv.attr("cast")("i", py::make_tuple(static_cast<py::ssize_t>(ntri), 3)).cast<py::memoryview>();

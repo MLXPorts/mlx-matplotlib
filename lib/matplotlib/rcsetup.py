@@ -19,7 +19,7 @@ from numbers import Real
 import operator
 import os
 import re
-from matplotlib import _mlx_numpy as np
+from . import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib import _api, cbook
 from matplotlib.backends import backend_registry
