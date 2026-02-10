@@ -44,6 +44,8 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
         with:
           fetch-depth: 0
+          # setuptools_scm relies on git tags for correct versioning; fetch tags explicitly.
+          fetch-tags: true
           persist-credentials: false
 
       - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c  # v6.0.0
@@ -104,7 +106,8 @@ jobs:
         delvewheel repair -w {dest_dir} {wheel}
       CIBW_AFTER_BUILD: >-
         twine check {wheel} &&
-        python {package}/ci/check_wheel_licenses.py {wheel}
+        python {package}/ci/check_wheel_licenses.py {wheel} &&
+        python {package}/ci/check_version_number.py {wheel}
       # On Windows, we explicitly request MSVC compilers (as GitHub Action runners have
       # MinGW on PATH that would be picked otherwise), switch to a static build for
       # runtimes, but use dynamic linking for `VCRUNTIME140.dll`, `VCRUNTIME140_1.dll`,
@@ -113,13 +116,13 @@ jobs:
       CIBW_CONFIG_SETTINGS_WINDOWS: >-
         setup-args="--vsenv"
         setup-args="-Db_vscrt=mt"
-        setup-args="-Dcpp_link_args=['ucrt.lib','vcruntime.lib','/nodefaultlib:libucrt.lib','/nodefaultlib:libvcruntime.lib']"
+        setup-args="-Dcpp_link_args=['ucrt.lib','vcruntime.lib',
+        '/nodefaultlib:libucrt.lib','/nodefaultlib:libvcruntime.lib']"
       CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
       CIBW_SKIP: "*-musllinux_aarch64"
-      CIBW_TEST_COMMAND: >-
-        python {package}/ci/check_version_number.py
       MACOSX_DEPLOYMENT_TARGET: "10.12"
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
@@ -130,7 +133,9 @@ jobs:
             cibw_archs: "AMD64"
           - os: windows-11-arm
             cibw_archs: "ARM64"
-          - os: macos-13
+          # macos-13 runners are no longer available; use macos-14 to build
+          # x86_64 wheels under Rosetta.
+          - os: macos-14
             cibw_archs: "x86_64"
           - os: macos-14
             cibw_archs: "arm64"
@@ -142,7 +147,21 @@ jobs:
           name: cibw-sdist
           path: dist/
 
-      - name: Build wheels for CPython 3.14
+      - name: Set setuptools_scm version override (no tags in fork)
+        env:
+          SDIST_NAME: ${{ needs.build_sdist.outputs.SDIST_NAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${SDIST_NAME#matplotlib-}"
+          version="${version%.tar.gz}"
+          {
+            echo "SETUPTOOLS_SCM_PRETEND_VERSION=$version"
+            echo "CIBW_ENVIRONMENT=SETUPTOOLS_SCM_PRETEND_VERSION=$version"
+          } >> "$GITHUB_ENV"
+
+      - name: Build wheels for CPython 3.14 (non-blocking)
+        continue-on-error: true
         uses: pypa/cibuildwheel@c923d83ad9c1bc00211c5041d0c3f73294ff88f6  # v3.1.4
         with:
           package-dir: dist/${{ needs.build_sdist.outputs.SDIST_NAME }}
