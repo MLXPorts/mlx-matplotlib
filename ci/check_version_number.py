@@ -58,7 +58,9 @@ def main(argv: list[str]) -> int:
     try:
         ver = dist_version("matplotlib")
     except PackageNotFoundError as e:
-        raise SystemExit("matplotlib is not installed (pass a wheel path instead)") from e
+        raise SystemExit(
+            "matplotlib is not installed (pass a wheel path instead)"
+        ) from e
 
     print(f"Installed version {ver}")
     _fail_if_unknown(ver)
