@@ -388,7 +388,8 @@ jobs:
               -instr-profile default.profdata > info.lcov
           fi
       - name: Upload code coverage
-        if: ${{ !cancelled() && github.event_name != 'schedule' }}
+        # Many forks/branches don't have CODECOV_TOKEN set; tokenless uploads may be rejected.
+        if: ${{ !cancelled() && github.event_name != 'schedule' && secrets.CODECOV_TOKEN != '' }}
         uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7  # v5.5.1
         with:
           name: "${{ matrix.python-version }} ${{ matrix.os }} ${{ matrix.name-suffix }}"

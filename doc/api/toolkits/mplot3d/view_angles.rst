@@ -131,7 +131,7 @@ Henriksen et al. [Henriksen2002]_ provide an overview. In summary:
 
 You can try out one of the various mouse rotation styles using:
 
-.. code::
+.. code-block:: python
 
     import matplotlib as mpl
     mpl.rcParams['axes3d.mouserotationstyle'] = 'trackball'  # 'azel', 'trackball', 'sphere', or 'arcball'
