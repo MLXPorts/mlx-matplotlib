@@ -69,6 +69,9 @@ repos:
     rev: v6.2.4
     hooks:
       - id: rstcheck
+        # INFO-level docutils messages (e.g. duplicate external target names) are noisy and
+        # can cause unrelated PRs to fail. Only fail CI on WARNING+.
+        args: ["--report-level", "WARNING"]
         additional_dependencies:
           - sphinx>=1.8.1
           - tomli
