@@ -151,7 +151,7 @@ jobs:
         env:
           SDIST_NAME: ${{ needs.build_sdist.outputs.SDIST_NAME }}
         run: >-
-          python -c "import os; sdist=os.environ['SDIST_NAME']; version=sdist.removeprefix('matplotlib-').removesuffix('.tar.gz'); open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8').write(f'SETUPTOOLS_SCM_PRETEND_VERSION={version}\\n')"
+          python -c "import os; sdist=os.environ['SDIST_NAME']; version=sdist.removeprefix('matplotlib-').removesuffix('.tar.gz'); env_path=os.environ['GITHUB_ENV']; lines=[f'SETUPTOOLS_SCM_PRETEND_VERSION={version}\\n', f'CIBW_ENVIRONMENT=SETUPTOOLS_SCM_PRETEND_VERSION={version}\\n']; open(env_path, 'a', encoding='utf-8').writelines(lines)"
 
       - name: Build wheels for CPython 3.14 (non-blocking)
         continue-on-error: true
