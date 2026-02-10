@@ -26,6 +26,7 @@ jobs:
     steps:
       # https://github.com/actions/download-artifact/issues/3#issuecomment-1017141067
       - name: Download wheel artifacts from last build on 'main'
+        id: download_wheels
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -50,6 +51,14 @@ jobs:
               # and get ID of latest build of wheels.
               sort_by(.databaseId) | reverse | .[0].databaseId' runs.json
           )
+
+          if [[ -z "${RUN_ID}" || "${RUN_ID}" == "null" ]]; then
+            echo "No successful ${WORKFLOW_NAME} run found on branch '${BRANCH}'. Skipping nightly upload."
+            echo "skip_upload=true" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          echo "skip_upload=false" >> "${GITHUB_OUTPUT}"
           gh run --repo "${PROJECT_REPO}" view "${RUN_ID}"
           gh run --repo "${PROJECT_REPO}" \
              download "${RUN_ID}" --pattern "${ARTIFACT_PATTERN}"
@@ -59,6 +68,7 @@ jobs:
           ls -l dist/
 
       - name: Upload wheels to Anaconda Cloud as nightlies
+        if: steps.download_wheels.outputs.skip_upload != 'true'
         uses: scientific-python/upload-nightly-action@b36e8c0c10dbcfd2e05bf95f17ef8c14fd708dbf  # 0.6.2
         with:
           artifacts_path: dist
