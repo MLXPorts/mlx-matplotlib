@@ -106,7 +106,8 @@ jobs:
         delvewheel repair -w {dest_dir} {wheel}
       CIBW_AFTER_BUILD: >-
         twine check {wheel} &&
-        python {package}/ci/check_wheel_licenses.py {wheel}
+        python {package}/ci/check_wheel_licenses.py {wheel} &&
+        python {package}/ci/check_version_number.py {wheel}
       # On Windows, we explicitly request MSVC compilers (as GitHub Action runners have
       # MinGW on PATH that would be picked otherwise), switch to a static build for
       # runtimes, but use dynamic linking for `VCRUNTIME140.dll`, `VCRUNTIME140_1.dll`,
@@ -115,11 +116,10 @@ jobs:
       CIBW_CONFIG_SETTINGS_WINDOWS: >-
         setup-args="--vsenv"
         setup-args="-Db_vscrt=mt"
-        setup-args="-Dcpp_link_args=['ucrt.lib','vcruntime.lib','/nodefaultlib:libucrt.lib','/nodefaultlib:libvcruntime.lib']"
+        setup-args="-Dcpp_link_args=['ucrt.lib','vcruntime.lib',
+        '/nodefaultlib:libucrt.lib','/nodefaultlib:libvcruntime.lib']"
       CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
       CIBW_SKIP: "*-musllinux_aarch64"
-      CIBW_TEST_COMMAND: >-
-        python {package}/ci/check_version_number.py
       MACOSX_DEPLOYMENT_TARGET: "10.12"
     strategy:
       fail-fast: false
@@ -150,8 +150,15 @@ jobs:
       - name: Set setuptools_scm version override (no tags in fork)
         env:
           SDIST_NAME: ${{ needs.build_sdist.outputs.SDIST_NAME }}
-        run: >-
-          python -c "import os; sdist=os.environ['SDIST_NAME']; version=sdist.removeprefix('matplotlib-').removesuffix('.tar.gz'); env_path=os.environ['GITHUB_ENV']; lines=[f'SETUPTOOLS_SCM_PRETEND_VERSION={version}\\n', f'CIBW_ENVIRONMENT=SETUPTOOLS_SCM_PRETEND_VERSION={version}\\n']; open(env_path, 'a', encoding='utf-8').writelines(lines)"
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${SDIST_NAME#matplotlib-}"
+          version="${version%.tar.gz}"
+          {
+            echo "SETUPTOOLS_SCM_PRETEND_VERSION=$version"
+            echo "CIBW_ENVIRONMENT=SETUPTOOLS_SCM_PRETEND_VERSION=$version"
+          } >> "$GITHUB_ENV"
 
       - name: Build wheels for CPython 3.14 (non-blocking)
         continue-on-error: true
