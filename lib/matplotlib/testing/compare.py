@@ -487,7 +487,18 @@ def compare_images(expected, actual, tol, in_decorator=False):
     if rms <= tol:
         return None
 
-    Image.fromarray(abs_diff).save(diff_image, format="png")
+    if isinstance(abs_diff, memoryview):
+        shape = abs_diff.shape
+        if len(shape) == 2:
+            mode = "L"
+        elif shape[2] == 3:
+            mode = "RGB"
+        else:
+            mode = "RGBA"
+        Image.frombytes(mode, (shape[1], shape[0]), abs_diff.tobytes()).save(
+            diff_image, format="png")
+    else:
+        Image.fromarray(abs_diff).save(diff_image, format="png")
 
     results = dict(rms=rms, expected=str(expected),
                    actual=str(actual), diff=str(diff_image), tol=tol)

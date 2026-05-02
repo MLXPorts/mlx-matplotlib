@@ -75,6 +75,33 @@ jobs:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
 
+      - name: Reject direct NumPy imports
+        run: |
+          python - <<'PY'
+          import ast
+          import pathlib
+          import sys
+
+          bad = []
+          for root in (pathlib.Path("lib"), pathlib.Path("src")):
+              for path in root.rglob("*.py"):
+                  tree = ast.parse(path.read_text(), filename=str(path))
+                  for node in ast.walk(tree):
+                      if isinstance(node, ast.Import):
+                          for alias in node.names:
+                              if alias.name == "numpy" or alias.name.startswith("numpy."):
+                                  bad.append((path, node.lineno, f"import {alias.name}"))
+                      elif isinstance(node, ast.ImportFrom):
+                          module = node.module or ""
+                          if module == "numpy" or module.startswith("numpy."):
+                              bad.append((path, node.lineno, f"from {module} import ..."))
+
+          if bad:
+              for path, lineno, text in bad:
+                  print(f"{path}:{lineno}: direct NumPy import rejected: {text}")
+              sys.exit(1)
+          PY
+
       - name: Install OS dependencies
         run: |
           case "${{ runner.os }}" in

@@ -10,6 +10,7 @@ visualisation.
 """
 
 import copy
+from array import array as _array
 from functools import lru_cache
 from weakref import WeakValueDictionary
 from matplotlib import _mlx_numpy as np
@@ -17,6 +18,42 @@ import matplotlib as mpl
 from . import _api, _path
 from .cbook import _to_unmasked_float_array, simple_linear_interpolation
 from .bezier import BezierSegment
+
+
+def _path_values_to_memoryview(values):
+    if values is None:
+        return None
+    if isinstance(values, np.ndarray):
+        values = values.tolist()
+
+    def shape_of(value):
+        if not isinstance(value, (list, tuple)):
+            return ()
+        if len(value) == 0:
+            return (0,)
+        return (len(value),) + shape_of(value[0])
+
+    def flatten(value):
+        if isinstance(value, (list, tuple)):
+            for item in value:
+                yield from flatten(item)
+        else:
+            yield float(value)
+
+    shape = shape_of(values)
+    flat = list(flatten(values))
+    buf = _array("d", flat)
+    return memoryview(buf).cast("B").cast("d", shape=shape)
+
+
+def _path_transform_to_memoryview(transform):
+    if transform is None:
+        return None
+    if hasattr(transform, "get_matrix"):
+        transform = transform.get_matrix()
+    elif hasattr(transform, "get_affine"):
+        transform = transform.get_affine().get_matrix()
+    return _path_values_to_memoryview(transform)
 
 
 class Path:
@@ -496,7 +533,8 @@ class Path:
         Path.iter_segments : for details of the keyword arguments.
         """
         vertices, codes = _path.cleanup_path(
-            self, transform, remove_nans, clip, snap, stroke_width, simplify,
+            self, _path_transform_to_memoryview(transform), remove_nans,
+            _path_values_to_memoryview(clip), snap, stroke_width, simplify,
             curves, sketch)
         pth = Path._fast_from_codes_and_verts(vertices, codes, self)
         if not simplify:
@@ -564,7 +602,9 @@ class Path:
         if transform and not transform.is_affine:
             self = transform.transform_path(self)
             transform = None
-        return _path.point_in_path(point[0], point[1], radius, self, transform)
+        return _path.point_in_path(
+            point[0], point[1], radius, self,
+            _path_transform_to_memoryview(transform))
 
     def contains_points(self, points, transform=None, radius=0.0):
         """
@@ -607,7 +647,8 @@ class Path:
         """
         if transform is not None:
             transform = transform.frozen()
-        result = _path.points_in_path(points, radius, self, transform)
+        result = _path.points_in_path(
+            points, radius, self, _path_transform_to_memoryview(transform))
         return result.astype('bool')
 
     def contains_path(self, path, transform=None):
@@ -619,7 +660,8 @@ class Path:
         """
         if transform is not None:
             transform = transform.frozen()
-        return _path.path_in_path(self, None, path, transform)
+        return _path.path_in_path(
+            self, None, path, _path_transform_to_memoryview(transform))
 
     def get_extents(self, transform=None, **kwargs):
         """
@@ -1126,6 +1168,8 @@ def get_path_collection_extents(
     if len(offsets) == 0:
         raise ValueError("No offsets provided")
     extents, minpos = _path.get_path_collection_extents(
-        master_transform, paths, np.atleast_3d(transforms),
-        offsets, offset_transform)
+        _path_transform_to_memoryview(master_transform), paths,
+        _path_values_to_memoryview(np.atleast_3d(transforms)),
+        _path_values_to_memoryview(offsets),
+        _path_transform_to_memoryview(offset_transform))
     return Bbox.from_extents(*extents, minpos=minpos)

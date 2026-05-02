@@ -21,7 +21,7 @@ from matplotlib.colors import rgb2hex
 from matplotlib.dates import UTC
 from matplotlib.path import Path
 from matplotlib import _path
-from matplotlib.transforms import Affine2D, Affine2DBase
+from matplotlib.transforms import Affine2D, Affine2DBase, _as_float_memoryview
 
 
 _log = logging.getLogger(__name__)
@@ -669,6 +669,14 @@ class RendererSVG(RendererBase):
             clip = (0.0, 0.0, self.width, self.height)
         else:
             clip = None
+        if clip is not None:
+            clip = _as_float_memoryview(clip)
+        if transform is not None:
+            if hasattr(transform, "get_matrix"):
+                transform = transform.get_matrix()
+            elif hasattr(transform, "get_affine"):
+                transform = transform.get_affine().get_matrix()
+            transform = _as_float_memoryview(transform)
         return _path.convert_to_string(
             path, transform, clip, simplify, sketch, 6,
             [b'M', b'L', b'Q', b'C', b'z'], False).decode('ascii')
@@ -1026,7 +1034,7 @@ class RendererSVG(RendererBase):
                 char_id = self._adjust_char_id(char_id)
                 # x64 to go back to FreeType's internal (integral) units.
                 path_data = self._convert_path(
-                    Path(vertices * 64, codes), simplify=False)
+                    Path(np.asarray(vertices) * 64, codes), simplify=False)
                 writer.element(
                     'path', id=char_id, d=path_data,
                     transform=_generate_transform([('scale', (1 / 64,))]))
