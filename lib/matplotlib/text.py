@@ -1251,6 +1251,8 @@ class Text(Artist):
             The rotation angle in degrees in mathematically positive direction
             (counterclockwise). 'horizontal' equals 0, 'vertical' equals 90.
         """
+        if hasattr(s, "item") and getattr(s, "size", 0) == 1:
+            s = s.item()
         if isinstance(s, Real):
             self._rotation = float(s) % 360
         elif cbook._str_equal(s, 'horizontal') or s is None:

@@ -35,7 +35,7 @@ from matplotlib.figure import Figure
 from matplotlib.font_manager import get_font, fontManager as _fontManager
 from matplotlib._afm import AFM
 from matplotlib.ft2font import FT2Font, FaceFlags, Kerning, LoadFlags, StyleFlags
-from matplotlib.transforms import Affine2D, BboxBase
+from matplotlib.transforms import Affine2D, BboxBase, _as_float_memoryview
 from matplotlib.path import Path
 from matplotlib.dates import UTC
 from matplotlib import _path
@@ -351,6 +351,9 @@ def pdfRepr(obj):
     elif isinstance(obj, (list, tuple)):
         return _fill([b"[", *[pdfRepr(val) for val in obj], b"]"])
 
+    elif isinstance(obj, np.ndarray):
+        return pdfRepr(obj.tolist())
+
     # The null keyword.
     elif obj is None:
         return b'null'
@@ -621,6 +624,8 @@ def _get_pdf_charprocs(font_path, glyph_ids):
         # (this is different for negative x's).
         d1 = (np.array([g.horiAdvance, 0, *g.bbox]) * conv + .5).astype(int)
         v, c = font.get_path()
+        v = np.asarray(v)
+        c = np.asarray(c)
         v = (v * 64).astype(int)  # Back to TrueType's internal units (1/64's).
         # Backcompat with old ttconv code: control points between two quads are
         # omitted if they are exactly at the midpoint between the control of
@@ -1901,6 +1906,14 @@ end"""
 
     @staticmethod
     def pathOperations(path, transform, clip=None, simplify=None, sketch=None):
+        if clip is not None:
+            clip = _as_float_memoryview(clip)
+        if transform is not None:
+            if hasattr(transform, "get_matrix"):
+                transform = transform.get_matrix()
+            elif hasattr(transform, "get_affine"):
+                transform = transform.get_affine().get_matrix()
+            transform = _as_float_memoryview(transform)
         return [Verbatim(_path.convert_to_string(
             path, transform, clip, simplify, sketch,
             6,

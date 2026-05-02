@@ -416,11 +416,14 @@ def _to_rgba_no_colorcycle(c, alpha=None):
     if isinstance(c, np.ndarray):
         if c.ndim == 2 and c.shape[0] == 1:
             c = c.reshape(-1)
+        c = c.tolist()
     # tuple color.
     if not np.iterable(c):
         raise ValueError(f"Invalid RGBA argument: {orig_c!r}")
     if len(c) not in [3, 4]:
         raise ValueError("RGBA sequence should have length 3 or 4")
+    c = tuple(x.item() if hasattr(x, "item") and getattr(x, "size", 0) == 1
+              else x for x in c)
     if not all(isinstance(x, Real) for x in c):
         # Checks that don't work: `map(float, ...)`, `np.array(..., float)` and
         # `np.array(...).astype(float)` would all convert "0.5" to 0.5.

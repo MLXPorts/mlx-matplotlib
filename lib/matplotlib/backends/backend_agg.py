@@ -58,6 +58,32 @@ def _transform_to_memoryview(transform):
     return _as_float_memoryview(transform)
 
 
+def _plain_float_buffer(values, empty_fallback=None):
+    values = np.asarray(values)
+    shape = tuple(values.shape)
+    data = values.tolist()
+    if not shape:
+        shape = (1,)
+        data = [data]
+    if 0 in shape:
+        if empty_fallback is None:
+            empty_fallback = [0.0]
+        values = np.asarray(empty_fallback)
+        shape = tuple(values.shape)
+        data = values.tolist()
+
+    def flatten(value):
+        if isinstance(value, list):
+            for item in value:
+                yield from flatten(item)
+        else:
+            yield float(value)
+
+    buf = _array("d", list(flatten(data)))
+    return memoryview(buf).cast("B").cast("d", shape=shape)
+
+
+
 def get_hinting_flag():
     mapping = {
         'default': LoadFlags.DEFAULT,
@@ -105,8 +131,7 @@ class RendererAgg(RendererBase):
     def _update_methods(self):
         self.draw_gouraud_triangles = self._renderer.draw_gouraud_triangles
         self.draw_image = self._renderer.draw_image
-        self.draw_path_collection = self._renderer.draw_path_collection
-        self.draw_quad_mesh = self._renderer.draw_quad_mesh
+
         self.copy_from_bbox = self._renderer.copy_from_bbox
 
     def draw_markers(self, gc, marker_path, marker_trans, path, transform,
@@ -122,7 +147,9 @@ class RendererAgg(RendererBase):
         transform = _transform_to_memoryview(transform)
         path = _BufferPath(path)
         nmax = mpl.rcParams['agg.path.chunksize']  # here at least for testing
-        npts = path.vertices.shape[0]
+        vertices = np.asarray(path.vertices)
+        codes = None if path.codes is None else np.asarray(path.codes)
+        npts = vertices.shape[0]
 
         if (npts > nmax > 100 and path.should_simplify and
                 rgbFace is None and gc.get_hatch() is None):
@@ -133,10 +160,10 @@ class RendererAgg(RendererBase):
             i1[:-1] = i0[1:] - 1
             i1[-1] = npts
             for ii0, ii1 in zip(i0, i1):
-                v = path.vertices[ii0:ii1, :]
-                c = path.codes
+                v = vertices[int(ii0):int(ii1), :]
+                c = codes
                 if c is not None:
-                    c = c[ii0:ii1]
+                    c = c[int(ii0):int(ii1)]
                     c[0] = Path.MOVETO  # move to end of last chunk
                 p = Path(v, c)
                 p.simplify_threshold = path.simplify_threshold
@@ -154,6 +181,7 @@ class RendererAgg(RendererBase):
                         f"{path.simplify_threshold:.2f} on the input)."
                     )
                     raise OverflowError(msg) from None
+
         else:
             try:
                 self._renderer.draw_path(gc, path, transform, rgbFace)
@@ -198,6 +226,45 @@ class RendererAgg(RendererBase):
                         )
 
                 raise OverflowError(msg) from None
+
+    def draw_path_collection(self, gc, master_transform, paths, transforms,
+                             offsets, offset_trans, facecolors, edgecolors,
+                             linewidths, linestyles, antialiaseds, urls,
+                             offset_position, hatchcolors=None):
+        master_transform = _transform_to_memoryview(master_transform)
+        paths = [_BufferPath(path) for path in paths]
+        transforms = _plain_float_buffer(
+            transforms, [[[1.0, 0.0, 0.0],
+                          [0.0, 1.0, 0.0],
+                          [0.0, 0.0, 1.0]]])
+        offsets = _plain_float_buffer(offsets, [[0.0, 0.0]])
+        offset_trans = _transform_to_memoryview(offset_trans)
+        facecolors = _plain_float_buffer(facecolors, [[0.0, 0.0, 0.0, 0.0]])
+        edgecolors = _plain_float_buffer(edgecolors, [[0.0, 0.0, 0.0, 0.0]])
+        linewidths = _plain_float_buffer(linewidths, [1.0])
+        antialiaseds = memoryview(_array("B", [
+            int(value) for value in np.asarray(antialiaseds).tolist()
+        ]))
+        if hatchcolors is not None:
+            hatchcolors = _plain_float_buffer(
+                hatchcolors, [[0.0, 0.0, 0.0, 0.0]])
+        self._renderer.draw_path_collection(
+            gc, master_transform, paths, transforms, offsets, offset_trans,
+            facecolors, edgecolors, linewidths, linestyles, antialiaseds,
+            urls, offset_position, hatchcolors=hatchcolors)
+
+    def draw_quad_mesh(self, gc, master_transform, meshWidth, meshHeight,
+                       coordinates, offsets, offsetTrans, facecolors,
+                       antialiased, edgecolors):
+        master_transform = _transform_to_memoryview(master_transform)
+        coordinates = _plain_float_buffer(coordinates)
+        offsets = _plain_float_buffer(offsets, [[0.0, 0.0]])
+        offsetTrans = _transform_to_memoryview(offsetTrans)
+        facecolors = _plain_float_buffer(facecolors, [[0.0, 0.0, 0.0, 0.0]])
+        edgecolors = _plain_float_buffer(edgecolors, [[0.0, 0.0, 0.0, 0.0]])
+        self._renderer.draw_quad_mesh(
+            gc, master_transform, meshWidth, meshHeight, coordinates, offsets,
+            offsetTrans, facecolors, antialiased, edgecolors)
 
     def draw_mathtext(self, gc, x, y, s, prop, angle):
         """Draw mathtext using :mod:`matplotlib.mathtext`."""
