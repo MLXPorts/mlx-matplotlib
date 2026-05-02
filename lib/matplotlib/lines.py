@@ -6,9 +6,7 @@ import copy
 
 from numbers import Integral, Number, Real
 import logging
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from . import _api, cbook, colors as mcolors, _docstring
 from .artist import Artist, allow_rasterization
@@ -1634,8 +1632,7 @@ class VertexSelector:
     something with the picks.
 
     Here is an example which highlights the selected verts with red circles::
-
-        import numpy as np
+from matplotlib import _mlx_numpy as np
         import matplotlib.pyplot as plt
         import matplotlib.lines as lines
 

@@ -12,8 +12,7 @@ In this example the plots share a common x-axis, but you can follow the same
 logic to supply a common y-axis.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 t = np.arange(0.0, 2.0, 0.01)
 
 s1 = np.sin(2 * np.pi * t)

@@ -16,8 +16,7 @@ import itertools
 from numbers import Integral, Number
 
 from cycler import cycler
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from . import (_api, _docstring, backend_tools, cbook, collections, colors,
                text as mtext, ticker, transforms)

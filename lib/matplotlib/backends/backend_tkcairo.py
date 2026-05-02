@@ -1,7 +1,5 @@
 import sys
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from . import _backend_tk
 from .backend_cairo import cairo, FigureCanvasCairo
 from ._backend_tk import _BackendTk, FigureCanvasTk

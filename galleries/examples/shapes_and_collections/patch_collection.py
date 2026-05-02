@@ -10,8 +10,7 @@ adds each artist separately to its own Axes.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Circle, Polygon, Wedge
 

@@ -10,7 +10,7 @@
  */
 
 #include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
+#include <pybind11/stl.h>
 
 namespace py = pybind11;
 
@@ -18,31 +18,36 @@ namespace py = pybind11;
 #include "agg_color_rgba.h"
 #include "agg_trans_affine.h"
 #include "mplutils.h"
+#include "py_buffer.h"
 
 void convert_trans_affine(const py::object& transform, agg::trans_affine& affine);
 
-inline auto convert_points(py::array_t<double> obj)
+inline auto convert_points(const py::buffer &obj)
 {
-    check_trailing_shape(obj, "points", 2);
-    return obj.unchecked<2>();
+    mpl::BufferView<double, 2> view(obj);
+    check_trailing_shape(view, "points", 2);
+    return view;
 }
 
-inline auto convert_transforms(py::array_t<double> obj)
+inline auto convert_transforms(const py::buffer &obj)
 {
-    check_trailing_shape(obj, "transforms", 3, 3);
-    return obj.unchecked<3>();
+    mpl::BufferView<double, 3> view(obj);
+    check_trailing_shape(view, "transforms", 3, 3);
+    return view;
 }
 
-inline auto convert_bboxes(py::array_t<double> obj)
+inline auto convert_bboxes(const py::buffer &obj)
 {
-    check_trailing_shape(obj, "bbox array", 2, 2);
-    return obj.unchecked<3>();
+    mpl::BufferView<double, 3> view(obj);
+    check_trailing_shape(view, "bbox array", 2, 2);
+    return view;
 }
 
-inline auto convert_colors(py::array_t<double> obj)
+inline auto convert_colors(const py::buffer &obj)
 {
-    check_trailing_shape(obj, "colors", 4);
-    return obj.unchecked<2>();
+    mpl::BufferView<double, 2> view(obj);
+    check_trailing_shape(view, "colors", 4);
+    return view;
 }
 
 namespace PYBIND11_NAMESPACE { namespace detail {
@@ -59,27 +64,38 @@ namespace PYBIND11_NAMESPACE { namespace detail {
                 return true;
             }
 
-            auto rect_arr = py::array_t<double>::ensure(src);
+            py::buffer rect_buf = py::reinterpret_borrow<py::buffer>(src);
+            mpl::BufferView<double, 2> rect_arr;
+            mpl::BufferView<double, 1> rect_vec;
+            bool is_2d = false;
+            bool is_1d = false;
+            try {
+                rect_arr = mpl::BufferView<double, 2>(rect_buf);
+                is_2d = true;
+            } catch (...) {
+                rect_vec = mpl::BufferView<double, 1>(rect_buf);
+                is_1d = true;
+            }
 
-            if (rect_arr.ndim() == 2) {
+            if (is_2d) {
                 if (rect_arr.shape(0) != 2 || rect_arr.shape(1) != 2) {
                     throw py::value_error("Invalid bounding box");
                 }
 
-                value.x1 = *rect_arr.data(0, 0);
-                value.y1 = *rect_arr.data(0, 1);
-                value.x2 = *rect_arr.data(1, 0);
-                value.y2 = *rect_arr.data(1, 1);
+                value.x1 = rect_arr(0, 0);
+                value.y1 = rect_arr(0, 1);
+                value.x2 = rect_arr(1, 0);
+                value.y2 = rect_arr(1, 1);
 
-            } else if (rect_arr.ndim() == 1) {
-                if (rect_arr.shape(0) != 4) {
+            } else if (is_1d) {
+                if (rect_vec.shape(0) != 4) {
                     throw py::value_error("Invalid bounding box");
                 }
 
-                value.x1 = *rect_arr.data(0);
-                value.y1 = *rect_arr.data(1);
-                value.x2 = *rect_arr.data(2);
-                value.y2 = *rect_arr.data(3);
+                value.x1 = rect_vec(0);
+                value.y1 = rect_vec(1);
+                value.x2 = rect_vec(2);
+                value.y2 = rect_vec(3);
 
             } else {
                 throw py::value_error("Invalid bounding box");
@@ -129,19 +145,18 @@ namespace PYBIND11_NAMESPACE { namespace detail {
                 return true;
             }
 
-            auto array = py::array_t<double, py::array::c_style>::ensure(src);
-            if (!array || array.ndim() != 2 ||
-                    array.shape(0) != 3 || array.shape(1) != 3) {
+            py::buffer buf = py::reinterpret_borrow<py::buffer>(src);
+            mpl::BufferView<double, 2> array(buf);
+            if (array.shape(0) != 3 || array.shape(1) != 3) {
                 throw std::invalid_argument("Invalid affine transformation matrix");
             }
 
-            auto buffer = array.data();
-            value.sx = buffer[0];
-            value.shx = buffer[1];
-            value.tx = buffer[2];
-            value.shy = buffer[3];
-            value.sy = buffer[4];
-            value.ty = buffer[5];
+            value.sx = array(0, 0);
+            value.shx = array(0, 1);
+            value.tx = array(0, 2);
+            value.shy = array(1, 0);
+            value.sy = array(1, 1);
+            value.ty = array(1, 2);
 
             return true;
         }

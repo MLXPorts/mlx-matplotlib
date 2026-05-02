@@ -5,8 +5,7 @@ Shade regions defined by a logical mask using fill_between
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 t = np.arange(0.0, 2, 0.01)
 s = np.sin(2*np.pi*t)
 

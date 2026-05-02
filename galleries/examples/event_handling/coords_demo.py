@@ -16,8 +16,7 @@ and click events.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.backend_bases import MouseButton
 
 t = np.arange(0.0, 1.0, 0.01)

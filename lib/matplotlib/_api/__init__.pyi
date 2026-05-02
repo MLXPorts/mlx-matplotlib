@@ -2,7 +2,7 @@ from collections.abc import Callable, Generator, Iterable, Mapping, Sequence
 from typing import Any, TypeVar, overload
 from typing import Self
 
-from numpy.typing import NDArray
+from matplotlib._mlx_typing import NDArray
 
 from .deprecation import (  # noqa: F401, re-exported API
     deprecated as deprecated,

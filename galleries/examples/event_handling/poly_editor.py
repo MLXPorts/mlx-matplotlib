@@ -14,9 +14,7 @@ Matplotlib event handling to interact with objects on the canvas.
     You can copy and paste individual parts, or download the entire example
     using the link at the bottom of the page.
 """
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.artist import Artist
 from matplotlib.lines import Line2D
 

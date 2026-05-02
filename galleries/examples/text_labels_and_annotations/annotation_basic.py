@@ -12,8 +12,7 @@ For a complete overview of the annotation capabilities, also see the
 .. redirect-from:: /gallery/pyplots/annotation_basic
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 fig, ax = plt.subplots()
 
 t = np.arange(0.0, 5.0, 0.01)

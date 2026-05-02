@@ -15,9 +15,7 @@ import urllib.request
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import numpy as np
-
-
+from matplotlib import _mlx_numpy as np
 plt.rcdefaults()
 plt.rcParams['svg.fonttype'] = 'path'
 plt.rcParams['pdf.fonttype'] = 3

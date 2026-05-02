@@ -14,8 +14,7 @@ Note, however, that it is simpler to achieve this effect using standard
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from mpl_toolkits import axisartist
 
 fig = plt.figure(figsize=(6, 3), layout="constrained")

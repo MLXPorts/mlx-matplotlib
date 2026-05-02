@@ -10,8 +10,7 @@ The data used is the same as in the second plot of :doc:`trisurf3d_2`.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.tri as tri
 
 n_angles = 48

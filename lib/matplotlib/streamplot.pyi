@@ -5,7 +5,7 @@ from matplotlib.patches import ArrowStyle
 from matplotlib.transforms import Transform
 
 from typing import Literal
-from numpy.typing import ArrayLike
+from matplotlib._mlx_typing import ArrayLike
 from .typing import ColorType
 
 def streamplot(

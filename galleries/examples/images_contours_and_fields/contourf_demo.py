@@ -6,8 +6,7 @@ Contourf demo
 How to use the `.axes.Axes.contourf` method to create filled contour plots.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 delta = 0.025
 
 x = y = np.arange(-3.0, 3.01, delta)

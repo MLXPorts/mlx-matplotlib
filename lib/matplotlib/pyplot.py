@@ -12,8 +12,7 @@ screen, and acts as the figure GUI manager.
 
 pyplot is mainly intended for interactive plots and simple cases of
 programmatic plot generation::
-
-    import numpy as np
+from matplotlib import _mlx_numpy as np
     import matplotlib.pyplot as plt
 
     x = np.arange(0, 5, 0.1)
@@ -26,8 +25,7 @@ pyplot is still usually used to create the figure and often the Axes in the
 figure. See `.pyplot.figure`, `.pyplot.subplots`, and
 `.pyplot.subplot_mosaic` to create figures, and
 :doc:`Axes API </api/axes_api>` for the plotting methods on an Axes::
-
-    import numpy as np
+from matplotlib import _mlx_numpy as np
     import matplotlib.pyplot as plt
 
     x = np.arange(0, 5, 0.1)
@@ -84,9 +82,7 @@ from matplotlib.scale import get_scale_names  # noqa: F401
 
 from matplotlib.cm import _colormaps
 from matplotlib.colors import _color_sequences, Colormap
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 if TYPE_CHECKING:
     from collections.abc import Callable, Hashable, Iterable, Sequence
     import pathlib
@@ -95,7 +91,7 @@ if TYPE_CHECKING:
     from typing_extensions import ParamSpec
 
     import PIL.Image
-    from numpy.typing import ArrayLike
+    from matplotlib._mlx_typing import ArrayLike
     import pandas as pd
 
     import matplotlib.axes

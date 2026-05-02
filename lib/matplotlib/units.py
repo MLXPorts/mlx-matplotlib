@@ -42,9 +42,8 @@ datetime objects::
 
 from decimal import Decimal
 from numbers import Number
-
-import numpy as np
-from numpy import ma
+from matplotlib import _mlx_numpy as np
+from matplotlib._mlx_numpy import ma
 
 from matplotlib import cbook
 

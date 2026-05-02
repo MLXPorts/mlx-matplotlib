@@ -7,8 +7,7 @@ Demonstrate including 3D plots as subplots.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from mpl_toolkits.mplot3d.axes3d import get_test_data
 
 # set up a figure twice as wide as it is tall

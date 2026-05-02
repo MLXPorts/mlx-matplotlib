@@ -4,8 +4,7 @@ from collections.abc import Callable
 import re
 import typing
 from typing import Any, TypeVar
-
-import numpy as np
+from matplotlib import _mlx_numpy as np
 import pytest
 
 import matplotlib as mpl

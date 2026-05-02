@@ -17,9 +17,7 @@ through dragging and zooming.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-
+from matplotlib import _mlx_numpy as np
 # A class that will downsample the data and recompute when zoomed.
 class DataDisplayDownsampler:
     def __init__(self, xdata, y1data, y2data):

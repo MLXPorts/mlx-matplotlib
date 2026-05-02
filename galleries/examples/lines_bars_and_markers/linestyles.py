@@ -21,8 +21,7 @@ and passing a list of dash sequences using the keyword *dashes* to the
 cycler in :ref:`property_cycle <color_cycle>`.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 linestyle_str = [
      ('solid', 'solid'),      # Same as (0, ()) or '-'
      ('dotted', 'dotted'),    # Same as ':'

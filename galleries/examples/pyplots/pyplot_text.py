@@ -14,8 +14,7 @@ You can use TeX-like mathematical typesetting in all texts; see also
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 t = np.arange(0.0, 2.0, 0.01)
 s = np.sin(2*np.pi*t)
 

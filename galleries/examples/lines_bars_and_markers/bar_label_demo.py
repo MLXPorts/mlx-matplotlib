@@ -15,8 +15,7 @@ See also the :doc:`grouped bar
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # %%
 # data from https://allisonhorst.github.io/palmerpenguins/
 

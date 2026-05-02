@@ -7,8 +7,7 @@ How to set and adjust plots with equal axis aspect ratios.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # Plot circle of radius 3.
 
 an = np.linspace(0, 2 * np.pi, 100)

@@ -81,7 +81,7 @@ If you were relying on both the major and minor tick labels to appear
 on the same tick, you may need to update your code.  For example, the
 following snippet ::
 
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
     import matplotlib.dates as mdates
     import matplotlib.pyplot as plt
 

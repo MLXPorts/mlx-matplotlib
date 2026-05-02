@@ -7,8 +7,7 @@ Demonstrates a very basic plot of a 3D surface using a solid color.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 fig = plt.figure()
 ax = fig.add_subplot(projection='3d')
 

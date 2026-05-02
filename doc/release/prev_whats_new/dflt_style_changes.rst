@@ -48,7 +48,7 @@ originally developed at Tableau.
 
 .. plot::
 
-  import numpy as np
+  from matplotlib import _mlx_numpy as np
   import matplotlib.pyplot as plt
 
   th = np.linspace(0, 2*np.pi, 512)
@@ -125,7 +125,7 @@ The new default colormap used by `matplotlib.cm.ScalarMappable` instances is
 
 .. plot::
 
-   import numpy as np
+   from matplotlib import _mlx_numpy as np
    import matplotlib.pyplot as plt
 
    N = M = 200
@@ -195,7 +195,7 @@ solid light grey lines.
 
 .. plot::
 
-   import numpy as np
+   from matplotlib import _mlx_numpy as np
    import matplotlib.pyplot as plt
 
    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6, 3))
@@ -287,7 +287,7 @@ The following changes were made to the default behavior of
 
 .. plot::
 
-   import numpy as np
+   from matplotlib import _mlx_numpy as np
    import matplotlib.pyplot as plt
 
    np.random.seed(2)
@@ -334,7 +334,7 @@ The following changes were made to the default behavior of
 
 .. plot::
 
-   import numpy as np
+   from matplotlib import _mlx_numpy as np
    import matplotlib.pyplot as plt
    import matplotlib as mpl
    from cycler import cycler
@@ -401,7 +401,7 @@ By default, caps on the ends of errorbars are not present.
 
    import matplotlib as mpl
    import matplotlib.pyplot as plt
-   import numpy as np
+   from matplotlib import _mlx_numpy as np
 
    # example data
    x = np.arange(0.1, 4, 0.5)
@@ -453,7 +453,7 @@ obscuring data too much.
 
 .. plot::
 
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
     import matplotlib.pyplot as plt
 
     data = np.random.lognormal(size=(37, 4))
@@ -518,7 +518,7 @@ cycle.
 .. plot::
 
    import matplotlib.pyplot as plt
-   import numpy as np
+   from matplotlib import _mlx_numpy as np
 
    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6, 3))
    fig.subplots_adjust(wspace=0.3)
@@ -551,7 +551,7 @@ default.  The default face color is now ``'C0'`` instead of ``'b'``.
 .. plot::
 
    import matplotlib.pyplot as plt
-   import numpy as np
+   from matplotlib import _mlx_numpy as np
    from matplotlib import rc_context
    import matplotlib.patches as mpatches
 
@@ -617,7 +617,7 @@ The default value of the ``align`` kwarg for both
 .. plot::
 
    import matplotlib.pyplot as plt
-   import numpy as np
+   from matplotlib import _mlx_numpy as np
 
    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(5, 5))
 
@@ -787,7 +787,7 @@ Legends
 
    import matplotlib as mpl
    import matplotlib.pyplot as plt
-   import numpy as np
+   from matplotlib import _mlx_numpy as np
 
    def demo(ax, rcparams, title):
        np.random.seed(2)
@@ -856,7 +856,7 @@ sampling) before colormapping.
 
    import matplotlib.pyplot as plt
    import matplotlib as mpl
-   import numpy as np
+   from matplotlib import _mlx_numpy as np
 
 
    def demo(ax, rcparams, title):
@@ -931,7 +931,7 @@ sets the view limits to 5% wider than the data range.
 
    import matplotlib as mpl
    import matplotlib.pyplot as plt
-   import numpy
+   from matplotlib import _mlx_numpy as numpy
 
    data = np.zeros(1000)
    data[0] = 1
@@ -995,7 +995,7 @@ a cleaner separation between subplots.
 
    import matplotlib as mpl
    import matplotlib.pyplot as plt
-   import numpy as np
+   from matplotlib import _mlx_numpy as np
 
    th = np.linspace(0, 2*np.pi, 128)
    y = np.sin(th)
@@ -1055,7 +1055,7 @@ two ticks visible.
 .. plot::
 
    import matplotlib.pyplot as plt
-   import numpy as np
+   from matplotlib import _mlx_numpy as np
 
    from matplotlib.ticker import AutoLocator
 
@@ -1109,7 +1109,7 @@ but cannot be controlled independently via `.rcParams`.
 
 .. plot::
 
-   import numpy as np
+   from matplotlib import _mlx_numpy as np
    import matplotlib.pyplot as plt
 
    np.random.seed(2)
@@ -1141,7 +1141,7 @@ digits, use ``rcParams['axes.formatter.offset_threshold'] = 2``.
 
 .. plot::
 
-   import numpy as np
+   from matplotlib import _mlx_numpy as np
    import matplotlib.pyplot as plt
 
    np.random.seed(5)

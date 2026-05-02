@@ -279,9 +279,9 @@ ax.legend(handler_map={line1: HandlerLine2D(numpoints=4)}, handlelength=4)
 # another for each item in the given tuple. The following example demonstrates
 # combining two legend keys on top of one another:
 
-from numpy.random import randn
+import mlx.core as mx
 
-z = randn(10)
+z = mx.random.normal(shape=(10,))
 
 fig, ax = plt.subplots()
 red_dot, = ax.plot(z, "ro", markersize=15)

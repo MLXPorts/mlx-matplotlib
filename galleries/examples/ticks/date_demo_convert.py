@@ -7,8 +7,7 @@ Date Demo Convert
 import datetime
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.dates import DateFormatter, DayLocator, HourLocator, drange
 
 date1 = datetime.datetime(2000, 3, 2)

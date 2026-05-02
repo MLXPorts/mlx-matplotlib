@@ -196,7 +196,7 @@ in the perspective view.
     :include-source:
     :align: center
 
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d import Axes3D
 
@@ -434,7 +434,7 @@ to ``False``.
     :include-source:
     :align: center
 
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d import Axes3D
 

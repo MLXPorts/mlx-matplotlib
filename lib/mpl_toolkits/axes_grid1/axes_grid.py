@@ -1,9 +1,7 @@
 from numbers import Number
 import functools
 from types import MethodType
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib import _api, cbook
 from matplotlib.gridspec import SubplotSpec
 

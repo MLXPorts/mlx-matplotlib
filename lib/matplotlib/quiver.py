@@ -15,9 +15,8 @@ the Quiver code.
 """
 
 import math
-
-import numpy as np
-from numpy import ma
+from matplotlib import _mlx_numpy as np
+from matplotlib._mlx_numpy import ma
 
 from matplotlib import _api, cbook, _docstring
 import matplotlib.artist as martist

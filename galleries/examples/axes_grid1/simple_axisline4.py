@@ -5,8 +5,7 @@ Simple Axisline4
 
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from mpl_toolkits.axes_grid1 import host_subplot
 
 ax = host_subplot(111)

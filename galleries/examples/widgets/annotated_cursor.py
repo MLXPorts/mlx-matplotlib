@@ -21,8 +21,7 @@ currently tracked coordinates.
 
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.backend_bases import MouseEvent
 from matplotlib.widgets import Cursor
 

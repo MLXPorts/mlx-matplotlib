@@ -32,8 +32,7 @@ axis (because the locator stores references to the axis data and view limits).
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.ticker import AutoMinorLocator, MultipleLocator
 
 t = np.arange(0.0, 100.0, 0.1)

@@ -1,7 +1,7 @@
-import numpy as np
-from numpy.testing import (
+from matplotlib import _mlx_numpy as np
+from matplotlib.mlx_testing import (
     assert_array_equal, assert_array_almost_equal, assert_array_less)
-import numpy.ma.testutils as matest
+import matplotlib.mlx_ma_testutils as matest
 import pytest
 
 import matplotlib as mpl

@@ -32,9 +32,7 @@ Third parties can register their scales by name through `register_scale`.
 import inspect
 import textwrap
 from functools import wraps
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib import _api, _docstring
 from matplotlib.ticker import (

@@ -2,9 +2,7 @@ from matplotlib.font_manager import FontProperties
 from matplotlib.ft2font import FT2Font
 from matplotlib.mathtext import MathTextParser, VectorParse
 from matplotlib.path import Path
-
-import numpy as np
-
+import matplotlib._mlx_numpy as np
 from typing import Literal
 
 class TextToPath:

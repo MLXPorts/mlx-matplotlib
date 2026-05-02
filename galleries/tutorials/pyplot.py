@@ -89,11 +89,9 @@ plt.show()
 # converted to numpy arrays internally.  The example below illustrates
 # plotting several lines with different format styles in one function call
 # using arrays.
-
-import numpy as np
-
+import mlx.core as mx
 # evenly sampled time at 200ms intervals
-t = np.arange(0., 5., 0.2)
+t = mx.arange(0., 5., 0.2)
 
 # red dashes, blue squares and green triangles
 plt.plot(t, t, 'r--', t, t**2, 'bs', t, t**3, 'g^')
@@ -115,11 +113,11 @@ plt.show()
 # the ``data`` keyword argument. If provided, then you may generate plots with
 # the strings corresponding to these variables.
 
-data = {'a': np.arange(50),
-        'c': np.random.randint(0, 50, 50),
-        'd': np.random.randn(50)}
-data['b'] = data['a'] + 10 * np.random.randn(50)
-data['d'] = np.abs(data['d']) * 100
+data = {'a': mx.arange(50),
+        'c': mx.random.randint(0, 50, shape=(50,)),
+        'd': mx.random.normal(shape=(50,))}
+data['b'] = data['a'] + 10 * mx.random.normal(shape=(50,))
+data['d'] = mx.abs(data['d']) * 100
 
 plt.scatter('a', 'b', c='c', s='d', data=data)
 plt.xlabel('entry a')

@@ -75,7 +75,7 @@ def _isolated_tk_test(success_count, func=None):
 @_isolated_tk_test(success_count=6)  # len(bad_boxes)
 def test_blit():
     import matplotlib.pyplot as plt
-    import numpy as np
+from matplotlib import _mlx_numpy as np
     import matplotlib.backends.backend_tkagg  # noqa
     from matplotlib.backends import _backend_tk, _tkagg
 

@@ -4,9 +4,7 @@ from typing import Any, Literal
 from matplotlib.axis import Axis
 from matplotlib.transforms import Transform
 from matplotlib.projections.polar import _AxisWrapper
-
-import numpy as np
-
+import matplotlib._mlx_numpy as np
 class _DummyAxis:
     __name__: str
     def __init__(self, minpos: float = ...) -> None: ...

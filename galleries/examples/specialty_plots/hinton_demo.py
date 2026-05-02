@@ -11,9 +11,7 @@ magnitude of each value.
 Initial idea from David Warde-Farley on the SciPy Cookbook
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
-
+from matplotlib import _mlx_numpy as np
 def hinton(matrix, max_weight=None, ax=None):
     """Draw Hinton diagram for visualizing a weight matrix."""
     ax = ax if ax is not None else plt.gca()

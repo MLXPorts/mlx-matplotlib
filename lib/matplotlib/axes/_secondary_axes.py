@@ -1,8 +1,6 @@
 import functools
 import numbers
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib import _api, _docstring, transforms
 import matplotlib.ticker as mticker
 from matplotlib.axes._base import _AxesBase, _TransformedBoundsLocator

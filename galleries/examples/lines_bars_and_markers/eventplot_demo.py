@@ -8,8 +8,7 @@ properties. The plot is shown in both horizontal and vertical orientations.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib
 
 matplotlib.rcParams['font.size'] = 8.0

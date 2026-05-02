@@ -2,8 +2,7 @@
 import warnings
 
 import pytest
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib.axes import Axes
 import matplotlib.pyplot as plt

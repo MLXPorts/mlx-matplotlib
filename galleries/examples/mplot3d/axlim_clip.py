@@ -9,8 +9,7 @@ functions.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
 
 # Make the data

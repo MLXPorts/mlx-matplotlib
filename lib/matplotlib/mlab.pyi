@@ -1,9 +1,8 @@
 from collections.abc import Callable
 import functools
 from typing import Literal
-
-import numpy as np
-from numpy.typing import ArrayLike
+import matplotlib._mlx_numpy as np
+from matplotlib._mlx_typing import ArrayLike
 
 def window_hanning(x: ArrayLike) -> ArrayLike: ...
 def window_none(x: ArrayLike) -> ArrayLike: ...

@@ -15,8 +15,7 @@ http://docs.astropy.org/en/stable/visualization/histogram.html
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 np.random.seed(19680801)
 
 mu_x = 200

@@ -9,8 +9,7 @@ for an image.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.cbook import get_sample_data
 from matplotlib.image import BboxImage
 from matplotlib.offsetbox import AnchoredOffsetbox, AnnotationBbox, AuxTransformBox

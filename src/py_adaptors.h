@@ -9,9 +9,9 @@
  */
 
 #include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
 
 #include "agg_basics.h"
+#include "py_buffer.h"
 
 namespace py = pybind11;
 
@@ -31,8 +31,10 @@ class PathIterator
        underlying data arrays, so that Python reference counting
        can work.
     */
-    py::array_t<double> m_vertices;
-    py::array_t<uint8_t> m_codes;
+    py::buffer m_vertices;
+    py::buffer m_codes;
+    mpl::BufferView<double, 2> m_vertices_view;
+    mpl::BufferView<uint8_t, 1> m_codes_view;
 
     unsigned m_iterator;
     unsigned m_total_vertices;
@@ -70,6 +72,12 @@ class PathIterator
     {
         m_vertices = other.m_vertices;
         m_codes = other.m_codes;
+        if (m_vertices) {
+            m_vertices_view = mpl::BufferView<double, 2>(m_vertices);
+        }
+        if (m_codes) {
+            m_codes_view = mpl::BufferView<uint8_t, 1>(m_codes);
+        }
 
         m_iterator = 0;
         m_total_vertices = other.m_total_vertices;
@@ -84,18 +92,21 @@ class PathIterator
         m_should_simplify = should_simplify;
         m_simplify_threshold = simplify_threshold;
 
-        m_vertices = vertices.cast<py::array_t<double>>();
-        if (m_vertices.ndim() != 2 || m_vertices.shape(1) != 2) {
+        m_vertices = py::reinterpret_borrow<py::buffer>(vertices);
+        m_vertices_view = mpl::BufferView<double, 2>(m_vertices);
+        if (m_vertices_view.ndim() != 2 || m_vertices_view.shape(1) != 2) {
             throw py::value_error("Invalid vertices array");
         }
-        m_total_vertices = m_vertices.shape(0);
+        m_total_vertices = static_cast<unsigned>(m_vertices_view.shape(0));
 
-        m_codes.release().dec_ref();
         if (!codes.is_none()) {
-            m_codes = codes.cast<py::array_t<uint8_t>>();
-            if (m_codes.ndim() != 1 || m_codes.shape(0) != m_total_vertices) {
+            m_codes = py::reinterpret_borrow<py::buffer>(codes);
+            m_codes_view = mpl::BufferView<uint8_t, 1>(m_codes);
+            if (m_codes_view.ndim() != 1 || m_codes_view.shape(0) != m_total_vertices) {
                 throw py::value_error("Invalid codes array");
             }
+        } else {
+            m_codes = py::buffer();
         }
 
         m_iterator = 0;
@@ -116,11 +127,11 @@ class PathIterator
 
         const size_t idx = m_iterator++;
 
-        *x = *m_vertices.data(idx, 0);
-        *y = *m_vertices.data(idx, 1);
+        *x = m_vertices_view(static_cast<py::ssize_t>(idx), 0);
+        *y = m_vertices_view(static_cast<py::ssize_t>(idx), 1);
 
         if (m_codes) {
-            return *m_codes.data(idx);
+            return m_codes_view(static_cast<py::ssize_t>(idx));
         } else {
             return idx == 0 ? agg::path_cmd_move_to : agg::path_cmd_line_to;
         }

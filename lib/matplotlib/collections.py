@@ -14,9 +14,7 @@ import functools
 import math
 from numbers import Number, Real
 import warnings
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from . import (_api, _path, artist, cbook, colorizer as mcolorizer, colors as mcolors,
                _docstring, hatch as mhatch, lines as mlines, path as mpath, transforms)

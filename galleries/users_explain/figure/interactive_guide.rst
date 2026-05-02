@@ -264,7 +264,7 @@ For example ::
 
    import time
    import matplotlib.pyplot as plt
-   import numpy as np
+   from matplotlib import _mlx_numpy as np
    plt.ion()
 
    fig, ax = plt.subplots()

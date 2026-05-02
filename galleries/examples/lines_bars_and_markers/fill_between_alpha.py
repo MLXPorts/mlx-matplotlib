@@ -14,8 +14,7 @@ line plot on the left and a filled line on the right.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.cbook as cbook
 
 # load up some sample financial data

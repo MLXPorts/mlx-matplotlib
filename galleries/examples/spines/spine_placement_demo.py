@@ -9,8 +9,7 @@ Note: If you want to obtain arrow heads at the ends of the axes, also check
 out the :doc:`/gallery/spines/centered_spines_with_arrows` example.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # %%
 
 x = np.linspace(0, 2*np.pi, 100)

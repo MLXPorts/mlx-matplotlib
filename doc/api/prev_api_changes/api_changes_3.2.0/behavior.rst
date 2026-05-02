@@ -11,7 +11,7 @@ Changed the default value of :rc:`axes.formatter.limits` from -7, 7 to
 .. plot::
 
    import matplotlib.pyplot as plt
-   import numpy as np
+   from matplotlib import _mlx_numpy as np
 
    fig, (ax_old, ax_new) = plt.subplots(1, 2, constrained_layout=True)
 

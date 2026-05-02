@@ -55,8 +55,7 @@ For now, let's get on with the implicit approach:
 from PIL import Image
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+import mlx.core as mx
 # %%
 # .. _importing_data:
 #
@@ -82,7 +81,9 @@ import numpy as np
 # convert the `PIL.Image.Image` object into an 8-bit (``dtype=uint8``) numpy
 # array.
 
-img = np.asarray(Image.open('../../doc/_static/stinkbug.png'))
+_img_pil = Image.open('../../doc/_static/stinkbug.png').convert('RGB')
+_w, _h = _img_pil.size
+img = mx.array(_img_pil.tobytes(), dtype=mx.uint8).reshape((_h, _w, 3))
 print(repr(img))
 
 # %%
@@ -182,7 +183,7 @@ plt.colorbar()
 # interesting regions is the histogram.  To create a histogram of our
 # image data, we use the :func:`~matplotlib.pyplot.hist` function.
 
-plt.hist(lum_img.ravel(), bins=range(256), fc='k', ec='k')
+plt.hist(mx.reshape(lum_img, (-1,)), bins=range(256), fc='k', ec='k')
 
 # %%
 # Most often, the "interesting" part of the image is around the peak,

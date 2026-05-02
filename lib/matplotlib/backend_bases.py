@@ -42,9 +42,7 @@ import sys
 import time
 import weakref
 from weakref import WeakKeyDictionary
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib import (
     _api, backend_tools as tools, cbook, colors, _docstring, text,
@@ -775,6 +773,21 @@ class GraphicsContextBase:
                 _log.warning("Ill-defined clip_path detected. Returning None.")
                 return None, None
         return None, None
+
+    def get_clip_path_agg(self):
+        path, transform = self.get_clip_path()
+        if path is None:
+            return None
+        if hasattr(transform, "get_matrix"):
+            transform = transform.get_matrix()
+        elif hasattr(transform, "get_affine"):
+            transform = transform.get_affine().get_matrix()
+        return path, transforms._as_float_memoryview(transform)
+
+    def get_clip_rectangle_agg(self):
+        if self._cliprect is None:
+            return None
+        return transforms._as_float_memoryview(self._cliprect.get_points())
 
     def get_dashes(self):
         """

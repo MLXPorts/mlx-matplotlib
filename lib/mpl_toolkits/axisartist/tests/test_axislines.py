@@ -1,4 +1,4 @@
-import numpy as np
+from matplotlib import _mlx_numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.testing.decorators import image_comparison
 from matplotlib.transforms import IdentityTransform

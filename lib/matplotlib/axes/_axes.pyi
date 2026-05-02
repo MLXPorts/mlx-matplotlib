@@ -34,8 +34,8 @@ import matplotlib.streamplot as mstream
 import PIL.Image
 from collections.abc import Callable, Iterable, Sequence
 from typing import Any, Literal, overload
-import numpy as np
-from numpy.typing import ArrayLike
+import matplotlib._mlx_numpy as np
+from matplotlib._mlx_typing import ArrayLike
 from matplotlib.typing import ColorType, MarkerType, LegendLocType, LineStyleType
 import pandas as pd
 

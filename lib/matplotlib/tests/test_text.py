@@ -1,9 +1,8 @@
 from datetime import datetime
 import io
 import warnings
-
-import numpy as np
-from numpy.testing import assert_almost_equal
+from matplotlib import _mlx_numpy as np
+from matplotlib.mlx_testing import assert_almost_equal
 from packaging.version import parse as parse_version
 import pyparsing
 import pytest

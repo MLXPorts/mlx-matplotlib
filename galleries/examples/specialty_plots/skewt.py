@@ -149,8 +149,7 @@ if __name__ == '__main__':
     from io import StringIO
 
     import matplotlib.pyplot as plt
-    import numpy as np
-
+from matplotlib import _mlx_numpy as np
     from matplotlib.ticker import MultipleLocator, NullFormatter, ScalarFormatter
 
     # Some example data.

@@ -2,8 +2,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import sys
-
-import numpy as np
+from matplotlib import _mlx_numpy as np
 import pytest
 
 import matplotlib as mpl

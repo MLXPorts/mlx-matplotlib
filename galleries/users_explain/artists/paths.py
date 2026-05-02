@@ -17,9 +17,7 @@ with a (N, 2) array of (x, y) vertices, and an N-length array of path
 codes.  For example to draw the unit rectangle from (0, 0) to (1, 1), we
 could use this code:
 """
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.pyplot as plt
 
 import matplotlib.patches as patches

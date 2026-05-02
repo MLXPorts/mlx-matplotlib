@@ -23,9 +23,7 @@ Thanks to matplotlib and wx teams for creating such great software!
 
 import wx
 import wx.xrc as xrc
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wxagg import \
     NavigationToolbar2WxAgg as NavigationToolbar

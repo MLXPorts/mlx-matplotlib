@@ -17,8 +17,7 @@ knowing a good offset value which is hardcoded.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 fig, axs = plt.subplots(2, 3, figsize=(8.9, 5.5),
                         layout='constrained', gridspec_kw={'wspace': 0.1})
 

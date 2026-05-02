@@ -2,8 +2,7 @@ from collections import Counter
 import io
 import re
 import tempfile
-
-import numpy as np
+from matplotlib import _mlx_numpy as np
 import pytest
 
 from matplotlib import cbook, path, patheffects

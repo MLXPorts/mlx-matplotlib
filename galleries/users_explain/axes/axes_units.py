@@ -31,9 +31,7 @@ In the following example, the x-axis gains a converter that converts from
 `numpy.datetime64` to float, and a locator that put ticks at the beginning of
 the month, and a formatter that label the ticks appropriately:
 """
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.dates as mdates
 import matplotlib.units as munits
 

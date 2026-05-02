@@ -1,7 +1,5 @@
 """StrConverter module containing class StrConverter."""
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.units as units
 
 __all__ = ['StrConverter']

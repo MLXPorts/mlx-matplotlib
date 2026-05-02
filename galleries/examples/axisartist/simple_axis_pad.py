@@ -6,8 +6,7 @@ Simple axis pad
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.projections import PolarAxes
 from matplotlib.transforms import Affine2D
 import mpl_toolkits.axisartist as axisartist

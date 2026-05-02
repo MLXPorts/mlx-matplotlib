@@ -127,9 +127,7 @@ format_axes(ax)
 # Any `~.path.Path` can be used as a marker. The following example shows two
 # simple paths *star* and *circle*, and a more elaborate path of a circle with
 # a cut-out star.
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.path as mpath
 
 star = mpath.Path.unit_regular_star(6)

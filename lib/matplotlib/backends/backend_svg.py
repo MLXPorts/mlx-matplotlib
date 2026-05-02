@@ -9,8 +9,7 @@ import logging
 import os
 import re
 import uuid
-
-import numpy as np
+from matplotlib import _mlx_numpy as np
 from PIL import Image
 
 import matplotlib as mpl

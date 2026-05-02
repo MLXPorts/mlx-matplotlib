@@ -5,9 +5,7 @@ import xml.etree.ElementTree
 import xml.parsers.expat
 
 import pytest
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib.figure import Figure
 from matplotlib.patches import Circle

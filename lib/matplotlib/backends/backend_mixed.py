@@ -1,5 +1,4 @@
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib import cbook
 from .backend_agg import RendererAgg
 from matplotlib._tight_bbox import process_figure_for_rasterizing

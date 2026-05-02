@@ -12,8 +12,7 @@ Below is an examples of such a plot:
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.ticker as mticker
 
 # Fixing random state for reproducibility

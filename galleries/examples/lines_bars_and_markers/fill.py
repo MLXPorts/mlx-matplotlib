@@ -13,9 +13,7 @@ This example uses the `Koch snowflake`_ as an example polygon.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-
+from matplotlib import _mlx_numpy as np
 def koch_snowflake(order, scale=10):
     """
     Return two lists x, y of point coordinates of the Koch snowflake.

@@ -11,8 +11,7 @@ to fine-tune the appearance of a Figure.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # Fixing random state for reproducibility.
 np.random.seed(19680801)
 

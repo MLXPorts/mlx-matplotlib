@@ -19,9 +19,8 @@ import string
 import textwrap
 import typing as T
 from typing import NamedTuple
-
-import numpy as np
-from numpy.typing import NDArray
+from matplotlib import _mlx_numpy as np
+from matplotlib._mlx_typing import NDArray
 from pyparsing import (
     Empty, Forward, Literal, Group, NotAny, OneOrMore, Optional,
     ParseBaseException, ParseException, ParseExpression, ParseFatalException,

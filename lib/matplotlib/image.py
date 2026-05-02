@@ -8,8 +8,7 @@ import os
 import logging
 from pathlib import Path
 import warnings
-
-import numpy as np
+from matplotlib import _mlx_numpy as np
 import PIL.Image
 import PIL.PngImagePlugin
 

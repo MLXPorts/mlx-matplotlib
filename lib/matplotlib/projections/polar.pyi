@@ -4,9 +4,8 @@ import matplotlib.transforms as mtransforms
 from matplotlib.axes import Axes
 from matplotlib.lines import Line2D
 from matplotlib.text import Text
-
-import numpy as np
-from numpy.typing import ArrayLike
+import matplotlib._mlx_numpy as np
+from matplotlib._mlx_typing import ArrayLike
 from collections.abc import Sequence
 from typing import Any, ClassVar, Literal, overload
 

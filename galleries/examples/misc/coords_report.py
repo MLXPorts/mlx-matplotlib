@@ -8,9 +8,7 @@ in an interactive backend.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-
+from matplotlib import _mlx_numpy as np
 def millions(x):
     return '$%1.1fM' % (x * 1e-6)
 

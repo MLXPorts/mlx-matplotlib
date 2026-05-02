@@ -25,9 +25,7 @@ import itertools
 import logging
 import numbers
 import time
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib import _api, _docstring, cbook, colors, offsetbox
 from matplotlib.artist import Artist, allow_rasterization

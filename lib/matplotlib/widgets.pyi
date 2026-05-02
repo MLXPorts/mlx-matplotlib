@@ -12,10 +12,9 @@ import PIL.Image
 
 from collections.abc import Callable, Collection, Iterable, Sequence
 from typing import Any, Literal
-from numpy.typing import ArrayLike
+from matplotlib._mlx_typing import ArrayLike
 from .typing import ColorType
-import numpy as np
-
+import matplotlib._mlx_numpy as np
 class LockDraw:
     def __init__(self) -> None: ...
     def __call__(self, o: Any) -> None: ...

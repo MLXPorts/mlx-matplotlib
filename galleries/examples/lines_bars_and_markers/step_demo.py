@@ -17,8 +17,7 @@ positions so that it's easier to see the effect of *where*.
 
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 x = np.arange(14)
 y = np.sin(x / 2)
 

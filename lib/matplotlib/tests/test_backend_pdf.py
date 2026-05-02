@@ -3,8 +3,7 @@ import decimal
 import io
 import os
 from pathlib import Path
-
-import numpy as np
+from matplotlib import _mlx_numpy as np
 import pytest
 
 import matplotlib as mpl

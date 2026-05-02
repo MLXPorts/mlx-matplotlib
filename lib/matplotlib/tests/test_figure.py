@@ -6,8 +6,7 @@ import platform
 from threading import Timer
 from types import SimpleNamespace
 import warnings
-
-import numpy as np
+from matplotlib import _mlx_numpy as np
 import pytest
 from PIL import Image
 

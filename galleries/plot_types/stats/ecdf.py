@@ -8,13 +8,12 @@ See `~matplotlib.axes.Axes.ecdf`.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+import mlx.core as mx
 plt.style.use('_mpl-gallery')
 
 # make data
-np.random.seed(1)
-x = 4 + np.random.normal(0, 1.5, 200)
+mx.random.seed(1)
+x = 4 + mx.random.normal(shape=(200,), scale=1.5)
 
 # plot:
 fig, ax = plt.subplots()

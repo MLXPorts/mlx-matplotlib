@@ -7,16 +7,15 @@ Draw streamlines of a vector flow.
 See `~matplotlib.axes.Axes.streamplot`.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+import mlx.core as mx
 plt.style.use('_mpl-gallery-nogrid')
 
 # make a stream function:
-X, Y = np.meshgrid(np.linspace(-3, 3, 256), np.linspace(-3, 3, 256))
-Z = (1 - X/2 + X**5 + Y**3) * np.exp(-X**2 - Y**2)
+X, Y = mx.meshgrid(mx.linspace(-3, 3, 256), mx.linspace(-3, 3, 256))
+Z = (1 - X/2 + X**5 + Y**3) * mx.exp(-X**2 - Y**2)
 # make U and V out of the streamfunction:
-V = np.diff(Z[1:, :], axis=1)
-U = -np.diff(Z[:, 1:], axis=0)
+V = Z[1:, 1:] - Z[1:, :-1]
+U = -(Z[1:, 1:] - Z[:-1, 1:])
 
 # plot:
 fig, ax = plt.subplots()

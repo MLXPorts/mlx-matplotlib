@@ -15,8 +15,7 @@ See https://dateutil.readthedocs.io/en/stable/rrule.html for help with rrules.
 import datetime
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.dates import YEARLY, DateFormatter, RRuleLocator, drange, rrulewrapper
 
 # Fixing random state for reproducibility

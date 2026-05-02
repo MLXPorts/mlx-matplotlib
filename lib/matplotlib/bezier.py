@@ -5,9 +5,7 @@ A module providing some utility functions regarding Bézier path manipulation.
 from functools import lru_cache
 import math
 import warnings
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib import _api
 
 

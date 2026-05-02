@@ -8,9 +8,8 @@ from matplotlib.image import BboxImage
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
 from matplotlib.transforms import Bbox, BboxBase, Transform
 from matplotlib.typing import CoordsType
-
-import numpy as np
-from numpy.typing import ArrayLike
+import matplotlib._mlx_numpy as np
+from matplotlib._mlx_typing import ArrayLike
 from collections.abc import Callable, Sequence
 from typing import Any, Literal, overload
 

@@ -11,8 +11,7 @@ import tkinter.filedialog
 import tkinter.font
 import tkinter.messagebox
 from tkinter.simpledialog import SimpleDialog
-
-import numpy as np
+from matplotlib import _mlx_numpy as np
 from PIL import Image, ImageTk
 
 import matplotlib as mpl

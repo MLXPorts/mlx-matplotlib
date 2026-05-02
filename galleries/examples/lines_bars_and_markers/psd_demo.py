@@ -10,8 +10,7 @@ many useful libraries for computing a PSD. Below we demo a few examples
 of how this can be accomplished and visualized with Matplotlib.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.mlab as mlab
 
 # Fixing random state for reproducibility

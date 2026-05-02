@@ -12,7 +12,7 @@ import matplotlib as mpl
 from matplotlib import _api, _c_internal_utils
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-import numpy as np
+from matplotlib import _mlx_numpy as np
 from matplotlib.rcsetup import (
     validate_bool,
     validate_color,

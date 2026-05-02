@@ -1,5 +1,4 @@
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.pyplot as plt
 
 from matplotlib.backend_bases import MouseEvent

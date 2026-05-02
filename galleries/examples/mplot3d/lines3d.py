@@ -7,8 +7,7 @@ This example demonstrates plotting a parametric curve in 3D.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 ax = plt.figure().add_subplot(projection='3d')
 
 # Prepare arrays x, y, z

@@ -12,8 +12,7 @@ This example demonstrates two ways to invert the direction of an axis:
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 x = np.arange(0.01, 4.0, 0.01)
 y = np.exp(-x)
 

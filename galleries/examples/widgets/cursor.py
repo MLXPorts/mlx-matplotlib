@@ -5,8 +5,7 @@ Cursor
 
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.widgets import Cursor
 
 # Fixing random state for reproducibility

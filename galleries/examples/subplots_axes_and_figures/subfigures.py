@@ -15,9 +15,7 @@ that subfigures can also have their own child subfigures.
 
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
-
+from matplotlib import _mlx_numpy as np
 def example_plot(ax, fontsize=12, hide_labels=False):
     pc = ax.pcolormesh(np.random.randn(30, 30), vmin=-2.5, vmax=2.5)
     if not hide_labels:

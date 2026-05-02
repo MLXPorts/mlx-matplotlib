@@ -106,7 +106,7 @@ data differently depending one these types of transforms.
 .. plot::
    :include-source: true
 
-   import numpy as np
+   from matplotlib import _mlx_numpy as np
    import matplotlib.pyplot as plt
    from matplotlib import cbook
    np.random.seed(0)

@@ -1,9 +1,7 @@
 from collections import OrderedDict
 import logging
 import urllib.parse
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib import _text_helpers, dviread
 from matplotlib.font_manager import (
     FontProperties, get_font, fontManager as _fontManager

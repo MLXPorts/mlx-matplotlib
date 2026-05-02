@@ -38,9 +38,7 @@ In addition to AxisArtist, the Axes will have *gridlines* attribute,
 which obviously draws grid lines. The gridlines needs to be separated
 from the axis as some gridlines can never pass any axis.
 """
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib import _api
 import matplotlib.axes as maxes

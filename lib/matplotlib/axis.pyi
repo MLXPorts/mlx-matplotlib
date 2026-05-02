@@ -2,9 +2,8 @@ from collections.abc import Callable, Iterable, Sequence
 import datetime
 from typing import Any, Literal, overload
 from typing import Self
-
-import numpy as np
-from numpy.typing import ArrayLike
+import matplotlib._mlx_numpy as np
+from matplotlib._mlx_typing import ArrayLike
 
 import matplotlib.artist as martist
 from matplotlib import cbook

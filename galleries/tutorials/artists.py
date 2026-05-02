@@ -73,8 +73,7 @@ coordinates::
     ax2 = fig2.add_axes((0.15, 0.1, 0.7, 0.3))
 
 Continuing with our example::
-
-    import numpy as np
+from matplotlib import _mlx_numpy as np
     t = np.arange(0.0, 1.0, 0.01)
     s = np.sin(2*np.pi*t)
     line, = ax.plot(t, s, color='blue', lw=2)
@@ -119,8 +118,7 @@ Try creating the figure below.
 # sphinx_gallery_capture_repr = ('__repr__',)
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 fig = plt.figure()
 fig.subplots_adjust(top=0.8)
 ax1 = fig.add_subplot(211)

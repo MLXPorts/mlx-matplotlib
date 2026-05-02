@@ -108,7 +108,7 @@ Matplotlib's original logo (2003 -- 2008).
 .. plot::
 
    from matplotlib import cbook, pyplot as plt, style
-   import numpy as np
+   from matplotlib import _mlx_numpy as np
 
    style.use("classic")
 
@@ -138,7 +138,7 @@ Matplotlib logo (2008 - 2015).
 
 .. plot::
 
-   import numpy as np
+   from matplotlib import _mlx_numpy as np
    import matplotlib as mpl
    import matplotlib.pyplot as plt
    import matplotlib.cm as cm

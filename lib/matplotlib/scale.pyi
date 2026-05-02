@@ -3,7 +3,7 @@ from matplotlib.transforms import Transform
 
 from collections.abc import Callable, Iterable
 from typing import Literal
-from numpy.typing import ArrayLike
+from matplotlib._mlx_typing import ArrayLike
 
 class ScaleBase:
     def __init__(self, axis: Axis | None) -> None: ...

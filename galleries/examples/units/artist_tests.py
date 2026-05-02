@@ -14,13 +14,12 @@ to scalars.
 
    This example requires :download:`basic_units.py <basic_units.py>`
 """
-import random
+import mlx.core as mx
 
 from basic_units import cm, inch
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.collections as collections
 import matplotlib.lines as lines
 import matplotlib.patches as patches
@@ -39,7 +38,7 @@ if 0:
     verts = []
     for i in range(10):
         # a random line segment in inches
-        verts.append(zip(*inch*10*np.random.rand(2, random.randint(2, 15))))
+        verts.append(zip(*inch * 10 * np.random.rand(2, mx.random.randint(2, 16).item())))
     lc = collections.LineCollection(verts, axes=ax)
     ax.add_collection(lc)
 

@@ -6,9 +6,7 @@ An experimental support for curvilinear grid.
 # see if tick_iterator method can be simplified by reusing the parent method.
 
 import functools
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib import _api, cbook
 import matplotlib.patches as mpatches

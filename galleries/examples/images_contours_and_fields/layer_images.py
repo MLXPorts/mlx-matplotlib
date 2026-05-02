@@ -6,9 +6,7 @@ Layer images with alpha blending
 Layer images above one another using alpha blending
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
-
+from matplotlib import _mlx_numpy as np
 def func3(x, y):
     return (1 - x / 2 + x**5 + y**3) * np.exp(-(x**2 + y**2))
 

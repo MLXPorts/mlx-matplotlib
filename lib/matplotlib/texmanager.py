@@ -26,9 +26,7 @@ import logging
 from pathlib import Path
 import subprocess
 from tempfile import TemporaryDirectory
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib import cbook, dviread
 

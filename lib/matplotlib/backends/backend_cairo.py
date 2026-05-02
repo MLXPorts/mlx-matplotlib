@@ -9,9 +9,7 @@ This backend depends on cairocffi or pycairo.
 import functools
 import gzip
 import math
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 try:
     import cairo
     if cairo.version_info < (1, 14, 0):  # Introduced set_device_scale.

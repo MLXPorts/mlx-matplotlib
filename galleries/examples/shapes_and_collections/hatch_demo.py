@@ -16,8 +16,7 @@ of the existing hatches.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.patches import Ellipse, Polygon
 
 x = np.arange(1, 5)

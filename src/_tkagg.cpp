@@ -30,7 +30,7 @@
 #endif
 
 #include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
+#include "py_buffer.h"
 namespace py = pybind11;
 using namespace pybind11::literals;
 
@@ -96,7 +96,7 @@ static Tcl_SetVar2_t TCL_SETVAR2;
 
 static void
 mpl_tk_blit(py::object interp_obj, const char *photo_name,
-            py::array_t<unsigned char> data, int comp_rule,
+            const py::buffer &data, int comp_rule,
             std::tuple<int, int, int, int> offset, std::tuple<int, int, int, int> bbox)
 {
     auto interp = convert_voidptr<Tcl_Interp *>(interp_obj);
@@ -106,24 +106,24 @@ mpl_tk_blit(py::object interp_obj, const char *photo_name,
         throw py::value_error("Failed to extract Tk_PhotoHandle");
     }
 
-    auto data_ptr = data.mutable_unchecked<3>();  // Checks ndim and writeable flag.
-    if (data.shape(2) != 4) {
+    mpl::BufferView<unsigned char, 3> data_ptr(data, true);
+    if (data_ptr.shape(2) != 4) {
         throw py::value_error(
             "Data pointer must be RGBA; last dimension is {}, not 4"_s.format(
-                data.shape(2)));
+                data_ptr.shape(2)));
     }
-    if (data.shape(0) > INT_MAX) {  // Limited by Tk_PhotoPutBlock argument type.
+    if (data_ptr.shape(0) > INT_MAX) {  // Limited by Tk_PhotoPutBlock argument type.
         throw std::range_error(
             "Height ({}) exceeds maximum allowable size ({})"_s.format(
-                data.shape(0), INT_MAX));
+                data_ptr.shape(0), INT_MAX));
     }
-    if (data.shape(1) > INT_MAX / 4) {  // Limited by Tk_PhotoImageBlock.pitch field.
+    if (data_ptr.shape(1) > INT_MAX / 4) {  // Limited by Tk_PhotoImageBlock.pitch field.
         throw std::range_error(
             "Width ({}) exceeds maximum allowable size ({})"_s.format(
-                data.shape(1), INT_MAX / 4));
+                data_ptr.shape(1), INT_MAX / 4));
     }
-    const auto height = static_cast<int>(data.shape(0));
-    const auto width = static_cast<int>(data.shape(1));
+    const auto height = static_cast<int>(data_ptr.shape(0));
+    const auto width = static_cast<int>(data_ptr.shape(1));
     int x1, x2, y1, y2;
     std::tie(x1, x2, y1, y2) = bbox;
     if (0 > y1 || y1 > y2 || y2 > height || 0 > x1 || x1 > x2 || x2 > width) {
@@ -135,7 +135,7 @@ mpl_tk_blit(py::object interp_obj, const char *photo_name,
 
     int put_retval;
     Tk_PhotoImageBlock block;
-    block.pixelPtr = data_ptr.mutable_data(height - y2, x1, 0);
+    block.pixelPtr = &data_ptr(height - y2, x1, 0);
     block.width = x2 - x1;
     block.height = y2 - y1;
     block.pitch = 4 * width;

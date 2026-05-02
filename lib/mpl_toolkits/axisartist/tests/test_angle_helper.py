@@ -1,6 +1,5 @@
 import re
-
-import numpy as np
+from matplotlib import _mlx_numpy as np
 import pytest
 
 from mpl_toolkits.axisartist.angle_helper import (

@@ -22,12 +22,10 @@ import types
 import weakref
 
 import mlx.core as mx
-import numpy as np  # secondary: used only for np.ma (numpy MaskedArray interop) and np.flatiter
-
-try:
-    from numpy.exceptions import VisibleDeprecationWarning  # numpy >= 1.25
-except ImportError:
-    from numpy import VisibleDeprecationWarning
+from . import _mlx_numpy as np
+# NumPy's VisibleDeprecationWarning is used by Matplotlib for user-facing warnings.
+# In this MLX fork, import the compatibility version from our shim.
+from matplotlib._mlx_numpy import VisibleDeprecationWarning
 
 import matplotlib
 from matplotlib import _api, _c_internal_utils, mlab

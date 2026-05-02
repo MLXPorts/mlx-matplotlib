@@ -35,8 +35,7 @@ rcParams can be modified directly, for example:
 from cycler import cycler
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 
 mpl.rcParams['lines.linewidth'] = 2

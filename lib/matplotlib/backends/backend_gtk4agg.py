@@ -1,5 +1,4 @@
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from .. import cbook
 from . import backend_agg, backend_gtk4
 from .backend_gtk4 import GLib, Gtk, _BackendGTK4

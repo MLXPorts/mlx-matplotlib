@@ -13,8 +13,7 @@ arrays.
 from basic_units import hertz, minutes, secs
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 # create masked array
 data = (1, 2, 3, 4, 5, 6, 7, 8)
 mask = (1, 0, 1, 0, 0, 0, 1, 0)

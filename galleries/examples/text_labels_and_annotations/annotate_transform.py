@@ -11,8 +11,7 @@ For a complete overview of the annotation capabilities, also see the
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 x = np.arange(0, 10, 0.005)
 y = np.exp(-x/2.) * np.sin(2*np.pi*x)
 

@@ -16,8 +16,7 @@ Extracting colors from a continuous colormap
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 
 n_lines = 21

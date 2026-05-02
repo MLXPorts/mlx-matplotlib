@@ -20,9 +20,7 @@ limitations of the 3D visualization, it's not a refined solution for drawing
 arbitrary intersecting planes, which you can copy-and-paste as is.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
-
+from matplotlib import _mlx_numpy as np
 def plot_quadrants(ax, array, fixed_coord, cmap):
     """For a given 3d *array* plot a plane with *fixed_coord*, using four quadrants."""
     nx, ny, nz = array.shape

@@ -1,7 +1,5 @@
 import platform
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib.colors import same_color
 from matplotlib.testing.decorators import image_comparison

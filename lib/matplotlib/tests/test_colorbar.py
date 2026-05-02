@@ -1,6 +1,5 @@
 import platform
-
-import numpy as np
+from matplotlib import _mlx_numpy as np
 import pytest
 
 from matplotlib import cm

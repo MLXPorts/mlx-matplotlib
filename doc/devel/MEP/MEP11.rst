@@ -61,7 +61,7 @@ Current behavior
 
 When installing from source, a :program:`git` checkout or pip_:
 
-- :file:`setup.py` attempts to ``import numpy``.  If this fails, the
+- :file:`setup.py` attempts to ``from matplotlib import _mlx_numpy as numpy``.  If this fails, the
   installation fails.
 
 - For each of dateutil_, pytz_ and six_, :file:`setup.py` attempts to

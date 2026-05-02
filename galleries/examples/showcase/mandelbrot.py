@@ -10,9 +10,7 @@ further enhanced thanks to shading.
 The ``maxiter`` gives the precision of the computation. ``maxiter=200`` should
 take a few seconds on most modern laptops.
 """
-import numpy as np
-
-
+from matplotlib import _mlx_numpy as np
 def mandelbrot_set(xmin, xmax, ymin, ymax, xn, yn, maxiter, horizon=2.0):
     X = np.linspace(xmin, xmax, xn).astype(np.float32)
     Y = np.linspace(ymin, ymax, yn).astype(np.float32)

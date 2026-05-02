@@ -17,8 +17,7 @@ example shows a few features of the `~.axes.Axes.streamplot` function:
 import time
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 w = 3
 Y, X = np.mgrid[-w:w:100j, -w:w:100j]
 U = -1 - X**2 + Y

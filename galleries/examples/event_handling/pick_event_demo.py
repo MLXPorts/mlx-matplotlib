@@ -72,8 +72,7 @@ The examples below illustrate each of these methods.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-from numpy.random import rand
+import mlx.core as mx
 
 from matplotlib.image import AxesImage
 from matplotlib.lines import Line2D
@@ -81,7 +80,7 @@ from matplotlib.patches import Rectangle
 from matplotlib.text import Text
 
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mx.random.seed(19680801)
 
 
 # %%
@@ -91,10 +90,10 @@ np.random.seed(19680801)
 fig, (ax1, ax2) = plt.subplots(2, 1)
 ax1.set_title('click on points, rectangles or text', picker=True)
 ax1.set_ylabel('ylabel', picker=True, bbox=dict(facecolor='red'))
-line, = ax1.plot(rand(100), 'o', picker=True, pickradius=5)
+line, = ax1.plot(mx.random.uniform(shape=(100,)), 'o', picker=True, pickradius=5)
 
 # Pick the rectangle.
-ax2.bar(range(10), rand(10), picker=True)
+ax2.bar(range(10), mx.random.uniform(shape=(10,)), picker=True)
 for label in ax2.get_xticklabels():  # Make the xtick labels pickable.
     label.set_picker(True)
 
@@ -105,7 +104,9 @@ def onpick1(event):
         xdata = thisline.get_xdata()
         ydata = thisline.get_ydata()
         ind = event.ind
-        print('onpick1 line:', np.column_stack([xdata[ind], ydata[ind]]))
+        ind_mx = ind if isinstance(ind, mx.array) else mx.array(ind, dtype=mx.int32)
+        pts = mx.stack([mx.array(xdata)[ind_mx], mx.array(ydata)[ind_mx]], axis=1)
+        print('onpick1 line:', pts)
     elif isinstance(event.artist, Rectangle):
         patch = event.artist
         print('onpick1 patch:', patch.get_path())
@@ -140,13 +141,18 @@ def line_picker(line, mouseevent):
     xdata = line.get_xdata()
     ydata = line.get_ydata()
     maxd = 0.05
-    d = np.sqrt(
-        (xdata - mouseevent.xdata)**2 + (ydata - mouseevent.ydata)**2)
+    x_mx = mx.array(xdata)
+    y_mx = mx.array(ydata)
+    d = mx.sqrt((x_mx - mouseevent.xdata)**2 + (y_mx - mouseevent.ydata)**2)
 
-    ind, = np.nonzero(d <= maxd)
-    if len(ind):
-        pickx = xdata[ind]
-        picky = ydata[ind]
+    mask = d <= maxd
+    mask_i = mask.astype(mx.int32)
+    order = mx.argsort(-mask_i)
+    k = mx.sum(mask_i).item()
+    ind = order[:k]
+    if k:
+        pickx = x_mx[ind]
+        picky = y_mx[ind]
         props = dict(ind=ind, pickx=pickx, picky=picky)
         return True, props
     else:
@@ -159,7 +165,10 @@ def onpick2(event):
 
 fig, ax = plt.subplots()
 ax.set_title('custom picker for line data')
-line, = ax.plot(rand(100), rand(100), 'o', picker=line_picker)
+line, = ax.plot(mx.random.uniform(shape=(100,)),
+                mx.random.uniform(shape=(100,)),
+                'o',
+                picker=line_picker)
 fig.canvas.mpl_connect('pick_event', onpick2)
 
 
@@ -168,7 +177,7 @@ fig.canvas.mpl_connect('pick_event', onpick2)
 # -------------------------
 # A scatter plot is backed by a `~matplotlib.collections.PathCollection`.
 
-x, y, c, s = rand(4, 100)
+x, y, c, s = mx.random.uniform(shape=(4, 100))
 
 
 def onpick3(event):
@@ -188,10 +197,10 @@ fig.canvas.mpl_connect('pick_event', onpick3)
 # objects.
 
 fig, ax = plt.subplots()
-ax.imshow(rand(10, 5), extent=(1, 2, 1, 2), picker=True)
-ax.imshow(rand(5, 10), extent=(3, 4, 1, 2), picker=True)
-ax.imshow(rand(20, 25), extent=(1, 2, 3, 4), picker=True)
-ax.imshow(rand(30, 12), extent=(3, 4, 3, 4), picker=True)
+ax.imshow(mx.random.uniform(shape=(10, 5)), extent=(1, 2, 1, 2), picker=True)
+ax.imshow(mx.random.uniform(shape=(5, 10)), extent=(3, 4, 1, 2), picker=True)
+ax.imshow(mx.random.uniform(shape=(20, 25)), extent=(1, 2, 3, 4), picker=True)
+ax.imshow(mx.random.uniform(shape=(30, 12)), extent=(3, 4, 3, 4), picker=True)
 ax.set(xlim=(0, 5), ylim=(0, 5))
 
 

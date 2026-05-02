@@ -5,9 +5,7 @@ Select indices from a collection using polygon selector
 
 Shows how one can select indices of a polygon interactively.
 """
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.path import Path
 from matplotlib.widgets import PolygonSelector
 

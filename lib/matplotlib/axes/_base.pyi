@@ -24,9 +24,8 @@ from matplotlib.text import Text
 from matplotlib.transforms import Transform, Bbox
 
 from cycler import Cycler
-
-import numpy as np
-from numpy.typing import ArrayLike
+import matplotlib._mlx_numpy as np
+from matplotlib._mlx_typing import ArrayLike
 from typing import Any, Literal, TypeVar, overload
 from matplotlib.typing import ColorType
 

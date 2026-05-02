@@ -295,7 +295,7 @@ reset all the button press data you stored as None.
 
 Here is the solution::
 
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
     import matplotlib.pyplot as plt
 
     class DraggableRectangle:
@@ -364,7 +364,7 @@ smoother.
 Extra credit solution::
 
     # Draggable rectangle with blitting.
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
     import matplotlib.pyplot as plt
 
     class DraggableRectangle:
@@ -579,7 +579,7 @@ the PickEvent.  For example, ``Line2D`` attaches the ind property,
 which are the indices into the line data under the pick point.  See
 `!.Line2D.pick` for details on the ``PickEvent`` properties of the line.  ::
 
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots()
@@ -620,7 +620,7 @@ Exercise solution::
     that generated that point.
     """
 
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
     import matplotlib.pyplot as plt
 
     X = np.random.rand(100, 1000)

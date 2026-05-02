@@ -9,8 +9,7 @@ elements default to colors defined by an rc parameter.
 
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 plt.style.use('dark_background')
 
 fig, ax = plt.subplots()

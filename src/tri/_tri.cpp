@@ -7,8 +7,66 @@
 #include "_tri.h"
 
 #include <algorithm>
+#include <cstdint>
+#include <cstring>
 #include <random>
 #include <set>
+
+namespace {
+
+bool is_empty_optional(py::handle obj)
+{
+    if (obj.is_none()) {
+        return true;
+    }
+    if (py::isinstance<py::tuple>(obj) && py::len(obj) == 0) {
+        return true;
+    }
+    if (py::isinstance<py::list>(obj) && py::len(obj) == 0) {
+        return true;
+    }
+    return false;
+}
+
+template <typename T>
+std::vector<T> copy_1d(const mpl::BufferView<T, 1> &view)
+{
+    std::vector<T> out(static_cast<size_t>(view.shape(0)));
+    for (py::ssize_t i = 0; i < view.shape(0); ++i) {
+        out[static_cast<size_t>(i)] = view(i);
+    }
+    return out;
+}
+
+template <typename T>
+std::vector<T> copy_2d(const mpl::BufferView<T, 2> &view)
+{
+    std::vector<T> out(static_cast<size_t>(view.shape(0) * view.shape(1)));
+    for (py::ssize_t i = 0; i < view.shape(0); ++i) {
+        for (py::ssize_t j = 0; j < view.shape(1); ++j) {
+            out[static_cast<size_t>(i * view.shape(1) + j)] = view(i, j);
+        }
+    }
+    return out;
+}
+
+py::memoryview make_view_from_bytearray(const py::bytearray &ba, const char *format, const py::tuple &shape)
+{
+    py::object mv = py::module_::import("builtins").attr("memoryview")(ba);
+    return mv.attr("cast")(format, shape).cast<py::memoryview>();
+}
+
+py::bytearray bytearray_of_size(py::ssize_t nbytes)
+{
+    py::bytearray ba = py::reinterpret_steal<py::bytearray>(
+        PyByteArray_FromStringAndSize(nullptr, nbytes));
+    if (!ba) {
+        throw py::error_already_set();
+    }
+    return ba;
+}
+
+}  // namespace
 
 
 TriEdge::TriEdge()
@@ -201,45 +259,86 @@ void write_contour(const Contour& contour)
 
 
 
-Triangulation::Triangulation(const CoordinateArray& x,
-                             const CoordinateArray& y,
-                             const TriangleArray& triangles,
-                             const MaskArray& mask,
-                             const EdgeArray& edges,
-                             const NeighborArray& neighbors,
+Triangulation::Triangulation(const py::buffer& x,
+                             const py::buffer& y,
+                             const py::buffer& triangles,
+                             py::object mask,
+                             py::object edges,
+                             py::object neighbors,
                              bool correct_triangle_orientations)
-    : _x(x),
-      _y(y),
-      _triangles(triangles),
-      _mask(mask),
-      _edges(edges),
-      _neighbors(neighbors)
 {
-    if (_x.ndim() != 1 || _y.ndim() != 1 || _x.shape(0) != _y.shape(0))
-        throw std::invalid_argument("x and y must be 1D arrays of the same length");
+    mpl::BufferView<double, 1> x_view(x);
+    mpl::BufferView<double, 1> y_view(y);
 
-    if (_triangles.ndim() != 2 || _triangles.shape(1) != 3)
+    if (x_view.shape(0) != y_view.shape(0)) {
+        throw std::invalid_argument("x and y must be 1D arrays of the same length");
+    }
+
+    mpl::BufferView<std::int32_t, 2> triangles_view(triangles);
+
+    if (triangles_view.shape(1) != 3) {
         throw std::invalid_argument("triangles must be a 2D array of shape (?,3)");
+    }
+
+    _npoints = static_cast<int>(x_view.shape(0));
+    _ntri = static_cast<int>(triangles_view.shape(0));
+
+    _x = copy_1d(x_view);
+    _y = copy_1d(y_view);
+    {
+        auto tri_tmp = copy_2d(triangles_view);
+        _triangles.resize(tri_tmp.size());
+        for (size_t i = 0; i < tri_tmp.size(); ++i) {
+            _triangles[i] = static_cast<int>(tri_tmp[i]);
+        }
+    }
 
     // Optional mask.
-    if (_mask.size() > 0 &&
-        (_mask.ndim() != 1 || _mask.shape(0) != _triangles.shape(0)))
-        throw std::invalid_argument(
-            "mask must be a 1D array with the same length as the triangles array");
+    if (!is_empty_optional(mask)) {
+        auto mask_buf = py::reinterpret_borrow<py::buffer>(mask);
+        mpl::BufferView<bool, 1> mask_view(mask_buf);
+        if (mask_view.shape(0) != triangles_view.shape(0)) {
+            throw std::invalid_argument(
+                "mask must be a 1D array with the same length as the triangles array");
+        }
+        _mask.resize(static_cast<size_t>(mask_view.shape(0)));
+        for (py::ssize_t i = 0; i < mask_view.shape(0); ++i) {
+            _mask[static_cast<size_t>(i)] = mask_view(i) ? 1 : 0;
+        }
+    }
 
     // Optional edges.
-    if (_edges.size() > 0 &&
-        (_edges.ndim() != 2 || _edges.shape(1) != 2))
-        throw std::invalid_argument("edges must be a 2D array with shape (?,2)");
+    if (!is_empty_optional(edges)) {
+        auto edges_buf = py::reinterpret_borrow<py::buffer>(edges);
+        mpl::BufferView<std::int32_t, 2> edges_view(edges_buf);
+        if (edges_view.shape(1) != 2) {
+            throw std::invalid_argument("edges must be a 2D array with shape (?,2)");
+        }
+        auto e_tmp = copy_2d(edges_view);
+        _edges.resize(e_tmp.size());
+        for (size_t i = 0; i < e_tmp.size(); ++i) {
+            _edges[i] = static_cast<int>(e_tmp[i]);
+        }
+    }
 
     // Optional neighbors.
-    if (_neighbors.size() > 0 &&
-        (_neighbors.ndim() != 2 || _neighbors.shape() != _triangles.shape()))
-        throw std::invalid_argument(
-            "neighbors must be a 2D array with the same shape as the triangles array");
+    if (!is_empty_optional(neighbors)) {
+        auto neigh_buf = py::reinterpret_borrow<py::buffer>(neighbors);
+        mpl::BufferView<std::int32_t, 2> neigh_view(neigh_buf);
+        if (neigh_view.shape(0) != triangles_view.shape(0) || neigh_view.shape(1) != 3) {
+            throw std::invalid_argument(
+                "neighbors must be a 2D array with the same shape as the triangles array");
+        }
+        auto n_tmp = copy_2d(neigh_view);
+        _neighbors.resize(n_tmp.size());
+        for (size_t i = 0; i < n_tmp.size(); ++i) {
+            _neighbors[i] = static_cast<int>(n_tmp[i]);
+        }
+    }
 
-    if (correct_triangle_orientations)
+    if (correct_triangle_orientations) {
         correct_triangles();
+    }
 }
 
 void Triangulation::calculate_boundaries()
@@ -315,15 +414,11 @@ void Triangulation::calculate_edges()
         }
     }
 
-    // Convert to python _edges array.
-    py::ssize_t dims[2] = {static_cast<py::ssize_t>(edge_set.size()), 2};
-    _edges = EdgeArray(dims);
-    auto edges = _edges.mutable_data();
-
-    int i = 0;
+    _edges.clear();
+    _edges.reserve(edge_set.size() * 2);
     for (const auto & it : edge_set) {
-        edges[i++] = it.start;
-        edges[i++] = it.end;
+        _edges.push_back(it.start);
+        _edges.push_back(it.end);
     }
 }
 
@@ -331,13 +426,11 @@ void Triangulation::calculate_neighbors()
 {
     assert(!has_neighbors() && "Expected empty neighbors array");
 
-    // Create _neighbors array with shape (ntri,3) and initialise all to -1.
-    py::ssize_t dims[2] = {get_ntri(), 3};
-    _neighbors = NeighborArray(dims);
-    auto* neighbors = _neighbors.mutable_data();
+    _neighbors.assign(static_cast<size_t>(3 * get_ntri()), -1);
+    auto *neighbors = _neighbors.data();
 
     int tri, edge;
-    std::fill(neighbors, neighbors+3*get_ntri(), -1);
+    // already initialized to -1
 
     // For each triangle edge (start to end point), find corresponding neighbor
     // edge from end to start point.  Do this by traversing all edges and
@@ -371,27 +464,21 @@ void Triangulation::calculate_neighbors()
     // boundary edges, but the boundaries are calculated separately elsewhere.
 }
 
-Triangulation::TwoCoordinateArray Triangulation::calculate_plane_coefficients(
-    const CoordinateArray& z)
+py::memoryview Triangulation::calculate_plane_coefficients(const py::buffer& z)
 {
-    if (z.ndim() != 1 || z.shape(0) != _x.shape(0))
+    mpl::BufferView<double, 1> z_view(z);
+    if (z_view.shape(0) != static_cast<py::ssize_t>(_x.size()))
         throw std::invalid_argument(
             "z must be a 1D array with the same length as the triangulation x and y arrays");
 
-    int dims[2] = {get_ntri(), 3};
-    Triangulation::TwoCoordinateArray planes_array(dims);
-    auto planes = planes_array.mutable_unchecked<2>();
-    auto triangles = _triangles.unchecked<2>();
-    auto x = _x.unchecked<1>();
-    auto y = _y.unchecked<1>();
-    auto z_ptr = z.unchecked<1>();
+    std::vector<double> planes_vec(static_cast<size_t>(get_ntri() * 3), 0.0);
 
     int point;
     for (int tri = 0; tri < get_ntri(); ++tri) {
         if (is_masked(tri)) {
-            planes(tri, 0) = 0.0;
-            planes(tri, 1) = 0.0;
-            planes(tri, 2) = 0.0;
+            planes_vec[static_cast<size_t>(3 * tri + 0)] = 0.0;
+            planes_vec[static_cast<size_t>(3 * tri + 1)] = 0.0;
+            planes_vec[static_cast<size_t>(3 * tri + 2)] = 0.0;
         }
         else {
             // Equation of plane for all points r on plane is r.normal = p
@@ -401,12 +488,12 @@ Triangulation::TwoCoordinateArray Triangulation::calculate_plane_coefficients(
             // and rearrange to give
             // r_z = (-normal_x/normal_z)*r_x + (-normal_y/normal_z)*r_y +
             //       p/normal_z
-            point = triangles(tri, 0);
-            XYZ point0(x(point), y(point), z_ptr(point));
-            point = triangles(tri, 1);
-            XYZ side01 = XYZ(x(point), y(point), z_ptr(point)) - point0;
-            point = triangles(tri, 2);
-            XYZ side02 = XYZ(x(point), y(point), z_ptr(point)) - point0;
+            point = _triangles[static_cast<size_t>(3 * tri + 0)];
+            XYZ point0(_x[static_cast<size_t>(point)], _y[static_cast<size_t>(point)], z_view(point));
+            point = _triangles[static_cast<size_t>(3 * tri + 1)];
+            XYZ side01 = XYZ(_x[static_cast<size_t>(point)], _y[static_cast<size_t>(point)], z_view(point)) - point0;
+            point = _triangles[static_cast<size_t>(3 * tri + 2)];
+            XYZ side02 = XYZ(_x[static_cast<size_t>(point)], _y[static_cast<size_t>(point)], z_view(point)) - point0;
 
             XYZ normal = side01.cross(side02);
 
@@ -418,25 +505,28 @@ Triangulation::TwoCoordinateArray Triangulation::calculate_plane_coefficients(
                                side02.x*side02.x + side02.y*side02.y);
                 double a = (side01.x*side01.z + side02.x*side02.z) / sum2;
                 double b = (side01.y*side01.z + side02.y*side02.z) / sum2;
-                planes(tri, 0) = a;
-                planes(tri, 1) = b;
-                planes(tri, 2) = point0.z - a*point0.x - b*point0.y;
+                planes_vec[static_cast<size_t>(3 * tri + 0)] = a;
+                planes_vec[static_cast<size_t>(3 * tri + 1)] = b;
+                planes_vec[static_cast<size_t>(3 * tri + 2)] = point0.z - a*point0.x - b*point0.y;
             }
             else {
-                planes(tri, 0) = -normal.x / normal.z;           // x
-                planes(tri, 1) = -normal.y / normal.z;           // y
-                planes(tri, 2) = normal.dot(point0) / normal.z;  // constant
+                planes_vec[static_cast<size_t>(3 * tri + 0)] = -normal.x / normal.z;           // x
+                planes_vec[static_cast<size_t>(3 * tri + 1)] = -normal.y / normal.z;           // y
+                planes_vec[static_cast<size_t>(3 * tri + 2)] = normal.dot(point0) / normal.z;  // constant
             }
         }
     }
 
-    return planes_array;
+    py::bytearray ba = bytearray_of_size(
+        static_cast<py::ssize_t>(planes_vec.size() * sizeof(double)));
+    std::memcpy(PyByteArray_AsString(ba.ptr()), planes_vec.data(), planes_vec.size() * sizeof(double));
+    return make_view_from_bytearray(ba, "d", py::make_tuple(static_cast<py::ssize_t>(get_ntri()), 3));
 }
 
 void Triangulation::correct_triangles()
 {
-    auto triangles = _triangles.mutable_data();
-    auto neighbors = _neighbors.mutable_data();
+    auto *triangles = _triangles.data();
+    auto *neighbors = _neighbors.empty() ? nullptr : _neighbors.data();
 
     for (int tri = 0; tri < get_ntri(); ++tri) {
         XY point0 = get_point_coords(triangles[3*tri]);
@@ -483,11 +573,18 @@ int Triangulation::get_edge_in_triangle(int tri, int point) const
     return -1;  // point is not in triangle.
 }
 
-Triangulation::EdgeArray& Triangulation::get_edges()
+py::memoryview Triangulation::get_edges()
 {
-    if (!has_edges())
+    if (!has_edges()) {
         calculate_edges();
-    return _edges;
+    }
+
+    py::bytearray ba = bytearray_of_size(
+        static_cast<py::ssize_t>(_edges.size() * sizeof(std::int32_t)));
+    if (!_edges.empty()) {
+        std::memcpy(PyByteArray_AsString(ba.ptr()), _edges.data(), _edges.size() * sizeof(std::int32_t));
+    }
+    return make_view_from_bytearray(ba, "i", py::make_tuple(static_cast<py::ssize_t>(_edges.size() / 2), 2));
 }
 
 int Triangulation::get_neighbor(int tri, int edge) const
@@ -511,34 +608,41 @@ TriEdge Triangulation::get_neighbor_edge(int tri, int edge) const
                                                                (edge+1)%3)));
 }
 
-Triangulation::NeighborArray& Triangulation::get_neighbors()
+py::memoryview Triangulation::get_neighbors()
 {
-    if (!has_neighbors())
+    if (!has_neighbors()) {
         calculate_neighbors();
-    return _neighbors;
+    }
+
+    py::bytearray ba = bytearray_of_size(
+        static_cast<py::ssize_t>(_neighbors.size() * sizeof(std::int32_t)));
+    if (!_neighbors.empty()) {
+        std::memcpy(PyByteArray_AsString(ba.ptr()), _neighbors.data(), _neighbors.size() * sizeof(std::int32_t));
+    }
+    return make_view_from_bytearray(ba, "i", py::make_tuple(static_cast<py::ssize_t>(get_ntri()), 3));
 }
 
 int Triangulation::get_npoints() const
 {
-    return _x.shape(0);
+    return _npoints;
 }
 
 int Triangulation::get_ntri() const
 {
-    return _triangles.shape(0);
+    return _ntri;
 }
 
 XY Triangulation::get_point_coords(int point) const
 {
     assert(point >= 0 && point < get_npoints() && "Point index out of bounds.");
-    return XY(_x.data()[point], _y.data()[point]);
+    return XY(_x[static_cast<size_t>(point)], _y[static_cast<size_t>(point)]);
 }
 
 int Triangulation::get_triangle_point(int tri, int edge) const
 {
     assert(tri >= 0 && tri < get_ntri() && "Triangle index out of bounds");
     assert(edge >= 0 && edge < 3 && "Edge index out of bounds");
-    return _triangles.data()[3*tri + edge];
+    return _triangles[static_cast<size_t>(3 * tri + edge)];
 }
 
 int Triangulation::get_triangle_point(const TriEdge& tri_edge) const
@@ -564,21 +668,28 @@ bool Triangulation::has_neighbors() const
 bool Triangulation::is_masked(int tri) const
 {
     assert(tri >= 0 && tri < get_ntri() && "Triangle index out of bounds.");
-    return has_mask() && _mask.data()[tri];
+    return has_mask() && _mask[static_cast<size_t>(tri)] != 0;
 }
 
-void Triangulation::set_mask(const MaskArray& mask)
+void Triangulation::set_mask(py::object mask)
 {
-    if (mask.size() > 0 &&
-        (mask.ndim() != 1 || mask.shape(0) != _triangles.shape(0)))
-        throw std::invalid_argument(
-            "mask must be a 1D array with the same length as the triangles array");
-
-    _mask = mask;
+    _mask.clear();
+    if (!is_empty_optional(mask)) {
+        auto mask_buf = py::reinterpret_borrow<py::buffer>(mask);
+        mpl::BufferView<bool, 1> mask_view(mask_buf);
+        if (mask_view.shape(0) != get_ntri()) {
+            throw std::invalid_argument(
+                "mask must be a 1D array with the same length as the triangles array");
+        }
+        _mask.resize(static_cast<size_t>(mask_view.shape(0)));
+        for (py::ssize_t i = 0; i < mask_view.shape(0); ++i) {
+            _mask[static_cast<size_t>(i)] = mask_view(i) ? 1 : 0;
+        }
+    }
 
     // Clear derived fields so they are recalculated when needed.
-    _edges = EdgeArray();
-    _neighbors = NeighborArray();
+    _edges.clear();
+    _neighbors.clear();
     _boundaries.clear();
 }
 
@@ -598,14 +709,15 @@ void Triangulation::write_boundaries() const
 
 
 TriContourGenerator::TriContourGenerator(Triangulation& triangulation,
-                                         const CoordinateArray& z)
+                                         const py::buffer& z)
     : _triangulation(triangulation),
-      _z(z),
+      _z_buf(z),
+      _z(_z_buf),
       _interior_visited(2*_triangulation.get_ntri()),
       _boundaries_visited(0),
       _boundaries_used(0)
 {
-    if (_z.ndim() != 1 || _z.shape(0) != _triangulation.get_npoints())
+    if (_z.shape(0) != _triangulation.get_npoints())
         throw std::invalid_argument(
             "z must be a 1D array with the same length as the x and y arrays");
 }
@@ -660,13 +772,13 @@ py::tuple TriContourGenerator::contour_line_to_segs_and_kinds(const Contour& con
         const ContourLine& contour_line = contour[i];
         py::ssize_t npoints = static_cast<py::ssize_t>(contour_line.size());
 
-        py::ssize_t segs_dims[2] = {npoints, 2};
-        CoordinateArray segs(segs_dims);
-        double* segs_ptr = segs.mutable_data();
+        py::bytearray segs_ba = bytearray_of_size(
+            static_cast<py::ssize_t>(npoints * 2 * sizeof(double)));
+        auto *segs_ptr = reinterpret_cast<double *>(PyByteArray_AsString(segs_ba.ptr()));
 
-        py::ssize_t codes_dims[1] = {npoints};
-        CodeArray codes(codes_dims);
-        unsigned char* codes_ptr = codes.mutable_data();
+        py::bytearray codes_ba = bytearray_of_size(
+            static_cast<py::ssize_t>(npoints * sizeof(unsigned char)));
+        auto *codes_ptr = reinterpret_cast<unsigned char *>(PyByteArray_AsString(codes_ba.ptr()));
 
         for (const auto & point : contour_line) {
             *segs_ptr++ = point.x;
@@ -674,7 +786,7 @@ py::tuple TriContourGenerator::contour_line_to_segs_and_kinds(const Contour& con
             *codes_ptr++ = LINETO;
         }
         if (npoints > 0) {
-            *codes.mutable_data(0) = MOVETO;
+            *reinterpret_cast<unsigned char *>(PyByteArray_AsString(codes_ba.ptr())) = MOVETO;
         }
 
         // Closed line loop has identical first and last (x, y) points.
@@ -682,8 +794,8 @@ py::tuple TriContourGenerator::contour_line_to_segs_and_kinds(const Contour& con
             contour_line.front() == contour_line.back())
             *(codes_ptr-1) = CLOSEPOLY;
 
-        vertices_list[i] = segs;
-        codes_list[i] = codes;
+        vertices_list[i] = make_view_from_bytearray(segs_ba, "d", py::make_tuple(npoints, 2));
+        codes_list[i] = make_view_from_bytearray(codes_ba, "B", py::make_tuple(npoints));
     }
 
     return py::make_tuple(vertices_list, codes_list);
@@ -711,15 +823,13 @@ py::tuple TriContourGenerator::contour_to_segs_and_kinds(const Contour& contour)
         n_points += static_cast<py::ssize_t>(line.size());
     }
 
-    // Create segs array for point coordinates.
-    py::ssize_t segs_dims[2] = {n_points, 2};
-    TwoCoordinateArray segs(segs_dims);
-    double* segs_ptr = segs.mutable_data();
+    py::bytearray segs_ba = bytearray_of_size(
+        static_cast<py::ssize_t>(n_points * 2 * sizeof(double)));
+    auto *segs_ptr = reinterpret_cast<double *>(PyByteArray_AsString(segs_ba.ptr()));
 
-    // Create kinds array for code types.
-    py::ssize_t codes_dims[1] = {n_points};
-    CodeArray codes(codes_dims);
-    unsigned char* codes_ptr = codes.mutable_data();
+    py::bytearray codes_ba = bytearray_of_size(
+        static_cast<py::ssize_t>(n_points * sizeof(unsigned char)));
+    auto *codes_ptr = reinterpret_cast<unsigned char *>(PyByteArray_AsString(codes_ba.ptr()));
 
     for (const auto & line : contour) {
         for (auto point = line.cbegin(); point != line.cend(); point++) {
@@ -734,10 +844,10 @@ py::tuple TriContourGenerator::contour_to_segs_and_kinds(const Contour& contour)
     }
 
     py::list vertices_list(1);
-    vertices_list[0] = segs;
+    vertices_list[0] = make_view_from_bytearray(segs_ba, "d", py::make_tuple(n_points, 2));
 
     py::list codes_list(1);
-    codes_list[0] = codes;
+    codes_list[0] = make_view_from_bytearray(codes_ba, "B", py::make_tuple(n_points));
 
     return py::make_tuple(vertices_list, codes_list);
 }
@@ -1300,26 +1410,32 @@ TrapezoidMapTriFinder::clear()
     _tree = nullptr;
 }
 
-TrapezoidMapTriFinder::TriIndexArray
-TrapezoidMapTriFinder::find_many(const CoordinateArray& x,
-                                 const CoordinateArray& y)
+py::memoryview TrapezoidMapTriFinder::find_many(const py::buffer& x,
+                                                const py::buffer& y)
 {
-    if (x.ndim() != 1 || y.ndim() != 1 || x.shape(0) != y.shape(0))
-        throw std::invalid_argument(
-            "x and y must be array-like with same shape");
+    mpl::BufferView<double, 1> x_view(x);
+    mpl::BufferView<double, 1> y_view(y);
+    if (x_view.shape(0) != y_view.shape(0)) {
+        throw std::invalid_argument("x and y must be array-like with same shape");
+    }
 
-    // Create integer array to return.
-    auto n = x.shape(0);
-    TriIndexArray tri_indices_array(n);
-    auto tri_indices = tri_indices_array.mutable_unchecked<1>();
-    auto x_data = x.data();
-    auto y_data = y.data();
+    auto n = x_view.shape(0);
+    std::vector<std::int32_t> tri_indices_vec(static_cast<size_t>(n));
 
     // Fill returned array.
-    for (py::ssize_t i = 0; i < n; ++i)
-        tri_indices(i) = find_one(XY(x_data[i], y_data[i]));
+    for (py::ssize_t i = 0; i < n; ++i) {
+        tri_indices_vec[static_cast<size_t>(i)] =
+            static_cast<std::int32_t>(find_one(XY(x_view(i), y_view(i))));
+    }
 
-    return tri_indices_array;
+    py::bytearray ba = bytearray_of_size(
+        static_cast<py::ssize_t>(tri_indices_vec.size() * sizeof(std::int32_t)));
+    if (!tri_indices_vec.empty()) {
+        std::memcpy(PyByteArray_AsString(ba.ptr()),
+                    tri_indices_vec.data(),
+                    tri_indices_vec.size() * sizeof(std::int32_t));
+    }
+    return make_view_from_bytearray(ba, "i", py::make_tuple(n));
 }
 
 int

@@ -11,8 +11,7 @@ rectangular box. In order to get a better sense of polar curves, please look at
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.projections import PolarAxes
 from matplotlib.transforms import Affine2D
 from mpl_toolkits.axisartist import GridHelperCurveLinear, HostAxes

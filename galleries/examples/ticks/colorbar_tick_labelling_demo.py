@@ -10,8 +10,7 @@ of the visible colorbar Axes. For further adjustments, the ``yaxis`` or
 ``xaxis`` Axes of the colorbar can be retrieved using its ``ax`` property.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.ticker as mticker
 
 # Fixing random state for reproducibility

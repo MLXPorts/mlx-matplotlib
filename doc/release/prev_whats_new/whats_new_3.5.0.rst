@@ -424,7 +424,7 @@ hide quads that contain masked or NaN points. The behaviour is similar to
 
     import matplotlib
     import matplotlib.pyplot as plt
-    import numpy as np
+    from matplotlib import _mlx_numpy as np
 
     fig, ax = plt.subplots(figsize=(6, 6), subplot_kw={'projection': '3d'},
                            constrained_layout=True)

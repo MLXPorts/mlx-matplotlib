@@ -10,8 +10,7 @@ the take-off angle, and thrust to the marker color.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.colors import Normalize
 from matplotlib.markers import MarkerStyle
 from matplotlib.text import TextPath

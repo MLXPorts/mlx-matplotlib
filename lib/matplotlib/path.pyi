@@ -1,9 +1,8 @@
 from .bezier import BezierSegment
 from .transforms import Affine2D, Transform, Bbox
 from collections.abc import Generator, Iterable, Sequence
-
-import numpy as np
-from numpy.typing import ArrayLike
+import matplotlib._mlx_numpy as np
+from matplotlib._mlx_typing import ArrayLike
 
 from typing import Any, overload
 

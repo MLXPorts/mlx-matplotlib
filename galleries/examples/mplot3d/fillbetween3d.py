@@ -8,8 +8,7 @@ create a sort of "lampshade" shape.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 N = 50
 theta = np.linspace(0, 2*np.pi, N)
 

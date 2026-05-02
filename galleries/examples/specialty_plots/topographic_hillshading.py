@@ -17,8 +17,7 @@ this example demonstrates how to use the *dx* and *dy* keyword arguments to
 ensure that the *vert_exag* parameter is the true vertical exaggeration.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.cbook import get_sample_data
 from matplotlib.colors import LightSource
 

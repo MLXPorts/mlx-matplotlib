@@ -8,8 +8,8 @@ import timeit
 from types import SimpleNamespace
 
 from cycler import cycler
-import numpy as np
-from numpy.testing import assert_array_equal
+from matplotlib import _mlx_numpy as np
+from matplotlib.mlx_testing import assert_array_equal
 import pytest
 
 import matplotlib

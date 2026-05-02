@@ -11,8 +11,7 @@ description of the annotation and text tools in Matplotlib, see the
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.patches import Ellipse
 from matplotlib.text import OffsetFrom
 

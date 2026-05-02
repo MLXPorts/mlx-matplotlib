@@ -11,9 +11,7 @@ from matplotlib import colors as mcolors
 from matplotlib import patches as mpatches
 from matplotlib import transforms as mtransforms
 from matplotlib.path import Path
-import numpy as np
-
-
+from matplotlib import _mlx_numpy as np
 class AbstractPathEffect:
     """
     A base class for path effects.

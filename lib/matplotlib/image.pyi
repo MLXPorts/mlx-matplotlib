@@ -2,9 +2,8 @@ from collections.abc import Callable, Sequence
 import os
 import pathlib
 from typing import Any, BinaryIO, Literal
-
-import numpy as np
-from numpy.typing import ArrayLike, NDArray
+import matplotlib._mlx_numpy as np
+from matplotlib._mlx_typing import ArrayLike, NDArray
 import PIL.Image
 
 from matplotlib.axes import Axes

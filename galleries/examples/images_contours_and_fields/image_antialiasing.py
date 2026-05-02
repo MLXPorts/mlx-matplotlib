@@ -20,8 +20,7 @@ hence is up-sampled.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 fig, axs = plt.subplots(1, 2, figsize=(4, 2))
 
 # First we generate a 450x450 pixel image with varying frequency content:

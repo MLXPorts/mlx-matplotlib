@@ -7,9 +7,7 @@ with the purpose and type of your colormap if you add data for one here.
 """
 
 from functools import partial
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 _binary_data = {
     'red':    ((0., 1., 1.), (1., 0., 0.)),
     'green':  ((0., 1., 1.), (1., 0., 0.)),

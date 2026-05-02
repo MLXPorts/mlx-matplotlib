@@ -12,8 +12,7 @@ Texts are aligned relative to their anchor point depending on the properties
 .. plot::
 
     import matplotlib.pyplot as plt
-    import numpy as np
-
+from matplotlib import _mlx_numpy as np
     y = [0.22, 0.34, 0.5, 0.56, 0.78]
     x = [0.17, 0.5, 0.855]
     X, Y = np.meshgrid(x, y)

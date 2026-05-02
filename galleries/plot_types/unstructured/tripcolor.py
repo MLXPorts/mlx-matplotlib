@@ -7,8 +7,7 @@ Create a pseudocolor plot of an unstructured triangular grid.
 See `~matplotlib.axes.Axes.tripcolor`.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 plt.style.use('_mpl-gallery-nogrid')
 
 # make data:

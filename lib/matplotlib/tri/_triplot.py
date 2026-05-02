@@ -1,4 +1,4 @@
-import numpy as np
+from matplotlib import _mlx_numpy as np
 from matplotlib.tri._triangulation import Triangulation
 import matplotlib.cbook as cbook
 import matplotlib.lines as mlines

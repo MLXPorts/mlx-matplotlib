@@ -18,8 +18,7 @@ pearson correlation coefficients and ones) is particularly easy to handle.
 
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.patches import Ellipse
 import matplotlib.transforms as transforms
 

@@ -7,22 +7,21 @@ Plot a 2D field of wind barbs.
 See `~matplotlib.axes.Axes.barbs`.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+import mlx.core as mx
 plt.style.use('_mpl-gallery-nogrid')
 
 # make data:
-X, Y = np.meshgrid([1, 2, 3, 4], [1, 2, 3, 4])
-angle = np.pi / 180 * np.array([[15., 30, 35, 45],
+X, Y = mx.meshgrid(mx.array([1, 2, 3, 4]), mx.array([1, 2, 3, 4]))
+angle = mx.pi / 180 * mx.array([[15., 30, 35, 45],
                                 [25., 40, 55, 60],
                                 [35., 50, 65, 75],
                                 [45., 60, 75, 90]])
-amplitude = np.array([[5, 10, 25, 50],
+amplitude = mx.array([[5, 10, 25, 50],
                       [10, 15, 30, 60],
                       [15, 26, 50, 70],
                       [20, 45, 80, 100]])
-U = amplitude * np.sin(angle)
-V = amplitude * np.cos(angle)
+U = amplitude * mx.sin(angle)
+V = amplitude * mx.cos(angle)
 
 # plot:
 fig, ax = plt.subplots()

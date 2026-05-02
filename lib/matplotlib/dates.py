@@ -8,9 +8,7 @@ objects when plotted on an x- or y-axis. The user does not
 need to do anything for dates to be formatted, but dates often have strict
 formatting needs, so this module provides many tick locators and formatters.
 A basic example using `numpy.datetime64` is::
-
-    import numpy as np
-
+from matplotlib import _mlx_numpy as np
     times = np.arange(np.datetime64('2001-01-02'),
                       np.datetime64('2002-02-03'), np.timedelta64(75, 'm'))
     y = np.random.randn(len(times))
@@ -184,8 +182,7 @@ from dateutil.rrule import (rrule, MO, TU, WE, TH, FR, SA, SU, YEARLY,
 from dateutil.relativedelta import relativedelta
 import dateutil.parser
 import dateutil.tz
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib as mpl
 from matplotlib import _api, cbook, ticker, units
 

@@ -11,8 +11,7 @@ rendering. You can modify the rendering of Artists by applying a filter via
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 from matplotlib.artist import Artist
 from matplotlib.colors import LightSource
 import matplotlib.transforms as mtransforms

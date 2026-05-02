@@ -7,8 +7,7 @@ Plot a 3D surface with a triangular mesh.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 n_radii = 8
 n_angles = 36
 

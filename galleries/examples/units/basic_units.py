@@ -19,9 +19,7 @@ import itertools
 import math
 
 from packaging.version import parse as parse_version
-
-import numpy as np
-
+from matplotlib import _mlx_numpy as np
 import matplotlib.ticker as ticker
 import matplotlib.units as units
 

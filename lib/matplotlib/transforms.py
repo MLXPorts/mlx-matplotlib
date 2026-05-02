@@ -40,15 +40,52 @@ import itertools
 import textwrap
 import weakref
 import math
-
-import numpy as np
-from numpy.linalg import inv
+from array import array as _array
+from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_numpy as np
+inv = np.linalg.inv
 
 from matplotlib import _api
-from matplotlib._path import affine_transform, count_bboxes_overlapping_bbox
+from matplotlib._path import (
+    affine_transform as _path_affine_transform,
+    count_bboxes_overlapping_bbox,
+)
 from .path import Path
 
 DEBUG = False
+
+
+def _plain_float_data(values):
+    if isinstance(values, np.ndarray):
+        values = values.tolist()
+    if isinstance(values, (list, tuple)):
+        return [_plain_float_data(value) for value in values]
+    if hasattr(values, "item"):
+        values = values.item()
+    return float(values)
+
+
+def _as_float_memoryview(values):
+    values = _plain_float_data(values)
+    if (isinstance(values, list) and values
+            and isinstance(values[0], list)):
+        shape = (len(values), len(values[0]))
+        flat = [item for row in values for item in row]
+    else:
+        shape = (len(values),)
+        flat = values
+    buf = _array("d", flat)
+    return memoryview(buf).cast("B").cast("d", shape=shape)
+
+
+def affine_transform(values, mtx):
+    result = _path_affine_transform(
+        _as_float_memoryview(values), _as_float_memoryview(mtx))
+    return np.array(result.tolist(), dtype=float)
+
+
+def _maybe_scalar(value):
+    return value.item() if hasattr(value, "item") else value
 
 
 def _make_str_method(*args, **kwargs):
@@ -242,7 +279,7 @@ class BboxBase(TransformNode):
         This is not guaranteed to be less than :attr:`x1` (for that, use
         :attr:`~BboxBase.xmin`).
         """
-        return self.get_points()[0, 0]
+        return _maybe_scalar(self.get_points()[0, 0])
 
     @property
     def y0(self):
@@ -252,7 +289,7 @@ class BboxBase(TransformNode):
         This is not guaranteed to be less than :attr:`y1` (for that, use
         :attr:`~BboxBase.ymin`).
         """
-        return self.get_points()[0, 1]
+        return _maybe_scalar(self.get_points()[0, 1])
 
     @property
     def x1(self):
@@ -262,7 +299,7 @@ class BboxBase(TransformNode):
         This is not guaranteed to be greater than :attr:`x0` (for that, use
         :attr:`~BboxBase.xmax`).
         """
-        return self.get_points()[1, 0]
+        return _maybe_scalar(self.get_points()[1, 0])
 
     @property
     def y1(self):
@@ -272,7 +309,7 @@ class BboxBase(TransformNode):
         This is not guaranteed to be greater than :attr:`y0` (for that, use
         :attr:`~BboxBase.ymax`).
         """
-        return self.get_points()[1, 1]
+        return _maybe_scalar(self.get_points()[1, 1])
 
     @property
     def p0(self):
@@ -346,13 +383,15 @@ class BboxBase(TransformNode):
     def width(self):
         """The (signed) width of the bounding box."""
         points = self.get_points()
-        return points[1, 0] - points[0, 0]
+        width = points[1, 0] - points[0, 0]
+        return _maybe_scalar(width)
 
     @property
     def height(self):
         """The (signed) height of the bounding box."""
         points = self.get_points()
-        return points[1, 1] - points[0, 1]
+        height = points[1, 1] - points[0, 1]
+        return _maybe_scalar(height)
 
     @property
     def size(self):
@@ -2008,16 +2047,13 @@ class Affine2D(Affine2DBase):
         """
         a = math.cos(theta)
         b = math.sin(theta)
-        mtx = self._mtx
-        # Operating and assigning one scalar at a time is much faster.
-        (xx, xy, x0), (yx, yy, y0), _ = mtx.tolist()
-        # mtx = [[a -b 0], [b a 0], [0 0 1]] * mtx
-        mtx[0, 0] = a * xx - b * yx
-        mtx[0, 1] = a * xy - b * yy
-        mtx[0, 2] = a * x0 - b * y0
-        mtx[1, 0] = b * xx + a * yx
-        mtx[1, 1] = b * xy + a * yy
-        mtx[1, 2] = b * x0 + a * y0
+        rot = np.identity(3, dtype=self._mtx.dtype)
+        rot[0, 0] = a
+        rot[0, 1] = -b
+        rot[1, 0] = b
+        rot[1, 1] = a
+        # Left-multiply: rot @ mtx
+        self._mtx = rot @ self._mtx
         self.invalidate()
         return self
 
@@ -2049,8 +2085,9 @@ class Affine2D(Affine2DBase):
         calls to :meth:`rotate`, :meth:`rotate_deg`, :meth:`translate`
         and :meth:`scale`.
         """
-        # Cast to float to avoid wraparound issues with uint8's
-        x, y = float(x), float(y)
+        # Keep in MLX space (avoid Python scalar casts that break lazy graphs).
+        x = np.asarray(x, dtype=np.float64)
+        y = np.asarray(y, dtype=np.float64)
         return self.translate(-x, -y).rotate_deg(degrees).translate(x, y)
 
     def translate(self, tx, ty):
@@ -2061,8 +2098,10 @@ class Affine2D(Affine2DBase):
         calls to :meth:`rotate`, :meth:`rotate_deg`, :meth:`translate`
         and :meth:`scale`.
         """
-        self._mtx[0, 2] += tx
-        self._mtx[1, 2] += ty
+        t = np.identity(3, dtype=self._mtx.dtype)
+        t[0, 2] = tx
+        t[1, 2] = ty
+        self._mtx = t @ self._mtx
         self.invalidate()
         return self
 
@@ -2079,13 +2118,10 @@ class Affine2D(Affine2DBase):
         """
         if sy is None:
             sy = sx
-        # explicit element-wise scaling is fastest
-        self._mtx[0, 0] *= sx
-        self._mtx[0, 1] *= sx
-        self._mtx[0, 2] *= sx
-        self._mtx[1, 0] *= sy
-        self._mtx[1, 1] *= sy
-        self._mtx[1, 2] *= sy
+        s = np.identity(3, dtype=self._mtx.dtype)
+        s[0, 0] = sx
+        s[1, 1] = sy
+        self._mtx = s @ self._mtx
         self.invalidate()
         return self
 
@@ -2102,16 +2138,10 @@ class Affine2D(Affine2DBase):
         """
         rx = math.tan(xShear)
         ry = math.tan(yShear)
-        mtx = self._mtx
-        # Operating and assigning one scalar at a time is much faster.
-        (xx, xy, x0), (yx, yy, y0), _ = mtx.tolist()
-        # mtx = [[1 rx 0], [ry 1 0], [0 0 1]] * mtx
-        mtx[0, 0] += rx * yx
-        mtx[0, 1] += rx * yy
-        mtx[0, 2] += rx * y0
-        mtx[1, 0] += ry * xx
-        mtx[1, 1] += ry * xy
-        mtx[1, 2] += ry * x0
+        sh = np.identity(3, dtype=self._mtx.dtype)
+        sh[0, 1] = rx
+        sh[1, 0] = ry
+        self._mtx = sh @ self._mtx
         self.invalidate()
         return self
 

@@ -6,9 +6,8 @@ from matplotlib.backend_bases import RendererBase
 from matplotlib.patches import Patch
 from matplotlib.ticker import Locator, Formatter
 from matplotlib.transforms import Bbox
-
-import numpy as np
-from numpy.typing import ArrayLike
+import matplotlib._mlx_numpy as np
+from matplotlib._mlx_typing import ArrayLike
 from collections.abc import Sequence
 from typing import Any, Literal, overload
 from .typing import ColorType
