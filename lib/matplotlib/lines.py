@@ -6,7 +6,7 @@ import copy
 
 from numbers import Integral, Number, Real
 import logging
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from . import _api, cbook, colors as mcolors, _docstring
 from .artist import Artist, allow_rasterization
@@ -100,7 +100,7 @@ def segment_hits(cx, cy, x, y, radius):
     """
     # Process single points specially
     if len(x) <= 1:
-        res, = np.nonzero((cx - x) ** 2 + (cy - y) ** 2 <= radius ** 2)
+        res, = mlxarr.nonzero((cx - x) ** 2 + (cy - y) ** 2 <= radius ** 2)
         return res
 
     # We need to lop the last element off a lot.
@@ -127,7 +127,7 @@ def segment_hits(cx, cy, x, y, radius):
     line_hits = line_hits & candidates
     points, = point_hits.ravel().nonzero()
     lines, = line_hits.ravel().nonzero()
-    return np.concatenate((points, lines))
+    return mlxarr.concatenate((points, lines))
 
 
 def _mark_every_path(markevery, tpath, affine, ax):
@@ -184,24 +184,24 @@ def _mark_every_path(markevery, tpath, affine, ax):
                     "the line does not have a Axes as parent")
 
             # calc cumulative distance along path (in display coords):
-            fin = np.isfinite(verts).all(axis=1)
+            fin = mlxarr.isfinite(verts).all(axis=1)
             fverts = verts[fin]
             disp_coords = affine.transform(fverts)
 
-            delta = np.empty((len(disp_coords), 2))
+            delta = mlxarr.empty((len(disp_coords), 2))
             delta[0, :] = 0
             delta[1:, :] = disp_coords[1:, :] - disp_coords[:-1, :]
-            delta = np.hypot(*delta.T).cumsum()
+            delta = mlxarr.hypot(*delta.T).cumsum()
             # calc distance between markers along path based on the Axes
             # bounding box diagonal being a distance of unity:
             (x0, y0), (x1, y1) = ax.transAxes.transform([[0, 0], [1, 1]])
-            scale = np.hypot(x1 - x0, y1 - y0)
-            marker_delta = np.arange(start * scale, delta[-1], step * scale)
+            scale = mlxarr.hypot(x1 - x0, y1 - y0)
+            marker_delta = mlxarr.arange(start * scale, delta[-1], step * scale)
             # find closest actual data point that is closest to
             # the theoretical distance along the path:
-            inds = np.abs(delta[np.newaxis, :] - marker_delta[:, np.newaxis])
+            inds = mlxarr.abs(delta[mlxarr.newaxis, :] - marker_delta[:, mlxarr.newaxis])
             inds = inds.argmin(axis=1)
-            inds = np.unique(inds)
+            inds = mlxarr.unique(inds)
             # return, we are done here
             return Path(fverts[inds], _slice_or_none(codes, inds))
         else:
@@ -213,13 +213,13 @@ def _mark_every_path(markevery, tpath, affine, ax):
         # mazol tov, it's already a slice, just return
         return Path(verts[markevery], _slice_or_none(codes, markevery))
 
-    elif np.iterable(markevery):
+    elif mlxarr.iterable(markevery):
         # fancy indexing
         try:
             return Path(verts[markevery], _slice_or_none(codes, markevery))
         except (ValueError, IndexError) as err:
             raise ValueError(
-                f"markevery={markevery!r} is iterable but not a valid numpy "
+                f"markevery={markevery!r} is iterable but not a valid array_backend "
                 f"fancy index") from err
     else:
         raise ValueError(f"markevery={markevery!r} is not a recognized value")
@@ -333,10 +333,10 @@ class Line2D(Artist):
         """
         super().__init__()
 
-        # Convert sequences to NumPy arrays.
-        if not np.iterable(xdata):
+        # Convert sequences to MLXArrayBackend arrays.
+        if not mlxarr.iterable(xdata):
             raise RuntimeError('xdata must be a sequence')
-        if not np.iterable(ydata):
+        if not mlxarr.iterable(ydata):
             raise RuntimeError('ydata must be a sequence')
 
         linewidth = mpl._val_or_rc(linewidth, 'lines.linewidth')
@@ -411,8 +411,8 @@ class Line2D(Artist):
                 not isinstance(self._picker, bool)):
             self._pickradius = self._picker
 
-        self._xorig = np.asarray([])
-        self._yorig = np.asarray([])
+        self._xorig = mlxarr.asarray([])
+        self._yorig = mlxarr.asarray([])
         self._invalidx = True
         self._invalidy = True
         self._x = None
@@ -477,11 +477,11 @@ class Line2D(Artist):
         # The math involved in checking for containment (here and inside of
         # segment_hits) assumes that it is OK to overflow, so temporarily set
         # the error flags accordingly.
-        with np.errstate(all='ignore'):
+        with mlxarr.errstate(all='ignore'):
             # Check for collision
             if self._linestyle in ['None', None]:
                 # If no line, return the nearby point(s)
-                ind, = np.nonzero(
+                ind, = mlxarr.nonzero(
                     (xt - mouseevent.x) ** 2 + (yt - mouseevent.y) ** 2
                     <= pixels ** 2)
             else:
@@ -681,7 +681,7 @@ class Line2D(Artist):
         else:
             y = self._y
 
-        self._xy = np.column_stack(np.broadcast_arrays(x, y)).astype(float)
+        self._xy = mlxarr.column_stack(mlxarr.broadcast_arrays(x, y)).astype(float)
         self._x, self._y = self._xy.T  # views
 
         self._subslice = False
@@ -694,11 +694,11 @@ class Line2D(Artist):
                 and self.get_clip_on()
                 and self.get_transform() == self.axes.transData):
             self._subslice = True
-            nanmask = np.isnan(x)
+            nanmask = mlxarr.isnan(x)
             if nanmask.any():
                 self._x_filled = self._x.copy()
-                indices = np.arange(len(x))
-                self._x_filled[nanmask] = np.interp(
+                indices = mlxarr.arange(len(x))
+                self._x_filled[nanmask] = mlxarr.interp(
                     indices[nanmask], indices[~nanmask], self._x[~nanmask])
             else:
                 self._x_filled = self._x
@@ -708,7 +708,7 @@ class Line2D(Artist):
         else:
             interpolation_steps = 1
         xy = STEP_LOOKUP_MAP[self._drawstyle](*self._xy.T)
-        self._path = Path(np.asarray(xy).T,
+        self._path = Path(mlxarr.asarray(xy).T,
                           _interpolation_steps=interpolation_steps)
         self._transformed_path = None
         self._invalidx = False
@@ -723,7 +723,7 @@ class Line2D(Artist):
         # Masked arrays are now handled by the Path class itself
         if subslice is not None:
             xy = STEP_LOOKUP_MAP[self._drawstyle](*self._xy[subslice, :].T)
-            _path = Path(np.asarray(xy).T,
+            _path = Path(mlxarr.asarray(xy).T,
                          _interpolation_steps=self._path._interpolation_steps)
         else:
             _path = self._path
@@ -1209,8 +1209,8 @@ class Line2D(Artist):
             self.stale = True
         else:
             neq = current != val
-            # Much faster than `np.any(current != val)` if no arrays are used.
-            if neq.any() if isinstance(neq, np.ndarray) else neq:
+            # Much faster than `mlxarr.any(current != val)` if no arrays are used.
+            if neq.any() if isinstance(neq, mlxarr.ndarray) else neq:
                 self.stale = True
         setattr(self, attr, val)
 
@@ -1285,7 +1285,7 @@ class Line2D(Artist):
         set_data
         set_ydata
         """
-        if not np.iterable(x):
+        if not mlxarr.iterable(x):
             raise RuntimeError('x must be a sequence')
         self._xorig = copy.copy(x)
         self._invalidx = True
@@ -1304,7 +1304,7 @@ class Line2D(Artist):
         set_data
         set_xdata
         """
-        if not np.iterable(y):
+        if not mlxarr.iterable(y):
             raise RuntimeError('y must be a sequence')
         self._yorig = copy.copy(y)
         self._invalidy = True
@@ -1509,7 +1509,7 @@ class AxLine(Line2D):
                     raise ValueError(
                         f"Cannot draw a line through two identical points "
                         f"(x={(x1, x2)}, y={(y1, y2)})")
-                slope = np.inf
+                slope = mlxarr.inf
             else:
                 slope = dy / dx
         else:
@@ -1522,7 +1522,7 @@ class AxLine(Line2D):
         if slope == 0:
             start = vxlo, y1
             stop = vxhi, y1
-        elif np.isinf(slope):
+        elif mlxarr.isinf(slope):
             start = x1, vylo
             stop = x1, vyhi
         else:
@@ -1632,7 +1632,7 @@ class VertexSelector:
     something with the picks.
 
     Here is an example which highlights the selected verts with red circles::
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
         import matplotlib.pyplot as plt
         import matplotlib.lines as lines
 
@@ -1646,7 +1646,7 @@ from matplotlib import _mlx_numpy as np
                 self.canvas.draw()
 
         fig, ax = plt.subplots()
-        x, y = np.random.rand(2, 30)
+        x, y = mlxarr.random.rand(2, 30)
         line, = ax.plot(x, y, 'bs-', picker=5)
 
         selector = HighlightSelected(line)

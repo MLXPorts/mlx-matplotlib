@@ -8,7 +8,7 @@ using `~matplotlib.pyplot.bar`.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 # data from https://allisonhorst.github.io/palmerpenguins/
 
 species = (
@@ -17,13 +17,13 @@ species = (
     "Gentoo\n $\\mu=5076.02g$",
 )
 weight_counts = {
-    "Below": np.array([70, 31, 58]),
-    "Above": np.array([82, 37, 66]),
+    "Below": mlxarr.array([70, 31, 58]),
+    "Above": mlxarr.array([82, 37, 66]),
 }
 width = 0.5
 
 fig, ax = plt.subplots()
-bottom = np.zeros(3)
+bottom = mlxarr.zeros(3)
 
 for boolean, weight_count in weight_counts.items():
     p = ax.bar(species, weight_count, width, label=boolean, bottom=bottom)

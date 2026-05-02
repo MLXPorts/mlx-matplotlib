@@ -10,7 +10,7 @@ See also the :doc:`/gallery/specialty_plots/leftventricle_bullseye` example.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 # %%
 # The most straightforward way to build a pie chart is to use the
 # `~matplotlib.axes.Axes.pie` method.
@@ -28,7 +28,7 @@ from matplotlib import _mlx_numpy as np
 fig, ax = plt.subplots()
 
 size = 0.3
-vals = np.array([[60., 32.], [37., 40.], [29., 10.]])
+vals = mlxarr.array([[60., 32.], [37., 40.], [29., 10.]])
 
 tab20c = plt.color_sequences["tab20c"]
 outer_colors = [tab20c[i] for i in [0, 4, 8]]
@@ -55,14 +55,14 @@ plt.show()
 fig, ax = plt.subplots(subplot_kw=dict(projection="polar"))
 
 size = 0.3
-vals = np.array([[60., 32.], [37., 40.], [29., 10.]])
+vals = mlxarr.array([[60., 32.], [37., 40.], [29., 10.]])
 # Normalize vals to 2 pi
-valsnorm = vals/np.sum(vals)*2*np.pi
+valsnorm = vals/mlxarr.sum(vals)*2*mlxarr.pi
 # Obtain the ordinates of the bar edges
-valsleft = np.cumsum(np.append(0, valsnorm.flatten()[:-1])).reshape(vals.shape)
+valsleft = mlxarr.cumsum(mlxarr.append(0, valsnorm.flatten()[:-1])).reshape(vals.shape)
 
 cmap = plt.colormaps["tab20c"]
-outer_colors = cmap(np.arange(3)*4)
+outer_colors = cmap(mlxarr.arange(3)*4)
 inner_colors = cmap([1, 2, 5, 6, 9, 10])
 
 ax.bar(x=valsleft[:, 0],

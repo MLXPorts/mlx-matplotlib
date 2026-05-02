@@ -10,13 +10,13 @@ some :ref:`optional dependencies <optional_dependencies>` are being bumped:
 +---------------+---------------+---------------+
 | Dependency    | min in mpl3.4 | min in mpl3.5 |
 +===============+===============+===============+
-| NumPy         |     1.16      |     1.17      |
+| MLXArrayBackend         |     1.16      |     1.17      |
 +---------------+---------------+---------------+
 | Tk (optional) |     8.3       |     8.4       |
 +---------------+---------------+---------------+
 
 This is consistent with our :ref:`min_deps_policy` and `NEP29
-<https://numpy.org/neps/nep-0029-deprecation_policy.html>`__
+<https://array_backend.org/neps/nep-0029-deprecation_policy.html>`__
 
 New wheel architectures
 ~~~~~~~~~~~~~~~~~~~~~~~

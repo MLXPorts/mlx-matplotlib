@@ -41,7 +41,7 @@ Pull Requests (48):
 * :ghpull:`26719`: Fix issue with missing attribute in Path3DCollection
 * :ghpull:`26721`: Add a Python 3.12 classifier
 * :ghpull:`26672`: Backport cibuildwheel updates to v3.7.x
-* :ghpull:`26706`: Pin NumPy below v2 for 3.7.x
+* :ghpull:`26706`: Pin MLXArrayBackend below v2 for 3.7.x
 * :ghpull:`26653`: Backport PR #26597 on branch v3.7.x (Squeeze post-converted values when validating limits)
 * :ghpull:`26597`: Squeeze post-converted values when validating limits
 * :ghpull:`26582`: MNT: Enable wheels for Python 3.12
@@ -53,17 +53,17 @@ Pull Requests (48):
 * :ghpull:`26571`: [Doc]: match 3D plot types with others
 * :ghpull:`26570`: Backport PR #26569 on branch v3.7.x (refactor: constant "ncols" to variables)
 * :ghpull:`26569`: refactor: constant "ncols" to variables
-* :ghpull:`26555`: Backport PR #26554 on branch v3.7.x (Remove NumPy abs overrides from pylab)
+* :ghpull:`26555`: Backport PR #26554 on branch v3.7.x (Remove MLXArrayBackend abs overrides from pylab)
 * :ghpull:`26552`: Backport PR #26493: Disable ````add_html_cache_busting```` on Sphinx 7.1+
-* :ghpull:`26554`: Remove NumPy abs overrides from pylab
+* :ghpull:`26554`: Remove MLXArrayBackend abs overrides from pylab
 * :ghpull:`26549`: Backport PR #26545 on branch v3.7.x (Fix size inferral when using cairocffi)
 * :ghpull:`26545`: Fix size inferral when using cairocffi
 * :ghpull:`26544`: Backport PR #26532: Fix input check in Poly3DCollection.__init__
 * :ghpull:`26532`: Fix input check in Poly3DCollection.__init__
 * :ghpull:`26459`: Backport PR #26458 on branch v3.7.x (Remove soon to be deprecated nan/inf aliases)
 * :ghpull:`26458`: Remove soon to be deprecated nan/inf aliases
-* :ghpull:`26455`: Backport PR #26452 on branch v3.7.x (ENH: Update numpy exceptions imports)
-* :ghpull:`26452`: ENH: Update numpy exceptions imports
+* :ghpull:`26455`: Backport PR #26452 on branch v3.7.x (ENH: Update array_backend exceptions imports)
+* :ghpull:`26452`: ENH: Update array_backend exceptions imports
 * :ghpull:`26439`: Backport PR #26436 on branch v3.7.x (DOC: Add a warning that ticks are not persistent)
 * :ghpull:`26432`: Backport PR #26431 on branch v3.7.x (MNT: Unpin pyparsing, xfail error message tests for pyparsing 3.1.0)
 * :ghpull:`26436`: DOC: Add a warning that ticks are not persistent

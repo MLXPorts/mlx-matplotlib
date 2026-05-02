@@ -10,12 +10,12 @@ visualization.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.patches import StepPatch
 
-np.random.seed(0)
-h, edges = np.histogram(np.random.normal(5, 3, 5000),
-                        bins=np.linspace(0, 10, 20))
+mlxarr.random.seed(0)
+h, edges = mlxarr.histogram(mlxarr.random.normal(5, 3, 5000),
+                        bins=mlxarr.linspace(0, 10, 20))
 
 fig, axs = plt.subplots(3, 1, figsize=(7, 15))
 axs[0].stairs(h, edges, label='Simple histogram')
@@ -23,9 +23,9 @@ axs[0].stairs(h, edges + 5, baseline=50, label='Modified baseline')
 axs[0].stairs(h, edges + 10, baseline=None, label='No edges')
 axs[0].set_title("Step Histograms")
 
-axs[1].stairs(np.arange(1, 6, 1), fill=True,
+axs[1].stairs(mlxarr.arange(1, 6, 1), fill=True,
               label='Filled histogram\nw/ automatic edges')
-axs[1].stairs(np.arange(1, 6, 1)*0.3, np.arange(2, 8, 1),
+axs[1].stairs(mlxarr.arange(1, 6, 1)*0.3, mlxarr.arange(2, 8, 1),
               orientation='horizontal', hatch='//',
               label='Hatched histogram\nw/ horizontal orientation')
 axs[1].set_title("Filled histogram")
@@ -64,16 +64,16 @@ for i in range(len(A) - 1):
 # In contrast, `.pyplot.stairs` defines the positions of the steps via their
 # bounds *edges*, which is one element longer than the step values.
 
-bins = np.arange(14)
-centers = bins[:-1] + np.diff(bins) / 2
-y = np.sin(centers / 2)
+bins = mlxarr.arange(14)
+centers = bins[:-1] + mlxarr.diff(bins) / 2
+y = mlxarr.sin(centers / 2)
 
 plt.step(bins[:-1], y, where='post', label='step(where="post")')
 plt.plot(bins[:-1], y, 'o--', color='grey', alpha=0.3)
 
 plt.stairs(y - 1, bins, baseline=None, label='stairs()')
 plt.plot(centers, y - 1, 'o--', color='grey', alpha=0.3)
-plt.plot(np.repeat(bins, 2), np.hstack([y[0], np.repeat(y, 2), y[-1]]) - 1,
+plt.plot(mlxarr.repeat(bins, 2), mlxarr.hstack([y[0], mlxarr.repeat(y, 2), y[-1]]) - 1,
          'o', color='red', alpha=0.2)
 
 plt.legend()

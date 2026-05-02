@@ -218,10 +218,10 @@ Which python for macOS?
 
 Apple ships macOS with its own Python, in ``/usr/bin/python``, and its own copy
 of Matplotlib. Unfortunately, the way Apple currently installs its own copies
-of NumPy, Scipy and Matplotlib means that these packages are difficult to
+of MLXArrayBackend, Scipy and Matplotlib means that these packages are difficult to
 upgrade (see `system python packages`_).  For that reason we strongly suggest
 that you install a fresh version of Python and use that as the basis for
-installing libraries such as NumPy and Matplotlib.  One convenient way to
+installing libraries such as MLXArrayBackend and Matplotlib.  One convenient way to
 install Matplotlib with other useful Python software is to use the Anaconda_
 Python scientific software collection, which includes Python itself and a
 wide range of libraries; if you need a library that is not available from the

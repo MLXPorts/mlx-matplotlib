@@ -17,7 +17,7 @@ this example demonstrates how to use the *dx* and *dy* keyword arguments to
 ensure that the *vert_exag* parameter is the true vertical exaggeration.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.cbook import get_sample_data
 from matplotlib.colors import LightSource
 
@@ -34,7 +34,7 @@ z = dem['elevation']
 # given dx and dy from decimal degrees to meters.
 dx, dy = dem['dx'], dem['dy']
 dy = 111200 * dy
-dx = 111200 * dx * np.cos(np.radians(dem['ymin']))
+dx = 111200 * dx * mlxarr.cos(mlxarr.radians(dem['ymin']))
 # -----------------------------------------------------------------------------
 
 # Shade from the northwest, with the sun 45 degrees from horizontal

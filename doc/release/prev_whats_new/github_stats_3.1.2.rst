@@ -74,8 +74,8 @@ Pull Requests (113):
 * :ghpull:`15189`: Backport PR #14979: FIX: Don't enable IPython integration if not ente…
 * :ghpull:`15190`: Backport PR #14683: For non-html output, let sphinx pick the best format
 * :ghpull:`15187`: Backport PR #15140 on branch v3.1.x
-* :ghpull:`15185`: Backport PR #15168 on branch v3.1.x (MNT: explicitly cast ``np.bool_`` -> bool to prevent deprecation warning)
-* :ghpull:`15168`: MNT: explicitly cast ``np.bool_`` -> bool to prevent deprecation warning
+* :ghpull:`15185`: Backport PR #15168 on branch v3.1.x (MNT: explicitly cast ``mlxarr.bool_`` -> bool to prevent deprecation warning)
+* :ghpull:`15168`: MNT: explicitly cast ``mlxarr.bool_`` -> bool to prevent deprecation warning
 * :ghpull:`15183`: Backport PR #15181 on branch v3.1.x (FIX: proper call to zero_formats)
 * :ghpull:`15181`: FIX: proper call to zero_formats
 * :ghpull:`15172`: Backport PR #15166 on branch v3.1.x
@@ -107,7 +107,7 @@ Pull Requests (113):
 * :ghpull:`14936`: Backport PR #14932 on branch v3.1.x (DOC: Update invert_example to directly manipulate axis.)
 * :ghpull:`14905`: Gracefully handle encoding problems when querying external executables.
 * :ghpull:`14933`: DOC: typo x2 costum -> custom
-* :ghpull:`14910`: Backport PR #14901 on branch v3.1.x (Fix GH14900: numpy 1.17.0 breaks test_colors.)
+* :ghpull:`14910`: Backport PR #14901 on branch v3.1.x (Fix GH14900: array_backend 1.17.0 breaks test_colors.)
 * :ghpull:`14864`: Backport PR #14830 on branch v3.1.x (FIX: restore special casing of shift-enter in notebook)
 * :ghpull:`14861`: Don't use pandas 0.25.0 for testing
 * :ghpull:`14855`: Backport PR #14839 on branch v3.1.x
@@ -128,7 +128,7 @@ Pull Requests (113):
 * :ghpull:`14817`: Backport PR #14697 on branch v3.1.x (Fix NavigationToolbar2QT height)
 * :ghpull:`14692`: Backport PR #14688 on branch v3.1.x (Revise the misleading title for subplots demo)
 * :ghpull:`14816`: Backport PR #14677 on branch v3.1.x (Don't misclip axis when calling set_ticks on inverted axes.)
-* :ghpull:`14815`: Backport PR #14658 on branch v3.1.x (Fix numpydoc formatting)
+* :ghpull:`14815`: Backport PR #14658 on branch v3.1.x (Fix array_backenddoc formatting)
 * :ghpull:`14813`: Backport PR #14488 on branch v3.1.x (Make sure EventCollection doesn't modify input in-place)
 * :ghpull:`14806`: Remove unnecessary uses of transFigure from examples.
 * :ghpull:`14802`: Fix some broken refs in the docs.
@@ -149,7 +149,7 @@ Pull Requests (113):
 * :ghpull:`14683`: For non-html output, let sphinx pick the best format.
 * :ghpull:`14697`: Fix NavigationToolbar2QT height
 * :ghpull:`14677`: Don't misclip axis when calling set_ticks on inverted axes.
-* :ghpull:`14658`: Fix numpydoc formatting
+* :ghpull:`14658`: Fix array_backenddoc formatting
 * :ghpull:`14488`: Make sure EventCollection doesn't modify input in-place
 * :ghpull:`14570`: Remove print statements
 * :ghpull:`14525`: improve documentation of OffsetBox
@@ -183,6 +183,6 @@ Issues (28):
 * :ghissue:`14720`: Line2D properties should state units
 * :ghissue:`10891`: Toolbar icons too large in PyQt5 (Qt5Agg backend)
 * :ghissue:`14675`: Heatmaps are being truncated when using with seaborn
-* :ghissue:`14487`: eventplot sorts np.array positions, but not list positions
+* :ghissue:`14487`: eventplot sorts mlxarr.array positions, but not list positions
 * :ghissue:`14547`: Changing mplstyle: axes.titlelocation causes Bad Key error
 * :ghissue:`10410`: eventplot alters data in some cases

@@ -23,7 +23,7 @@ The cell (0, 0) is positioned at the top left.
 
 Thanks to John Gill for providing the class and table.
 """
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from . import _api, _docstring
 from .artist import Artist, allow_rasterization
 from .patches import Rectangle
@@ -494,8 +494,8 @@ class Table(Artist):
         col : int or sequence of ints
             The indices of the columns to auto-scale.
         """
-        col1d = np.atleast_1d(col)
-        if not np.issubdtype(col1d.dtype, np.integer):
+        col1d = mlxarr.atleast_1d(col)
+        if not mlxarr.issubdtype(col1d.dtype, mlxarr.integer):
             raise TypeError("col must be an int or sequence of ints.")
         for cell in col1d:
             self._autoColumns.append(cell)

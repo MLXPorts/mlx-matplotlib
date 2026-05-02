@@ -1,5 +1,5 @@
 from matplotlib.path import Path
-import matplotlib._mlx_numpy as np
+import matplotlib._mlx_array as mlxarr
 from matplotlib._mlx_typing import ArrayLike
 
 class HatchPatternBase: ...
@@ -36,8 +36,8 @@ class Shapes(HatchPatternBase):
     def set_vertices_and_codes(self, vertices: ArrayLike, codes: ArrayLike) -> None: ...
 
 class Circles(Shapes):
-    shape_vertices: np.ndarray
-    shape_codes: np.ndarray
+    shape_vertices: mlxarr.ndarray
+    shape_codes: mlxarr.ndarray
     def __init__(self, hatch: str, density: int) -> None: ...
 
 class SmallCircles(Circles):
@@ -60,8 +60,8 @@ class Stars(Shapes):
     size: float
     filled: bool
     num_rows: int
-    shape_vertices: np.ndarray
-    shape_codes: np.ndarray
+    shape_vertices: mlxarr.ndarray
+    shape_codes: mlxarr.ndarray
     def __init__(self, hatch: str, density: int) -> None: ...
 
 def get_path(hatchpattern: str, density: int = ...) -> Path: ...

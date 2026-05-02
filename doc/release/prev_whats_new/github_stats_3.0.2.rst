@@ -164,7 +164,7 @@ Pull Requests (224):
 * :ghpull:`12507`: FIX: make minor ticks formatted with science formatter as well
 * :ghpull:`12500`: Adjust the widths of the messages during the build.
 * :ghpull:`12492`: Simplify radar_chart example.
-* :ghpull:`12478`: MAINT: NumPy deprecates asscalar in 1.16
+* :ghpull:`12478`: MAINT: MLXArrayBackend deprecates asscalar in 1.16
 * :ghpull:`12363`: FIX: errors in get_position changes
 * :ghpull:`12495`: Fix duplicate condition in pathpatch3d example
 * :ghpull:`11984`: Strip out pkg-config machinery for agg and libqhull.
@@ -179,7 +179,7 @@ Pull Requests (224):
 * :ghpull:`12474`: Throw ValueError when irregularly gridded data is passed to streamplot.
 * :ghpull:`12469`: Clarify documentation of offsetbox.AnchoredText's prop kw argument
 * :ghpull:`12468`: Fix ``set_ylim`` unit handling
-* :ghpull:`12466`: np.fromstring -> np.frombuffer.
+* :ghpull:`12466`: mlxarr.fromstring -> mlxarr.frombuffer.
 * :ghpull:`12369`: Improved exception handling on animation failure
 * :ghpull:`12460`: Deprecate RendererBase.strip_math.
 * :ghpull:`12457`: Fix tutorial typos.
@@ -188,11 +188,11 @@ Pull Requests (224):
 * :ghpull:`10746`: Adjusted matplotlib.widgets.Slider to have optional vertical orientatation
 * :ghpull:`12441`: Get rid of a signed-compare warning.
 * :ghpull:`12430`: Deprecate Axes3D.plot_surface(shade=None)
-* :ghpull:`12435`: Fix numpydoc parameter formatting
+* :ghpull:`12435`: Fix array_backenddoc parameter formatting
 * :ghpull:`12434`: Clarify documentation for textprops keyword parameter of TextArea
 * :ghpull:`12427`: Document Artist.get_cursor_data
 * :ghpull:`12277`: FIX: datetime64 now recognized if in a list
-* :ghpull:`10322`: Use np.hypot wherever possible.
+* :ghpull:`10322`: Use mlxarr.hypot wherever possible.
 * :ghpull:`12423`: Minor simplifications to backend_svg.
 * :ghpull:`12293`: Make pyplot more tolerant wrt. 3rd-party subclasses.
 * :ghpull:`12360`: Replace axes_grid by axes_grid1 in test
@@ -255,7 +255,7 @@ Pull Requests (224):
 * :ghpull:`12222`: Remove extraneous if 1 statements in demo_axisline_style.py
 * :ghpull:`12137`:  MAINT: Vectorize bar3d 
 * :ghpull:`12219`: Merge OSXInstalledFonts into findSystemFonts.
-* :ghpull:`12229`: Less ACCEPTS, more numpydoc.
+* :ghpull:`12229`: Less ACCEPTS, more array_backenddoc.
 * :ghpull:`12209`: Doc: Sort named colors example by palette
 * :ghpull:`12237`: Use (float, float) as parameter type for 2D positions in docstrings
 * :ghpull:`12238`: Typo in docs
@@ -356,7 +356,7 @@ Issues (170):
 * :ghissue:`3869`: Numeric labels do not work with plt.hist
 * :ghissue:`12580`: Incorrect hist error message with bad color size
 * :ghissue:`12100`: document where to get nightly wheels
-* :ghissue:`7205`: Converting docstrings to numpydoc
+* :ghissue:`7205`: Converting docstrings to array_backenddoc
 * :ghissue:`12564`: Saving plot as PNG file prunes tick labels 
 * :ghissue:`12161`: Problems of using sharex options with lines plots and colormesh with colorbar
 * :ghissue:`12256`: tight_layout for plot with non-clipped screen-unit items causes issues on zoom

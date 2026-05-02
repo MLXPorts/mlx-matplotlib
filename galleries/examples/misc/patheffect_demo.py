@@ -5,7 +5,7 @@ Patheffect Demo
 
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib import patheffects
 
 fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(8, 3))
@@ -24,7 +24,7 @@ pe = [patheffects.withStroke(linewidth=3,
                              foreground="w")]
 ax1.grid(True, linestyle="-", path_effects=pe)
 
-arr = np.arange(25).reshape((5, 5))
+arr = mlxarr.arange(25).reshape((5, 5))
 ax2.imshow(arr)
 cntr = ax2.contour(arr, colors="k")
 

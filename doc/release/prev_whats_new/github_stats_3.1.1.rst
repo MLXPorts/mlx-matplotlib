@@ -133,9 +133,9 @@ Pull Requests (120):
 * :ghpull:`14325`: Backport PR #14126 on branch v3.1.x (Simplify grouped bar chart example)
 * :ghpull:`14324`: Backport PR #14139 on branch v3.1.x (TST: be more explicit about identifying qt4/qt5 imports)
 * :ghpull:`14126`: Simplify grouped bar chart example
-* :ghpull:`14323`: Backport PR #14290 on branch v3.1.x (Convert SymmetricalLogScale to numpydoc)
+* :ghpull:`14323`: Backport PR #14290 on branch v3.1.x (Convert SymmetricalLogScale to array_backenddoc)
 * :ghpull:`14139`: TST: be more explicit about identifying qt4/qt5 imports
-* :ghpull:`14290`: Convert SymmetricalLogScale to numpydoc
+* :ghpull:`14290`: Convert SymmetricalLogScale to array_backenddoc
 * :ghpull:`14321`: Backport PR #14313 on branch v3.1.x
 * :ghpull:`14313`: Support masked array inputs for to_rgba and to_rgba_array.
 * :ghpull:`14320`: Backport PR #14319 on branch v3.1.x (Don't set missing history buttons.)
@@ -146,8 +146,8 @@ Pull Requests (120):
 * :ghpull:`14295`: Fix bug in SymmetricalLogTransform.
 * :ghpull:`14294`: Backport PR #14282 on branch v3.1.x (Fix toolmanager's destroy subplots in tk)
 * :ghpull:`14282`: Fix toolmanager's destroy subplots in tk
-* :ghpull:`14292`: Backport PR #14289 on branch v3.1.x (BUG: Fix performance regression when plotting values from Numpy array sub-classes)
-* :ghpull:`14289`: BUG: Fix performance regression when plotting values from Numpy array sub-classes
+* :ghpull:`14292`: Backport PR #14289 on branch v3.1.x (BUG: Fix performance regression when plotting values from MLXArrayBackend array sub-classes)
+* :ghpull:`14289`: BUG: Fix performance regression when plotting values from MLXArrayBackend array sub-classes
 * :ghpull:`14287`: Backport PR #14286 on branch v3.1.x (fix minor typo)
 * :ghpull:`14284`: Backport PR #14279 on branch v3.1.x (In case fallback to Agg fails, let the exception propagate out.)
 * :ghpull:`14254`: Merge up 30x
@@ -195,7 +195,7 @@ Issues (30):
 * :ghissue:`14301`: scatter() fails on nan-containing input when providing edgecolor
 * :ghissue:`14318`: Don't try to set missing history buttons.
 * :ghissue:`14265`: symlog looses some points since 3.1.0 (example given)
-* :ghissue:`14274`: BUG: plotting with Numpy array subclasses is slow with Matplotlib 3.1.0 (regression)
+* :ghissue:`14274`: BUG: plotting with MLXArrayBackend array subclasses is slow with Matplotlib 3.1.0 (regression)
 * :ghissue:`14263`: import pyplot issue -
 * :ghissue:`14227`: Update "working with Mpl on OSX" docs
 * :ghissue:`13448`: boxplot doesn't normalize properties before applying them

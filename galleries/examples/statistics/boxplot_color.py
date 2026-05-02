@@ -10,12 +10,12 @@ To color each box of a box plot individually:
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
-np.random.seed(19680801)
+from matplotlib import _mlx_array as mlxarr
+mlxarr.random.seed(19680801)
 fruit_weights = [
-    np.random.normal(130, 10, size=100),
-    np.random.normal(125, 20, size=100),
-    np.random.normal(120, 30, size=100),
+    mlxarr.random.normal(130, 10, size=100),
+    mlxarr.random.normal(125, 20, size=100),
+    mlxarr.random.normal(120, 30, size=100),
 ]
 labels = ['peaches', 'oranges', 'tomatoes']
 colors = ['peachpuff', 'orange', 'tomato']

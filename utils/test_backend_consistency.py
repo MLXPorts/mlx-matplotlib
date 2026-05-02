@@ -3,7 +3,7 @@
 Test backend consistency across different backends.
 
 This script checks if operations are consistently implemented across all backends
-in the new folder structure (ember_ml/backend/numpy, ember_ml/backend/torch, ember_ml/backend/mlx).
+in the new folder structure (ember_ml/backend/array_backend, ember_ml/backend/torch, ember_ml/backend/mlx).
 """
 
 import os
@@ -14,7 +14,7 @@ from typing import Dict, List, Set, Tuple, Optional, Any
 
 # Paths to backend implementation directories
 BACKEND_DIRS = {
-    "numpy": "../ember_ml/backend/numpy",
+    "array_backend": "../ember_ml/backend/array_backend",
     "torch": "../ember_ml/backend/torch",
     "mlx": "../ember_ml/backend/mlx"
 }

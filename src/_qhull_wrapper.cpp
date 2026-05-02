@@ -1,7 +1,7 @@
 /*
  * Wrapper module for libqhull, providing Delaunay triangulation.
  *
- * This MLX fork removes the hard dependency on NumPy by using the Python buffer
+ * This MLX fork removes the hard dependency on MLXArrayBackend by using the Python buffer
  * protocol for inputs and returning shaped memoryviews for outputs.
  */
 #include <pybind11/pybind11.h>

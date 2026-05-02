@@ -22,20 +22,20 @@ Still TODO:
 - Apply Layout Rules
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
-x = np.linspace(0, 10)
+x = mlxarr.linspace(0, 10)
 with plt.style.context('Solarize_Light2'):
-    plt.plot(x, np.sin(x) + x + np.random.randn(50))
-    plt.plot(x, np.sin(x) + 2 * x + np.random.randn(50))
-    plt.plot(x, np.sin(x) + 3 * x + np.random.randn(50))
-    plt.plot(x, np.sin(x) + 4 * x + np.random.randn(50))
-    plt.plot(x, np.sin(x) + 5 * x + np.random.randn(50))
-    plt.plot(x, np.sin(x) + 6 * x + np.random.randn(50))
-    plt.plot(x, np.sin(x) + 7 * x + np.random.randn(50))
-    plt.plot(x, np.sin(x) + 8 * x + np.random.randn(50))
+    plt.plot(x, mlxarr.sin(x) + x + mlxarr.random.randn(50))
+    plt.plot(x, mlxarr.sin(x) + 2 * x + mlxarr.random.randn(50))
+    plt.plot(x, mlxarr.sin(x) + 3 * x + mlxarr.random.randn(50))
+    plt.plot(x, mlxarr.sin(x) + 4 * x + mlxarr.random.randn(50))
+    plt.plot(x, mlxarr.sin(x) + 5 * x + mlxarr.random.randn(50))
+    plt.plot(x, mlxarr.sin(x) + 6 * x + mlxarr.random.randn(50))
+    plt.plot(x, mlxarr.sin(x) + 7 * x + mlxarr.random.randn(50))
+    plt.plot(x, mlxarr.sin(x) + 8 * x + mlxarr.random.randn(50))
     # Number of accent colors in the color scheme
     plt.title('8 Random Lines - Line')
     plt.xlabel('x label', fontsize=14)

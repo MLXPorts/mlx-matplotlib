@@ -6,7 +6,7 @@ import platform
 from threading import Timer
 from types import SimpleNamespace
 import warnings
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import pytest
 from PIL import Image
 
@@ -31,10 +31,10 @@ def test_align_labels():
     gs = gridspec.GridSpec(3, 3)
 
     ax = fig.add_subplot(gs[0, :2])
-    ax.plot(np.arange(0, 1e6, 1000))
+    ax.plot(mlxarr.arange(0, 1e6, 1000))
     ax.set_ylabel('Ylabel0 0')
     ax = fig.add_subplot(gs[0, -1])
-    ax.plot(np.arange(0, 1e4, 100))
+    ax.plot(mlxarr.arange(0, 1e4, 100))
 
     for i in range(3):
         ax = fig.add_subplot(gs[1, i])
@@ -56,7 +56,7 @@ def test_align_labels():
         ax.set_ylabel(f'YLabel2 {i}')
 
         if i == 2:
-            ax.plot(np.arange(0, 1e4, 10))
+            ax.plot(mlxarr.arange(0, 1e4, 10))
             ax.yaxis.set_label_position("right")
             ax.yaxis.tick_right()
             for tick in ax.get_xticklabels():
@@ -74,13 +74,13 @@ def test_align_titles():
         fig, axs = plt.subplots(1, 2, layout=layout, width_ratios=[2, 1])
 
         ax = axs[0]
-        ax.plot(np.arange(0, 1e6, 1000))
+        ax.plot(mlxarr.arange(0, 1e6, 1000))
         ax.set_title('Title0 left', loc='left')
         ax.set_title('Title0 center', loc='center')
         ax.set_title('Title0 right', loc='right')
 
         ax = axs[1]
-        ax.plot(np.arange(0, 1e4, 100))
+        ax.plot(mlxarr.arange(0, 1e4, 100))
         ax.set_title('Title1')
         ax.set_xlabel('Xlabel0')
         ax.xaxis.set_label_position("top")
@@ -96,34 +96,34 @@ def test_align_labels_stray_axes():
     for nn, ax in enumerate(axs.flat):
         ax.set_xlabel('Boo')
         ax.set_xlabel('Who')
-        ax.plot(np.arange(4)**nn, np.arange(4)**nn)
+        ax.plot(mlxarr.arange(4)**nn, mlxarr.arange(4)**nn)
     fig.align_ylabels()
     fig.align_xlabels()
     fig.draw_without_rendering()
-    xn = np.zeros(4)
-    yn = np.zeros(4)
+    xn = mlxarr.zeros(4)
+    yn = mlxarr.zeros(4)
     for nn, ax in enumerate(axs.flat):
         yn[nn] = ax.xaxis.label.get_position()[1]
         xn[nn] = ax.yaxis.label.get_position()[0]
-    np.testing.assert_allclose(xn[:2], xn[2:])
-    np.testing.assert_allclose(yn[::2], yn[1::2])
+    mlxarr.testing.assert_allclose(xn[:2], xn[2:])
+    mlxarr.testing.assert_allclose(yn[::2], yn[1::2])
 
     fig, axs = plt.subplots(2, 2, constrained_layout=True)
     for nn, ax in enumerate(axs.flat):
         ax.set_xlabel('Boo')
         ax.set_xlabel('Who')
-        pc = ax.pcolormesh(np.random.randn(10, 10))
+        pc = ax.pcolormesh(mlxarr.random.randn(10, 10))
     fig.colorbar(pc, ax=ax)
     fig.align_ylabels()
     fig.align_xlabels()
     fig.draw_without_rendering()
-    xn = np.zeros(4)
-    yn = np.zeros(4)
+    xn = mlxarr.zeros(4)
+    yn = mlxarr.zeros(4)
     for nn, ax in enumerate(axs.flat):
         yn[nn] = ax.xaxis.label.get_position()[1]
         xn[nn] = ax.yaxis.label.get_position()[0]
-    np.testing.assert_allclose(xn[:2], xn[2:])
-    np.testing.assert_allclose(yn[::2], yn[1::2])
+    mlxarr.testing.assert_allclose(xn[:2], xn[2:])
+    mlxarr.testing.assert_allclose(yn[::2], yn[1::2])
 
 
 def test_figure_label():
@@ -213,7 +213,7 @@ def test_figure():
     fig = plt.figure('today')
     ax = fig.add_subplot()
     ax.set_title(fig.get_label())
-    ax.plot(np.arange(5))
+    ax.plot(mlxarr.arange(5))
     # plot red line in a different figure.
     plt.figure('tomorrow')
     plt.plot([0, 1], [1, 0], 'r')
@@ -443,13 +443,13 @@ def test_axes_remove():
 
 
 def test_figaspect():
-    w, h = plt.figaspect(np.float64(2) / np.float64(1))
+    w, h = plt.figaspect(mlxarr.float64(2) / mlxarr.float64(1))
     assert h / w == 2
     w, h = plt.figaspect(2)
     assert h / w == 2
-    w, h = plt.figaspect(np.zeros((1, 2)))
+    w, h = plt.figaspect(mlxarr.zeros((1, 2)))
     assert h / w == 0.5
-    w, h = plt.figaspect(np.zeros((2, 2)))
+    w, h = plt.figaspect(mlxarr.zeros((2, 2)))
     assert h / w == 1
 
 
@@ -520,9 +520,9 @@ def test_change_dpi():
 
 
 @pytest.mark.parametrize('width, height', [
-    (1, np.nan),
+    (1, mlxarr.nan),
     (-1, 1),
-    (np.inf, 1)
+    (mlxarr.inf, 1)
 ])
 def test_invalid_figure_size(width, height):
     with pytest.raises(ValueError):
@@ -540,7 +540,7 @@ def test_invalid_figure_add_axes():
         fig.add_axes()
 
     with pytest.raises(ValueError):
-        fig.add_axes((.1, .1, .5, np.nan))
+        fig.add_axes((.1, .1, .5, mlxarr.nan))
 
     with pytest.raises(TypeError, match="multiple values for argument 'rect'"):
         fig.add_axes((0, 0, 1, 1), rect=[0, 0, 1, 1])
@@ -636,7 +636,7 @@ def test_savefig_preserve_layout_engine():
 
 def test_savefig_locate_colorbar():
     fig, ax = plt.subplots()
-    pc = ax.pcolormesh(np.random.randn(2, 2))
+    pc = ax.pcolormesh(mlxarr.random.randn(2, 2))
     cbar = fig.colorbar(pc, aspect=40)
     fig.savefig(io.BytesIO(), bbox_inches=mpl.transforms.Bbox([[0, 0], [4, 4]]))
 
@@ -719,7 +719,7 @@ def test_invalid_layouts():
 
     # test that layouts cannot be swapped if there is a colorbar:
     fig, ax = plt.subplots(layout="constrained")
-    pc = ax.pcolormesh(np.random.randn(2, 2))
+    pc = ax.pcolormesh(mlxarr.random.randn(2, 2))
     fig.colorbar(pc)
     with pytest.raises(RuntimeError, match='Colorbar layout of new layout'):
         fig.set_layout_engine("tight")
@@ -728,7 +728,7 @@ def test_invalid_layouts():
         fig.set_layout_engine("tight")
 
     fig, ax = plt.subplots(layout="tight")
-    pc = ax.pcolormesh(np.random.randn(2, 2))
+    pc = ax.pcolormesh(mlxarr.random.randn(2, 2))
     fig.colorbar(pc)
     with pytest.raises(RuntimeError, match='Colorbar layout of new layout'):
         fig.set_layout_engine("constrained")
@@ -1014,7 +1014,7 @@ class TestSubplotMosaic:
         for k, ax in grid_axes.items():
             ax.set_title(k)
 
-        labels = sorted(np.unique(x))
+        labels = sorted(mlxarr.unique(x))
 
         assert len(labels) == len(grid_axes)
 
@@ -1325,20 +1325,20 @@ def test_reused_gridspec():
 @image_comparison(['test_subfigure.png'], style='mpl20',
                   savefig_kwarg={'facecolor': 'teal'})
 def test_subfigure():
-    np.random.seed(19680801)
+    mlxarr.random.seed(19680801)
     fig = plt.figure(layout='constrained')
     sub = fig.subfigures(1, 2)
 
     axs = sub[0].subplots(2, 2)
     for ax in axs.flat:
-        pc = ax.pcolormesh(np.random.randn(30, 30), vmin=-2, vmax=2)
+        pc = ax.pcolormesh(mlxarr.random.randn(30, 30), vmin=-2, vmax=2)
     sub[0].colorbar(pc, ax=axs)
     sub[0].suptitle('Left Side')
     sub[0].set_facecolor('white')
 
     axs = sub[1].subplots(1, 3)
     for ax in axs.flat:
-        pc = ax.pcolormesh(np.random.randn(30, 30), vmin=-2, vmax=2)
+        pc = ax.pcolormesh(mlxarr.random.randn(30, 30), vmin=-2, vmax=2)
     sub[1].colorbar(pc, ax=axs, location='bottom')
     sub[1].suptitle('Right Side')
     sub[1].set_facecolor('white')
@@ -1357,7 +1357,7 @@ def test_subfigure_tightbbox():
     fig = plt.figure(layout='constrained')
     sub = fig.subfigures(1, 2)
 
-    np.testing.assert_allclose(
+    mlxarr.testing.assert_allclose(
             fig.get_tightbbox(fig.canvas.get_renderer()).width,
             8.0)
 
@@ -1376,7 +1376,7 @@ def test_subfigure_dpi():
                   savefig_kwarg={'facecolor': 'teal'}, tol=0.02)
 def test_subfigure_ss():
     # test assigning the subfigure via subplotspec
-    np.random.seed(19680801)
+    mlxarr.random.seed(19680801)
     fig = plt.figure(layout='constrained')
     gs = fig.add_gridspec(1, 2)
 
@@ -1384,12 +1384,12 @@ def test_subfigure_ss():
 
     axs = sub.subplots(2, 2)
     for ax in axs.flat:
-        pc = ax.pcolormesh(np.random.randn(30, 30), vmin=-2, vmax=2)
+        pc = ax.pcolormesh(mlxarr.random.randn(30, 30), vmin=-2, vmax=2)
     sub.colorbar(pc, ax=axs)
     sub.suptitle('Left Side')
 
     ax = fig.add_subplot(gs[1])
-    ax.plot(np.arange(20))
+    ax.plot(mlxarr.arange(20))
     ax.set_title('Axes')
 
     fig.suptitle('Figure suptitle', fontsize='xx-large')
@@ -1399,7 +1399,7 @@ def test_subfigure_ss():
                   savefig_kwarg={'facecolor': 'teal'})
 def test_subfigure_double():
     # test assigning the subfigure via subplotspec
-    np.random.seed(19680801)
+    mlxarr.random.seed(19680801)
 
     fig = plt.figure(layout='constrained', figsize=(10, 8))
 
@@ -1419,7 +1419,7 @@ def test_subfigure_double():
     axsnest0 = subfigsnest[0].subplots(1, 2, sharey=True)
     for ax in axsnest0:
         fontsize = 12
-        pc = ax.pcolormesh(np.random.randn(30, 30), vmin=-2.5, vmax=2.5)
+        pc = ax.pcolormesh(mlxarr.random.randn(30, 30), vmin=-2.5, vmax=2.5)
         ax.set_xlabel('x-label', fontsize=fontsize)
         ax.set_ylabel('y-label', fontsize=fontsize)
         ax.set_title('Title', fontsize=fontsize)
@@ -1449,14 +1449,14 @@ def test_subfigure_spanning():
 
     w = 640
     h = 480
-    np.testing.assert_allclose(sub_figs[0].bbox.min, [0., h * 2/3])
-    np.testing.assert_allclose(sub_figs[0].bbox.max, [w / 3, h])
+    mlxarr.testing.assert_allclose(sub_figs[0].bbox.min, [0., h * 2/3])
+    mlxarr.testing.assert_allclose(sub_figs[0].bbox.max, [w / 3, h])
 
-    np.testing.assert_allclose(sub_figs[1].bbox.min, [w / 3, h / 3])
-    np.testing.assert_allclose(sub_figs[1].bbox.max, [w * 2/3, h])
+    mlxarr.testing.assert_allclose(sub_figs[1].bbox.min, [w / 3, h / 3])
+    mlxarr.testing.assert_allclose(sub_figs[1].bbox.max, [w * 2/3, h])
 
-    np.testing.assert_allclose(sub_figs[2].bbox.min, [w / 3, 0])
-    np.testing.assert_allclose(sub_figs[2].bbox.max, [w, h / 3])
+    mlxarr.testing.assert_allclose(sub_figs[2].bbox.min, [w / 3, 0])
+    mlxarr.testing.assert_allclose(sub_figs[2].bbox.max, [w, h / 3])
 
     # check here that slicing actually works.  Last sub_fig
     # with open slices failed, but only on draw...
@@ -1490,7 +1490,7 @@ def test_subfigure_ticks():
     fig.dpi = 300
     fig.draw_without_rendering()
     ticks300 = ax2.get_xticks()
-    np.testing.assert_allclose(ticks120, ticks300)
+    mlxarr.testing.assert_allclose(ticks120, ticks300)
 
 
 @image_comparison(['test_subfigure_scatter_size.png'], style='mpl20',
@@ -1526,23 +1526,23 @@ def test_subfigures_wspace_hspace():
     w = 640
     h = 480
 
-    np.testing.assert_allclose(sub_figs[0, 0].bbox.min, [0., h * 0.6])
-    np.testing.assert_allclose(sub_figs[0, 0].bbox.max, [w * 0.3, h])
+    mlxarr.testing.assert_allclose(sub_figs[0, 0].bbox.min, [0., h * 0.6])
+    mlxarr.testing.assert_allclose(sub_figs[0, 0].bbox.max, [w * 0.3, h])
 
-    np.testing.assert_allclose(sub_figs[0, 1].bbox.min, [w * 0.35, h * 0.6])
-    np.testing.assert_allclose(sub_figs[0, 1].bbox.max, [w * 0.65, h])
+    mlxarr.testing.assert_allclose(sub_figs[0, 1].bbox.min, [w * 0.35, h * 0.6])
+    mlxarr.testing.assert_allclose(sub_figs[0, 1].bbox.max, [w * 0.65, h])
 
-    np.testing.assert_allclose(sub_figs[0, 2].bbox.min, [w * 0.7, h * 0.6])
-    np.testing.assert_allclose(sub_figs[0, 2].bbox.max, [w, h])
+    mlxarr.testing.assert_allclose(sub_figs[0, 2].bbox.min, [w * 0.7, h * 0.6])
+    mlxarr.testing.assert_allclose(sub_figs[0, 2].bbox.max, [w, h])
 
-    np.testing.assert_allclose(sub_figs[1, 0].bbox.min, [0, 0])
-    np.testing.assert_allclose(sub_figs[1, 0].bbox.max, [w * 0.3, h * 0.4])
+    mlxarr.testing.assert_allclose(sub_figs[1, 0].bbox.min, [0, 0])
+    mlxarr.testing.assert_allclose(sub_figs[1, 0].bbox.max, [w * 0.3, h * 0.4])
 
-    np.testing.assert_allclose(sub_figs[1, 1].bbox.min, [w * 0.35, 0])
-    np.testing.assert_allclose(sub_figs[1, 1].bbox.max, [w * 0.65, h * 0.4])
+    mlxarr.testing.assert_allclose(sub_figs[1, 1].bbox.min, [w * 0.35, 0])
+    mlxarr.testing.assert_allclose(sub_figs[1, 1].bbox.max, [w * 0.65, h * 0.4])
 
-    np.testing.assert_allclose(sub_figs[1, 2].bbox.min, [w * 0.7, 0])
-    np.testing.assert_allclose(sub_figs[1, 2].bbox.max, [w, h * 0.4])
+    mlxarr.testing.assert_allclose(sub_figs[1, 2].bbox.min, [w * 0.7, 0])
+    mlxarr.testing.assert_allclose(sub_figs[1, 2].bbox.max, [w, h * 0.4])
 
 
 def test_subfigure_remove():
@@ -1621,7 +1621,7 @@ def test_ginput(recwarn):  # recwarn undoes warn filters at exit.
         MouseEvent("button_press_event", fig.canvas, *trans((0, 0)), 2)._process()
 
     Timer(.1, multi_presses).start()
-    np.testing.assert_allclose(fig.ginput(3), [(.3, .4), (.5, .6)])
+    mlxarr.testing.assert_allclose(fig.ginput(3), [(.3, .4), (.5, .6)])
 
 
 def test_waitforbuttonpress(recwarn):  # recwarn undoes warn filters at exit.

@@ -8,7 +8,7 @@ This example shows the effect of the path's orientations in a compound path.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.patches as mpatches
 import matplotlib.path as mpath
 
@@ -18,29 +18,29 @@ def wise(v):
 
 
 def make_circle(r):
-    t = np.arange(0, np.pi * 2.0, 0.01)
-    x = r * np.cos(t)
-    y = r * np.sin(t)
-    return np.column_stack((x, y))
+    t = mlxarr.arange(0, mlxarr.pi * 2.0, 0.01)
+    x = r * mlxarr.cos(t)
+    y = r * mlxarr.sin(t)
+    return mlxarr.column_stack((x, y))
 
 
 fig, ax = plt.subplots()
 
 inside_vertices = make_circle(0.5)
 outside_vertices = make_circle(1.0)
-codes = np.full(len(inside_vertices), mpath.Path.LINETO)
+codes = mlxarr.full(len(inside_vertices), mpath.Path.LINETO)
 codes[0] = mpath.Path.MOVETO
 
 for i, (inside, outside) in enumerate(((1, 1), (1, -1), (-1, 1), (-1, -1))):
     # Concatenate the inside and outside subpaths together, changing their
     # order as needed
-    vertices = np.concatenate((outside_vertices[::outside],
+    vertices = mlxarr.concatenate((outside_vertices[::outside],
                                inside_vertices[::inside]))
     # Shift the path
     vertices += (i * 2.5, 0)
     # The codes will be all "LINETO" commands, except for "MOVETO"s at the
     # beginning of each subpath
-    all_codes = np.concatenate((codes, codes))
+    all_codes = mlxarr.concatenate((codes, codes))
     # Create the Path object
     path = mpath.Path(vertices, all_codes)
     # And plot it

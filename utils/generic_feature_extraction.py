@@ -6,7 +6,7 @@ maintaining the ability to process data regardless of column count or specific m
 """
 
 import pandas as pd
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import os
 from typing import Dict, List, Optional, Tuple, Union, Any
 from sklearn.preprocessing import StandardScaler
@@ -629,7 +629,7 @@ def test_feature_extraction(csv_path: str, header_file: Optional[str] = None,
         print("No numeric features available for temporal processing")
         return df, column_types, df_engineered, None
     
-    # Convert to numpy array for processing
+    # Convert to array_backend array for processing
     data = df_engineered[numeric_features].values
     
     # Initialize temporal processor

@@ -4,7 +4,7 @@ Module for creating Sankey diagrams using Matplotlib.
 
 import logging
 from types import SimpleNamespace
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from matplotlib.path import Path
 from matplotlib.patches import PathPatch
@@ -154,11 +154,11 @@ class Sankey:
         self.shoulder = shoulder
         self.offset = offset
         self.margin = margin
-        self.pitch = np.tan(np.pi * (1 - head_angle / 180.0) / 2.0)
+        self.pitch = mlxarr.tan(mlxarr.pi * (1 - head_angle / 180.0) / 2.0)
         self.tolerance = tolerance
 
         # Initialize the vertices of tight box around the diagram(s).
-        self.extent = np.array((np.inf, -np.inf, np.inf, -np.inf))
+        self.extent = mlxarr.array((mlxarr.inf, -mlxarr.inf, mlxarr.inf, -mlxarr.inf))
 
         # If there are any kwargs, create the first subdiagram.
         if len(kwargs):
@@ -193,7 +193,7 @@ class Sankey:
                      Path.CURVE4]
         # Vertices of a cubic Bezier curve approximating a 90 deg arc
         # These can be determined by Path.arc(0, 90).
-        ARC_VERTICES = np.array([[1.00000000e+00, 0.00000000e+00],
+        ARC_VERTICES = mlxarr.array([[1.00000000e+00, 0.00000000e+00],
                                  [1.00000000e+00, 2.65114773e-01],
                                  [8.94571235e-01, 5.19642327e-01],
                                  [7.07106781e-01, 7.07106781e-01],
@@ -211,15 +211,15 @@ class Sankey:
             # Negate x.
             if cw:
                 # Swap x and y.
-                vertices = np.column_stack((-ARC_VERTICES[:, 1],
+                vertices = mlxarr.column_stack((-ARC_VERTICES[:, 1],
                                              ARC_VERTICES[:, 0]))
             else:
-                vertices = np.column_stack((-ARC_VERTICES[:, 0],
+                vertices = mlxarr.column_stack((-ARC_VERTICES[:, 0],
                                              ARC_VERTICES[:, 1]))
         if quadrant > 1:
             radius = -radius  # Rotate 180 deg.
         return list(zip(ARC_CODES, radius * vertices +
-                        np.tile(center, (ARC_VERTICES.shape[0], 1))))
+                        mlxarr.tile(center, (ARC_VERTICES.shape[0], 1))))
 
     def _add_input(self, path, angle, flow, length):
         """
@@ -432,7 +432,7 @@ class Sankey:
         Sankey.finish
         """
         # Check and preprocess the arguments.
-        flows = np.array([1.0, -1.0]) if flows is None else np.array(flows)
+        flows = mlxarr.array([1.0, -1.0]) if flows is None else mlxarr.array(flows)
         n = flows.shape[0]  # Number of flows
         if rotation is None:
             rotation = 0
@@ -442,27 +442,27 @@ class Sankey:
         if orientations is None:
             orientations = 0
         try:
-            orientations = np.broadcast_to(orientations, n)
+            orientations = mlxarr.broadcast_to(orientations, n)
         except ValueError:
             raise ValueError(
-                f"The shapes of 'flows' {np.shape(flows)} and 'orientations' "
-                f"{np.shape(orientations)} are incompatible"
+                f"The shapes of 'flows' {mlxarr.shape(flows)} and 'orientations' "
+                f"{mlxarr.shape(orientations)} are incompatible"
             ) from None
         try:
-            labels = np.broadcast_to(labels, n)
+            labels = mlxarr.broadcast_to(labels, n)
         except ValueError:
             raise ValueError(
-                f"The shapes of 'flows' {np.shape(flows)} and 'labels' "
-                f"{np.shape(labels)} are incompatible"
+                f"The shapes of 'flows' {mlxarr.shape(flows)} and 'labels' "
+                f"{mlxarr.shape(labels)} are incompatible"
             ) from None
         if trunklength < 0:
             raise ValueError(
                 "'trunklength' is negative, which is not allowed because it "
                 "would cause poor layout")
-        if abs(np.sum(flows)) > self.tolerance:
+        if abs(mlxarr.sum(flows)) > self.tolerance:
             _log.info("The sum of the flows is nonzero (%f; patchlabel=%r); "
                       "is the system not at steady state?",
-                      np.sum(flows), patchlabel)
+                      mlxarr.sum(flows), patchlabel)
         scaled_flows = self.scale * flows
         gain = sum(max(flow, 0) for flow in scaled_flows)
         loss = sum(min(flow, 0) for flow in scaled_flows)
@@ -533,7 +533,7 @@ class Sankey:
                     angles[i] = DOWN
 
         # Justify the lengths of the paths.
-        if np.iterable(pathlengths):
+        if mlxarr.iterable(pathlengths):
             if len(pathlengths) != n:
                 raise ValueError(
                     f"The lengths of 'flows' ({n}) and 'pathlengths' "
@@ -620,8 +620,8 @@ class Sankey:
                                  gain / 2.0])]
 
         # Add the subpaths and assign the locations of the tips and labels.
-        tips = np.zeros((n, 2))
-        label_locations = np.zeros((n, 2))
+        tips = mlxarr.zeros((n, 2))
+        label_locations = mlxarr.zeros((n, 2))
         # Add the top-side inputs and outputs from the middle outwards.
         for i, (angle, is_input, spec) in enumerate(zip(
               angles, are_inputs, list(zip(scaled_flows, pathlengths)))):
@@ -685,7 +685,7 @@ class Sankey:
 
         # Create a patch with the Sankey outline.
         codes, vertices = zip(*path)
-        vertices = np.array(vertices)
+        vertices = mlxarr.array(vertices)
 
         def _get_angle(a, r):
             if a is None:
@@ -750,17 +750,17 @@ class Sankey:
         # user wants to provide labels later.
 
         # Expand the size of the diagram if necessary.
-        self.extent = (min(np.min(vertices[:, 0]),
-                           np.min(label_locations[:, 0]),
+        self.extent = (min(mlxarr.min(vertices[:, 0]),
+                           mlxarr.min(label_locations[:, 0]),
                            self.extent[0]),
-                       max(np.max(vertices[:, 0]),
-                           np.max(label_locations[:, 0]),
+                       max(mlxarr.max(vertices[:, 0]),
+                           mlxarr.max(label_locations[:, 0]),
                            self.extent[1]),
-                       min(np.min(vertices[:, 1]),
-                           np.min(label_locations[:, 1]),
+                       min(mlxarr.min(vertices[:, 1]),
+                           mlxarr.min(label_locations[:, 1]),
                            self.extent[2]),
-                       max(np.max(vertices[:, 1]),
-                           np.max(label_locations[:, 1]),
+                       max(mlxarr.max(vertices[:, 1]),
+                           mlxarr.max(label_locations[:, 1]),
                            self.extent[3]))
         # Include both vertices _and_ label locations in the extents; there are
         # where either could determine the margins (e.g., arrow shoulders).

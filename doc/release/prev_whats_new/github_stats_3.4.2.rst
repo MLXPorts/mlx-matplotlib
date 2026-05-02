@@ -96,8 +96,8 @@ Pull Requests (97):
 * :ghpull:`19961`: FIX: subfigure tightbbox
 * :ghpull:`19953`: Backport PR #19919 on branch v3.4.x (Copy errorbar style normalization to 3D)
 * :ghpull:`19919`: Copy errorbar style normalization to 3D
-* :ghpull:`19950`: Backport PR #19948 on branch v3.4.x (Allow numpy arrays to be used as elinewidth)
-* :ghpull:`19948`: Allow numpy arrays to be used as elinewidth
+* :ghpull:`19950`: Backport PR #19948 on branch v3.4.x (Allow array_backend arrays to be used as elinewidth)
+* :ghpull:`19948`: Allow array_backend arrays to be used as elinewidth
 * :ghpull:`19944`: Backport PR #19939 on branch v3.4.x (add highlight-text to the third party packages list)
 * :ghpull:`19921`: Backport PR #19913 on branch v3.4.x (Minor docstring improvement for set_aspect())
 * :ghpull:`19920`: Backport PR #19903 on branch v3.4.x (Fix textbox cursor color, set its linewidth.)
@@ -109,8 +109,8 @@ Pull Requests (97):
 * :ghpull:`19888`: Fix errorbar drawstyle
 * :ghpull:`19910`: Backport PR #19895 on branch v3.4.x (Added PyPI info to third party page)
 * :ghpull:`19895`: Added PyPI info to third party page
-* :ghpull:`19896`: Backport PR #19893 on branch v3.4.x (Remove Howto: Plot numpy.datetime64 values)
-* :ghpull:`19893`: Remove Howto: Plot numpy.datetime64 values
+* :ghpull:`19896`: Backport PR #19893 on branch v3.4.x (Remove Howto: Plot array_backend.datetime64 values)
+* :ghpull:`19893`: Remove Howto: Plot array_backend.datetime64 values
 * :ghpull:`19886`: Backport PR #19881 on branch v3.4.x (Remove two sections from Plotting FAQ)
 * :ghpull:`19877`: Backport PR #19863 on branch v3.4.x (Cleanup docstrings related to interactive mode)
 * :ghpull:`19881`: Remove two sections from Plotting FAQ
@@ -150,6 +150,6 @@ Issues (21):
 * :ghissue:`19979`: Blank EPS figures if plot contains 'd'
 * :ghissue:`19938`: useless deprecation warning figbox
 * :ghissue:`19958`: subfigures missing bbox_inches attribute in inline backend
-* :ghissue:`19936`: Errorbars elinewidth raise error when numpy array
+* :ghissue:`19936`: Errorbars elinewidth raise error when array_backend array
 * :ghissue:`19879`: Using "drawstyle" raises AttributeError in errorbar, when yerr is specified.
 * :ghissue:`19454`: I cannot import matplotlib.pyplot as plt

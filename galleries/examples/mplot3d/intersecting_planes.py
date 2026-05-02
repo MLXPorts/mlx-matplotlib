@@ -20,7 +20,7 @@ limitations of the 3D visualization, it's not a refined solution for drawing
 arbitrary intersecting planes, which you can copy-and-paste as is.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 def plot_quadrants(ax, array, fixed_coord, cmap):
     """For a given 3d *array* plot a plane with *fixed_coord*, using four quadrants."""
     nx, ny, nz = array.shape
@@ -47,22 +47,22 @@ def plot_quadrants(ax, array, fixed_coord, cmap):
     for i, quadrant in enumerate(quadrants):
         facecolors = cmap((quadrant - min_val) / (max_val - min_val))
         if fixed_coord == 'x':
-            Y, Z = np.mgrid[0:ny // 2, 0:nz // 2]
-            X = nx // 2 * np.ones_like(Y)
+            Y, Z = mlxarr.mgrid[0:ny // 2, 0:nz // 2]
+            X = nx // 2 * mlxarr.ones_like(Y)
             Y_offset = (i // 2) * ny // 2
             Z_offset = (i % 2) * nz // 2
             ax.plot_surface(X, Y + Y_offset, Z + Z_offset, rstride=1, cstride=1,
                             facecolors=facecolors, shade=False)
         elif fixed_coord == 'y':
-            X, Z = np.mgrid[0:nx // 2, 0:nz // 2]
-            Y = ny // 2 * np.ones_like(X)
+            X, Z = mlxarr.mgrid[0:nx // 2, 0:nz // 2]
+            Y = ny // 2 * mlxarr.ones_like(X)
             X_offset = (i // 2) * nx // 2
             Z_offset = (i % 2) * nz // 2
             ax.plot_surface(X + X_offset, Y, Z + Z_offset, rstride=1, cstride=1,
                             facecolors=facecolors, shade=False)
         elif fixed_coord == 'z':
-            X, Y = np.mgrid[0:nx // 2, 0:ny // 2]
-            Z = nz // 2 * np.ones_like(X)
+            X, Y = mlxarr.mgrid[0:nx // 2, 0:ny // 2]
+            Z = nz // 2 * mlxarr.ones_like(X)
             X_offset = (i // 2) * nx // 2
             Y_offset = (i % 2) * ny // 2
             ax.plot_surface(X + X_offset, Y + Y_offset, Z, rstride=1, cstride=1,
@@ -81,7 +81,7 @@ def figure_3D_array_slices(array, cmap=None):
 
 
 nx, ny, nz = 70, 100, 50
-r_square = (np.mgrid[-1:1:1j * nx, -1:1:1j * ny, -1:1:1j * nz] ** 2).sum(0)
+r_square = (mlxarr.mgrid[-1:1:1j * nx, -1:1:1j * ny, -1:1:1j * nz] ** 2).sum(0)
 
 figure_3D_array_slices(r_square, cmap='viridis_r')
 plt.show()

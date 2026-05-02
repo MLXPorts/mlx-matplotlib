@@ -1,4 +1,4 @@
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.mlx_testing import assert_array_equal
 import matplotlib.pyplot as plt
 
@@ -34,15 +34,15 @@ def test_errorbar_remove():
 
 def test_nonstring_label():
     # Test for #26824
-    plt.bar(np.arange(10), np.random.rand(10), label=1)
+    plt.bar(mlxarr.arange(10), mlxarr.random.rand(10), label=1)
     plt.legend()
 
 
 def test_barcontainer_position_centers__bottoms__tops():
     fig, ax = plt.subplots()
     pos = [1, 2, 4]
-    bottoms = np.array([1, 5, 3])
-    heights = np.array([2, 3, 4])
+    bottoms = mlxarr.array([1, 5, 3])
+    heights = mlxarr.array([2, 3, 4])
 
     container = ax.bar(pos, heights, bottom=bottoms)
     assert_array_equal(container.position_centers, pos)

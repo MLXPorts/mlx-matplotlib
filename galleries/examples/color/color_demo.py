@@ -36,9 +36,9 @@ For more information on colors in matplotlib see
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
-t = np.linspace(0.0, 2.0, 201)
-s = np.sin(2 * np.pi * t)
+from matplotlib import _mlx_array as mlxarr
+t = mlxarr.linspace(0.0, 2.0, 201)
+s = mlxarr.sin(2 * mlxarr.pi * t)
 
 # 1) RGB tuple:
 fig, ax = plt.subplots(facecolor=(.18, .31, .31))

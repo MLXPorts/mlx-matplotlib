@@ -21,7 +21,7 @@ import time
 import types
 import warnings
 import zlib
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from PIL import Image
 
 import matplotlib as mpl
@@ -305,8 +305,8 @@ def pdfRepr(obj):
     # Floats. PDF does not have exponential notation (1.0e-10) so we
     # need to use %f with some precision.  Perhaps the precision
     # should adapt to the magnitude of the number?
-    elif isinstance(obj, (float, np.floating)):
-        if not np.isfinite(obj):
+    elif isinstance(obj, (float, mlxarr.floating)):
+        if not mlxarr.isfinite(obj):
             raise ValueError("Can only output finite numbers in PDF")
         r = b"%.10f" % obj
         return r.rstrip(b'0').rstrip(b'.')
@@ -317,7 +317,7 @@ def pdfRepr(obj):
         return [b'false', b'true'][obj]
 
     # Integers are written as such.
-    elif isinstance(obj, (int, np.integer)):
+    elif isinstance(obj, (int, mlxarr.integer)):
         return b"%d" % obj
 
     # Non-ASCII Unicode strings are encoded in UTF-16BE with byte-order mark.
@@ -351,7 +351,7 @@ def pdfRepr(obj):
     elif isinstance(obj, (list, tuple)):
         return _fill([b"[", *[pdfRepr(val) for val in obj], b"]"])
 
-    elif isinstance(obj, np.ndarray):
+    elif isinstance(obj, mlxarr.ndarray):
         return pdfRepr(obj.tolist())
 
     # The null keyword.
@@ -622,10 +622,10 @@ def _get_pdf_charprocs(font_path, glyph_ids):
         # NOTE: We should be using round(), but instead use
         # "(x+.5).astype(int)" to keep backcompat with the old ttconv code
         # (this is different for negative x's).
-        d1 = (np.array([g.horiAdvance, 0, *g.bbox]) * conv + .5).astype(int)
+        d1 = (mlxarr.array([g.horiAdvance, 0, *g.bbox]) * conv + .5).astype(int)
         v, c = font.get_path()
-        v = np.asarray(v)
-        c = np.asarray(c)
+        v = mlxarr.asarray(v)
+        c = mlxarr.asarray(c)
         v = (v * 64).astype(int)  # Back to TrueType's internal units (1/64's).
         # Backcompat with old ttconv code: control points between two quads are
         # omitted if they are exactly at the midpoint between the control of
@@ -635,9 +635,9 @@ def _get_pdf_charprocs(font_path, glyph_ids):
         # re-interpolating them.  Note that occasionally (e.g. with DejaVu Sans
         # glyph "0") a point detected as "implicit" is actually explicit, and
         # will thus be shifted by 1.
-        quads, = np.nonzero(c == 3)
+        quads, = mlxarr.nonzero(c == 3)
         quads_on = quads[1::2]
-        quads_mid_on = np.array(
+        quads_mid_on = mlxarr.array(
             sorted({*quads_on} & {*(quads - 1)} & {*(quads + 1)}), int)
         implicit = quads_mid_on[
             (v[quads_mid_on]  # As above, use astype(int), not // division
@@ -1560,7 +1560,7 @@ end"""
             self.endStream()
 
     def hatchPattern(self, hatch_style):
-        # The colors may come in as numpy arrays, which aren't hashable
+        # The colors may come in as array_backend arrays, which aren't hashable
         edge, face, hatch, lw = hatch_style
         if edge is not None:
             edge = tuple(edge)
@@ -1626,10 +1626,10 @@ end"""
 
         Parameters
         ----------
-        points : np.ndarray
+        points : mlxarr.ndarray
             Triangle vertices, shape (n, 3, 2)
             where n = number of triangles, 3 = vertices, 2 = x, y.
-        colors : np.ndarray
+        colors : mlxarr.ndarray
             Vertex colors, shape (n, 3, 1) or (n, 3, 4)
             as with points, but last dimension is either (gray,)
             or (r, g, b, alpha).
@@ -1655,8 +1655,8 @@ end"""
             if colordim == 4:
                 # strip the alpha channel
                 colordim = 3
-            points_min = np.min(flat_points, axis=0) - (1 << 8)
-            points_max = np.max(flat_points, axis=0) + (1 << 8)
+            points_min = mlxarr.min(flat_points, axis=0) - (1 << 8)
+            points_max = mlxarr.max(flat_points, axis=0) + (1 << 8)
             factor = 0xffffffff / (points_max - points_min)
 
             self.beginStream(
@@ -1674,7 +1674,7 @@ end"""
                             + [0, 1] * colordim),
                  })
 
-            streamarr = np.empty(
+            streamarr = mlxarr.empty(
                 (shape[0] * shape[1],),
                 dtype=[('flags', 'u1'),
                        ('points', '>u4', (2,)),
@@ -1710,14 +1710,14 @@ end"""
             return im, None
         else:
             rgb = im[:, :, :3]
-            rgb = np.array(rgb, order='C')
+            rgb = mlxarr.array(rgb, order='C')
             # PDF needs a separate alpha image
             if im.shape[2] == 4:
                 alpha = im[:, :, 3][..., None]
-                if np.all(alpha == 255):
+                if mlxarr.all(alpha == 255):
                     alpha = None
                 else:
-                    alpha = np.array(alpha, order='C')
+                    alpha = mlxarr.array(alpha, order='C')
             else:
                 alpha = None
             return rgb, alpha
@@ -1777,16 +1777,16 @@ end"""
                 # Convert to indexed color if there are 256 colors or fewer. This can
                 # significantly reduce the file size.
                 num_colors = len(img_colors)
-                palette = np.array([comp for _, color in img_colors for comp in color],
-                                   dtype=np.uint8)
-                palette24 = ((palette[0::3].astype(np.uint32) << 16) |
-                             (palette[1::3].astype(np.uint32) << 8) |
+                palette = mlxarr.array([comp for _, color in img_colors for comp in color],
+                                   dtype=mlxarr.uint8)
+                palette24 = ((palette[0::3].astype(mlxarr.uint32) << 16) |
+                             (palette[1::3].astype(mlxarr.uint32) << 8) |
                              palette[2::3])
-                rgb24 = ((data[:, :, 0].astype(np.uint32) << 16) |
-                         (data[:, :, 1].astype(np.uint32) << 8) |
+                rgb24 = ((data[:, :, 0].astype(mlxarr.uint32) << 16) |
+                         (data[:, :, 1].astype(mlxarr.uint32) << 8) |
                          data[:, :, 2])
-                indices = np.argsort(palette24).astype(np.uint8)
-                rgb8 = indices[np.searchsorted(palette24, rgb24, sorter=indices)]
+                indices = mlxarr.argsort(palette24).astype(mlxarr.uint8)
+                rgb8 = indices[mlxarr.searchsorted(palette24, rgb24, sorter=indices)]
                 img = Image.fromarray(rgb8).convert("P")
                 img.putpalette(palette)
                 png_data, bit_depth, palette = self._writePng(img)
@@ -1888,7 +1888,7 @@ end"""
              stroked) in self.paths:
             pathops = self.pathOperations(path, trans, simplify=False)
             bbox = path.get_extents(trans)
-            if not np.all(np.isfinite(bbox.extents)):
+            if not mlxarr.all(mlxarr.isfinite(bbox.extents)):
                 extents = [0, 0, 0, 0]
             else:
                 bbox = bbox.padded(padding)
@@ -2072,8 +2072,8 @@ class RendererPdf(_backend_pdf_ps.RendererPDFPSBase):
         # stroke (and the amount of alpha for each) is the same for
         # all of them
         can_do_optimization = True
-        facecolors = np.asarray(facecolors)
-        edgecolors = np.asarray(edgecolors)
+        facecolors = mlxarr.asarray(facecolors)
+        edgecolors = mlxarr.asarray(edgecolors)
 
         if hatchcolors is None:
             hatchcolors = []
@@ -2082,7 +2082,7 @@ class RendererPdf(_backend_pdf_ps.RendererPDFPSBase):
             filled = False
             can_do_optimization = not gc.get_hatch()
         else:
-            if np.all(facecolors[:, 3] == facecolors[0, 3]):
+            if mlxarr.all(facecolors[:, 3] == facecolors[0, 3]):
                 filled = facecolors[0, 3] != 0.0
             else:
                 can_do_optimization = False
@@ -2090,9 +2090,9 @@ class RendererPdf(_backend_pdf_ps.RendererPDFPSBase):
         if not len(edgecolors):
             stroked = False
         else:
-            if np.all(np.asarray(linewidths) == 0.0):
+            if mlxarr.all(mlxarr.asarray(linewidths) == 0.0):
                 stroked = False
-            elif np.all(edgecolors[:, 3] == edgecolors[0, 3]):
+            elif mlxarr.all(edgecolors[:, 3] == edgecolors[0, 3]):
                 stroked = edgecolors[0, 3] != 0.0
             else:
                 can_do_optimization = False
@@ -2114,7 +2114,7 @@ class RendererPdf(_backend_pdf_ps.RendererPDFPSBase):
                 linewidths, linestyles, antialiaseds, urls,
                 offset_position, hatchcolors=hatchcolors)
 
-        padding = np.max(linewidths)
+        padding = mlxarr.max(linewidths)
         path_codes = []
         for i, (path, transform) in enumerate(self._iter_collection_raw_paths(
                 master_transform, paths, all_transforms)):
@@ -2201,7 +2201,7 @@ class RendererPdf(_backend_pdf_ps.RendererPDFPSBase):
             return
 
         alpha = colors[0, 0, 3]
-        if np.allclose(alpha, colors[:, :, 3]):
+        if mlxarr.allclose(alpha, colors[:, :, 3]):
             # single alpha value
             gc.set_alpha(alpha)
             self.check_gc(gc)
@@ -2645,13 +2645,13 @@ class GraphicsContextPdf(GraphicsContextBase):
                     else:
                         different = bool(ours != theirs)
                 except (ValueError, DeprecationWarning):
-                    # numpy version < 1.25 raises DeprecationWarning when array shapes
-                    # mismatch, unlike numpy >= 1.25 which raises ValueError.
-                    # This should be removed when numpy < 1.25 is no longer supported.
-                    ours = np.asarray(ours)
-                    theirs = np.asarray(theirs)
+                    # array_backend version < 1.25 raises DeprecationWarning when array shapes
+                    # mismatch, unlike array_backend >= 1.25 which raises ValueError.
+                    # This should be removed when array_backend < 1.25 is no longer supported.
+                    ours = mlxarr.asarray(ours)
+                    theirs = mlxarr.asarray(theirs)
                     different = (ours.shape != theirs.shape or
-                                 np.any(ours != theirs))
+                                 mlxarr.any(ours != theirs))
                 if different:
                     break
 

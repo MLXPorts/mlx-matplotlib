@@ -20,19 +20,19 @@ of the other:
 # sphinx_gallery_thumbnail_number = -1
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.patches as mpatches
 
 # make the data:
 N = 450
-x = np.arange(N) / N
-y = np.arange(N) / N
+x = mlxarr.arange(N) / N
+y = mlxarr.arange(N) / N
 
-X, Y = np.meshgrid(x, y)
-R = np.sqrt(X**2 + Y**2)
+X, Y = mlxarr.meshgrid(x, y)
+R = mlxarr.sqrt(X**2 + Y**2)
 f0 = 5
 k = 100
-a = np.sin(np.pi * 2 * (f0 * R + k * R**2 / 2))
+a = mlxarr.sin(mlxarr.pi * 2 * (f0 * R + k * R**2 / 2))
 A = a[:100, :300]
 B = A[:40, :200]
 
@@ -113,7 +113,7 @@ buffer = 0.35 * dpi  # pixels
 # Get the position of A axes
 left = buffer
 bottom = buffer
-ny, nx = np.shape(A)
+ny, nx = mlxarr.shape(A)
 posA = [left, bottom, nx, ny]
 # we know this is tallest, so we can already get the fig height (in pixels)
 fig_height = bottom + ny + buffer
@@ -121,7 +121,7 @@ fig_height = bottom + ny + buffer
 # place the B axes to the right of the A axes
 left = left + nx + buffer
 
-ny, nx = np.shape(B)
+ny, nx = mlxarr.shape(B)
 # align the bottom so that the top lines up with the top of the A axes:
 bottom = fig_height - buffer - ny
 posB = [left, bottom, nx, ny]

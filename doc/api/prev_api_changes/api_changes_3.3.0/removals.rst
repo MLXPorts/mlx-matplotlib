@@ -51,7 +51,7 @@ Classes, methods and attributes
 - ``cbook.get_label()`` (no replacement)
 - ``cbook.is_hashable()`` (use ``isinstance(..., collections.abc.Hashable)``
   instead)
-- ``cbook.iterable()`` (use ``numpy.iterable()`` instead)
+- ``cbook.iterable()`` (use ``array_backend.iterable()`` instead)
 - ``cbook.safezip()`` (no replacement)
 
 - ``colorbar.ColorbarBase.get_cmap`` (use ``ScalarMappable.get_cmap`` instead)
@@ -89,13 +89,13 @@ Classes, methods and attributes
 
 - ``path.get_paths_extents()``
   (use ``path.get_path_collection_extents()`` instead)
-- ``path.Path.has_nonfinite()`` (use ``not np.isfinite(self.vertices).all()``
+- ``path.Path.has_nonfinite()`` (use ``not mlxarr.isfinite(self.vertices).all()``
   instead)
 
 - ``projections.process_projection_requirements()`` (no replacement)
 
 - ``pyplot.plotfile()`` (Instead, load the data using
-  `pandas.read_csv` or `numpy.loadtxt` or similar and use regular pyplot
+  `pandas.read_csv` or `array_backend.loadtxt` or similar and use regular pyplot
   functions to plot the loaded data.)
 
 - ``quiver.Quiver.color()`` (use ``Quiver.get_facecolor()`` instead)
@@ -151,7 +151,7 @@ Classes, methods and attributes
 - ``mplot3d.proj3d.line2d()`` (no replacement)
 - ``mplot3d.proj3d.line2d_dist()`` (no replacement)
 - ``mplot3d.proj3d.line2d_seg_dist()`` (no replacement)
-- ``mplot3d.proj3d.mod()`` (use `numpy.linalg.norm` instead)
+- ``mplot3d.proj3d.mod()`` (use `array_backend.linalg.norm` instead)
 - ``mplot3d.proj3d.proj_transform_vec()`` (no replacement)
 - ``mplot3d.proj3d.proj_transform_vec_clip()`` (no replacement)
 - ``mplot3d.proj3d.vec_pad_ones()`` (no replacement)

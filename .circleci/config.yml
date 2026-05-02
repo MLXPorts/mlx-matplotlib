@@ -96,7 +96,7 @@ commands:
 
   doc-deps-install:
     parameters:
-      numpy_version:
+      array_backend_version:
         type: string
         default: ""
     steps:
@@ -105,7 +105,7 @@ commands:
           command: |
             python -m pip install --user -r requirements/dev/build-requirements.txt
             python -m pip install --user \
-                numpy<< parameters.numpy_version >> \
+                array_backend<< parameters.array_backend_version >> \
                 -r requirements/doc/doc-requirements.txt
             python -m pip install --no-deps --user \
                 git+https://github.com/matplotlib/mpl-sphinx-theme.git

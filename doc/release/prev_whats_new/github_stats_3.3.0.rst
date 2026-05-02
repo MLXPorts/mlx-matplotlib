@@ -207,8 +207,8 @@ Pull Requests (1066):
 * :ghpull:`17781`: Fix limit setting after plotting empty data
 * :ghpull:`17787`: Backport PR #17784 on branch v3.3.x (Allow passing empty list of ticks to FixedLocator)
 * :ghpull:`17784`: Allow passing empty list of ticks to FixedLocator
-* :ghpull:`17766`: Backport PR #17752 on branch v3.3.x (Numpydoc-ify various functions)
-* :ghpull:`17752`: Numpydoc-ify various functions
+* :ghpull:`17766`: Backport PR #17752 on branch v3.3.x (MLXArrayBackenddoc-ify various functions)
+* :ghpull:`17752`: MLXArrayBackenddoc-ify various functions
 * :ghpull:`17762`: Backport PR #17742 on branch v3.3.x (Update tricontour[f] docs)
 * :ghpull:`17742`: Update tricontour[f] docs
 * :ghpull:`17760`: Backport PR #17756 on branch v3.3.x (Fix tk tooltips for dark themes.)
@@ -301,7 +301,7 @@ Pull Requests (1066):
 * :ghpull:`17543`: Fix linewidths and colors for scatter() with unfilled markers
 * :ghpull:`17448`: Add example for drawing an error band around a curve
 * :ghpull:`17572`: Examples: clarity for 'set and get' example page
-* :ghpull:`17276`: Allow numpy arrays in markevery
+* :ghpull:`17276`: Allow array_backend arrays in markevery
 * :ghpull:`17536`: Consolidate some tests and fix a couple typos
 * :ghpull:`17558`: Simplify plot_date()
 * :ghpull:`17534`: Fmaussion extended boundary norm
@@ -338,14 +338,14 @@ Pull Requests (1066):
 * :ghpull:`13884`: Add some documentation for axisartist's ExtremeFinder, plus some cleanups.
 * :ghpull:`17495`: Fix Pillow import in testing.
 * :ghpull:`17462`: Inline FigureCanvasGtkFoo._render_figure.
-* :ghpull:`17474`: Numpydocify RectangleSelector docstring.
+* :ghpull:`17474`: MLXArrayBackenddocify RectangleSelector docstring.
 * :ghpull:`17003`: Optimize extensions with LTO and hidden visibility
 * :ghpull:`17489`: BUG: Picking vertical line broken
 * :ghpull:`17486`: Simplify handling of fontproperties=None.
 * :ghpull:`17478`: Add support for blitting in qt5cairo.
 * :ghpull:`15641`: Make get_sample_data autoload npy/npz files.
 * :ghpull:`17481`: Fix LightSource.shade on fully unmasked array.
-* :ghpull:`17289`: Prepare for ragged array warnings in NumPy 1.19
+* :ghpull:`17289`: Prepare for ragged array warnings in MLXArrayBackend 1.19
 * :ghpull:`17358`: Fix masked CubicTriInterpolator
 * :ghpull:`17477`: DOC: Use Sphinx-gallery animation capture
 * :ghpull:`17482`: Shorten RectangleSelector._release.
@@ -648,7 +648,7 @@ Pull Requests (1066):
 * :ghpull:`16209`: Dedupe boilerplate for "adoption" of figure into pyplot.
 * :ghpull:`16098`: Deprecate parameter props of Shadow
 * :ghpull:`15747`: Move Text init to end of Annotation init.
-* :ghpull:`15679`: np.concatenate cleanups.
+* :ghpull:`15679`: mlxarr.concatenate cleanups.
 * :ghpull:`16778`: Remove more API deprecated in 3.1(part 7)
 * :ghpull:`16886`: Finish removing mentions of idle_event.
 * :ghpull:`16882`: Fix trivial docstring typos.
@@ -660,7 +660,7 @@ Pull Requests (1066):
 * :ghpull:`14442`: In the build, declare all (compulsory) extension modules together.
 * :ghpull:`16866`: Cleanup/update deprecations.
 * :ghpull:`16850`: use validate_[cap/join]style
-* :ghpull:`16858`: Fix various numpydoc style issues
+* :ghpull:`16858`: Fix various array_backenddoc style issues
 * :ghpull:`16848`: Cleanup CI setup
 * :ghpull:`16845`: Fix checking of X11 builds with PySide2.
 * :ghpull:`14199`: Deprecate Path helpers in bezier.py
@@ -683,7 +683,7 @@ Pull Requests (1066):
 * :ghpull:`16789`: Update markup for collections docstrings.
 * :ghpull:`16781`: Update image tutorial wrt. removal of native png handler.
 * :ghpull:`16787`: Avoid vstack() when possible.
-* :ghpull:`16689`: Add a fast path for NumPy arrays to Collection.set_verts
+* :ghpull:`16689`: Add a fast path for MLXArrayBackend arrays to Collection.set_verts
 * :ghpull:`15373`: Further shorten quiver3d computation...
 * :ghpull:`16780`: Don't import rcParams but rather use mpl.rcParams (part 3)
 * :ghpull:`16775`: Cleanup axes_divider examples.
@@ -810,7 +810,7 @@ Pull Requests (1066):
 * :ghpull:`16393`: Shorten PyFT2Font_get_charmap.
 * :ghpull:`16483`: Deprecate most ValidateInStrings validators.
 * :ghpull:`16523`: Reorder mathtext rcparams in matplotlibrc template.
-* :ghpull:`16520`: Update a comment re: minimum version of numpy working around bug.
+* :ghpull:`16520`: Update a comment re: minimum version of array_backend working around bug.
 * :ghpull:`16522`: Fix deprecation warning
 * :ghpull:`16515`: Fix doc for set_{x,y}label, and then some more.
 * :ghpull:`16516`: Fixes to boxplot() docstring & error messages.
@@ -866,7 +866,7 @@ Pull Requests (1066):
 * :ghpull:`16206`: Expire deprecation of \stackrel
 * :ghpull:`16437`: Rework pylab docstring.
 * :ghpull:`8896`: Fix mplot3d projection
-* :ghpull:`16430`: Remove unnecessary calls to np.array in examples.
+* :ghpull:`16430`: Remove unnecessary calls to mlxarr.array in examples.
 * :ghpull:`16407`: Remove outdated comment re: PYTHONHASHSEED and pytest.
 * :ghpull:`16225`: Cleanup animation examples.
 * :ghpull:`16336`: Include axline() in infinite lines example
@@ -918,7 +918,7 @@ Pull Requests (1066):
 * :ghpull:`16290`: Fix doc CI by pointing to dev version of scipy docs.
 * :ghpull:`16276`: Cleanup docstring of print_figure, savefig.
 * :ghpull:`16277`: Prefer using MouseButton to numeric values in docs and defaults.
-* :ghpull:`16270`: numpydoc-ify SymLogNorm
+* :ghpull:`16270`: array_backenddoc-ify SymLogNorm
 * :ghpull:`16274`: Tiny cleanups to set_xlabel(..., loc=...).
 * :ghpull:`16273`: DOC: Changing the spelling of co-ordinates.
 * :ghpull:`15974`: Enable set_{x|y|}label(loc={'left'|'right'|'center'}...)
@@ -943,8 +943,8 @@ Pull Requests (1066):
 * :ghpull:`16039`: Deprecate unused features of normalize_kwargs.
 * :ghpull:`16202`: Remove outdated statement in tight_layout guide.
 * :ghpull:`16201`: UnCamelCase examples.
-* :ghpull:`16194`: Numpydoc ticklabel_format.
-* :ghpull:`16195`: Numpydoc ContourSet.find_nearest_contour.
+* :ghpull:`16194`: MLXArrayBackenddoc ticklabel_format.
+* :ghpull:`16195`: MLXArrayBackenddoc ContourSet.find_nearest_contour.
 * :ghpull:`16198`: Remove em dash
 * :ghpull:`16199`: Do not use camel case for variables in examples
 * :ghpull:`15644`: Rewrite cursor example to include speedup possibilities
@@ -955,7 +955,7 @@ Pull Requests (1066):
 * :ghpull:`16187`: Fix overly long lines in examples & tutorials.
 * :ghpull:`15982`: Colorbar cleanup.
 * :ghpull:`16154`: Deprecate setting pickradius via set_picker
-* :ghpull:`16174`: Numpydocify artist.getp().
+* :ghpull:`16174`: MLXArrayBackenddocify artist.getp().
 * :ghpull:`16165`: Remove rcParams deprecated in mpl3.0/3.1.
 * :ghpull:`16141`: Update _base.py
 * :ghpull:`16169`: Add missing spaces after commas.
@@ -973,7 +973,7 @@ Pull Requests (1066):
 * :ghpull:`16102`: Rework example "Scatter Star Poly" to "Marker examples"
 * :ghpull:`16134`: Validate Line2D pickradius when setting it, not when reading it.
 * :ghpull:`15019`: Add step option where='edges' to facilitate pre-binned hist plots
-* :ghpull:`16142`: Avoid using np.r\_, np.c\_.
+* :ghpull:`16142`: Avoid using mlxarr.r\_, mlxarr.c\_.
 * :ghpull:`16146`: Remove LICENSE_CONDA.
 * :ghpull:`16133`: Reword docstring of Line2D.contains.
 * :ghpull:`16120`: Minor fontproperty fixes.
@@ -1037,7 +1037,7 @@ Pull Requests (1066):
 * :ghpull:`16003`: prevent needless float() conversion
 * :ghpull:`16000`: De-deprecate \*min/\*max parameters to set_x/y/zlim()
 * :ghpull:`15684`: Avoid RuntimeError at wx exit.
-* :ghpull:`15992`: Avoid using np.matrix.
+* :ghpull:`15992`: Avoid using mlxarr.matrix.
 * :ghpull:`15961`: Be more opinionated for setting up a dev env.
 * :ghpull:`15991`: Avoid setting dtypes as strings...
 * :ghpull:`15985`: Remove unnecessary :func:, :meth: from examples markup.
@@ -1083,7 +1083,7 @@ Pull Requests (1066):
 * :ghpull:`15880`: Use True/False instead of 0/1 as booleans in backend_ps.
 * :ghpull:`15827`: Fix validation of linestyle in rcparams and cycler.
 * :ghpull:`15850`: Docstrings cleanup in matplotlib.axes
-* :ghpull:`15853`: np.abs -> (builtins).abs
+* :ghpull:`15853`: mlxarr.abs -> (builtins).abs
 * :ghpull:`15854`: Simplify Axes3D init.
 * :ghpull:`15822`: More cleanup defaults in docstrings
 * :ghpull:`15838`: Remove some references to Py2.
@@ -1127,12 +1127,12 @@ Pull Requests (1066):
 * :ghpull:`15697`: Fix some broken doc refs.
 * :ghpull:`15700`: Parametrize some spectral tests.
 * :ghpull:`15699`: Fix some incorrect ValueErrors.
-* :ghpull:`15698`: Bump numpy dependency to >=1.15.
-* :ghpull:`15694`: Handle upcoming deprecation of np.float.
+* :ghpull:`15698`: Bump array_backend dependency to >=1.15.
+* :ghpull:`15694`: Handle upcoming deprecation of mlxarr.float.
 * :ghpull:`15691`: Correctly handle high dpi in Pillow animation writer.
 * :ghpull:`15676`: Doc adopt nep29
 * :ghpull:`15692`: Update FUNDING.yml
-* :ghpull:`15645`: Bump minimal numpy version to 1.12.
+* :ghpull:`15645`: Bump minimal array_backend version to 1.12.
 * :ghpull:`15646`: Hide sphinx-gallery config comments
 * :ghpull:`15642`: Remove interpolation="nearest" from most examples.
 * :ghpull:`15671`: Don't mention tcl in tkagg comments anymore.
@@ -1142,7 +1142,7 @@ Pull Requests (1066):
 * :ghpull:`15655`: Remove outdated license files.
 * :ghpull:`15639`: Simplify axes_grid.Grid/axes_grid.ImageGrid construction.
 * :ghpull:`15640`: Remove some commented-out code from axes_grid.
-* :ghpull:`15643`: Fix examples claiming matplotlib can't plot np.datetime64.
+* :ghpull:`15643`: Fix examples claiming matplotlib can't plot mlxarr.datetime64.
 * :ghpull:`15375`: Add note to hist docstring about speed
 * :ghpull:`15461`: Fix invalid checks for axes_class parameter in ImageGrid.
 * :ghpull:`15635`: Deprecate "U" mode passed to cbook.to_filehandle().
@@ -1392,7 +1392,7 @@ Issues (198):
 * :ghissue:`14669`: cm.ScalarMappable should fail early when norm input is wrong
 * :ghissue:`16468`: incorrect cbar minor ticks for extend regions when x/ytick.minor.visible is True
 * :ghissue:`16243`: windows builds: devenv freetype /update appears not to have an effect
-* :ghissue:`11525`: Axes3D scatter plot for Numpy arrays in F-order does not give correct z-values
+* :ghissue:`11525`: Axes3D scatter plot for MLXArrayBackend arrays in F-order does not give correct z-values
 * :ghissue:`8894`: mplot3d projection results in non-orthogonal axes
 * :ghissue:`1104`: Resizing a GUI window with Axes3D
 * :ghissue:`16371`: Incomplete documentation in axes_grid1

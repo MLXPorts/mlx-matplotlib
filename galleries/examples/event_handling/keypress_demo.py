@@ -16,7 +16,7 @@ Show how to connect to keypress events.
 import sys
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 def on_press(event):
     print('press', event.key)
     sys.stdout.flush()
@@ -27,13 +27,13 @@ def on_press(event):
 
 
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 fig, ax = plt.subplots()
 
 fig.canvas.mpl_connect('key_press_event', on_press)
 
-ax.plot(np.random.rand(12), np.random.rand(12), 'go')
+ax.plot(mlxarr.random.rand(12), mlxarr.random.rand(12), 'go')
 xl = ax.set_xlabel('easy come, easy go')
 ax.set_title('Press a key')
 plt.show()

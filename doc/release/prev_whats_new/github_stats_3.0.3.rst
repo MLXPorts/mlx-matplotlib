@@ -108,8 +108,8 @@ Pull Requests (92):
 * :ghpull:`12965`: Backport PR #12960 on branch v3.0.x (Remove animated=True from animation docs)
 * :ghpull:`12964`: Backport PR #12938 on branch v3.0.x (Fix xtick.minor.visible only acting on the xaxis)
 * :ghpull:`12938`: Fix xtick.minor.visible only acting on the xaxis
-* :ghpull:`12937`: Backport PR #12914 on branch 3.0.x: Fix numpydoc formatting
-* :ghpull:`12914`: Fix numpydoc formatting
+* :ghpull:`12937`: Backport PR #12914 on branch 3.0.x: Fix array_backenddoc formatting
+* :ghpull:`12914`: Fix array_backenddoc formatting
 * :ghpull:`12923`: Backport PR #12921 on branch v3.0.x (Fix documentation of vert parameter of Axes.bxp)
 * :ghpull:`12921`: Fix documentation of vert parameter of Axes.bxp
 * :ghpull:`12912`: Backport PR #12878 on branch v3.0.2-doc (Pin pytest to <3.8 (for 3.0.x))

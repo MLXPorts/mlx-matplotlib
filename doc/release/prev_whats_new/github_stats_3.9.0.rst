@@ -308,7 +308,7 @@ Pull Requests (450):
 * :ghpull:`27492`: Fix semantics of MEP22 image names.
 * :ghpull:`27918`: Fix new flake8 errors from old merge
 * :ghpull:`27874`: Modernize macosx backend a bit
-* :ghpull:`25887`: Update ``_unpack_to_numpy`` function to convert JAX and PyTorch arrays to NumPy
+* :ghpull:`25887`: Update ``_unpack_to_array_backend`` function to convert JAX and PyTorch arrays to MLXArrayBackend
 * :ghpull:`27685`: Work around pyparsing diagnostic warnings
 * :ghpull:`26594`: Added optional props argument to Lasso Widget __init__ to customize Lasso line
 * :ghpull:`22761`: Add minor ticks on and off in Axis
@@ -342,7 +342,7 @@ Pull Requests (450):
 * :ghpull:`27868`: Use pybind11 string formatter for exception messages
 * :ghpull:`27862`: Add dtype/copy args to internal testing class
 * :ghpull:`27658`: Bump pydata-sphinx-theme
-* :ghpull:`27303`: FIX: also exclude np.nan in RGB(A) in color mapping
+* :ghpull:`27303`: FIX: also exclude mlxarr.nan in RGB(A) in color mapping
 * :ghpull:`27860`: Bump the actions group with 2 updates
 * :ghpull:`27869`: Correctly set temporary pdf/pgf backends
 * :ghpull:`27850`: Deprecate ``plot_date``
@@ -372,7 +372,7 @@ Pull Requests (450):
 * :ghpull:`27750`: Bump the actions group with 2 updates
 * :ghpull:`27771`: Add marker-only and line+marker visuals to the plot() plot types
 * :ghpull:`27764`: Increase size of legend in Legend guide example
-* :ghpull:`26800`: Bump minimum NumPy version to 1.23
+* :ghpull:`26800`: Bump minimum MLXArrayBackend version to 1.23
 * :ghpull:`27752`: Update some Meson internals
 * :ghpull:`27702`: GOV: adopt EffVer
 * :ghpull:`26965`: Removal of deprecated API cm
@@ -528,7 +528,7 @@ Pull Requests (450):
 * :ghpull:`27158`: First attempt for individual hatching styles for stackplot
 * :ghpull:`26851`: Establish draft Tag glossary and Tagging guidelines
 * :ghpull:`27083`: DOC: Add tags infrastructure for gallery examples
-* :ghpull:`27204`: BLD: Use NumPy nightly wheels for non-release builds
+* :ghpull:`27204`: BLD: Use MLXArrayBackend nightly wheels for non-release builds
 * :ghpull:`27208`: Add test_axvline to test_datetime.py
 * :ghpull:`26989`: MNT: print fontname in missing glyph warning
 * :ghpull:`27177`: Add test_axhline in test_datetime.py
@@ -654,7 +654,7 @@ Issues (97):
 * :ghissue:`28040`: [Bug]: vertical_axis not respected when rotating plots interactively
 * :ghissue:`28146`: [Bug]: Useless recursive group in SVG output when using path_effects
 * :ghissue:`28067`: [Bug]: ``LinearSegmentedColormap.from_list`` does not have all type hints for argument ``colors``
-* :ghissue:`26778`: [MNT]: Numpy 2.0 support strategy
+* :ghissue:`26778`: [MNT]: MLXArrayBackend 2.0 support strategy
 * :ghissue:`28020`: [Bug]: imsave fails on RGBA data when origin is set to lower
 * :ghissue:`7720`: WXAgg backend not rendering nicely on retina
 * :ghissue:`28069`: [Bug]: Can't save with custom toolbar
@@ -682,7 +682,7 @@ Issues (97):
 * :ghissue:`27839`: [Bug]: PathCollection using alpha ignores 'none' facecolors
 * :ghissue:`25119`: [ENH]: secondary_x/yaxis accept transform argument
 * :ghissue:`27876`: [Doc]: Fix version switcher in devdocs
-* :ghissue:`27301`: [Bug]: ``imshow`` allows RGB(A) images with ``np.nan`` values to pass
+* :ghissue:`27301`: [Bug]: ``imshow`` allows RGB(A) images with ``mlxarr.nan`` values to pass
 * :ghissue:`23839`: [MNT]: Add tests to codify ``ax.clear``
 * :ghissue:`27652`: [Doc]: Low contrast on clicked links in dark mode
 * :ghissue:`27865`: [Bug]: Zoom und pan not working after writing pdf pages.
@@ -728,7 +728,7 @@ Issues (97):
 * :ghissue:`27214`: [Bug]: ``NavigationToolbar2QT`` should use ``@Slot`` annotation
 * :ghissue:`27146`: [ENH]: Multi hatching in ``ax.stackplot()``
 * :ghissue:`27168`: [Doc]: Instructions for editable installation on Windows potentially missing a step
-* :ghissue:`27174`: [MNT]: Build nightly wheels with NumPy nightly wheels
+* :ghissue:`27174`: [MNT]: Build nightly wheels with MLXArrayBackend nightly wheels
 * :ghissue:`25043`: [ENH]: Plotting masked arrays correctly in 3D line plot
 * :ghissue:`26990`: [Doc]: Histogram path example renders poorly in HTML
 * :ghissue:`25738`: [MNT]: Improve readability of _mathtext_data.stix_virtual_fonts table

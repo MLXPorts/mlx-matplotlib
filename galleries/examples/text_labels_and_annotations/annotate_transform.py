@@ -11,9 +11,9 @@ For a complete overview of the annotation capabilities, also see the
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
-x = np.arange(0, 10, 0.005)
-y = np.exp(-x/2.) * np.sin(2*np.pi*x)
+from matplotlib import _mlx_array as mlxarr
+x = mlxarr.arange(0, 10, 0.005)
+y = mlxarr.exp(-x/2.) * mlxarr.sin(2*mlxarr.pi*x)
 
 fig, ax = plt.subplots()
 ax.plot(x, y)

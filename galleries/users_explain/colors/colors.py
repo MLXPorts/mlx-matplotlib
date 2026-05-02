@@ -108,12 +108,12 @@ The following plot illustrates the effect of transparency.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.patches import Rectangle
 
 fig, ax = plt.subplots(figsize=(6.5, 1.65), layout='constrained')
 ax.add_patch(Rectangle((-0.2, -0.35), 11.2, 0.7, color='C1', alpha=0.8))
-for i, alpha in enumerate(np.linspace(0, 1, 11)):
+for i, alpha in enumerate(mlxarr.linspace(0, 1, 11)):
     ax.add_patch(Rectangle((i, 0.05), 0.8, 0.6, alpha=alpha, zorder=0))
     ax.text(i+0.4, 0.85, f"{alpha:.1f}", ha='center')
     ax.add_patch(Rectangle((i, -0.05), 0.8, -0.6, alpha=alpha, zorder=2))
@@ -144,10 +144,10 @@ ax.axis('off')
 
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 
-th = np.linspace(0, 2*np.pi, 128)
+th = mlxarr.linspace(0, 2*mlxarr.pi, 128)
 
 
 def demo(sty):
@@ -156,8 +156,8 @@ def demo(sty):
 
     ax.set_title(f'style: {sty!r}', color='C0')
 
-    ax.plot(th, np.cos(th), 'C1', label='C1')
-    ax.plot(th, np.sin(th), 'C2', label='C2')
+    ax.plot(th, mlxarr.cos(th), 'C1', label='C1')
+    ax.plot(th, mlxarr.sin(th), 'C2', label='C2')
     ax.legend()
 
 

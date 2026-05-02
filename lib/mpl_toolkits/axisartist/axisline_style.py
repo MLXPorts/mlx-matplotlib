@@ -2,7 +2,7 @@
 Provides classes to style the axis lines.
 """
 import math
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from matplotlib.patches import _Style, FancyArrowPatch
 from matplotlib.path import Path
@@ -45,10 +45,10 @@ class _FancyAxislineStyle:
             x2 = x1 + math.cos(theta) * mutation_size
             y2 = y1 + math.sin(theta) * mutation_size
             if path.codes is None:
-                return Path(np.concatenate([path.vertices, [[x2, y2]]]))
+                return Path(mlxarr.concatenate([path.vertices, [[x2, y2]]]))
             else:
-                return Path(np.concatenate([path.vertices, [[x2, y2]]]),
-                            np.concatenate([path.codes, [Path.LINETO]]))
+                return Path(mlxarr.concatenate([path.vertices, [[x2, y2]]]),
+                            mlxarr.concatenate([path.codes, [Path.LINETO]]))
 
         def set_path(self, path):
             self._line_path = path

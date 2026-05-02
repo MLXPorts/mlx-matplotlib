@@ -38,7 +38,7 @@ In addition to AxisArtist, the Axes will have *gridlines* attribute,
 which obviously draws grid lines. The gridlines needs to be separated
 from the axis as some gridlines can never pass any axis.
 """
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from matplotlib import _api
 import matplotlib.axes as maxes
@@ -108,9 +108,9 @@ class _AxisArtistHelperBase:
                    [3, 0]])
         """
         if self.nth_coord == 0:
-            return np.stack(np.broadcast_arrays(values, const), axis=-1)
+            return mlxarr.stack(mlxarr.broadcast_arrays(values, const), axis=-1)
         elif self.nth_coord == 1:
-            return np.stack(np.broadcast_arrays(const, values), axis=-1)
+            return mlxarr.stack(mlxarr.broadcast_arrays(const, values), axis=-1)
         else:
             raise ValueError("Unexpected nth_coord")
 

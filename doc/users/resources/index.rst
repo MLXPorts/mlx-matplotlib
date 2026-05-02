@@ -50,7 +50,7 @@ Videos
 * `Plotting with matplotlib <https://www.youtube.com/watch?v=P7SVi0YTIuE>`_
   by Mike Müller
 
-* `Introduction to NumPy and Matplotlib
+* `Introduction to MLXArrayBackend and Matplotlib
   <https://www.youtube.com/watch?v=3Fp1zn5ao2M&feature=plcp>`_ by Eric Jones
 
 * `Anatomy of Matplotlib

@@ -96,8 +96,8 @@ Pull Requests (66):
 * :ghpull:`23075`: Backport PR #23069 on branch v3.5.x (TST: forgive more failures on pyside2 / pyside6 cross imports)
 * :ghpull:`23069`: TST: forgive more failures on pyside2 / pyside6 cross imports
 * :ghpull:`22981`: Backport PR #22979 on branch v3.5.x (Skip additional backend tests on import error)
-* :ghpull:`23064`: Backport PR #22975 on branch v3.5.x (MNT: fix __array__ to numpy)
-* :ghpull:`22975`: MNT: fix __array__ to numpy
+* :ghpull:`23064`: Backport PR #22975 on branch v3.5.x (MNT: fix __array__ to array_backend)
+* :ghpull:`22975`: MNT: fix __array__ to array_backend
 * :ghpull:`23058`: Backport PR #23051 on branch v3.5.x (Fix variable initialization due to jump bypassing it)
 * :ghpull:`23051`: Fix variable initialization due to jump bypassing it
 * :ghpull:`23010`: Backport PR #23000 on branch v3.5.x (Additional details on VS install on installation page)

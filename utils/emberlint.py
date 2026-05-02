@@ -5,7 +5,7 @@ EmberLint: A comprehensive linting tool for Ember ML codebase.
 This script scans Python files to detect:
 1. Syntax errors and compilation issues
 2. Backend purity issues:
-   - NumPy imports and usage
+   - MLXArrayBackend imports and usage
    - Precision-reducing casts (e.g., float() casts)
    - Tensor conversions between backends
    - Direct Python operators instead of ops functions
@@ -129,54 +129,54 @@ def check_types(file_path: str) -> Tuple[bool, List[str]]:
     except Exception as e:
         return False, [f"Error running mypy: {e}"]
 
-def check_numpy_import(file_path: str) -> Tuple[bool, List[str]]:
-    """Check if NumPy is imported in the file."""
+def check_array_backend_import(file_path: str) -> Tuple[bool, List[str]]:
+    """Check if MLXArrayBackend is imported in the file."""
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
     
-    # Check for numpy imports
-    numpy_imports = []
+    # Check for array_backend imports
+    array_backend_imports = []
     
     # Regular expression patterns for different import styles
     patterns = [
-        r'import\s+numpy\s+as\s+(\w+)',  # from matplotlib import _mlx_numpy as np
-        r'from\s+numpy\s+import\s+(.*)',  # from matplotlib._mlx_numpy import ...
-        r'import\s+numpy\b',  # import numpy
+        r'import\s+array_backend\s+as\s+(\w+)',  # from matplotlib import _mlx_array as mlxarr
+        r'from\s+array_backend\s+import\s+(.*)',  # from matplotlib._mlx_array import ...
+        r'import\s+array_backend\b',  # import array_backend
     ]
     
     for pattern in patterns:
         matches = re.findall(pattern, content)
         if matches:
-            if pattern == r'import\s+numpy\s+as\s+(\w+)':
-                # For "from matplotlib import _mlx_numpy as np" style, capture the alias
-                numpy_imports.extend(matches)
-            elif pattern == r'from\s+numpy\s+import\s+(.*)':
-                # For "from matplotlib._mlx_numpy import ..." style, capture the imported names
+            if pattern == r'import\s+array_backend\s+as\s+(\w+)':
+                # For "from matplotlib import _mlx_array as mlxarr" style, capture the alias
+                array_backend_imports.extend(matches)
+            elif pattern == r'from\s+array_backend\s+import\s+(.*)':
+                # For "from matplotlib._mlx_array import ..." style, capture the imported names
                 for match in matches:
                     imports = [name.strip() for name in match.split(',')]
-                    numpy_imports.extend(imports)
+                    array_backend_imports.extend(imports)
             else:
-                # For "import numpy" style, add "numpy" to the list
-                numpy_imports.append("numpy")
+                # For "import array_backend" style, add "array_backend" to the list
+                array_backend_imports.append("array_backend")
     
-    return bool(numpy_imports), numpy_imports
+    return bool(array_backend_imports), array_backend_imports
 
-def check_numpy_usage(file_path: str, numpy_aliases: List[str]) -> Tuple[bool, List[str]]:
-    """Check if NumPy is used in the file."""
+def check_array_backend_usage(file_path: str, array_backend_aliases: List[str]) -> Tuple[bool, List[str]]:
+    """Check if MLXArrayBackend is used in the file."""
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
     
-    # Check for numpy usage
-    numpy_usages = []
+    # Check for array_backend usage
+    array_backend_usages = []
     
-    for alias in numpy_aliases:
-        # Pattern to match usage of the numpy alias
+    for alias in array_backend_aliases:
+        # Pattern to match usage of the array_backend alias
         pattern = r'\b' + re.escape(alias) + r'\.\w+'
         matches = re.findall(pattern, content)
         if matches:
-            numpy_usages.extend(matches)
+            array_backend_usages.extend(matches)
     
-    return bool(numpy_usages), numpy_usages
+    return bool(array_backend_usages), array_backend_usages
 
 def check_backend_specific_imports(file_path: str) -> Tuple[bool, List[str]]:
     """Check if backend-specific libraries are imported in frontend code."""
@@ -247,8 +247,8 @@ class PrecisionReducingVisitor(ast.NodeVisitor):
         self.precision_reducing_casts = []
         self.tensor_conversions = []
         self.python_operators = []
-        self.numpy_imports = set()
-        self.numpy_aliases = set()
+        self.array_backend_imports = set()
+        self.array_backend_aliases = set()
         self.backend_imports = set()
         self.backend_usage = []
         self.current_function = None
@@ -264,19 +264,19 @@ class PrecisionReducingVisitor(ast.NodeVisitor):
     def visit_Import(self, node):
         """Visit import statements."""
         for name in node.names:
-            if name.name == 'numpy':
-                self.numpy_imports.add(f"import {name.name}")
-                self.numpy_aliases.add(name.asname or name.name)
+            if name.name == 'array_backend':
+                self.array_backend_imports.add(f"import {name.name}")
+                self.array_backend_aliases.add(name.asname or name.name)
             elif name.name in ['torch', 'mlx']:
                 self.backend_imports.add(f"import {name.name}")
         self.generic_visit(node)
     
     def visit_ImportFrom(self, node):
         """Visit from-import statements."""
-        if node.module == 'numpy':
+        if node.module == 'array_backend':
             for name in node.names:
-                self.numpy_imports.add(f"from matplotlib._mlx_numpy import {name.name}")
-                self.numpy_aliases.add(name.asname or name.name)
+                self.array_backend_imports.add(f"from matplotlib._mlx_array import {name.name}")
+                self.array_backend_aliases.add(name.asname or name.name)
         elif node.module in ['torch', 'mlx'] or node.module and node.module.startswith(('torch.', 'mlx.')):
             # Skip if this is in a backend or nn/tensor/common file
             filename = getattr(node, 'filename', '')
@@ -377,19 +377,19 @@ class PrecisionReducingVisitor(ast.NodeVisitor):
                 'line': node.lineno
             })
         
-        # Check for tensor to numpy conversions
+        # Check for tensor to array_backend conversions
         if isinstance(node.func, ast.Attribute):
-            # Check for tensor.numpy(), tensor.cpu().numpy(), etc.
-            if node.func.attr == 'numpy':
+            # Check for tensor.array_backend(), tensor.cpu().array_backend(), etc.
+            if node.func.attr == 'array_backend':
                 location = f"{self.current_function}:{node.lineno}" if self.current_function else f"line {node.lineno}"
                 self.tensor_conversions.append({
-                    'type': 'tensor.numpy()',
+                    'type': 'tensor.array_backend()',
                     'location': location,
                     'line': node.lineno
                 })
             
             # Check for tensor.convert_to_tensor(tensor), tensor.asarray(tensor), etc.
-            if isinstance(node.func.value, ast.Name) and node.func.value.id in self.numpy_aliases:
+            if isinstance(node.func.value, ast.Name) and node.func.value.id in self.array_backend_aliases:
                 if node.func.attr in ('array', 'asarray'):
                     location = f"{self.current_function}:{node.lineno}" if self.current_function else f"line {node.lineno}"
                     self.tensor_conversions.append({
@@ -455,7 +455,7 @@ class UnusedImportVisitor(ast.NodeVisitor):
         return unused
 
 def check_ast_for_issues(file_path: str) -> Tuple[bool, List[str], List[str], List[Dict], List[Dict], List[Dict], List[Tuple[str, int]], bool, List[str], List[Dict]]:
-    """Use AST to check for NumPy imports, usage, precision-reducing casts, tensor conversions, Python operators, and unused imports."""
+    """Use AST to check for MLXArrayBackend imports, usage, precision-reducing casts, tensor conversions, Python operators, and unused imports."""
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
     
@@ -474,17 +474,17 @@ def check_ast_for_issues(file_path: str) -> Tuple[bool, List[str], List[str], Li
     unused_visitor.visit(tree)
     unused_imports = unused_visitor.get_unused_imports()
     
-    # Check for numpy usage
-    numpy_usages = []
+    # Check for array_backend usage
+    array_backend_usages = []
     for node in ast.walk(tree):
         if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
-            if node.value.id in visitor.numpy_aliases:
-                numpy_usages.append(f"{node.value.id}.{node.attr}")
+            if node.value.id in visitor.array_backend_aliases:
+                array_backend_usages.append(f"{node.value.id}.{node.attr}")
     
     return (
-        bool(visitor.numpy_imports),
-        list(visitor.numpy_imports),
-        numpy_usages,
+        bool(visitor.array_backend_imports),
+        list(visitor.array_backend_imports),
+        array_backend_usages,
         visitor.precision_reducing_casts,
         visitor.tensor_conversions,
         visitor.python_operators,
@@ -507,14 +507,14 @@ def check_compilation(file_path: str) -> Tuple[bool, List[str]]:
 
 # Define backend paths for the new folder structure
 BACKEND_PATHS = {
-    "numpy": ["ember_ml/backend/numpy"],
+    "array_backend": ["ember_ml/backend/array_backend"],
     "torch": ["ember_ml/backend/torch"],
     "mlx": ["ember_ml/backend/mlx"]
 }
 
 # Define backend tensor paths for the new folder structure
 BACKEND_TENSOR_PATHS = {
-    "numpy": ["ember_ml/backend/numpy/tensor"],
+    "array_backend": ["ember_ml/backend/array_backend/tensor"],
     "torch": ["ember_ml/backend/torch/tensor"],
     "mlx": ["ember_ml/backend/mlx/tensor"]
 }
@@ -668,7 +668,7 @@ def check_frontend_backend_violation(file_path: str) -> Tuple[bool, List[Dict]]:
     # Check if the file is in the ops directory
     if "/ops/" in file_path:
         # Check if the file is in a backend-specific directory
-        if any(backend in file_path for backend in ["/ops/torch/", "/ops/mlx/", "/ops/numpy/"]):
+        if any(backend in file_path for backend in ["/ops/torch/", "/ops/mlx/", "/ops/array_backend/"]):
             return True, [{
                 "violation": "Backend-specific implementation in ops directory",
                 "file": file_path
@@ -677,7 +677,7 @@ def check_frontend_backend_violation(file_path: str) -> Tuple[bool, List[Dict]]:
     # Check if the file is in the features directory
     if "/features/" in file_path:
         # Check if the file is in a backend-specific directory
-        if any(backend in file_path for backend in ["/features/torch/", "/features/mlx/", "/features/numpy/"]):
+        if any(backend in file_path for backend in ["/features/torch/", "/features/mlx/", "/features/array_backend/"]):
             return True, [{
                 "violation": "Backend-specific implementation in features directory",
                 "file": file_path
@@ -686,7 +686,7 @@ def check_frontend_backend_violation(file_path: str) -> Tuple[bool, List[Dict]]:
     # Check if the file is in the nn directory
     if "/nn/" in file_path and not "/nn/tensor/common/" in file_path:
         # Check if the file is in a backend-specific directory
-        if any(backend in file_path for backend in ["/nn/torch/", "/nn/mlx/", "/nn/numpy/"]):
+        if any(backend in file_path for backend in ["/nn/torch/", "/nn/mlx/", "/nn/array_backend/"]):
             return True, [{
                 "violation": "Backend-specific implementation in nn directory",
                 "file": file_path
@@ -711,14 +711,14 @@ def analyze_file(file_path: str) -> Dict:
     # Check for type issues
     types_valid, type_errors = check_types(file_path)
     
-    # Check for NumPy imports using regex
-    has_numpy_import, numpy_imports = check_numpy_import(file_path)
+    # Check for MLXArrayBackend imports using regex
+    has_array_backend_import, array_backend_imports = check_array_backend_import(file_path)
     
-    # If NumPy is imported, check for usage
-    has_numpy_usage = False
-    numpy_usages = []
-    if has_numpy_import:
-        has_numpy_usage, numpy_usages = check_numpy_usage(file_path, numpy_imports)
+    # If MLXArrayBackend is imported, check for usage
+    has_array_backend_usage = False
+    array_backend_usages = []
+    if has_array_backend_import:
+        has_array_backend_usage, array_backend_usages = check_array_backend_usage(file_path, array_backend_imports)
     
     # Check for backend-specific imports
     has_backend_imports, backend_imports = check_backend_specific_imports(file_path)
@@ -727,7 +727,7 @@ def analyze_file(file_path: str) -> Dict:
     has_backend_code, backend_code = check_backend_specific_code(file_path)
     
     # Use AST for more accurate detection
-    ast_has_numpy, ast_numpy_imports, ast_numpy_usages, precision_casts, tensor_conversions, python_operators, unused_imports, ast_has_backend_imports, ast_backend_imports, backend_usage = check_ast_for_issues(file_path)
+    ast_has_array_backend, ast_array_backend_imports, ast_array_backend_usages, precision_casts, tensor_conversions, python_operators, unused_imports, ast_has_backend_imports, ast_backend_imports, backend_usage = check_ast_for_issues(file_path)
     
     # Check for backend consistency
     backend_consistent, inconsistent_operations = check_backend_consistency_for_file(file_path)
@@ -736,9 +736,9 @@ def analyze_file(file_path: str) -> Dict:
     frontend_backend_violation, violations = check_frontend_backend_violation(file_path)
     
     # Combine results
-    has_numpy = has_numpy_import or ast_has_numpy
-    all_imports = list(set(numpy_imports + ast_numpy_imports))
-    all_usages = list(set(numpy_usages + ast_numpy_usages))
+    has_array_backend = has_array_backend_import or ast_has_array_backend
+    all_imports = list(set(array_backend_imports + ast_array_backend_imports))
+    all_usages = list(set(array_backend_usages + ast_array_backend_usages))
     has_backend_specific = has_backend_imports or ast_has_backend_imports or has_backend_code
     all_backend_imports = list(set(backend_imports + ast_backend_imports))
     
@@ -754,7 +754,7 @@ def analyze_file(file_path: str) -> Dict:
         "style_errors": style_errors,
         "types_valid": types_valid,
         "type_errors": type_errors,
-        "has_numpy": has_numpy,
+        "has_array_backend": has_array_backend,
         "imports": all_imports,
         "usages": all_usages,
         "precision_casts": precision_casts,
@@ -800,7 +800,7 @@ def analyze_directory(directory: str, exclude_dirs: Optional[List[str]] = None) 
 def print_results(results: List[Dict], verbose: bool = False, show_all: bool = True,
                  show_syntax: bool = False, show_compilation: bool = False,
                  show_imports: bool = False, show_style: bool = False,
-                 show_types: bool = False, show_numpy: bool = False,
+                 show_types: bool = False, show_array_backend: bool = False,
                  show_precision: bool = False, show_conversion: bool = False,
                  show_operators: bool = False, show_unused: bool = False,
                  show_backend: bool = False, show_frontend_backend: bool = False):
@@ -810,7 +810,7 @@ def print_results(results: List[Dict], verbose: bool = False, show_all: bool = T
     files_with_import_errors = [result for result in results if not result["imports_valid"]]
     files_with_style_errors = [result for result in results if not result["style_valid"]]
     files_with_type_errors = [result for result in results if not result["types_valid"]]
-    numpy_files = [result for result in results if result["has_numpy"]]
+    array_backend_files = [result for result in results if result["has_array_backend"]]
     files_with_precision_casts = [result for result in results if result["precision_casts"]]
     files_with_tensor_conversions = [result for result in results if result["tensor_conversions"]]
     files_with_python_operators = [result for result in results if result["python_operators"]]
@@ -831,8 +831,8 @@ def print_results(results: List[Dict], verbose: bool = False, show_all: bool = T
             print(f"Files with style errors: {len(files_with_style_errors)} ({len(files_with_style_errors)/len(results)*100:.2f}%)")
         if show_all or show_types:
             print(f"Files with type errors: {len(files_with_type_errors)} ({len(files_with_type_errors)/len(results)*100:.2f}%)")
-        if show_all or show_numpy:
-            print(f"Files with NumPy: {len(numpy_files)} ({len(numpy_files)/len(results)*100:.2f}%)")
+        if show_all or show_array_backend:
+            print(f"Files with MLXArrayBackend: {len(array_backend_files)} ({len(array_backend_files)/len(results)*100:.2f}%)")
         if show_all or show_precision:
             print(f"Files with precision-reducing casts: {len(files_with_precision_casts)} ({len(files_with_precision_casts)/len(results)*100:.2f}%)")
         if show_all or show_conversion:
@@ -887,9 +887,9 @@ def print_results(results: List[Dict], verbose: bool = False, show_all: bool = T
                 if len(result["type_errors"]) > 10:
                     print(f"  ... and {len(result['type_errors']) - 10} more")
         
-        if (show_all or show_numpy) and numpy_files:
-            print("\nFiles with NumPy:")
-            for result in numpy_files:
+        if (show_all or show_array_backend) and array_backend_files:
+            print("\nFiles with MLXArrayBackend:")
+            for result in array_backend_files:
                 print(f"\n{result['file']}:")
                 print(f"  Imports: {', '.join(result['imports'])}")
                 print(f"  Usages: {', '.join(result['usages'])}")
@@ -960,7 +960,7 @@ def print_results(results: List[Dict], verbose: bool = False, show_all: bool = T
                 "import_errors": 0,
                 "style_errors": 0,
                 "type_errors": 0,
-                "numpy": 0,
+                "array_backend": 0,
                 "precision_casts": 0,
                 "tensor_conversions": 0,
                 "python_operators": 0,
@@ -980,8 +980,8 @@ def print_results(results: List[Dict], verbose: bool = False, show_all: bool = T
             dir_summary[dir_path]["style_errors"] += 1
         if not result["types_valid"]:
             dir_summary[dir_path]["type_errors"] += 1
-        if result["has_numpy"]:
-            dir_summary[dir_path]["numpy"] += 1
+        if result["has_array_backend"]:
+            dir_summary[dir_path]["array_backend"] += 1
         if result["precision_casts"]:
             dir_summary[dir_path]["precision_casts"] += 1
         if result["tensor_conversions"]:
@@ -1005,7 +1005,7 @@ def print_results(results: List[Dict], verbose: bool = False, show_all: bool = T
             (show_all or show_imports) and stats["import_errors"] > 0 or
             (show_all or show_style) and stats["style_errors"] > 0 or
             (show_all or show_types) and stats["type_errors"] > 0 or
-            (show_all or show_numpy) and stats["numpy"] > 0 or
+            (show_all or show_array_backend) and stats["array_backend"] > 0 or
             (show_all or show_precision) and stats["precision_casts"] > 0 or
             (show_all or show_conversion) and stats["tensor_conversions"] > 0 or
             (show_all or show_operators) and stats["python_operators"] > 0 or
@@ -1027,8 +1027,8 @@ def print_results(results: List[Dict], verbose: bool = False, show_all: bool = T
                 print(f"  Style errors: {stats['style_errors']}/{stats['total']} files ({stats['style_errors']/stats['total']*100:.2f}%)")
             if (show_all or show_types) and stats["type_errors"] > 0:
                 print(f"  Type errors: {stats['type_errors']}/{stats['total']} files ({stats['type_errors']/stats['total']*100:.2f}%)")
-            if (show_all or show_numpy) and stats["numpy"] > 0:
-                print(f"  NumPy: {stats['numpy']}/{stats['total']} files ({stats['numpy']/stats['total']*100:.2f}%)")
+            if (show_all or show_array_backend) and stats["array_backend"] > 0:
+                print(f"  MLXArrayBackend: {stats['array_backend']}/{stats['total']} files ({stats['array_backend']/stats['total']*100:.2f}%)")
             if (show_all or show_precision) and stats["precision_casts"] > 0:
                 print(f"  Precision casts: {stats['precision_casts']}/{stats['total']} files ({stats['precision_casts']/stats['total']*100:.2f}%)")
             if (show_all or show_conversion) and stats["tensor_conversions"] > 0:
@@ -1057,7 +1057,7 @@ def main():
     parser.add_argument("--imports-only", action="store_true", help="Only check for import errors")
     parser.add_argument("--style-only", action="store_true", help="Only check for style errors")
     parser.add_argument("--types-only", action="store_true", help="Only check for type errors")
-    parser.add_argument("--numpy-only", action="store_true", help="Only check for NumPy usage")
+    parser.add_argument("--array_backend-only", action="store_true", help="Only check for MLXArrayBackend usage")
     parser.add_argument("--precision-only", action="store_true", help="Only check for precision-reducing casts")
     parser.add_argument("--conversion-only", action="store_true", help="Only check for tensor conversions")
     parser.add_argument("--operators-only", action="store_true", help="Only check for Python operators (+, -, *, /, etc.)")
@@ -1070,12 +1070,12 @@ def main():
     # If single-issue linting is disabled, ignore the --*-only flags
     if not ALLOW_SINGLE_ISSUE_LINTING:
         if any([args.syntax_only, args.compilation_only, args.imports_only, 
-                args.style_only, args.types_only, args.numpy_only,
+                args.style_only, args.types_only, args.array_backend_only,
                 args.precision_only, args.conversion_only, args.operators_only,
                 args.unused_only, args.backend_only, args.frontend_backend_only]):
             print("Warning: Single-issue linting is disabled. Running all checks.")
             args.syntax_only = args.compilation_only = args.imports_only = False
-            args.style_only = args.types_only = args.numpy_only = False
+            args.style_only = args.types_only = args.array_backend_only = False
             args.precision_only = args.conversion_only = args.operators_only = False
             args.unused_only = args.backend_only = args.frontend_backend_only = False
     
@@ -1090,7 +1090,7 @@ def main():
     
     # Determine what to display based on flags
     show_all = not (args.syntax_only or args.compilation_only or args.imports_only or 
-                    args.style_only or args.types_only or args.numpy_only or 
+                    args.style_only or args.types_only or args.array_backend_only or
                     args.precision_only or args.conversion_only or args.operators_only or
                     args.unused_only or args.backend_only or args.frontend_backend_only)
     
@@ -1103,7 +1103,7 @@ def main():
         args.imports_only,
         args.style_only,
         args.types_only,
-        args.numpy_only,
+        args.array_backend_only,
         args.precision_only,
         args.conversion_only,
         args.operators_only,
@@ -1119,7 +1119,7 @@ def main():
         (args.imports_only and not result["imports_valid"]) or
         (args.style_only and not result["style_valid"]) or
         (args.types_only and not result["types_valid"]) or
-        (args.numpy_only and result["has_numpy"]) or
+        (args.array_backend_only and result["has_array_backend"]) or
         (args.precision_only and result["precision_casts"]) or
         (args.conversion_only and result["tensor_conversions"]) or
         (args.operators_only and result["python_operators"]) or
@@ -1132,7 +1132,7 @@ def main():
             not result["imports_valid"] or
             not result["style_valid"] or
             not result["types_valid"] or
-            result["has_numpy"] or
+            result["has_array_backend"] or
             result["precision_casts"] or
             result["tensor_conversions"] or
             result["python_operators"] or

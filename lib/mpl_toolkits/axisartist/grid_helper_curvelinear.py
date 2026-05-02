@@ -3,7 +3,7 @@ An experimental support for curvilinear grid.
 """
 
 import functools
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from matplotlib.path import Path
 from matplotlib.transforms import Affine2D, Bbox, IdentityTransform
@@ -43,36 +43,36 @@ def _value_and_jac_angle(func, xs, ys, xlim, ylim):
         Like *thetas_dx*, but for df/dy.
     """
 
-    shape = np.broadcast_shapes(np.shape(xs), np.shape(ys))
+    shape = mlxarr.broadcast_shapes(mlxarr.shape(xs), mlxarr.shape(ys))
     val = func(xs, ys)
 
     # Take finite difference steps towards the furthest bound; the step size will be the
     # min of epsilon and the distance to that bound.
-    eps0 = np.finfo(float).eps ** (1/2)  # cf. scipy.optimize.approx_fprime
+    eps0 = mlxarr.finfo(float).eps ** (1/2)  # cf. scipy.optimize.approx_fprime
 
     def calc_eps(vals, lim):
         lo, hi = sorted(lim)
         dlo = vals - lo
         dhi = hi - vals
-        eps_max = np.maximum(dlo, dhi)
-        eps = np.where(dhi >= dlo, 1, -1) * np.minimum(eps0, eps_max)
+        eps_max = mlxarr.maximum(dlo, dhi)
+        eps = mlxarr.where(dhi >= dlo, 1, -1) * mlxarr.minimum(eps0, eps_max)
         return eps, eps_max
 
     xeps, xeps_max = calc_eps(xs, xlim)
     yeps, yeps_max = calc_eps(ys, ylim)
 
     def calc_thetas(dfunc, ps, eps_p0, eps_max, eps_q):
-        thetas_dp = np.full(shape, np.nan)
-        missing = np.full(shape, True)
+        thetas_dp = mlxarr.full(shape, mlxarr.nan)
+        missing = mlxarr.full(shape, True)
         eps_p = eps_p0
         for it, eps_q in enumerate([0, eps_q]):
             while missing.any() and (abs(eps_p) < eps_max).any():
                 if it == 0 and (eps_p > 1).any():
                     break  # Degenerate derivative, move a bit along the other coord.
-                eps_p = np.minimum(eps_p, eps_max)
+                eps_p = mlxarr.minimum(eps_p, eps_max)
                 df_x, df_y = (dfunc(eps_p, eps_q) - dfunc(0, eps_q)) / eps_p
                 good = missing & ((df_x != 0) | (df_y != 0))
-                thetas_dp[good] = np.arctan2(df_y, df_x)[good]
+                thetas_dp[good] = mlxarr.arctan2(df_y, df_x)[good]
                 missing &= ~good
                 eps_p *= 2
         return thetas_dp
@@ -142,14 +142,14 @@ class FloatingAxisArtistHelper(_FloatingAxisArtistHelperBase):
         super().__init__(nth_coord, value)
         self.value = value
         self.grid_helper = grid_helper
-        self._extremes = -np.inf, np.inf
+        self._extremes = -mlxarr.inf, mlxarr.inf
         self._line_num_points = 100  # number of points to create a line
 
     def set_extremes(self, e1, e2):
         if e1 is None:
-            e1 = -np.inf
+            e1 = -mlxarr.inf
         if e2 is None:
-            e2 = np.inf
+            e2 = mlxarr.inf
         self._extremes = e1, e2
 
     def update_lim(self, axes):
@@ -174,20 +174,20 @@ class FloatingAxisArtistHelper(_FloatingAxisArtistHelperBase):
         lat_levs, lat_n, lat_factor = grid_finder.grid_locator2(lat_min, lat_max)
 
         if self.nth_coord == 0:
-            xys = grid_finder.get_transform().transform(np.column_stack([
-                np.full(self._line_num_points, self.value),
-                np.linspace(lat_min, lat_max, self._line_num_points),
+            xys = grid_finder.get_transform().transform(mlxarr.column_stack([
+                mlxarr.full(self._line_num_points, self.value),
+                mlxarr.linspace(lat_min, lat_max, self._line_num_points),
             ]))
         elif self.nth_coord == 1:
-            xys = grid_finder.get_transform().transform(np.column_stack([
-                np.linspace(lon_min, lon_max, self._line_num_points),
-                np.full(self._line_num_points, self.value),
+            xys = grid_finder.get_transform().transform(mlxarr.column_stack([
+                mlxarr.linspace(lon_min, lon_max, self._line_num_points),
+                mlxarr.full(self._line_num_points, self.value),
             ]))
 
         self._grid_info = {
             "extremes": Bbox.from_extents(lon_min, lat_min, lon_max, lat_max),
-            "lon_info": (lon_levs, lon_n, np.asarray(lon_factor)),
-            "lat_info": (lat_levs, lat_n, np.asarray(lat_factor)),
+            "lon_info": (lon_levs, lon_n, mlxarr.asarray(lon_factor)),
+            "lat_info": (lat_levs, lat_n, mlxarr.asarray(lat_factor)),
             "lon_labels": grid_finder._format_ticks(
                 1, "bottom", lon_factor, lon_levs),
             "lat_labels": grid_finder._format_ticks(
@@ -214,7 +214,7 @@ class FloatingAxisArtistHelper(_FloatingAxisArtistHelperBase):
             trf_xy, xx0, yy0, (xmin, xmax), (ymin, ymax))
         p = axes.transAxes.inverted().transform(xy1)
         if 0 <= p[0] <= 1 and 0 <= p[1] <= 1:
-            return xy1, np.rad2deg([angle_dy, angle_dx][self.nth_coord])
+            return xy1, mlxarr.rad2deg([angle_dy, angle_dx][self.nth_coord])
         else:
             return None, None
 
@@ -234,19 +234,19 @@ class FloatingAxisArtistHelper(_FloatingAxisArtistHelperBase):
 
         def trf_xy(x, y):
             trf = self.grid_helper.grid_finder.get_transform() + axes.transData
-            return trf.transform(np.column_stack(np.broadcast_arrays(x, y))).T
+            return trf.transform(mlxarr.column_stack(mlxarr.broadcast_arrays(x, y))).T
 
         # find angles
         if self.nth_coord == 0:
             mask = (e0 <= yy0) & (yy0 <= e1)
             (xx1, yy1), angle_normal, angle_tangent = _value_and_jac_angle(
-                trf_xy, self.value, yy0[mask], (-np.inf, np.inf), (e0, e1))
+                trf_xy, self.value, yy0[mask], (-mlxarr.inf, mlxarr.inf), (e0, e1))
             labels = self._grid_info["lat_labels"]
 
         elif self.nth_coord == 1:
             mask = (e0 <= xx0) & (xx0 <= e1)
             (xx1, yy1), angle_tangent, angle_normal = _value_and_jac_angle(
-                trf_xy, xx0[mask], self.value, (-np.inf, np.inf), (e0, e1))
+                trf_xy, xx0[mask], self.value, (-mlxarr.inf, mlxarr.inf), (e0, e1))
             labels = self._grid_info["lon_labels"]
 
         labels = [l for l, m in zip(labels, mask) if m]
@@ -259,7 +259,7 @@ class FloatingAxisArtistHelper(_FloatingAxisArtistHelperBase):
                     in zip(xx1, yy1, angle_normal, angle_tangent, labels):
                 c2 = tick_to_axes.transform((x, y))
                 if in_01(c2[0]) and in_01(c2[1]):
-                    yield [x, y], *np.rad2deg([normal, tangent]), lab
+                    yield [x, y], *mlxarr.rad2deg([normal, tangent]), lab
 
         return iter_major(), iter([])
 

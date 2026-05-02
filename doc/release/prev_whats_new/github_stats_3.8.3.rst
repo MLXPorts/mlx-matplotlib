@@ -67,8 +67,8 @@ Pull Requests (74):
 * :ghpull:`27680`: Backport PR #27678 on branch v3.8.x (DOC: selecting individual colors from a colormap)
 * :ghpull:`27664`: Backport PR #27581: CI: install German language packs on ubuntu test …
 * :ghpull:`27661`: Backport of pr 27647 on v3.8.x
-* :ghpull:`27662`: Backport PR #27657 on branch v3.8.x (Fix Numpy 2.0 related test failures)
-* :ghpull:`27657`: Fix Numpy 2.0 related test failures
+* :ghpull:`27662`: Backport PR #27657 on branch v3.8.x (Fix MLXArrayBackend 2.0 related test failures)
+* :ghpull:`27657`: Fix MLXArrayBackend 2.0 related test failures
 * :ghpull:`27647`: Fix error that occurs when minorticks are on multi-Axes Figure with more than one boxplot
 * :ghpull:`27660`: Backport PR #27624 on branch v3.8.x (Prepare for Pytest v8)
 * :ghpull:`27624`: Prepare for Pytest v8
@@ -122,7 +122,7 @@ Pull Requests (74):
 Issues (18):
 
 * :ghissue:`27437`: [Bug]: PGF backend crashes at program exit after creating a plot
-* :ghissue:`27770`: [Bug]: pcolormesh issue with np.seterr(under='raise')
+* :ghissue:`27770`: [Bug]: pcolormesh issue with mlxarr.seterr(under='raise')
 * :ghissue:`27720`: [Bug]: pyplot hangs at pause in sonoma 14.3 with backend MacOSX
 * :ghissue:`26316`: [Bug]: quiverkey shows multiple arrows under geographical projection and angle='xy'
 * :ghissue:`23178`: [Bug]: ``contains_point()`` does not appear to work?

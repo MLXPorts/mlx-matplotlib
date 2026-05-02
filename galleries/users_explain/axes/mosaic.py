@@ -32,7 +32,7 @@ provide a Pythonic API for specifying (nested) Axes layouts.
 
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 # Helper function used for visualization in the following examples
 def identify_axes(ax_dict, fontsize=48):
     """
@@ -55,8 +55,8 @@ def identify_axes(ax_dict, fontsize=48):
 # %%
 # If we want a 2x2 grid we can use `.Figure.subplots` which returns a 2D array
 # of `.axes.Axes` which we can index into to do our plotting.
-np.random.seed(19680801)
-hist_data = np.random.randn(1_500)
+mlxarr.random.seed(19680801)
+hist_data = mlxarr.random.randn(1_500)
 
 
 fig = plt.figure(layout="constrained")
@@ -379,8 +379,8 @@ identify_axes(axd, fontsize=36)
 
 
 # %%
-# We can also pass in a 2D NumPy array to do things like
-mosaic = np.zeros((4, 4), dtype=int)
+# We can also pass in a 2D MLXArrayBackend array to do things like
+mosaic = mlxarr.zeros((4, 4), dtype=int)
 for j in range(4):
     mosaic[j, j] = j + 1
 axd = plt.figure(layout="constrained").subplot_mosaic(

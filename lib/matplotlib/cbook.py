@@ -20,12 +20,10 @@ import time
 import traceback
 import types
 import weakref
-
-import mlx.core as mx
-from . import _mlx_numpy as np
-# NumPy's VisibleDeprecationWarning is used by Matplotlib for user-facing warnings.
+from . import _mlx_array as mlxarr
+# MLXArrayBackend's VisibleDeprecationWarning is used by Matplotlib for user-facing warnings.
 # In this MLX fork, import the compatibility version from our shim.
-from matplotlib._mlx_numpy import VisibleDeprecationWarning
+from matplotlib._mlx_array import VisibleDeprecationWarning
 
 import matplotlib
 from matplotlib import _api, _c_internal_utils, mlab
@@ -566,7 +564,7 @@ def open_file_cm(path_or_file, mode="r", encoding=None):
 
 def is_scalar_or_string(val):
     """Return whether the given object is a scalar or string like."""
-    return isinstance(val, str) or not hasattr(val, '__iter__')
+    return isinstance(val, str) or not mlxarr.iterable(val)
 
 
 def get_sample_data(fname, asfileobj=True):
@@ -580,7 +578,7 @@ def get_sample_data(fname, asfileobj=True):
 
     If the filename ends in .gz, the file is implicitly ungzipped.  If the
     filename ends with .npy or .npz, and *asfileobj* is `True`, the file is
-    loaded with `numpy.load`.
+    loaded with `array_backend.load`.
     """
     path = _get_data_path('sample_data', fname)
     if asfileobj:
@@ -588,10 +586,7 @@ def get_sample_data(fname, asfileobj=True):
         if suffix == '.gz':
             return gzip.open(path)
         elif suffix in ['.npy', '.npz']:
-            if suffix == '.npz':
-                return mx.load(str(path))  # MLX natively loads .npz
-            else:
-                return mx.array(np.load(path))  # .npy: load with numpy at I/O boundary, convert
+            return mlxarr.load(path)
         elif suffix in ['.csv', '.xrc', '.txt']:
             return path.open('r')
         else:
@@ -687,12 +682,17 @@ class _Stack:
 
 
 def safe_masked_invalid(x, copy=False):
-    x = mx.array(x)
+    x = mlxarr.array(x, subok=True, copy=copy)
+    if not x.dtype.isnative:
+        # If we have already made a copy, do the byteswap in place, else make a
+        # copy with the byte order swapped.
+        # Swap to native order.
+        x = x.byteswap(inplace=copy).view(x.dtype.newbyteorder('N'))
     try:
-        # MLX has no masked arrays; replace inf with nan so callers skip bad values.
-        return mx.where(mx.isinf(x), mx.array(float('nan'), dtype=x.dtype), x)
-    except Exception:
+        xm = mlxarr.ma.masked_where(~(mlxarr.isfinite(x)), x, copy=False)
+    except TypeError:
         return x
+    return xm
 
 
 def print_cycles(objects, outstream=sys.stdout, show_progress=False):
@@ -925,9 +925,9 @@ def simple_linear_interpolation(a, steps):
         return y0 + t * (y1 - y0)
 
     fps = a.reshape((len(a), -1))
-    xp = mx.arange(len(a)) * steps
-    x = mx.arange((len(a) - 1) * steps + 1)
-    return (mx.stack([_interp(x, xp, fp) for fp in fps.T], axis=1)
+    xp = mlxarr.arange(len(a)) * steps
+    x = mlxarr.arange((len(a) - 1) * steps + 1)
+    return (mlxarr.column_stack([mlxarr.interp(x, xp, fp) for fp in fps.T])
             .reshape((len(x),) + a.shape[1:]))
 
 
@@ -952,7 +952,7 @@ def delete_masked_points(*args):
     Masks are obtained from all arguments of the correct length
     in categories 1, 2, and 4; a point is bad if masked in a masked
     array or if it is a nan or inf.  No attempt is made to
-    extract a mask from categories 2, 3, and 4 if `numpy.isfinite`
+    extract a mask from categories 2, 3, and 4 if `array_backend.isfinite`
     does not yield a Boolean array.
 
     All input arguments that are not passed unchanged are returned
@@ -971,40 +971,40 @@ def delete_masked_points(*args):
     margs = []
     seqlist = [False] * len(args)
     for i, x in enumerate(args):
-        if not isinstance(x, str) and hasattr(x, '__iter__') and len(x) == nrecs:
+        if not isinstance(x, str) and mlxarr.iterable(x) and len(x) == nrecs:
             seqlist[i] = True
-            if isinstance(x, np.ma.MaskedArray):
+            if isinstance(x, mlxarr.ma.MaskedArray):
                 if x.ndim > 1:
                     raise ValueError("Masked arrays must be 1-D")
             else:
-                x = mx.array(x)
+                x = mlxarr.asarray(x)
         margs.append(x)
     masks = []  # List of masks that are True where good.
     for i, x in enumerate(margs):
         if seqlist[i]:
             if x.ndim > 1:
                 continue  # Don't try to get nan locations unless 1-D.
-            if isinstance(x, np.ma.MaskedArray):
-                masks.append(mx.array(~np.ma.getmaskarray(x)))
+            if isinstance(x, mlxarr.ma.MaskedArray):
+                masks.append(~mlxarr.ma.getmaskarray(x))  # invert the mask
                 xd = x.data
             else:
                 xd = x
             try:
-                mask = ~(mx.isnan(mx.array(xd)) | mx.isinf(mx.array(xd)))
-                if isinstance(mask, mx.array):
+                mask = mlxarr.isfinite(xd)
+                if isinstance(mask, mlxarr.ndarray):
                     masks.append(mask)
             except Exception:  # Fixme: put in tuple of possible exceptions?
                 pass
     if len(masks):
-        mask = mx.all(mx.stack(masks), axis=0)
+        mask = mlxarr.logical_and.reduce(masks)
         igood = mask.nonzero()[0]
         if len(igood) < nrecs:
             for i, x in enumerate(margs):
                 if seqlist[i]:
                     margs[i] = x[igood]
     for i, x in enumerate(margs):
-        if seqlist[i] and isinstance(x, np.ma.MaskedArray):
-            margs[i] = mx.array(x.filled())
+        if seqlist[i] and isinstance(x, mlxarr.ma.MaskedArray):
+            margs[i] = x.filled()
     return margs
 
 
@@ -1029,7 +1029,7 @@ def _combine_masks(*args):
     Masks are obtained from all arguments of the correct length
     in categories 1, 2, and 4; a point is bad if masked in a masked
     array or if it is a nan or inf.  No attempt is made to
-    extract a mask from categories 2 and 4 if `numpy.isfinite`
+    extract a mask from categories 2 and 4 if `array_backend.isfinite`
     does not yield a Boolean array.  Category 3 is included to
     support RGB or RGBA ndarrays, which are assumed to have only
     valid values and which are passed through unchanged.
@@ -1051,22 +1051,25 @@ def _combine_masks(*args):
         if is_scalar_or_string(x) or len(x) != nrecs:
             margs.append(x)  # Leave it unmodified.
         else:
-            if isinstance(x, np.ma.MaskedArray) and x.ndim > 1:
+            if isinstance(x, mlxarr.ma.MaskedArray) and x.ndim > 1:
                 raise ValueError("Masked arrays must be 1-D")
-            x = mx.array(x)
+            try:
+                x = mlxarr.asanyarray(x)
+            except (VisibleDeprecationWarning, ValueError):
+                # MLXArrayBackend 1.19 raises a warning about ragged arrays, but we want
+                # to accept basically anything here.
+                x = mlxarr.asanyarray(x, dtype=object)
             if x.ndim == 1:
                 x = safe_masked_invalid(x)
                 seqlist[i] = True
-                # Track positions where x became nan (inf replaced by nan in safe_masked_invalid)
-                masks.append(mx.isnan(x))
+                if mlxarr.ma.is_masked(x):
+                    masks.append(mlxarr.ma.getmaskarray(x))
             margs.append(x)  # Possibly modified.
     if len(masks):
-        mask = mx.any(mx.stack(masks), axis=0)
+        mask = mlxarr.logical_or.reduce(masks)
         for i, x in enumerate(margs):
             if seqlist[i]:
-                # MLX has no masked arrays; fill masked positions with nan
-                x = mx.array(x, dtype=mx.float32)
-                margs[i] = mx.where(mask, mx.array(float('nan'), dtype=mx.float32), x)
+                margs[i] = mlxarr.ma.array(x, mask=mask)
     return margs
 
 
@@ -1103,26 +1106,24 @@ def _broadcast_with_masks(*args, compress=False):
     list of array-like
         The broadcasted and masked inputs.
     """
-    # extract the masks, if any (numpy MaskedArray inputs still handled via .mask attribute)
-    raw_masks = [mx.array(k.mask) for k in args if isinstance(k, np.ma.MaskedArray)]
-    # broadcast all arrays and masks to common shape
-    bcast = _broadcast_arrays_mlx(*args, *raw_masks)
+    # extract the masks, if any
+    masks = [k.mask for k in args if isinstance(k, mlxarr.ma.MaskedArray)]
+    # broadcast to match the shape
+    bcast = mlxarr.broadcast_arrays(*args, *masks)
     inputs = bcast[:len(args)]
     masks = bcast[len(args):]
     if masks:
-        # combine the masks into one (True = masked/invalid)
-        mask = mx.any(mx.stack(list(masks)), axis=0)
-        mask_flat = mx.reshape(mask, (-1,))
+        # combine the masks into one
+        mask = mlxarr.logical_or.reduce(masks)
+        # put mask on and compress
         if compress:
-            # Remove masked positions (boolean fancy indexing)
-            inputs = [mx.reshape(mx.array(k), (-1,))[~mask_flat] for k in inputs]
+            inputs = [mlxarr.ma.array(k, mask=mask).compressed()
+                      for k in inputs]
         else:
-            inputs = [mx.reshape(
-                mx.where(mask, mx.array(float('nan'), dtype=mx.float32),
-                         mx.array(k, dtype=mx.float32)),
-                (-1,)) for k in inputs]
+            inputs = [mlxarr.ma.array(k, mask=mask, dtype=float).filled(mlxarr.nan).ravel()
+                      for k in inputs]
     else:
-        inputs = [mx.reshape(mx.array(k), (-1,)) for k in inputs]
+        inputs = [mlxarr.ravel(k) for k in inputs]
     return inputs
 
 
@@ -1246,11 +1247,11 @@ def boxplot_stats(X, whis=1.5, bootstrap=None, labels=None, autorange=False):
         M = len(data)
         percentiles = [2.5, 97.5]
 
-        bs_index = mx.random.randint(0, M, shape=(N, M))
+        bs_index = mlxarr.random.randint(M, size=(N, M))
         bsData = data[bs_index]
-        estimate = _median(bsData, axis=1)
+        estimate = mlxarr.median(bsData, axis=1, overwrite_input=True)
 
-        CI = _percentile(estimate, percentiles)
+        CI = mlxarr.percentile(estimate, percentiles)
         return CI
 
     def _compute_conf_interval(data, med, iqr, bootstrap):
@@ -1263,8 +1264,8 @@ def boxplot_stats(X, whis=1.5, bootstrap=None, labels=None, autorange=False):
         else:
 
             N = len(data)
-            notch_min = med - 1.57 * iqr / math.sqrt(N)
-            notch_max = med + 1.57 * iqr / math.sqrt(N)
+            notch_min = med - 1.57 * iqr / mlxarr.sqrt(N)
+            notch_max = med + 1.57 * iqr / mlxarr.sqrt(N)
 
         return notch_min, notch_max
 
@@ -1296,26 +1297,27 @@ def boxplot_stats(X, whis=1.5, bootstrap=None, labels=None, autorange=False):
 
         # if empty, bail
         if len(x) == 0:
-            stats['fliers'] = mx.array([])
-            stats['mean'] = math.nan
-            stats['med'] = math.nan
-            stats['q1'] = math.nan
-            stats['q3'] = math.nan
-            stats['iqr'] = math.nan
-            stats['cilo'] = math.nan
-            stats['cihi'] = math.nan
-            stats['whislo'] = math.nan
-            stats['whishi'] = math.nan
+            stats['fliers'] = mlxarr.array([])
+            stats['mean'] = mlxarr.nan
+            stats['med'] = mlxarr.nan
+            stats['q1'] = mlxarr.nan
+            stats['q3'] = mlxarr.nan
+            stats['iqr'] = mlxarr.nan
+            stats['cilo'] = mlxarr.nan
+            stats['cihi'] = mlxarr.nan
+            stats['whislo'] = mlxarr.nan
+            stats['whishi'] = mlxarr.nan
             continue
 
         # up-convert to an array, just to be safe
-        x = mx.reshape(mx.array(x, dtype=mx.float32), (-1,))
+        x = mlxarr.ma.asarray(x)
+        x = x.data[~x.mask].ravel()
 
         # arithmetic mean
-        stats['mean'] = mx.mean(x).item()
+        stats['mean'] = mlxarr.mean(x)
 
         # medians and quartiles
-        q1, med, q3 = _percentile(x, [25, 50, 75])
+        q1, med, q3 = mlxarr.percentile(x, [25, 50, 75])
 
         # interquartile range
         stats['iqr'] = q3 - q1
@@ -1328,9 +1330,9 @@ def boxplot_stats(X, whis=1.5, bootstrap=None, labels=None, autorange=False):
         )
 
         # lowest/highest non-outliers
-        if hasattr(whis, '__iter__') and not isinstance(whis, str):
-            loval, hival = _percentile(x, whis)
-        elif isinstance(whis, (int, float)):
+        if mlxarr.iterable(whis) and not isinstance(whis, str):
+            loval, hival = mlxarr.percentile(x, whis)
+        elif mlxarr.isreal(whis):
             loval = q1 - whis * stats['iqr']
             hival = q3 + whis * stats['iqr']
         else:
@@ -1338,20 +1340,20 @@ def boxplot_stats(X, whis=1.5, bootstrap=None, labels=None, autorange=False):
 
         # get high extreme
         wiskhi = x[x <= hival]
-        if len(wiskhi) == 0 or mx.max(wiskhi).item() < q3:
+        if len(wiskhi) == 0 or mlxarr.max(wiskhi) < q3:
             stats['whishi'] = q3
         else:
-            stats['whishi'] = mx.max(wiskhi).item()
+            stats['whishi'] = mlxarr.max(wiskhi)
 
         # get low extreme
         wisklo = x[x >= loval]
-        if len(wisklo) == 0 or mx.min(wisklo).item() > q1:
+        if len(wisklo) == 0 or mlxarr.min(wisklo) > q1:
             stats['whislo'] = q1
         else:
-            stats['whislo'] = mx.min(wisklo).item()
+            stats['whislo'] = mlxarr.min(wisklo)
 
         # compute a single array of outliers
-        stats['fliers'] = mx.concatenate([
+        stats['fliers'] = mlxarr.concatenate([
             x[x < stats['whislo']],
             x[x > stats['whishi']],
         ])
@@ -1373,13 +1375,13 @@ def contiguous_regions(mask):
     Return a list of (ind0, ind1) such that ``mask[ind0:ind1].all()`` is
     True and we cover all such regions.
     """
-    mask = mx.array(mask, dtype=mx.bool_)
+    mask = mlxarr.asarray(mask, dtype=bool)
 
     if not mask.size:
         return []
 
     # Find the indices of region changes, and correct offset
-    idx, = mx.nonzero(mask[:-1] != mask[1:])
+    idx, = mlxarr.nonzero(mask[:-1] != mask[1:])
     idx += 1
 
     # List operations are faster for moderately sized arrays
@@ -1413,26 +1415,22 @@ def _to_unmasked_float_array(x):
     values are converted to nans.
     """
     if hasattr(x, 'mask'):
-        # Numpy MaskedArray input: read .data and .mask directly
-        data = mx.array(x.data, dtype=mx.float32)
-        mask = mx.array(x.mask, dtype=mx.bool_)
-        return mx.where(mask, mx.array(float('nan'), dtype=mx.float32), data)
+        return mlxarr.ma.asanyarray(x, float).filled(mlxarr.nan)
     else:
-        return mx.array(x, dtype=mx.float32)
+        return mlxarr.asanyarray(x, float)
 
 
 def _check_1d(x):
     """Convert scalars to 1D arrays; pass-through arrays as is."""
     # Unpack in case of e.g. Pandas or xarray object
-    x = _unpack_to_numpy(x)
+    x = _unpack_to_array_backend(x)
     # plot requires `shape` and `ndim`.  If passed an
-    # object that doesn't provide them, then force to numpy array.
+    # object that doesn't provide them, then force to array_backend array.
     # Note this will strip unit information.
     if (not hasattr(x, 'shape') or
             not hasattr(x, 'ndim') or
             len(x.shape) < 1):
-        t = mx.array(x)
-        return mx.reshape(t, (-1,)) if t.ndim == 0 else t
+        return mlxarr.atleast_1d(x)
     else:
         return x
 
@@ -1442,7 +1440,7 @@ def _reshape_2D(X, name):
     Use Fortran ordering to convert ndarrays and lists of iterables to lists of
     1D arrays.
 
-    Lists of iterables are converted by applying `numpy.asanyarray` to each of
+    Lists of iterables are converted by applying `array_backend.asanyarray` to each of
     their elements.  1D ndarrays are returned in a singleton list containing
     them.  2D ndarrays are converted to the list of their *columns*.
 
@@ -1450,20 +1448,20 @@ def _reshape_2D(X, name):
     """
 
     # Unpack in case of e.g. Pandas or xarray object
-    X = _unpack_to_numpy(X)
+    X = _unpack_to_array_backend(X)
 
     # Iterate over columns for ndarrays.
-    if isinstance(X, mx.array):
+    if isinstance(X, mlxarr.ndarray):
         X = X.transpose()
 
         if len(X) == 0:
             return [[]]
-        elif X.ndim == 1 and mx.array(X[0]).ndim == 0:
+        elif X.ndim == 1 and mlxarr.ndim(X[0]) == 0:
             # 1D array of scalars: directly return it.
             return [X]
         elif X.ndim in [1, 2]:
             # 2D array, or 1D array of iterables: flatten them first.
-            return [mx.reshape(x, (-1,)) for x in X]
+            return [mlxarr.reshape(x, -1) for x in X]
         else:
             raise ValueError(f'{name} must have 2 or fewer dimensions')
 
@@ -1483,15 +1481,15 @@ def _reshape_2D(X, name):
                 pass
             else:
                 is_1d = False
-        xi = mx.array(xi)
-        nd = xi.ndim
+        xi = mlxarr.asanyarray(xi)
+        nd = mlxarr.ndim(xi)
         if nd > 1:
             raise ValueError(f'{name} must have 2 or fewer dimensions')
         result.append(xi.reshape(-1))
 
     if is_1d:
         # 1D array of scalars: directly return it.
-        return [mx.reshape(mx.array(result), (-1,))]
+        return [mlxarr.reshape(result, -1)]
     else:
         # 2D array, or 1D array of iterables: use flattened version.
         return result
@@ -1571,7 +1569,7 @@ def violin_stats(X, method=("GaussianKDE", "scott"), points=100, quantiles=None)
 
         def _kde_method(x, coords):
             # fallback gracefully if the vector contains only one value
-            if mx.all(x[0] == x).item():
+            if mlxarr.all(x[0] == x):
                 return (x[0] == coords).astype(float)
             kde = mlab.GaussianKDE(x, bw_method)
             return kde.evaluate(coords)
@@ -1602,22 +1600,21 @@ def violin_stats(X, method=("GaussianKDE", "scott"), points=100, quantiles=None)
         stats = {}
 
         # Calculate basic stats for the distribution
-        min_val = mx.min(x).item()
-        max_val = mx.max(x).item()
-        quantile_val = _percentile(x, 100 * q)
+        min_val = mlxarr.min(x)
+        max_val = mlxarr.max(x)
+        quantile_val = mlxarr.percentile(x, 100 * q)
 
         # Evaluate the kernel density estimate
-        coords = mx.linspace(min_val, max_val, points)
+        coords = mlxarr.linspace(min_val, max_val, points)
         stats['vals'] = method(x, coords)
         stats['coords'] = coords
 
         # Store additional statistics for this distribution
-        stats['mean'] = mx.mean(x).item()
-        stats['median'] = _median(x).item()
+        stats['mean'] = mlxarr.mean(x)
+        stats['median'] = mlxarr.median(x)
         stats['min'] = min_val
         stats['max'] = max_val
-        qv = mx.array(quantile_val)
-        stats['quantiles'] = mx.reshape(qv, (-1,)) if qv.ndim == 0 else qv
+        stats['quantiles'] = mlxarr.atleast_1d(quantile_val)
 
         # Append to output
         vpstats.append(stats)
@@ -1653,7 +1650,7 @@ def pts_to_prestep(x, *args):
     --------
     >>> x_s, y1_s, y2_s = pts_to_prestep(x, y1, y2)
     """
-    steps = mx.zeros((1 + len(args), max(2 * len(x) - 1, 0)))
+    steps = mlxarr.zeros((1 + len(args), max(2 * len(x) - 1, 0)))
     # In all `pts_to_*step` functions, only assign once using *x* and *args*,
     # as converting to an array may be expensive.
     steps[0, 0::2] = x
@@ -1691,7 +1688,7 @@ def pts_to_poststep(x, *args):
     --------
     >>> x_s, y1_s, y2_s = pts_to_poststep(x, y1, y2)
     """
-    steps = mx.zeros((1 + len(args), max(2 * len(x) - 1, 0)))
+    steps = mlxarr.zeros((1 + len(args), max(2 * len(x) - 1, 0)))
     steps[0, 0::2] = x
     steps[0, 1::2] = steps[0, 2::2]
     steps[1:, 0::2] = args
@@ -1727,8 +1724,8 @@ def pts_to_midstep(x, *args):
     --------
     >>> x_s, y1_s, y2_s = pts_to_midstep(x, y1, y2)
     """
-    steps = mx.zeros((1 + len(args), 2 * len(x)))
-    x = mx.array(x)
+    steps = mlxarr.zeros((1 + len(args), 2 * len(x)))
+    x = mlxarr.asanyarray(x)
     steps[0, 1:-1:2] = steps[0, 2::2] = (x[:-1] + x[1:]) / 2
     steps[0, :1] = x[:1]  # Also works for zero-sized input.
     steps[0, -1:] = x[-1:]
@@ -1766,17 +1763,17 @@ def index_of(y):
        The x and y values to plot.
     """
     try:
-        return y.index.to_numpy(), y.to_numpy()
+        return y.index.to_array_backend(), y.to_array_backend()
     except AttributeError:
         pass
     try:
         y = _check_1d(y)
     except (VisibleDeprecationWarning, ValueError):
-        # NumPy 1.19 will warn on ragged input, and we can't actually use it.
+        # MLXArrayBackend 1.19 will warn on ragged input, and we can't actually use it.
         pass
     else:
-        return mx.arange(y.shape[0], dtype=mx.float32), y
-    raise ValueError('Input could not be cast to an at-least-1D NumPy array')
+        return mlxarr.arange(y.shape[0], dtype=float), y
+    raise ValueError('Input could not be cast to an at-least-1D MLXArrayBackend array')
 
 
 def safe_first_element(obj):
@@ -1788,7 +1785,7 @@ def safe_first_element(obj):
     """
     if isinstance(obj, collections.abc.Iterator):
         # needed to accept `array.flat` as input.
-        # np.flatiter reports as an instance of collections.Iterator but can still be
+        # mlxarr.flatiter reports as an instance of collections.Iterator but can still be
         # indexed via []. This has the side effect of re-setting the iterator, but
         # that is acceptable.
         try:
@@ -1816,18 +1813,18 @@ def _safe_first_finite(obj):
             return math.isfinite(val)
         except (TypeError, ValueError):
             # if the outer object is 2d, then val is a 1d array, and
-            # - math.isfinite(numpy.zeros(3)) raises TypeError
+            # - math.isfinite(array_backend.zeros(3)) raises TypeError
             # - math.isfinite(torch.zeros(3)) raises ValueError
             pass
         try:
-            return math.isfinite(val) if not hasattr(val, '__len__') else True
+            return mlxarr.isfinite(val) if mlxarr.isscalar(val) else True
         except TypeError:
-            # This is something that NumPy cannot make heads or tails of,
+            # This is something that MLXArrayBackend cannot make heads or tails of,
             # assume "finite"
             return True
 
-    if isinstance(obj, np.flatiter):
-        # np.flatiter from numpy_array.flat; index directly to get first element
+    if isinstance(obj, mlxarr.flatiter):
+        # TODO do the finite filtering on this
         return obj[0]
     elif isinstance(obj, collections.abc.Iterator):
         raise RuntimeError("matplotlib does not support generators as input")
@@ -1978,7 +1975,7 @@ def _str_equal(obj, s):
     """
     Return whether *obj* is a string equal to string *s*.
 
-    This helper solely exists to handle the case where *obj* is a numpy array,
+    This helper solely exists to handle the case where *obj* is a array_backend array,
     because in such cases, a naive ``obj == s`` would yield an array, which
     cannot be used in a boolean context.
     """
@@ -1989,7 +1986,7 @@ def _str_lower_equal(obj, s):
     """
     Return whether *obj* is a string equal, when lowercased, to string *s*.
 
-    This helper solely exists to handle the case where *obj* is a numpy array,
+    This helper solely exists to handle the case where *obj* is a array_backend array,
     because in such cases, a naive ``obj == s`` would yield an array, which
     cannot be used in a boolean context.
     """
@@ -2014,7 +2011,7 @@ def _array_perimeter(arr):
 
     Examples
     --------
-    >>> i, j = np.ogrid[:3, :4]
+    >>> i, j = mlxarr.ogrid[:3, :4]
     >>> a = i*10 + j
     >>> a
     array([[ 0,  1,  2,  3],
@@ -2025,14 +2022,14 @@ def _array_perimeter(arr):
     """
     # note we use Python's half-open ranges to avoid repeating
     # the corners
-    forward = slice(0, -1)      # [0 ... -1)
-    backward = slice(-1, 0, -1)  # [-1 ... 0)
-    return mx.concatenate([
+    forward = mlxarr.s_[0:-1]      # [0 ... -1)
+    backward = mlxarr.s_[-1:0:-1]  # [-1 ... 0)
+    return mlxarr.concatenate((
         arr[0, forward],
         arr[forward, -1],
         arr[-1, backward],
         arr[backward, 0],
-    ])
+    ))
 
 
 def _unfold(arr, axis, size, step):
@@ -2058,7 +2055,7 @@ def _unfold(arr, axis, size, step):
 
     Examples
     --------
-    >>> i, j = np.ogrid[:3, :7]
+    >>> i, j = mlxarr.ogrid[:3, :7]
     >>> a = i*10 + j
     >>> a
     array([[ 0,  1,  2,  3,  4,  5,  6],
@@ -2075,17 +2072,14 @@ def _unfold(arr, axis, size, step):
             [22, 23, 24],
             [24, 25, 26]]])
     """
-    n_windows = (arr.shape[axis] - size) // step + 1
-    windows = []
-    for i in range(n_windows):
-        idx = [slice(None)] * arr.ndim
-        idx[axis] = slice(i * step, i * step + size)
-        w = arr[tuple(idx)]
-        # Move the window-content axis to the last position so the output
-        # shape matches np.lib.stride_tricks.as_strided: (..., n_windows, ..., size)
-        w = mx.moveaxis(w, axis, -1)
-        windows.append(w)
-    return mx.stack(windows, axis=axis)
+    new_shape = [*arr.shape, size]
+    new_strides = [*arr.strides, arr.strides[axis]]
+    new_shape[axis] = (new_shape[axis] - size) // step + 1
+    new_strides[axis] = new_strides[axis] * step
+    return mlxarr.lib.stride_tricks.as_strided(arr,
+                                           shape=new_shape,
+                                           strides=new_strides,
+                                           writeable=False)
 
 
 def _array_patch_perimeters(x, rstride, cstride):
@@ -2128,12 +2122,12 @@ def _array_patch_perimeters(x, rstride, cstride):
     #     cstride for top and bottom and rstride for left and right)
     #
     # Note that _unfold doesn't incur any memory copies, so the only costly
-    # operation here is the np.concatenate.
+    # operation here is the mlxarr.concatenate.
     top = _unfold(x[:-1:rstride, :-1], 1, cstride, cstride)
     bottom = _unfold(x[rstride::rstride, 1:], 1, cstride, cstride)[..., ::-1]
     right = _unfold(x[:-1, cstride::cstride], 0, rstride, rstride)
     left = _unfold(x[1:, :-1:cstride], 0, rstride, rstride)[..., ::-1]
-    return (mx.concatenate([top, right, bottom, left], axis=2)
+    return (mlxarr.concatenate((top, right, bottom, left), axis=2)
               .reshape(-1, 2 * (rstride + cstride)))
 
 
@@ -2210,22 +2204,18 @@ def _premultiplied_argb32_to_unmultiplied_rgba8888(buf):
     """
     Convert a premultiplied ARGB32 buffer to an unmultiplied RGBA8888 buffer.
     """
-    rgba = mx.take(  # .take() ensures C-contiguity of the result.
+    rgba = mlxarr.take(  # .take() ensures C-contiguity of the result.
         buf,
         mx.array([2, 1, 0, 3] if sys.byteorder == "little" else [1, 2, 3, 0]), axis=2)
     rgb = rgba[..., :-1]
     alpha = rgba[..., -1]
     # Un-premultiply alpha.  The formula is the same as in cairo-png.c.
     mask = alpha != 0
-    # MLX arrays are immutable; process each channel and reconstruct.
-    channels = []
-    for i in range(rgb.shape[-1]):
-        ch = rgb[..., i].astype(mx.int32)
-        alpha_i = alpha.astype(mx.int32)
-        updated = (ch * 255 + alpha_i // 2) // alpha_i
-        channels.append(mx.where(mask, updated, ch).astype(rgba.dtype))
-    rgb_new = mx.stack(channels, axis=-1)
-    return mx.concatenate([rgb_new, rgba[..., -1:]], axis=-1)
+    for channel in mlxarr.rollaxis(rgb, -1):
+        channel[mask] = (
+            (channel[mask].astype(int) * 255 + alpha[mask] // 2)
+            // alpha[mask])
+    return rgba
 
 
 def _unmultiplied_rgba8888_to_premultiplied_argb32(rgba8888):
@@ -2233,23 +2223,18 @@ def _unmultiplied_rgba8888_to_premultiplied_argb32(rgba8888):
     Convert an unmultiplied RGBA8888 buffer to a premultiplied ARGB32 buffer.
     """
     if sys.byteorder == "little":
-        argb32 = mx.take(rgba8888, mx.array([2, 1, 0, 3]), axis=2)
+        argb32 = mlxarr.take(rgba8888, [2, 1, 0, 3], axis=2)
         rgb24 = argb32[..., :-1]
         alpha8 = argb32[..., -1:]
     else:
-        argb32 = mx.take(rgba8888, mx.array([3, 0, 1, 2]), axis=2)
+        argb32 = mlxarr.take(rgba8888, [3, 0, 1, 2], axis=2)
         alpha8 = argb32[..., :1]
         rgb24 = argb32[..., 1:]
     # Only bother premultiplying when the alpha channel is not fully opaque,
     # as the cost is not negligible.  The unsafe cast is needed to do the
     # multiplication in-place in an integer buffer.
     if alpha8.min() != 0xff:
-        # MLX arrays are immutable; reassign rgb24 and reconstruct argb32.
-        rgb24 = (rgb24 * (alpha8 / 0xff)).astype(rgba8888.dtype)
-        if sys.byteorder == "little":
-            argb32 = mx.concatenate([rgb24, alpha8], axis=-1)
-        else:
-            argb32 = mx.concatenate([alpha8, rgb24], axis=-1)
+        mlxarr.multiply(rgb24, alpha8 / 0xff, out=rgb24, casting="unsafe")
     return argb32
 
 
@@ -2342,12 +2327,12 @@ def _g_sig_digits(value, delta):
         return 0
     if delta == 0:
         if value == 0:
-            # if both value and delta are 0, np.spacing below returns 5e-324
+            # if both value and delta are 0, mlxarr.spacing below returns 5e-324
             # which results in rather silly results
             return 3
         # delta = 0 may occur when trying to format values over a tiny range;
         # in that case, replace it by the distance to the closest float.
-        delta = abs(math.ulp(value))
+        delta = abs(mlxarr.spacing(value))
     # If e.g. value = 45.67 and delta = 0.02, then we want to round to 2 digits
     # after the decimal point (floor(log10(0.02)) = -2); 45.67 contributes 2
     # digits before the decimal point (floor(log10(45.67)) + 1 = 2): the total
@@ -2494,25 +2479,29 @@ def _is_tensorflow_array(x):
         return False  # Just in case it's a very nonstandard module.
 
 
-def _unpack_to_numpy(x):
+def _unpack_to_array_backend(x):
     """Internal helper to extract data from e.g. pandas and xarray objects."""
-    if isinstance(x, mx.array):
-        # If MLX array, return directly
+    if isinstance(x, mlxarr.ndarray):
+        # If array_backend, return directly
         return x
-    if hasattr(x, 'to_numpy'):
-        # Assume that any to_numpy() method actually returns a numpy array; convert to MLX
-        return mx.array(x.to_numpy())
+    if hasattr(x, 'to_array_backend'):
+        # Assume that any to_array_backend() method actually returns a array_backend array
+        return x.to_array_backend()
     if hasattr(x, 'values'):
         xtmp = x.values
         # For example a dict has a 'values' attribute, but it is not a property
         # so in this case we do not want to return a function
-        if isinstance(xtmp, np.ndarray):
-            return mx.array(xtmp)
+        if isinstance(xtmp, mlxarr.ndarray):
+            return xtmp
     if _is_torch_array(x) or _is_jax_array(x) or _is_tensorflow_array(x):
-        # using mx.array() instead of np.asarray(); converts via __array__ protocol
-        xtmp = mx.array(x)
+        # using mlxarr.asarray() instead of explicitly __array__(), as the latter is
+        # only _one_ of many methods, and it's the last resort, see also
+        # https://array_backend.org/devdocs/user/basics.interoperability.html#using-arbitrary-objects-in-array_backend
+        # therefore, let arrays do better if they can
+        xtmp = mlxarr.asarray(x)
 
-        if isinstance(xtmp, mx.array):
+        # In case mlxarr.asarray method does not return a array_backend array in future
+        if isinstance(xtmp, mlxarr.ndarray):
             return xtmp
     return x
 

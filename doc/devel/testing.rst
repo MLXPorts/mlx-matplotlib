@@ -124,10 +124,10 @@ Random data in tests
 Random data is a very convenient way to generate data for examples,
 however the randomness is problematic for testing (as the tests
 must be deterministic!).  To work around this set the seed in each test.
-For numpy's default random number generator use::
+For array_backend's default random number generator use::
 
-  from matplotlib import _mlx_numpy as np
-  rng = np.random.default_rng(19680801)
+  from matplotlib import _mlx_array as mlxarr
+  rng = mlxarr.random.default_rng(19680801)
 
 and then use ``rng`` when generating the random numbers.
 
@@ -187,7 +187,7 @@ vs plotting the circle using the parametric equation of a circle ::
    from matplotlib.testing.decorators import check_figures_equal
    import matplotlib.patches as mpatches
    import matplotlib.pyplot as plt
-   from matplotlib import _mlx_numpy as np
+   from matplotlib import _mlx_array as mlxarr
 
    @check_figures_equal()
    def test_parametric_circle_plot(fig_test, fig_ref):
@@ -196,9 +196,9 @@ vs plotting the circle using the parametric equation of a circle ::
        radius = 0.4
 
        ax_test = fig_test.subplots()
-       theta = np.linspace(0, 2 * np.pi, 150)
-       l, = ax_test.plot(xo + (radius * np.cos(theta)),
-                         yo + (radius * np.sin(theta)), c='r')
+       theta = mlxarr.linspace(0, 2 * mlxarr.pi, 150)
+       l, = ax_test.plot(xo + (radius * mlxarr.cos(theta)),
+                         yo + (radius * mlxarr.sin(theta)), c='r')
 
        ax_ref = fig_ref.subplots()
        red_circle_ref = mpatches.Circle((xo, yo), radius, ec='r', fc='none',
@@ -298,7 +298,7 @@ When running a ``git bisect`` to see which commit introduced a certain bug,
 you may (rarely) need to build very old versions of Matplotlib.  The following
 constraints need to be taken into account:
 
-- Matplotlib 1.3 (or earlier) requires numpy 1.8 (or earlier).
+- Matplotlib 1.3 (or earlier) requires array_backend 1.8 (or earlier).
 
 Testing released versions of Matplotlib
 ---------------------------------------

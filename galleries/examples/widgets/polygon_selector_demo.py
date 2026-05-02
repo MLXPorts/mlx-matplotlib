@@ -5,7 +5,7 @@ Select indices from a collection using polygon selector
 
 Shows how one can select indices of a polygon interactively.
 """
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.path import Path
 from matplotlib.widgets import PolygonSelector
 
@@ -46,14 +46,14 @@ class SelectFromCollection:
         if len(self.fc) == 0:
             raise ValueError('Collection must have a facecolor')
         elif len(self.fc) == 1:
-            self.fc = np.tile(self.fc, (self.Npts, 1))
+            self.fc = mlxarr.tile(self.fc, (self.Npts, 1))
 
         self.poly = PolygonSelector(ax, self.onselect, draw_bounding_box=True)
         self.ind = []
 
     def onselect(self, verts):
         path = Path(verts)
-        self.ind = np.nonzero(path.contains_points(self.xys))[0]
+        self.ind = mlxarr.nonzero(path.contains_points(self.xys))[0]
         self.fc[:, -1] = self.alpha_other
         self.fc[self.ind, -1] = 1
         self.collection.set_facecolors(self.fc)
@@ -71,8 +71,8 @@ if __name__ == '__main__':
 
     fig, ax = plt.subplots()
     grid_size = 5
-    grid_x = np.tile(np.arange(grid_size), grid_size)
-    grid_y = np.repeat(np.arange(grid_size), grid_size)
+    grid_x = mlxarr.tile(mlxarr.arange(grid_size), grid_size)
+    grid_y = mlxarr.repeat(mlxarr.arange(grid_size), grid_size)
     pts = ax.scatter(grid_x, grid_y)
 
     selector = SelectFromCollection(ax, pts)

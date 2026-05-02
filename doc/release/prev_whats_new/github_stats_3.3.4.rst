@@ -29,8 +29,8 @@ Pull Requests (20):
 * :ghpull:`19386`: Backport PR #19238 on branch v3.3.x (Fix build with LTO disabled in environment)
 * :ghpull:`19238`: Fix build with LTO disabled in environment
 * :ghpull:`19382`: Backport PR #19052 on branch v3.3.x (Always pass integers to wx.Size.)
-* :ghpull:`19377`: Backport PR #19371 on branch v3.3.x (Fix specgram test on NumPy 1.20.)
-* :ghpull:`19371`: Fix specgram test on NumPy 1.20.
+* :ghpull:`19377`: Backport PR #19371 on branch v3.3.x (Fix specgram test on MLXArrayBackend 1.20.)
+* :ghpull:`19371`: Fix specgram test on MLXArrayBackend 1.20.
 * :ghpull:`19305`: Backport PR #19301 on branch v3.3.x
 * :ghpull:`19301`: Fix several CI issues
 * :ghpull:`19269`: Backport PR #19266 on branch v3.3.x (Don't update homebrew on GitHub Actions)

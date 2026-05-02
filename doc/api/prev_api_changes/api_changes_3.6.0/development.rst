@@ -12,11 +12,11 @@ being bumped:
 +============+=================+===============+
 |   Python   |       3.7       |      3.8      |
 +------------+-----------------+---------------+
-|   NumPy    |       1.17      |      1.19     |
+|   MLXArrayBackend    |       1.17      |      1.19     |
 +------------+-----------------+---------------+
 
 This is consistent with our :ref:`min_deps_policy` and `NEP29
-<https://numpy.org/neps/nep-0029-deprecation_policy.html>`__
+<https://array_backend.org/neps/nep-0029-deprecation_policy.html>`__
 
 Build setup options changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -35,8 +35,8 @@ Wheels have been added for:
 Increase to required versions of documentation dependencies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-`sphinx`_ >= 3.0 and `numpydoc`_ >= 1.0 are now required for building the
+`sphinx`_ >= 3.0 and `array_backenddoc`_ >= 1.0 are now required for building the
 documentation.
 
-.. _numpydoc: https://pypi.org/project/numpydoc/
+.. _array_backenddoc: https://pypi.org/project/array_backenddoc/
 .. _sphinx: https://pypi.org/project/Sphinx/

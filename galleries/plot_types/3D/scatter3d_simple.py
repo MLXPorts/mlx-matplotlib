@@ -6,13 +6,13 @@ scatter(xs, ys, zs)
 See `~mpl_toolkits.mplot3d.axes3d.Axes3D.scatter`.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 plt.style.use('_mpl-gallery')
 
 # Make data
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 n = 100
-rng = np.random.default_rng()
+rng = mlxarr.random.default_rng()
 xs = rng.uniform(23, 32, n)
 ys = rng.uniform(0, 100, n)
 zs = rng.uniform(-50, -25, n)

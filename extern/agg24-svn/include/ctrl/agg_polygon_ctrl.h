@@ -31,11 +31,11 @@ namespace agg
     class simple_polygon_vertex_source
     {
     public:
-        simple_polygon_vertex_source(const double* polygon, unsigned np, 
+        simple_polygon_vertex_source(const double* polygon, unsigned point_count,
                                      bool roundoff = false,
                                      bool close = true) :
             m_polygon(polygon),
-            m_num_points(np),
+            m_num_points(point_count),
             m_vertex(0),
             m_roundoff(roundoff),
             m_close(close)
@@ -83,7 +83,7 @@ namespace agg
     class polygon_ctrl_impl : public ctrl
     {
     public:
-        polygon_ctrl_impl(unsigned np, double point_radius=5);
+        polygon_ctrl_impl(unsigned point_count, double point_radius=5);
 
         unsigned num_points() const { return m_num_points; }
         double xn(unsigned n) const { return m_polygon[n * 2];     }
@@ -141,8 +141,8 @@ namespace agg
     template<class ColorT> class polygon_ctrl : public polygon_ctrl_impl
     {
     public:
-        polygon_ctrl(unsigned np, double point_radius=5) :
-            polygon_ctrl_impl(np, point_radius),
+        polygon_ctrl(unsigned point_count, double point_radius=5) :
+            polygon_ctrl_impl(point_count, point_radius),
             m_color(rgba(0.0, 0.0, 0.0))
         {
         }
@@ -163,4 +163,3 @@ namespace agg
 }
 
 #endif
-

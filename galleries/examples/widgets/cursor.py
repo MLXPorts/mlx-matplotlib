@@ -5,15 +5,15 @@ Cursor
 
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.widgets import Cursor
 
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 fig, ax = plt.subplots(figsize=(8, 6))
 
-x, y = 4*(np.random.rand(2, 100) - .5)
+x, y = 4*(mlxarr.random.rand(2, 100) - .5)
 ax.plot(x, y, 'o')
 ax.set_xlim(-2, 2)
 ax.set_ylim(-2, 2)

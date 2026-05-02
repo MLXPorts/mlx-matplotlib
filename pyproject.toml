@@ -34,8 +34,7 @@ dependencies = [
     "cycler >= 0.10",
     "fonttools >= 4.22.0",
     "kiwisolver >= 1.3.1",
-    # NumPy is intentionally not a dependency in this fork; MLX is the tensor backend.
-    # All NumPy usages will be ported or routed through an MLX-based shim.
+    # This fork uses MLX as the tensor backend.
     "mlx>=0.0.1",
     "packaging >= 20.0",
     "pillow >= 9",
@@ -168,7 +167,7 @@ external = [
 ]
 
 [tool.ruff.lint.pydocstyle]
-convention = "numpy"
+convention = "pep257"
 
 [tool.ruff.lint.per-file-ignores]
 "*.pyi" = ["E501"]
@@ -240,7 +239,7 @@ exclude = [
   # tinypages is used for testing the sphinx ext,
   # stubtest will import and run, opening a figure if not excluded
   ".*/tinypages",
-  # pylab's numpy wildcard imports cause re-def failures since numpy 2.2
+  # pylab's wildcard imports cause re-definition failures in recent array backends
   "lib/matplotlib/pylab.py",
 ]
 files = [

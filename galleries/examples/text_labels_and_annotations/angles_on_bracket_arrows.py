@@ -11,15 +11,15 @@ from the vertical and axes text annotate the angle sizes.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.patches import FancyArrowPatch
 
 
 def get_point_of_rotated_vertical(origin, line_length, degrees):
     """Return xy coordinates of the vertical line end rotated by degrees."""
-    rad = np.deg2rad(-degrees)
-    return [origin[0] + line_length * np.sin(rad),
-            origin[1] + line_length * np.cos(rad)]
+    rad = mlxarr.deg2rad(-degrees)
+    return [origin[0] + line_length * mlxarr.sin(rad),
+            origin[1] + line_length * mlxarr.cos(rad)]
 
 
 fig, ax = plt.subplots()

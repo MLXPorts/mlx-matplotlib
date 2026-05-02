@@ -12,7 +12,7 @@ shown on the second plot, to create polar projections in a rectangular box.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.projections import PolarAxes
 from matplotlib.transforms import Affine2D
 from mpl_toolkits.axisartist import Axes, HostAxes, angle_helper
@@ -33,7 +33,7 @@ def curvelinear_test1(fig):
     # ax1 will have ticks and gridlines defined by the given transform (+
     # transData of the Axes).  Note that the transform of the Axes itself
     # (i.e., transData) is not affected by the given transform.
-    xx, yy = tr(np.array([3, 6]), np.array([5, 10]))
+    xx, yy = tr(mlxarr.array([3, 6]), mlxarr.array([5, 10]))
     ax1.plot(xx, yy)
 
     ax1.set_aspect(1)
@@ -52,14 +52,14 @@ def curvelinear_test2(fig):
 
     # PolarAxes.PolarTransform takes radian. However, we want our coordinate
     # system in degree
-    tr = Affine2D().scale(np.pi/180, 1) + PolarAxes.PolarTransform()
+    tr = Affine2D().scale(mlxarr.pi/180, 1) + PolarAxes.PolarTransform()
     # Polar projection, which involves cycle, and also has limits in
     # its coordinates, needs a special method to find the extremes
     # (min, max of the coordinate within the view).
     extreme_finder = angle_helper.ExtremeFinderCycle(
         nx=20, ny=20,  # Number of sampling points in each direction.
         lon_cycle=360, lat_cycle=None,
-        lon_minmax=None, lat_minmax=(0, np.inf),
+        lon_minmax=None, lat_minmax=(0, mlxarr.inf),
     )
     # Find grid values appropriate for the coordinate (degree, minute, second).
     grid_locator1 = angle_helper.LocatorDMS(12)
@@ -92,12 +92,12 @@ def curvelinear_test2(fig):
     ax2 = ax1.get_aux_axes(tr)
     # note that ax2.transData == tr + ax1.transData
     # Anything you draw in ax2 will match the ticks and grids of ax1.
-    ax2.plot(np.linspace(0, 30, 51), np.linspace(10, 10, 51), linewidth=2)
+    ax2.plot(mlxarr.linspace(0, 30, 51), mlxarr.linspace(10, 10, 51), linewidth=2)
 
-    ax2.pcolor(np.linspace(0, 90, 4), np.linspace(0, 10, 4),
-               np.arange(9).reshape((3, 3)))
-    ax2.contour(np.linspace(0, 90, 4), np.linspace(0, 10, 4),
-                np.arange(16).reshape((4, 4)), colors="k")
+    ax2.pcolor(mlxarr.linspace(0, 90, 4), mlxarr.linspace(0, 10, 4),
+               mlxarr.arange(9).reshape((3, 3)))
+    ax2.contour(mlxarr.linspace(0, 90, 4), mlxarr.linspace(0, 10, 4),
+                mlxarr.arange(16).reshape((4, 4)), colors="k")
 
 
 if __name__ == "__main__":

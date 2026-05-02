@@ -3,7 +3,7 @@ from io import StringIO
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import pytest
 
 from cycler import cycler
@@ -34,7 +34,7 @@ def test_valid_marker_cycles():
 
 def test_marker_cycle_kwargs_arrays_iterators():
     fig, ax = plt.subplots()
-    ax.set_prop_cycle(c=np.array(['r', 'g', 'y']),
+    ax.set_prop_cycle(c=mlxarr.array(['r', 'g', 'y']),
                       marker=iter(['.', '*', 'x']))
     for _ in range(4):
         ax.plot(range(10), range(10))
@@ -115,15 +115,15 @@ def test_valid_input_forms():
     ax.set_prop_cycle('lw', (1, 2))
     ax.set_prop_cycle('linewidth', [1, 2])
     ax.set_prop_cycle('linewidth', iter([1, 2]))
-    ax.set_prop_cycle('linewidth', np.array([1, 2]))
-    ax.set_prop_cycle('color', np.array([[1, 0, 0],
+    ax.set_prop_cycle('linewidth', mlxarr.array([1, 2]))
+    ax.set_prop_cycle('color', mlxarr.array([[1, 0, 0],
                                          [0, 1, 0],
                                          [0, 0, 1]]))
     ax.set_prop_cycle('dashes', [[], [13, 2], [8, 3, 1, 3]])
     ax.set_prop_cycle(lw=[1, 2], color=['k', 'w'], ls=['-', '--'])
-    ax.set_prop_cycle(lw=np.array([1, 2]),
-                      color=np.array(['k', 'w']),
-                      ls=np.array(['-', '--']))
+    ax.set_prop_cycle(lw=mlxarr.array([1, 2]),
+                      color=mlxarr.array(['k', 'w']),
+                      ls=mlxarr.array(['-', '--']))
 
 
 def test_cycle_reset():

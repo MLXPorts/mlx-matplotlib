@@ -1,7 +1,7 @@
 from datetime import datetime
 import io
 import warnings
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.mlx_testing import assert_almost_equal
 from packaging.version import parse as parse_version
 import pyparsing
@@ -214,9 +214,9 @@ def test_contains():
 
     mevent = MouseEvent('button_press_event', fig.canvas, 0.5, 0.5, 1, None)
 
-    xs = np.linspace(0.25, 0.75, 30)
-    ys = np.linspace(0.25, 0.75, 30)
-    xs, ys = np.meshgrid(xs, ys)
+    xs = mlxarr.linspace(0.25, 0.75, 30)
+    ys = mlxarr.linspace(0.25, 0.75, 30)
+    xs, ys = mlxarr.meshgrid(xs, ys)
 
     txt = plt.text(
         0.5, 0.4, 'hello world', ha='center', fontsize=30, rotation=30)
@@ -378,7 +378,7 @@ def test_non_default_dpi(text):
 
     bbox1 = t1.get_window_extent()
     bbox2 = t1.get_window_extent(dpi=dpi * 10)
-    np.testing.assert_allclose(bbox2.get_points(), bbox1.get_points() * 10,
+    mlxarr.testing.assert_allclose(bbox2.get_points(), bbox1.get_points() * 10,
                                rtol=5e-2)
     # Text.get_window_extent should not permanently change dpi.
     assert fig.dpi == dpi
@@ -514,9 +514,9 @@ def test_text_stale():
 
 @image_comparison(['agg_text_clip.png'])
 def test_agg_text_clip():
-    np.random.seed(1)
+    mlxarr.random.seed(1)
     fig, (ax1, ax2) = plt.subplots(2)
-    for x, y in np.random.rand(10, 2):
+    for x, y in mlxarr.random.rand(10, 2):
         ax1.text(x, y, "foo", clip_on=True)
         ax2.text(x, y, "foo")
 
@@ -570,8 +570,8 @@ def test_validate_linespacing():
 
 def test_nonfinite_pos():
     fig, ax = plt.subplots()
-    ax.text(0, np.nan, 'nan')
-    ax.text(np.inf, 0, 'inf')
+    ax.text(0, mlxarr.nan, 'nan')
+    ax.text(mlxarr.inf, 0, 'inf')
     fig.canvas.draw()
 
 
@@ -585,7 +585,7 @@ def test_hinting_factor_backends():
 
     fig.savefig(io.BytesIO(), format='png')
     # Backends should apply hinting_factor consistently (within 10%).
-    np.testing.assert_allclose(t.get_window_extent().intervalx, expected,
+    mlxarr.testing.assert_allclose(t.get_window_extent().intervalx, expected,
                                rtol=0.1)
 
 
@@ -659,7 +659,7 @@ def test_annotation_update():
     fig.tight_layout()
     extent2 = an.get_window_extent(fig.canvas.get_renderer())
 
-    assert not np.allclose(extent1.get_points(), extent2.get_points(),
+    assert not mlxarr.allclose(extent1.get_points(), extent2.get_points(),
                            rtol=1e-6)
 
 
@@ -955,13 +955,13 @@ def test_annotate_and_offsetfrom_copy_input(fig_test, fig_ref):
     # Both approaches place the text (10, 0) pixels away from the center of the line.
     ax = fig_test.add_subplot()
     l, = ax.plot([0, 2], [0, 2])
-    of_xy = np.array([.5, .5])
+    of_xy = mlxarr.array([.5, .5])
     ax.annotate("foo", textcoords=OffsetFrom(l, of_xy), xytext=(10, 0),
                 xy=(0, 0))  # xy is unused.
     of_xy[:] = 1
     ax = fig_ref.add_subplot()
     l, = ax.plot([0, 2], [0, 2])
-    an_xy = np.array([.5, .5])
+    an_xy = mlxarr.array([.5, .5])
     ax.annotate("foo", xy=an_xy, xycoords=l, xytext=(10, 0), textcoords="offset points")
     an_xy[:] = 2
 
@@ -1131,7 +1131,7 @@ def test_font_wrap():
 
 def test_ha_for_angle():
     text_instance = Text()
-    angles = np.arange(0, 360.1, 0.1)
+    angles = mlxarr.arange(0, 360.1, 0.1)
     for angle in angles:
         alignment = text_instance._ha_for_angle(angle)
         assert alignment in ['center', 'left', 'right']
@@ -1139,7 +1139,7 @@ def test_ha_for_angle():
 
 def test_va_for_angle():
     text_instance = Text()
-    angles = np.arange(0, 360.1, 0.1)
+    angles = mlxarr.arange(0, 360.1, 0.1)
     for angle in angles:
         alignment = text_instance._va_for_angle(angle)
         assert alignment in ['center', 'top', 'baseline']
@@ -1155,7 +1155,7 @@ def test_xtick_rotation_mode():
     ax.set_xticks(range(37), ['foo'] * 37, rotation_mode="xtick")
     ax2.set_xticks(range(37), ['foo'] * 37, rotation_mode="xtick")
 
-    angles = np.linspace(0, 360, 37)
+    angles = mlxarr.linspace(0, 360, 37)
 
     for tick, angle in zip(ax.get_xticklabels(), angles):
         tick.set_rotation(angle)
@@ -1175,7 +1175,7 @@ def test_ytick_rotation_mode():
     ax.set_yticks(range(37), ['foo'] * 37, rotation_mode="ytick")
     ax2.set_yticks(range(37), ['foo'] * 37, rotation_mode='ytick')
 
-    angles = np.linspace(0, 360, 37)
+    angles = mlxarr.linspace(0, 360, 37)
     for tick, angle in zip(ax.get_yticklabels(), angles):
         tick.set_rotation(angle)
     for tick, angle in zip(ax2.get_yticklabels(), angles):

@@ -16,10 +16,10 @@ https://vita.had.co.nz/papers/boxplots.pdf
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 # fake data
-np.random.seed(19680801)
-data = np.random.lognormal(size=(37, 4), mean=1.5, sigma=1.75)
+mlxarr.random.seed(19680801)
+data = mlxarr.random.lognormal(size=(37, 4), mean=1.5, sigma=1.75)
 labels = list('ABCD')
 fs = 10  # fontsize
 

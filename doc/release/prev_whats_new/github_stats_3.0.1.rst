@@ -78,7 +78,7 @@ Pull Requests (127):
 * :ghpull:`12507`: FIX: make minor ticks formatted with science formatter as well
 * :ghpull:`12512`: Backport PR #12363 on branch v3.0.x
 * :ghpull:`12511`: Backport PR #12366 on branch v2.2.x (TST: Update test images for new Ghostscript.)
-* :ghpull:`12509`: Backport PR #12478 on branch v3.0.x (MAINT: numpy deprecates asscalar in 1.16)
+* :ghpull:`12509`: Backport PR #12478 on branch v3.0.x (MAINT: array_backend deprecates asscalar in 1.16)
 * :ghpull:`12363`: FIX: errors in get_position changes
 * :ghpull:`12497`: Backport PR #12495 on branch v3.0.x (Fix duplicate condition in pathpatch3d example)
 * :ghpull:`12490`: Backport PR #12489 on branch v3.0.x (Fix typo in documentation of ylim)

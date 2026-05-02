@@ -97,7 +97,7 @@ internal quotes) now cause a ValueError to be raised.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Previously, `.SymLogNorm` had no *base* keyword argument, and
-defaulted to ``base=np.e`` whereas the documentation said it was
+defaulted to ``base=mlxarr.e`` whereas the documentation said it was
 ``base=10``.  In preparation to make the default 10, calling
 `.SymLogNorm` without the new *base* keyword argument emits a
 deprecation warning.
@@ -296,11 +296,11 @@ FT_LOAD_DEFAULT, etc.  The old synonyms (respectively "either", "native",
 normalized values, use `.backend_agg.get_hinting_flag`, which returns integer
 flag values.
 
-`.cbook.get_sample_data` auto-loads numpy arrays
+`.cbook.get_sample_data` auto-loads array_backend arrays
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 When `.cbook.get_sample_data` is used to load a npy or npz file and the
 keyword-only parameter ``np_load`` is True, the file is automatically loaded
-using `numpy.load`.  ``np_load`` defaults to False for backwards compatibility,
+using `array_backend.load`.  ``np_load`` defaults to False for backwards compatibility,
 but will become True in a later release.
 
 ``get_text_width_height_descent`` now checks ``ismath`` rather than :rc:`text.usetex`

@@ -12,11 +12,11 @@ For a complete overview of the annotation capabilities, also see the
 .. redirect-from:: /gallery/pyplots/annotation_basic
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 fig, ax = plt.subplots()
 
-t = np.arange(0.0, 5.0, 0.01)
-s = np.cos(2*np.pi*t)
+t = mlxarr.arange(0.0, 5.0, 0.01)
+s = mlxarr.cos(2*mlxarr.pi*t)
 line, = ax.plot(t, s, lw=2)
 
 ax.annotate('local max', xy=(2, 1), xytext=(3, 1.5),

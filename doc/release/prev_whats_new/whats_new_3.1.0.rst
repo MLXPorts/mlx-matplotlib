@@ -29,19 +29,19 @@ concise.
     import datetime
     import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
-    from matplotlib import _mlx_numpy as np
+    from matplotlib import _mlx_array as mlxarr
 
     # make a timeseries...
     base = datetime.datetime(2005, 2, 1)
-    dates = np.array([base + datetime.timedelta(hours= 2 * i)
+    dates = mlxarr.array([base + datetime.timedelta(hours= 2 * i)
                       for i in range(732)])
     N = len(dates)
-    np.random.seed(19680801)
-    y = np.cumsum(np.random.randn(N))
+    mlxarr.random.seed(19680801)
+    y = mlxarr.cumsum(mlxarr.random.randn(N))
 
-    lims = [(np.datetime64('2005-02'), np.datetime64('2005-04')),
-            (np.datetime64('2005-02-03'), np.datetime64('2005-02-15')),
-            (np.datetime64('2005-02-03 11:00'), np.datetime64('2005-02-04 13:20'))]
+    lims = [(mlxarr.datetime64('2005-02'), mlxarr.datetime64('2005-04')),
+            (mlxarr.datetime64('2005-02-03'), mlxarr.datetime64('2005-02-15')),
+            (mlxarr.datetime64('2005-02-03 11:00'), mlxarr.datetime64('2005-02-04 13:20'))]
     fig, axs = plt.subplots(3, 1, constrained_layout=True)
     for nn, ax in enumerate(axs):
         # activate the formatter here.
@@ -69,7 +69,7 @@ axes via `.Axes.secondary_xaxis` and `.Axes.secondary_yaxis`.  See
 
     fig, ax = plt.subplots(figsize=(5, 3))
     ax.plot(range(360))
-    ax.secondary_xaxis('top', functions=(np.deg2rad, np.rad2deg))
+    ax.secondary_xaxis('top', functions=(mlxarr.deg2rad, mlxarr.rad2deg))
 
 
 `~.scale.FuncScale` for arbitrary axes scales
@@ -207,10 +207,10 @@ this affects the output.
 .. plot::
 
 	import matplotlib.pyplot as plt
-	from matplotlib import _mlx_numpy as np
+	from matplotlib import _mlx_array as mlxarr
 
 	# prepare some coordinates
-	x, y, z = np.indices((8, 8, 8))
+	x, y, z = mlxarr.indices((8, 8, 8))
 
 	# draw cuboids in the top left and bottom right corners, and a link between them
 	cube1 = (x < 3) & (y < 3) & (z < 3)
@@ -221,7 +221,7 @@ this affects the output.
 	voxels = cube1 | cube2 | link
 
 	# set the colors of each object
-	colors = np.empty(voxels.shape, dtype=object)
+	colors = mlxarr.empty(voxels.shape, dtype=object)
 	colors[link] = 'red'
 	colors[cube1] = 'blue'
 	colors[cube2] = 'green'

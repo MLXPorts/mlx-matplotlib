@@ -1,4 +1,4 @@
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.pyplot as plt
 from matplotlib.testing.decorators import image_comparison
 from matplotlib.transforms import IdentityTransform
@@ -23,8 +23,8 @@ def test_SubplotZero():
     for n in ["top", "right"]:
         ax.axis[n].set_visible(False)
 
-    xx = np.arange(0, 2 * np.pi, 0.01)
-    ax.plot(xx, np.sin(xx))
+    xx = mlxarr.arange(0, 2 * mlxarr.pi, 0.01)
+    ax.plot(xx, mlxarr.sin(xx))
     ax.set_ylabel("Test")
 
 
@@ -38,8 +38,8 @@ def test_Subplot():
     ax = Subplot(fig, 1, 1, 1)
     fig.add_subplot(ax)
 
-    xx = np.arange(0, 2 * np.pi, 0.01)
-    ax.plot(xx, np.sin(xx))
+    xx = mlxarr.arange(0, 2 * mlxarr.pi, 0.01)
+    ax.plot(xx, mlxarr.sin(xx))
     ax.set_ylabel("Test")
 
     ax.axis["top"].major_ticks.set_tick_out(True)
@@ -60,15 +60,15 @@ def test_Axes():
 @image_comparison(['ParasiteAxesAuxTrans_meshplot.png'],
                   remove_text=True, style='default', tol=0.075)
 def test_ParasiteAxesAuxTrans():
-    data = np.ones((6, 6))
+    data = mlxarr.ones((6, 6))
     data[2, 2] = 2
     data[0, :] = 0
     data[-2, :] = 0
     data[:, 0] = 0
     data[:, -2] = 0
-    x = np.arange(6)
-    y = np.arange(6)
-    xx, yy = np.meshgrid(x, y)
+    x = mlxarr.arange(6)
+    y = mlxarr.arange(6)
+    xx, yy = mlxarr.meshgrid(x, y)
 
     funcnames = ['pcolor', 'pcolormesh', 'contourf']
 

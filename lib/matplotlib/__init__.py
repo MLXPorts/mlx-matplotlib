@@ -156,10 +156,10 @@ import tempfile
 
 from packaging.version import parse as parse_version
 
-# Pre-import the MLX-backed NumPy compatibility shim so modules imported during
+# Pre-import the MLX-backed MLXArrayBackend compatibility shim so modules imported during
 # package initialization can safely reference it without triggering circular
 # import errors.
-from . import _mlx_numpy  # noqa: F401
+from . import _mlx_array  # noqa: F401
 
 # cbook must import matplotlib only within function
 # definitions, so it is safe to import from it here.
@@ -258,7 +258,6 @@ def _check_versions():
             ("cycler", "0.10"),
             ("dateutil", "2.7"),
             ("kiwisolver", "1.3.1"),
-            ("numpy", "1.25"),
             ("pyparsing", "2.3.1"),
     ]:
         module = importlib.import_module(modname)

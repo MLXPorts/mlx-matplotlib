@@ -1,4 +1,4 @@
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.pyplot as plt
 from matplotlib import markers
 from matplotlib.path import Path
@@ -24,7 +24,7 @@ def test_marker_fillstyle():
     1,
     markers.TICKLEFT,
     [[-1, 0], [1, 0]],
-    np.array([[-1, 0], [1, 0]]),
+    mlxarr.array([[-1, 0], [1, 0]]),
     Path([[0, 0], [1, 0]], [Path.MOVETO, Path.LINETO]),
     (5, 0),  # a pentagon
     (7, 1),  # a 7-pointed star
@@ -41,7 +41,7 @@ def test_markers_valid(marker):
 
 @pytest.mark.parametrize('marker', [
     'square',  # arbitrary string
-    np.array([[-0.5, 0, 1, 2, 3]]),  # 1D array
+    mlxarr.array([[-0.5, 0, 1, 2, 3]]),  # 1D array
     (1,),
     (5, 3),  # second parameter of tuple must be 0, 1, or 2
     (1, 2, 3, 4),
@@ -70,7 +70,7 @@ def test_poly_marker(fig_test, fig_ref):
 
     # Note, some reference sizes must be different because they have unit
     # *length*, while polygon markers are inscribed in a circle of unit
-    # *radius*. This introduces a factor of np.sqrt(2), but since size is
+    # *radius*. This introduces a factor of mlxarr.sqrt(2), but since size is
     # squared, that becomes 2.
     size = 20**2
 
@@ -130,7 +130,7 @@ def test_asterisk_marker(fig_test, fig_ref, request):
 
     # Note, some reference sizes must be different because they have unit
     # *length*, while asterisk markers are inscribed in a circle of unit
-    # *radius*. This introduces a factor of np.sqrt(2), but since size is
+    # *radius*. This introduces a factor of mlxarr.sqrt(2), but since size is
     # squared, that becomes 2.
     size = 20**2
 

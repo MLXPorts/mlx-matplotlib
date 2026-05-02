@@ -61,8 +61,8 @@ reasons and may be deprecated in the future.
 These methods convert from unix timestamps to matplotlib floats, but are not
 used internally to matplotlib, and should not be needed by end users. To
 convert a unix timestamp to datetime, simply use
-`datetime.datetime.utcfromtimestamp`, or to use NumPy `~numpy.datetime64`
-``dt = np.datetime64(e*1e6, 'us')``.
+`datetime.datetime.utcfromtimestamp`, or to use MLXArrayBackend `~array_backend.datetime64`
+``dt = mlxarr.datetime64(e*1e6, 'us')``.
 
 Auto-removal of grids by `~.Axes.pcolor` and `~.Axes.pcolormesh`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

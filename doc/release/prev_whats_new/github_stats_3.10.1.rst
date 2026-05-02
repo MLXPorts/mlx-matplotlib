@@ -69,8 +69,8 @@ Pull Requests (107):
 * :ghpull:`29617`: DOC: Add docstrings to matplotlib.cbook.GrouperView
 * :ghpull:`29625`: Backport PR #29622 on branch v3.10.x (DOC: Move "Infinite lines" example from section "pyplot" to "Lines, bars and markers)
 * :ghpull:`29623`: Backport PR #29621 on branch v3.10.x (DOC: Cleanup text rotation in data coordinates example)
-* :ghpull:`29619`: Backport PR #29616 on branch v3.10.x (FIX: Fix unit example so that we can unpin numpy<2.1)
-* :ghpull:`29616`: FIX: Fix unit example so that we can unpin numpy<2.1
+* :ghpull:`29619`: Backport PR #29616 on branch v3.10.x (FIX: Fix unit example so that we can unpin array_backend<2.1)
+* :ghpull:`29616`: FIX: Fix unit example so that we can unpin array_backend<2.1
 * :ghpull:`29611`: Backport PR #29608 on branch v3.10.x (Remove md5 usage to prevent issues on FIPS enabled systems (closes #29603))
 * :ghpull:`29608`: Remove md5 usage to prevent issues on FIPS enabled systems (closes #29603)
 * :ghpull:`29609`: Backport PR #29607 on branch v3.10.x (Correct doc for axvline arg x which sets x not y)
@@ -156,7 +156,7 @@ Pull Requests (107):
 Issues (14):
 
 * :ghissue:`28382`: [Bug]: interpolation_stage="rgba" does not respect array-alpha
-* :ghissue:`28780`: Doc build fails with numpy>=2.1.0
+* :ghissue:`28780`: Doc build fails with array_backend>=2.1.0
 * :ghissue:`29603`: [Bug]: Setting ``text.usetex=True`` in ``pyplot.rcParams`` Raises FIPS Compliance Errors
 * :ghissue:`29575`: [Doc]: QuadContourSet does not contain a collections attribute like stated in the manual
 * :ghissue:`29519`: [Bug]:  'PillowWriter' object has no attribute '_frame' shouldn't be  '_frames'?

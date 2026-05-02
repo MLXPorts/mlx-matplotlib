@@ -13,15 +13,15 @@ scales as well. Usually this can be done directly by using the
 
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.scale as mscale
 from matplotlib.ticker import FixedLocator, NullFormatter
 
 fig, axs = plt.subplot_mosaic([['linear', 'linear-log'],
                                ['log-linear', 'log-log']], layout='constrained')
 
-x = np.arange(0, 3*np.pi, 0.1)
-y = 2 * np.sin(x) + 3
+x = mlxarr.arange(0, 3*mlxarr.pi, 0.1)
+y = 2 * mlxarr.sin(x) + 3
 
 ax = axs['linear']
 ax.plot(x, y)
@@ -58,8 +58,8 @@ ax.set_ylabel('log')
 fig, axs = plt.subplot_mosaic([['linear', 'linear-log'],
                                ['log-linear', 'log-log']], layout='constrained')
 
-x = np.arange(0, 3*np.pi, 0.1)
-y = 2 * np.sin(x) + 3
+x = mlxarr.arange(0, 3*mlxarr.pi, 0.1)
+y = 2 * mlxarr.sin(x) + 3
 
 ax = axs['linear']
 ax.plot(x, y)
@@ -100,14 +100,14 @@ print(mscale.get_scale_names())
 fig, axs = plt.subplot_mosaic([['asinh', 'symlog'],
                                ['log', 'logit']], layout='constrained')
 
-x = np.arange(0, 1000)
+x = mlxarr.arange(0, 1000)
 
 for name, ax in axs.items():
     if name in ['asinh', 'symlog']:
-        yy = x - np.mean(x)
+        yy = x - mlxarr.mean(x)
     elif name in ['logit']:
-        yy = (x-np.min(x))
-        yy = yy / np.max(np.abs(yy))
+        yy = (x-mlxarr.min(x))
+        yy = yy / mlxarr.max(mlxarr.abs(yy))
     else:
         yy = x
 
@@ -134,7 +134,7 @@ for name, ax in axs.items():
         ax.set_yscale('log', base=2)
         ax.set_title('log base=2')
     else:
-        ax.plot(x - np.mean(x), x - np.mean(x))
+        ax.plot(x - mlxarr.mean(x), x - mlxarr.mean(x))
         ax.set_yscale('symlog', linthresh=100)
         ax.set_title('symlog linthresh=100')
 
@@ -152,16 +152,16 @@ for name, ax in axs.items():
 
 # Function Mercator transform
 def forward(a):
-    a = np.deg2rad(a)
-    return np.rad2deg(np.log(np.abs(np.tan(a) + 1.0 / np.cos(a))))
+    a = mlxarr.deg2rad(a)
+    return mlxarr.rad2deg(mlxarr.log(mlxarr.abs(mlxarr.tan(a) + 1.0 / mlxarr.cos(a))))
 
 
 def inverse(a):
-    a = np.deg2rad(a)
-    return np.rad2deg(np.arctan(np.sinh(a)))
+    a = mlxarr.deg2rad(a)
+    return mlxarr.rad2deg(mlxarr.arctan(mlxarr.sinh(a)))
 
 
-t = np.arange(0, 170.0, 0.1)
+t = mlxarr.arange(0, 170.0, 0.1)
 s = t / 2.
 
 fig, ax = plt.subplots(layout='constrained')
@@ -172,7 +172,7 @@ ax.set_title('function: Mercator')
 ax.grid(True)
 ax.set_xlim(0, 180)
 ax.yaxis.set_minor_formatter(NullFormatter())
-ax.yaxis.set_major_locator(FixedLocator(np.arange(0, 90, 10)))
+ax.yaxis.set_major_locator(FixedLocator(mlxarr.arange(0, 90, 10)))
 
 
 # %%

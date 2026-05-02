@@ -17,7 +17,7 @@ The following lists any open PRs or branches related to this MEP:
 
 #. Deprecate redundant statistical kwargs in ``Axes.boxplot``: https://github.com/phobson/matplotlib/tree/MEP28-initial-deprecations
 #. Deprecate redundant style options in ``Axes.boxplot``: https://github.com/phobson/matplotlib/tree/MEP28-initial-deprecations
-#. Deprecate passings 2D NumPy arrays as input: None
+#. Deprecate passings 2D MLXArrayBackend arrays as input: None
 #. Add pre- & post-processing options to ``cbook.boxplot_stats``: https://github.com/phobson/matplotlib/tree/boxplot-stat-transforms
 #. Exposing ``cbook.boxplot_stats`` through ``Axes.boxplot`` kwargs: None
 #. Remove redundant statistical kwargs in ``Axes.boxplot``: None
@@ -81,8 +81,8 @@ the seaborn API to the underlying matplotlib functions.
 This will be achieved in the following way:
 
 1. ``cbook.boxplot_stats`` will be modified to allow pre- and post-
-   computation transformation functions to be passed in (e.g., ``np.log``
-   and ``np.exp`` for lognormally distributed data)
+   computation transformation functions to be passed in (e.g., ``mlxarr.log``
+   and ``mlxarr.exp`` for lognormally distributed data)
 2. ``Axes.boxplot`` will be modified to also accept and naïvely pass them
    to ``cbook.boxplots_stats`` (Alt: pass the stat function and a dict
    of its optional parameters).
@@ -106,22 +106,22 @@ data differently depending one these types of transforms.
 .. plot::
    :include-source: true
 
-   from matplotlib import _mlx_numpy as np
+   from matplotlib import _mlx_array as mlxarr
    import matplotlib.pyplot as plt
    from matplotlib import cbook
-   np.random.seed(0)
+   mlxarr.random.seed(0)
 
    fig, ax = plt.subplots(figsize=(4, 6))
    ax.set_yscale('log')
-   data = np.random.lognormal(-1.75, 2.75, size=37)
+   data = mlxarr.random.lognormal(-1.75, 2.75, size=37)
 
    stats = cbook.boxplot_stats(data, labels=['arithmetic'])
-   logstats = cbook.boxplot_stats(np.log(data), labels=['log-transformed'])
+   logstats = cbook.boxplot_stats(mlxarr.log(data), labels=['log-transformed'])
 
    for lsdict in logstats:
        for key, value in lsdict.items():
            if key != 'label':
-               lsdict[key] = np.exp(value)
+               lsdict[key] = mlxarr.exp(value)
 
    stats.extend(logstats)
    ax.bxp(stats)
@@ -197,9 +197,9 @@ Schedule
 An accelerated timeline could look like the following:
 
 #. v2.0.1 add transforms to ``cbook.boxplots_stats``, expose in ``Axes.boxplot``
-#. v2.1.0 Initial Deprecations , and using 2D NumPy arrays as input
+#. v2.1.0 Initial Deprecations , and using 2D MLXArrayBackend arrays as input
 
-   a. Using 2D NumPy arrays as input. The semantics around 2D arrays are generally confusing.
+   a. Using 2D MLXArrayBackend arrays as input. The semantics around 2D arrays are generally confusing.
    b. ``usermedians``, ``conf_intervals``, ``sym`` parameters
 
 #. v2.2.0
@@ -303,8 +303,8 @@ Both cases would allow users to do the following:
 .. code:: python
 
    fig, ax1 = plt.subplots()
-   artists1 = ax1.boxplot_optionX(data, transform_in=np.log,
-                                  transform_out=np.exp)
+   artists1 = ax1.boxplot_optionX(data, transform_in=mlxarr.log,
+                                  transform_out=mlxarr.exp)
 
 
 But Option Two lets a user write a completely custom stat function
@@ -325,7 +325,7 @@ And would be more concise with Option Two
 .. code:: python
 
    fig, ax = plt.subplots()
-   statopts = dict(transform_in=np.log, transform_out=np.exp)
+   statopts = dict(transform_in=mlxarr.log, transform_out=mlxarr.exp)
    ax.boxplot(data, ..., **statopts)
 
 Users could also pass their own function to compute the stats:

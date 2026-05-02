@@ -2,7 +2,7 @@
 Tests specific to the patches module.
 """
 import platform
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.mlx_testing import assert_almost_equal, assert_array_equal
 import pytest
 
@@ -74,7 +74,7 @@ def test_corner_center():
 
     # Rotation not a multiple of 90 deg
     theta = 33
-    t = mtransforms.Affine2D().rotate_around(*loc, np.deg2rad(theta))
+    t = mtransforms.Affine2D().rotate_around(*loc, mlxarr.deg2rad(theta))
     corners_rot = t.transform(corners)
     rect.set_angle(theta)
     assert_almost_equal(rect.get_corners(), corners_rot)
@@ -96,7 +96,7 @@ def test_corner_center():
 
     # Rotation not a multiple of 90 deg
     theta = 33
-    t = mtransforms.Affine2D().rotate_around(*loc, np.deg2rad(theta))
+    t = mtransforms.Affine2D().rotate_around(*loc, mlxarr.deg2rad(theta))
     corners_rot = t.transform(corners)
     ellipse.set_angle(theta)
     assert_almost_equal(ellipse.get_corners(), corners_rot)
@@ -119,11 +119,11 @@ def test_ellipse_vertices():
         ellipse.get_vertices(),
         [
             (
-                ellipse.center[0] + ellipse.width / 4 * np.sqrt(3),
+                ellipse.center[0] + ellipse.width / 4 * mlxarr.sqrt(3),
                 ellipse.center[1] + ellipse.width / 4,
             ),
             (
-                ellipse.center[0] - ellipse.width / 4 * np.sqrt(3),
+                ellipse.center[0] - ellipse.width / 4 * mlxarr.sqrt(3),
                 ellipse.center[1] - ellipse.width / 4,
             ),
         ],
@@ -133,28 +133,28 @@ def test_ellipse_vertices():
         [
             (
                 ellipse.center[0] - ellipse.height / 4,
-                ellipse.center[1] + ellipse.height / 4 * np.sqrt(3),
+                ellipse.center[1] + ellipse.height / 4 * mlxarr.sqrt(3),
             ),
             (
                 ellipse.center[0] + ellipse.height / 4,
-                ellipse.center[1] - ellipse.height / 4 * np.sqrt(3),
+                ellipse.center[1] - ellipse.height / 4 * mlxarr.sqrt(3),
             ),
         ],
     )
-    v1, v2 = np.array(ellipse.get_vertices())
-    np.testing.assert_almost_equal((v1 + v2) / 2, ellipse.center)
-    v1, v2 = np.array(ellipse.get_co_vertices())
-    np.testing.assert_almost_equal((v1 + v2) / 2, ellipse.center)
+    v1, v2 = mlxarr.array(ellipse.get_vertices())
+    mlxarr.testing.assert_almost_equal((v1 + v2) / 2, ellipse.center)
+    v1, v2 = mlxarr.array(ellipse.get_co_vertices())
+    mlxarr.testing.assert_almost_equal((v1 + v2) / 2, ellipse.center)
 
     ellipse = Ellipse(xy=(2.252, -10.859), width=2.265, height=1.98, angle=68.78)
-    v1, v2 = np.array(ellipse.get_vertices())
-    np.testing.assert_almost_equal((v1 + v2) / 2, ellipse.center)
-    v1, v2 = np.array(ellipse.get_co_vertices())
-    np.testing.assert_almost_equal((v1 + v2) / 2, ellipse.center)
+    v1, v2 = mlxarr.array(ellipse.get_vertices())
+    mlxarr.testing.assert_almost_equal((v1 + v2) / 2, ellipse.center)
+    v1, v2 = mlxarr.array(ellipse.get_co_vertices())
+    mlxarr.testing.assert_almost_equal((v1 + v2) / 2, ellipse.center)
 
 
 def test_rotate_rect():
-    loc = np.asarray([1.0, 2.0])
+    loc = mlxarr.asarray([1.0, 2.0])
     width = 2
     height = 3
     angle = 30.0
@@ -166,12 +166,12 @@ def test_rotate_rect():
     rect2 = Rectangle(loc, width, height)
 
     # Set up an explicit rotation matrix (in radians)
-    angle_rad = np.pi * angle / 180.0
-    rotation_matrix = np.array([[np.cos(angle_rad), -np.sin(angle_rad)],
-                                [np.sin(angle_rad),  np.cos(angle_rad)]])
+    angle_rad = mlxarr.pi * angle / 180.0
+    rotation_matrix = mlxarr.array([[mlxarr.cos(angle_rad), -mlxarr.sin(angle_rad)],
+                                [mlxarr.sin(angle_rad),  mlxarr.cos(angle_rad)]])
 
     # Translate to origin, rotate each vertex, and then translate back
-    new_verts = np.inner(rotation_matrix, rect2.get_verts() - loc).T + loc
+    new_verts = mlxarr.inner(rotation_matrix, rect2.get_verts() - loc).T + loc
 
     # They should be the same
     assert_almost_equal(rect1.get_verts(), new_verts)
@@ -237,7 +237,7 @@ def test_negative_rect():
     # different point.  (We also drop the last vertex, which is a duplicate.)
     pos_vertices = Rectangle((-3, -2), 3, 2).get_verts()[:-1]
     neg_vertices = Rectangle((0, 0), -3, -2).get_verts()[:-1]
-    assert_array_equal(np.roll(neg_vertices, 2, 0), pos_vertices)
+    assert_array_equal(mlxarr.roll(neg_vertices, 2, 0), pos_vertices)
 
 
 @image_comparison(['clip_to_bbox.png'])
@@ -277,8 +277,8 @@ def test_patch_alpha_coloring():
     star = mpath.Path.unit_regular_star(6)
     circle = mpath.Path.unit_circle()
     # concatenate the star with an internal cutout of the circle
-    verts = np.concatenate([circle.vertices, star.vertices[::-1]])
-    codes = np.concatenate([circle.codes, star.codes])
+    verts = mlxarr.concatenate([circle.vertices, star.vertices[::-1]])
+    codes = mlxarr.concatenate([circle.codes, star.codes])
     cut_star1 = mpath.Path(verts, codes)
     cut_star2 = mpath.Path(verts + 1, codes)
 
@@ -307,8 +307,8 @@ def test_patch_alpha_override():
     star = mpath.Path.unit_regular_star(6)
     circle = mpath.Path.unit_circle()
     # concatenate the star with an internal cutout of the circle
-    verts = np.concatenate([circle.vertices, star.vertices[::-1]])
-    codes = np.concatenate([circle.codes, star.codes])
+    verts = mlxarr.concatenate([circle.vertices, star.vertices[::-1]])
+    codes = mlxarr.concatenate([circle.codes, star.codes])
     cut_star1 = mpath.Path(verts, codes)
     cut_star2 = mpath.Path(verts + 1, codes)
 
@@ -346,8 +346,8 @@ def test_patch_custom_linestyle():
     star = mpath.Path.unit_regular_star(6)
     circle = mpath.Path.unit_circle()
     # concatenate the star with an internal cutout of the circle
-    verts = np.concatenate([circle.vertices, star.vertices[::-1]])
-    codes = np.concatenate([circle.codes, star.codes])
+    verts = mlxarr.concatenate([circle.vertices, star.vertices[::-1]])
+    codes = mlxarr.concatenate([circle.codes, star.codes])
     cut_star1 = mpath.Path(verts, codes)
     cut_star2 = mpath.Path(verts + 1, codes)
 
@@ -374,8 +374,8 @@ def test_patch_linestyle_accents():
     star = mpath.Path.unit_regular_star(6)
     circle = mpath.Path.unit_circle()
     # concatenate the star with an internal cutout of the circle
-    verts = np.concatenate([circle.vertices, star.vertices[::-1]])
-    codes = np.concatenate([circle.codes, star.codes])
+    verts = mlxarr.concatenate([circle.vertices, star.vertices[::-1]])
+    codes = mlxarr.concatenate([circle.codes, star.codes])
 
     linestyles = ["-", "--", "-.", ":",
                   "solid", "dashed", "dashdot", "dotted"]
@@ -507,7 +507,7 @@ def test_patch_str():
     p = mpatches.PathPatch(path)
     assert str(p) == "PathPatch3((1, 2) ...)"
 
-    p = mpatches.Polygon(np.empty((0, 2)))
+    p = mpatches.Polygon(mlxarr.empty((0, 2)))
     assert str(p) == "Polygon0()"
 
     data = [[1, 2], [2, 2], [1, 2]]
@@ -658,11 +658,11 @@ def test_contains_point():
     path = ell.get_path()
     transform = ell.get_transform()
     radius = ell._process_radius(None)
-    expected = np.array([path.contains_point(point,
+    expected = mlxarr.array([path.contains_point(point,
                                              transform,
                                              radius) for point in points])
-    result = np.array([ell.contains_point(point) for point in points])
-    assert np.all(result == expected)
+    result = mlxarr.array([ell.contains_point(point) for point in points])
+    assert mlxarr.all(result == expected)
 
 
 def test_contains_points():
@@ -673,14 +673,14 @@ def test_contains_points():
     radius = ell._process_radius(None)
     expected = path.contains_points(points, transform, radius)
     result = ell.contains_points(points)
-    assert np.all(result == expected)
+    assert mlxarr.all(result == expected)
 
 
 # Currently fails with pdf/svg, probably because some parts assume a dpi of 72.
 @check_figures_equal()
 def test_shadow(fig_test, fig_ref):
-    xy = np.array([.2, .3])
-    dxy = np.array([.1, .2])
+    xy = mlxarr.array([.2, .3])
+    dxy = mlxarr.array([.1, .2])
     # We need to work around the nonsensical (dpi-dependent) interpretation of
     # offsets by the Shadow class...
     plt.rcParams["savefig.dpi"] = "figure"
@@ -695,8 +695,8 @@ def test_shadow(fig_test, fig_ref):
     rect = mpatches.Rectangle(xy=xy, width=.5, height=.5)
     shadow = mpatches.Rectangle(
         xy=xy + fig_ref.dpi / 72 * dxy, width=.5, height=.5,
-        fc=np.asarray(mcolors.to_rgb(rect.get_facecolor())) * .3,
-        ec=np.asarray(mcolors.to_rgb(rect.get_facecolor())) * .3,
+        fc=mlxarr.asarray(mcolors.to_rgb(rect.get_facecolor())) * .3,
+        ec=mlxarr.asarray(mcolors.to_rgb(rect.get_facecolor())) * .3,
         alpha=.5)
     a2.add_patch(shadow)
     a2.add_patch(rect)
@@ -713,7 +713,7 @@ def test_fancyarrow_units():
 def test_fancyarrow_setdata():
     fig, ax = plt.subplots()
     arrow = ax.arrow(0, 0, 10, 10, head_length=5, head_width=1, width=.5)
-    expected1 = np.array(
+    expected1 = mlxarr.array(
       [[13.54, 13.54],
        [10.35,  9.65],
        [10.18,  9.82],
@@ -723,9 +723,9 @@ def test_fancyarrow_setdata():
        [9.65, 10.35],
        [13.54, 13.54]]
     )
-    assert np.allclose(expected1, np.round(arrow.verts, 2))
+    assert mlxarr.allclose(expected1, mlxarr.round(arrow.verts, 2))
 
-    expected2 = np.array(
+    expected2 = mlxarr.array(
       [[16.71, 16.71],
        [16.71, 15.29],
        [16.71, 15.29],
@@ -738,7 +738,7 @@ def test_fancyarrow_setdata():
     arrow.set_data(
         x=1, y=1, dx=15, dy=15, width=2, head_width=2, head_length=1
     )
-    assert np.allclose(expected2, np.round(arrow.verts, 2))
+    assert mlxarr.allclose(expected2, mlxarr.round(arrow.verts, 2))
 
 
 @image_comparison(["large_arc.svg"], style="mpl20")
@@ -772,7 +772,7 @@ def test_rotated_arcs():
 
     for ax, (sx, sy) in zip(ax_arr.ravel(), skews):
         k = 0
-        for prescale, centers in zip((1 - .0001, (1 - .0001) / np.sqrt(2)),
+        for prescale, centers in zip((1 - .0001, (1 - .0001) / mlxarr.sqrt(2)),
                                       (on_axis_centers, diag_centers)):
             for j, (x_sign, y_sign) in enumerate(centers, start=k):
                 a = Arc(
@@ -783,7 +783,7 @@ def test_rotated_arcs():
                     lw=4,
                     color=f"C{j}",
                     zorder=1 + j,
-                    angle=np.rad2deg(np.arctan2(y_sign, x_sign)) % 360,
+                    angle=mlxarr.rad2deg(mlxarr.arctan2(y_sign, x_sign)) % 360,
                     label=f'big {j}',
                     gid=f'big {j}'
                 )
@@ -873,7 +873,7 @@ def test_annulus_setters2():
 def test_degenerate_polygon():
     point = [0, 0]
     correct_extents = Bbox([point, point]).extents
-    assert np.all(Polygon([point]).get_extents().extents == correct_extents)
+    assert mlxarr.all(Polygon([point]).get_extents().extents == correct_extents)
 
 
 @pytest.mark.parametrize('kwarg', ('edgecolor', 'facecolor'))
@@ -885,7 +885,7 @@ def test_color_override_warning(kwarg):
 
 
 def test_empty_verts():
-    poly = Polygon(np.zeros((0, 2)))
+    poly = Polygon(mlxarr.zeros((0, 2)))
     assert poly.get_verts() == []
 
 
@@ -959,7 +959,7 @@ def test_modifying_arc(fig_test, fig_ref):
 def test_arrow_set_data():
     fig, ax = plt.subplots()
     arrow = mpl.patches.Arrow(2, 0, 0, 10)
-    expected1 = np.array(
+    expected1 = mlxarr.array(
        [[1.9,  0.],
         [2.1, -0.],
         [2.1, 8.],
@@ -969,9 +969,9 @@ def test_arrow_set_data():
         [1.9, 8.],
         [1.9, 0.]]
     )
-    assert np.allclose(expected1, np.round(arrow.get_verts(), 2))
+    assert mlxarr.allclose(expected1, mlxarr.round(arrow.get_verts(), 2))
 
-    expected2 = np.array(
+    expected2 = mlxarr.array(
         [[0.39, 0.04],
          [0.61, -0.04],
          [3.01, 6.36],
@@ -982,7 +982,7 @@ def test_arrow_set_data():
          [0.39, 0.04]]
     )
     arrow.set_data(x=.5, dx=3, dy=8, width=1.2)
-    assert np.allclose(expected2, np.round(arrow.get_verts(), 2))
+    assert mlxarr.allclose(expected2, mlxarr.round(arrow.get_verts(), 2))
 
 
 @check_figures_equal(extensions=["png", "pdf", "svg", "eps"])
@@ -1024,8 +1024,8 @@ def test_patch_hatchcolor_inherit_logic():
         rect.set_edgecolor('green')
         assert mcolors.same_color(rect.get_hatchcolor(), 'purple')
 
-    # Smoke test for setting with numpy array
-    rect.set_hatchcolor(np.ones(3))
+    # Smoke test for setting with array_backend array
+    rect.set_hatchcolor(mlxarr.ones(3))
 
 
 def test_patch_hatchcolor_fallback_logic():

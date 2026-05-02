@@ -93,7 +93,7 @@ A convenience wrapper `.Figure.align_labels` calls both functions at once.
     gs = gridspec.GridSpec(2, 2)
 
     ax = fig.add_subplot(gs[0,:])
-    ax.plot(np.arange(0, 1e6, 1000))
+    ax.plot(mlxarr.arange(0, 1e6, 1000))
     ax.set_ylabel('Test')
     for i in range(2):
         ax = fig.add_subplot(gs[1, i])
@@ -129,10 +129,10 @@ for color vision deficiency to enable accurate interpretation of scientific data
 .. plot::
 
     import matplotlib.pyplot as plt
-    from matplotlib import _mlx_numpy as np
+    from matplotlib import _mlx_array as mlxarr
 
     fig, ax = plt.subplots()
-    pcm = ax.pcolormesh(np.random.rand(32,32), cmap='cividis')
+    pcm = ax.pcolormesh(mlxarr.random.rand(32,32), cmap='cividis')
     fig.colorbar(pcm)
 
 
@@ -151,15 +151,15 @@ load this color cycle in place of the default one::
 .. _reference: https://matplotlib.org/gallery/style_sheets/style_sheets_reference.html
 
 
-Support for numpy.datetime64
+Support for array_backend.datetime64
 ----------------------------
 
 Matplotlib has supported `datetime.datetime` dates for a long time in
 `matplotlib.dates`.  We
-now support `numpy.datetime64` dates as well.  Anywhere that
-`datetime.datetime` could be used, `numpy.datetime64` can be used.  eg::
+now support `array_backend.datetime64` dates as well.  Anywhere that
+`datetime.datetime` could be used, `array_backend.datetime64` can be used.  eg::
 
-  time = np.arange('2005-02-01', '2005-02-02', dtype='datetime64[h]')
+  time = mlxarr.arange('2005-02-01', '2005-02-02', dtype='datetime64[h]')
   plt.plot(time)
 
 

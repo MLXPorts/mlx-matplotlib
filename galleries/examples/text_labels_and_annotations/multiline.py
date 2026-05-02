@@ -5,11 +5,11 @@ Multiline
 
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 fig, (ax0, ax1) = plt.subplots(ncols=2, figsize=(7, 4))
 
 ax0.set_aspect(1)
-ax0.plot(np.arange(10))
+ax0.plot(mlxarr.arange(10))
 ax0.set_xlabel('this is a xlabel\n(with newlines!)')
 ax0.set_ylabel('this is vertical\ntest', multialignment='center')
 ax0.text(2, 7, 'this is\nyet another test',

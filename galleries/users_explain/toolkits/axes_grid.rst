@@ -102,7 +102,7 @@ rewritten using `~.axes_grid1.axes_divider.make_axes_locatable`::
 
     # the scatter plot:
     # histograms
-    bins = np.arange(-lim, lim + binwidth, binwidth)
+    bins = mlxarr.arange(-lim, lim + binwidth, binwidth)
     axHistx.hist(x, bins=bins)
     axHisty.hist(y, bins=bins, orientation='horizontal')
 
@@ -156,7 +156,7 @@ top(or right)-axis to have different tick-locations, tick-labels, or
 tick-formatter for bottom(or left)-axis. ::
 
   ax2 = ax.twin() # now, ax2 is responsible for "top" axis and "right" axis
-  ax2.set_xticks([0., .5*np.pi, np.pi, 1.5*np.pi, 2*np.pi],
+  ax2.set_xticks([0., .5*mlxarr.pi, mlxarr.pi, 1.5*mlxarr.pi, 2*mlxarr.pi],
                  labels=["0", r"$\frac{1}{2}\pi$",
                          r"$\pi$", r"$\frac{3}{2}\pi$", r"$2\pi$"])
 

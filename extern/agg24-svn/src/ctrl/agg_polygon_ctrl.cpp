@@ -22,10 +22,10 @@
 namespace agg
 {
 
-    polygon_ctrl_impl::polygon_ctrl_impl(unsigned np, double point_radius) :
+    polygon_ctrl_impl::polygon_ctrl_impl(unsigned point_count, double point_radius) :
         ctrl(0, 0, 1, 1, false),
-        m_polygon(np * 2),
-        m_num_points(np),
+        m_polygon(point_count * 2),
+        m_num_points(point_count),
         m_node(-1),
         m_edge(-1),
         m_vs(&m_polygon[0], m_num_points, false),
@@ -329,4 +329,3 @@ namespace agg
         return inside_flag != 0;
     }
 }
-

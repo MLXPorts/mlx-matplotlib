@@ -14,7 +14,7 @@ from typing import Dict, List, Set, Tuple
 
 # Paths to backend files
 BACKEND_FILES = {
-    "numpy": "ember_ml/backend/numpy_backend.py",
+    "array_backend": "ember_ml/backend/array_backend_backend.py",
     "torch": "ember_ml/backend/torch_backend.py",
     "mlx": "ember_ml/backend/mlx_backend.py"
 }
@@ -46,7 +46,7 @@ def get_function_names_from_module(module) -> Dict[str, str]:
         
         attr = getattr(module, name)
         if callable(attr):
-            # Extract the backend name from the function name (e.g., numpy_power -> numpy)
+            # Extract the backend name from the function name (e.g., array_backend_power -> array_backend)
             parts = name.split('_', 1)
             if len(parts) == 2 and parts[0] in BACKEND_FILES:
                 backend = parts[0]

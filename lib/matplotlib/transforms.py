@@ -31,8 +31,8 @@ See the tutorial :ref:`transforms_tutorial` for examples
 of how to use transforms.
 """
 
-# Note: There are a number of places in the code where we use `np.min` or
-# `np.minimum` instead of the builtin `min`, and likewise for `max`.  This is
+# Note: There are a number of places in the code where we use `mlxarr.min` or
+# `mlxarr.minimum` instead of the builtin `min`, and likewise for `max`.  This is
 # done so that `nan`s are propagated, instead of being silently dropped.
 
 import functools
@@ -41,9 +41,9 @@ import textwrap
 import weakref
 import math
 from array import array as _array
-from matplotlib import _mlx_numpy as np
-from matplotlib import _mlx_numpy as np
-inv = np.linalg.inv
+from matplotlib import _mlx_array as mlxarr
+from matplotlib import _mlx_array as mlxarr
+inv = mlxarr.linalg.inv
 
 from matplotlib import _api
 from matplotlib._path import (
@@ -56,7 +56,7 @@ DEBUG = False
 
 
 def _plain_float_data(values):
-    if isinstance(values, np.ndarray):
+    if isinstance(values, mlxarr.ndarray):
         values = values.tolist()
     if isinstance(values, (list, tuple)):
         return [_plain_float_data(value) for value in values]
@@ -81,7 +81,7 @@ def _as_float_memoryview(values):
 def affine_transform(values, mtx):
     result = _path_affine_transform(
         _as_float_memoryview(values), _as_float_memoryview(mtx))
-    return np.array(result.tolist(), dtype=float)
+    return mlxarr.array(result.tolist(), dtype=float)
 
 
 def _maybe_scalar(value):
@@ -258,9 +258,9 @@ class BboxBase(TransformNode):
     if DEBUG:
         @staticmethod
         def _check(points):
-            if isinstance(points, np.ma.MaskedArray):
+            if isinstance(points, mlxarr.ma.MaskedArray):
                 _api.warn_external("Bbox bounds are a masked array.")
-            points = np.asarray(points)
+            points = mlxarr.asarray(points)
             if any((points[1, :] - points[0, :]) == 0):
                 _api.warn_external("Singular Bbox.")
 
@@ -334,32 +334,32 @@ class BboxBase(TransformNode):
     @property
     def xmin(self):
         """The left edge of the bounding box."""
-        return np.min(self.get_points()[:, 0])
+        return mlxarr.min(self.get_points()[:, 0])
 
     @property
     def ymin(self):
         """The bottom edge of the bounding box."""
-        return np.min(self.get_points()[:, 1])
+        return mlxarr.min(self.get_points()[:, 1])
 
     @property
     def xmax(self):
         """The right edge of the bounding box."""
-        return np.max(self.get_points()[:, 0])
+        return mlxarr.max(self.get_points()[:, 0])
 
     @property
     def ymax(self):
         """The top edge of the bounding box."""
-        return np.max(self.get_points()[:, 1])
+        return mlxarr.max(self.get_points()[:, 1])
 
     @property
     def min(self):
         """The bottom-left corner of the bounding box."""
-        return np.min(self.get_points(), axis=0)
+        return mlxarr.min(self.get_points(), axis=0)
 
     @property
     def max(self):
         """The top-right corner of the bounding box."""
-        return np.max(self.get_points(), axis=0)
+        return mlxarr.max(self.get_points(), axis=0)
 
     @property
     def intervalx(self):
@@ -502,7 +502,7 @@ class BboxBase(TransformNode):
         Construct a `Bbox` by statically transforming this one by *transform*.
         """
         pts = self.get_points()
-        ll, ul, lr = transform.transform(np.array(
+        ll, ul, lr = transform.transform(mlxarr.array(
             [pts[0], [pts[0, 0], pts[1, 1]], [pts[1, 0], pts[0, 1]]]))
         return Bbox([ll, [lr[0], ul[1]]])
 
@@ -608,8 +608,8 @@ class BboxBase(TransformNode):
         """
         if len(vertices) == 0:
             return 0
-        vertices = np.asarray(vertices)
-        with np.errstate(invalid='ignore'):
+        vertices = mlxarr.asarray(vertices)
+        with mlxarr.errstate(invalid='ignore'):
             return (((self.min < vertices) &
                      (vertices < self.max)).all(axis=1).sum())
 
@@ -622,7 +622,7 @@ class BboxBase(TransformNode):
         bboxes : sequence of `.BboxBase`
         """
         return count_bboxes_overlapping_bbox(
-            self, np.atleast_3d([np.array(x) for x in bboxes]))
+            self, mlxarr.atleast_3d([mlxarr.array(x) for x in bboxes]))
 
     def expanded(self, sw, sh):
         """
@@ -633,7 +633,7 @@ class BboxBase(TransformNode):
         height = self.height
         deltaw = (sw * width - width) / 2.0
         deltah = (sh * height - height) / 2.0
-        a = np.array([[-deltaw, -deltah], [deltaw, deltah]])
+        a = mlxarr.array([[-deltaw, -deltah], [deltaw, deltah]])
         return Bbox(self._points + a)
 
     def padded(self, w_pad, h_pad=None):
@@ -665,7 +665,7 @@ class BboxBase(TransformNode):
         ``[[x0, y0], [x0, y1], [x1, y0], [x1, y1]]``.
         """
         (x0, y0), (x1, y1) = self.get_points()
-        return np.array([[x0, y0], [x0, y1], [x1, y0], [x1, y1]])
+        return mlxarr.array([[x0, y0], [x0, y1], [x1, y0], [x1, y1]])
 
     def rotated(self, radians):
         """
@@ -683,10 +683,10 @@ class BboxBase(TransformNode):
         """Return a `Bbox` that contains all of the given *bboxes*."""
         if not len(bboxes):
             raise ValueError("'bboxes' cannot be empty")
-        x0 = np.min([bbox.xmin for bbox in bboxes])
-        x1 = np.max([bbox.xmax for bbox in bboxes])
-        y0 = np.min([bbox.ymin for bbox in bboxes])
-        y1 = np.max([bbox.ymax for bbox in bboxes])
+        x0 = mlxarr.min([bbox.xmin for bbox in bboxes])
+        x1 = mlxarr.max([bbox.xmax for bbox in bboxes])
+        y0 = mlxarr.min([bbox.ymin for bbox in bboxes])
+        y1 = mlxarr.max([bbox.ymax for bbox in bboxes])
         return Bbox([[x0, y0], [x1, y1]])
 
     @staticmethod
@@ -695,14 +695,14 @@ class BboxBase(TransformNode):
         Return the intersection of *bbox1* and *bbox2* if they intersect, or
         None if they don't.
         """
-        x0 = np.maximum(bbox1.xmin, bbox2.xmin)
-        x1 = np.minimum(bbox1.xmax, bbox2.xmax)
-        y0 = np.maximum(bbox1.ymin, bbox2.ymin)
-        y1 = np.minimum(bbox1.ymax, bbox2.ymax)
+        x0 = mlxarr.maximum(bbox1.xmin, bbox2.xmin)
+        x1 = mlxarr.minimum(bbox1.xmax, bbox2.xmax)
+        y0 = mlxarr.maximum(bbox1.ymin, bbox2.ymin)
+        y1 = mlxarr.minimum(bbox1.ymax, bbox2.ymax)
         return Bbox([[x0, y0], [x1, y1]]) if x0 <= x1 and y0 <= y1 else None
 
 
-_default_minpos = np.array([np.inf, np.inf])
+_default_minpos = mlxarr.array([mlxarr.inf, mlxarr.inf])
 
 
 class Bbox(BboxBase):
@@ -790,11 +790,11 @@ class Bbox(BboxBase):
         """
         Parameters
         ----------
-        points : `~numpy.ndarray`
+        points : `~array_backend.ndarray`
             A (2, 2) array of the form ``[[x0, y0], [x1, y1]]``.
         """
         super().__init__(**kwargs)
-        points = np.asarray(points, float)
+        points = mlxarr.asarray(points, float)
         if points.shape != (2, 2):
             raise ValueError('Bbox points must be of the form '
                              '"[[x0, y0], [x1, y1]]".')
@@ -830,7 +830,7 @@ class Bbox(BboxBase):
     @staticmethod
     def null():
         """Create a new null `Bbox` from (inf, inf) to (-inf, -inf)."""
-        return Bbox([[np.inf, np.inf], [-np.inf, -np.inf]])
+        return Bbox([[mlxarr.inf, mlxarr.inf], [-mlxarr.inf, -mlxarr.inf]])
 
     @staticmethod
     def from_bounds(x0, y0, width, height):
@@ -857,7 +857,7 @@ class Bbox(BboxBase):
             set. This is useful when dealing with logarithmic scales and other
             scales where negative bounds result in floating point errors.
         """
-        bbox = Bbox(np.reshape(args, (2, 2)))
+        bbox = Bbox(mlxarr.reshape(args, (2, 2)))
         if minpos is not None:
             bbox._minpos[:] = minpos
         return bbox
@@ -909,27 +909,27 @@ class Bbox(BboxBase):
             return
 
         if ignore:
-            points = np.array([[np.inf, np.inf], [-np.inf, -np.inf]])
-            minpos = np.array([np.inf, np.inf])
+            points = mlxarr.array([[mlxarr.inf, mlxarr.inf], [-mlxarr.inf, -mlxarr.inf]])
+            minpos = mlxarr.array([mlxarr.inf, mlxarr.inf])
         else:
             points = self._points.copy()
             minpos = self._minpos.copy()
 
-        valid_points = (np.isfinite(path.vertices[..., 0])
-                        & np.isfinite(path.vertices[..., 1]))
+        valid_points = (mlxarr.isfinite(path.vertices[..., 0])
+                        & mlxarr.isfinite(path.vertices[..., 1]))
 
         if updatex:
             x = path.vertices[..., 0][valid_points]
-            points[0, 0] = min(points[0, 0], np.min(x, initial=np.inf))
-            points[1, 0] = max(points[1, 0], np.max(x, initial=-np.inf))
-            minpos[0] = min(minpos[0], np.min(x[x > 0], initial=np.inf))
+            points[0, 0] = min(points[0, 0], mlxarr.min(x, initial=mlxarr.inf))
+            points[1, 0] = max(points[1, 0], mlxarr.max(x, initial=-mlxarr.inf))
+            minpos[0] = min(minpos[0], mlxarr.min(x[x > 0], initial=mlxarr.inf))
         if updatey:
             y = path.vertices[..., 1][valid_points]
-            points[0, 1] = min(points[0, 1], np.min(y, initial=np.inf))
-            points[1, 1] = max(points[1, 1], np.max(y, initial=-np.inf))
-            minpos[1] = min(minpos[1], np.min(y[y > 0], initial=np.inf))
+            points[0, 1] = min(points[0, 1], mlxarr.min(y, initial=mlxarr.inf))
+            points[1, 1] = max(points[1, 1], mlxarr.max(y, initial=-mlxarr.inf))
+            minpos[1] = min(minpos[1], mlxarr.min(y[y > 0], initial=mlxarr.inf))
 
-        if np.any(points != self._points) or np.any(minpos != self._minpos):
+        if mlxarr.any(points != self._points) or mlxarr.any(minpos != self._minpos):
             self.invalidate()
             if updatex:
                 self._points[:, 0] = points[:, 0]
@@ -946,17 +946,17 @@ class Bbox(BboxBase):
 
         Parameters
         ----------
-        x : `~numpy.ndarray`
+        x : `~array_backend.ndarray`
             Array of x-values.
         ignore : bool, optional
            - When ``True``, ignore the existing bounds of the `Bbox`.
            - When ``False``, include the existing bounds of the `Bbox`.
            - When ``None``, use the last value passed to :meth:`ignore`.
         """
-        x = np.ravel(x)
-        # The y-component in np.array([x, *y*]).T is not used. We simply pass
+        x = mlxarr.ravel(x)
+        # The y-component in mlxarr.array([x, *y*]).T is not used. We simply pass
         # x again to not spend extra time on creating an array of unused data
-        self.update_from_data_xy(np.array([x, x]).T, ignore=ignore, updatey=False)
+        self.update_from_data_xy(mlxarr.array([x, x]).T, ignore=ignore, updatey=False)
 
     def update_from_data_y(self, y, ignore=None):
         """
@@ -966,17 +966,17 @@ class Bbox(BboxBase):
 
         Parameters
         ----------
-        y : `~numpy.ndarray`
+        y : `~array_backend.ndarray`
             Array of y-values.
         ignore : bool, optional
             - When ``True``, ignore the existing bounds of the `Bbox`.
             - When ``False``, include the existing bounds of the `Bbox`.
             - When ``None``, use the last value passed to :meth:`ignore`.
         """
-        y = np.ravel(y)
-        # The x-component in np.array([*x*, y]).T is not used. We simply pass
+        y = mlxarr.ravel(y)
+        # The x-component in mlxarr.array([*x*, y]).T is not used. We simply pass
         # y again to not spend extra time on creating an array of unused data
-        self.update_from_data_xy(np.array([y, y]).T, ignore=ignore, updatex=False)
+        self.update_from_data_xy(mlxarr.array([y, y]).T, ignore=ignore, updatex=False)
 
     def update_from_data_xy(self, xy, ignore=None, updatex=True, updatey=True):
         """
@@ -1046,8 +1046,8 @@ class Bbox(BboxBase):
     @BboxBase.bounds.setter
     def bounds(self, bounds):
         l, b, w, h = bounds
-        points = np.array([[l, b], [l + w, b + h]], float)
-        if np.any(self._points != points):
+        points = mlxarr.array([[l, b], [l + w, b + h]], float)
+        if mlxarr.any(self._points != points):
             self._points = points
             self.invalidate()
 
@@ -1110,7 +1110,7 @@ class Bbox(BboxBase):
         ``[[x0, y0], [x1, y1]]``.  No error checking is performed, as this
         method is mainly for internal use.
         """
-        if np.any(self._points != points):
+        if mlxarr.any(self._points != points):
             self._points = points
             self.invalidate()
 
@@ -1118,7 +1118,7 @@ class Bbox(BboxBase):
         """
         Set this bounding box from the "frozen" bounds of another `Bbox`.
         """
-        if np.any(self._points != other.get_points()):
+        if mlxarr.any(self._points != other.get_points()):
             self._points = other.get_points()
             self.invalidate()
 
@@ -1177,7 +1177,7 @@ class TransformedBbox(BboxBase):
                  [p[1, 0], p[0, 1]],
                  [p[0, 0], p[1, 1]],
                  [p[1, 0], p[1, 1]]])
-            points = np.ma.filled(points, 0.0)
+            points = mlxarr.ma.filled(points, 0.0)
 
             xs = min(points[:, 0]), max(points[:, 0])
             if p[0, 0] > p[1, 0]:
@@ -1187,7 +1187,7 @@ class TransformedBbox(BboxBase):
             if p[0, 1] > p[1, 1]:
                 ys = ys[::-1]
 
-            self._points = np.array([
+            self._points = mlxarr.array([
                 [xs[0], ys[0]],
                 [xs[1], ys[1]]
             ])
@@ -1246,7 +1246,7 @@ class LockableBbox(BboxBase):
         self._points = None
         fp = [x0, y0, x1, y1]
         mask = [val is None for val in fp]
-        self._locked_points = np.ma.array(fp, float, mask=mask).reshape((2, 2))
+        self._locked_points = mlxarr.ma.array(fp, float, mask=mask).reshape((2, 2))
 
     __str__ = _make_str_method("_bbox", "_locked_points")
 
@@ -1254,7 +1254,7 @@ class LockableBbox(BboxBase):
         # docstring inherited
         if self._invalid:
             points = self._bbox.get_points()
-            self._points = np.where(self._locked_points.mask,
+            self._points = mlxarr.where(self._locked_points.mask,
                                     points,
                                     self._locked_points)
             self._invalid = 0
@@ -1552,7 +1552,7 @@ class Transform(TransformNode):
         """
         # Ensure that values is a 2d array (but remember whether
         # we started with a 1d or 2d array).
-        values = np.asanyarray(values)
+        values = mlxarr.asanyarray(values)
         ndim = values.ndim
         values = values.reshape((-1, self.input_dims))
 
@@ -1561,7 +1561,7 @@ class Transform(TransformNode):
 
         # Convert the result back to the shape of the input values.
         if ndim == 0:
-            assert not np.ma.is_masked(res)  # just to be on the safe side
+            assert not mlxarr.ma.is_masked(res)  # just to be on the safe side
             return res[0, 0]
         if ndim == 1:
             return res.reshape(-1)
@@ -1714,27 +1714,27 @@ class Transform(TransformNode):
         # Must be 2D
         if self.input_dims != 2 or self.output_dims != 2:
             raise NotImplementedError('Only defined in 2D')
-        angles = np.asarray(angles)
-        pts = np.asarray(pts)
+        angles = mlxarr.asarray(angles)
+        pts = mlxarr.asarray(pts)
         _api.check_shape((None, 2), pts=pts)
         _api.check_shape((None,), angles=angles)
         if len(angles) != len(pts):
             raise ValueError("There must be as many 'angles' as 'pts'")
         # Convert to radians if desired
         if not radians:
-            angles = np.deg2rad(angles)
+            angles = mlxarr.deg2rad(angles)
         # Move a short distance away
-        pts2 = pts + pushoff * np.column_stack([np.cos(angles),
-                                                np.sin(angles)])
+        pts2 = pts + pushoff * mlxarr.column_stack([mlxarr.cos(angles),
+                                                mlxarr.sin(angles)])
         # Transform both sets of points
         tpts = self.transform(pts)
         tpts2 = self.transform(pts2)
         # Calculate transformed angles
         d = tpts2 - tpts
-        a = np.arctan2(d[:, 1], d[:, 0])
+        a = mlxarr.arctan2(d[:, 1], d[:, 0])
         # Convert back to degrees if desired
         if not radians:
-            a = np.rad2deg(a)
+            a = mlxarr.rad2deg(a)
         return a
 
     def inverted(self):
@@ -1882,7 +1882,7 @@ class Affine2DBase(AffineBase):
     """
     The base class of all 2D affine transformations.
 
-    2D affine transformations are performed using a 3x3 numpy array::
+    2D affine transformations are performed using a 3x3 array_backend array::
 
         a c e
         b d f
@@ -1915,9 +1915,9 @@ class Affine2DBase(AffineBase):
 
     def transform_affine(self, values):
         mtx = self.get_matrix()
-        if isinstance(values, np.ma.MaskedArray):
+        if isinstance(values, mlxarr.ma.MaskedArray):
             tpoints = affine_transform(values.data, mtx)
-            return np.ma.MaskedArray(tpoints, mask=np.ma.getmask(values))
+            return mlxarr.ma.MaskedArray(tpoints, mask=mlxarr.ma.getmask(values))
         return affine_transform(values, mtx)
 
     if DEBUG:
@@ -1928,9 +1928,9 @@ class Affine2DBase(AffineBase):
             # The major speed trap here is just converting to the
             # points to an array in the first place.  If we can use
             # more arrays upstream, that should help here.
-            if not isinstance(values, np.ndarray):
+            if not isinstance(values, mlxarr.ndarray):
                 _api.warn_external(
-                    f'A non-numpy array of type {type(values)} was passed in '
+                    f'A non-array_backend array of type {type(values)} was passed in '
                     f'for transformation, which results in poor performance.')
             return self._transform_affine(values)
 
@@ -1953,7 +1953,7 @@ class Affine2D(Affine2DBase):
 
     def __init__(self, matrix=None, **kwargs):
         """
-        Initialize an Affine transform from a 3x3 numpy float array::
+        Initialize an Affine transform from a 3x3 array_backend float array::
 
           a c e
           b d f
@@ -1963,7 +1963,7 @@ class Affine2D(Affine2DBase):
         """
         super().__init__(**kwargs)
         if matrix is None:
-            # A bit faster than np.identity(3).
+            # A bit faster than mlxarr.identity(3).
             matrix = IdentityTransform._mtx
         self._mtx = matrix.copy()
         self._invalid = 0
@@ -1972,7 +1972,7 @@ class Affine2D(Affine2DBase):
 
     def __str__(self):
         return (self._base_str()
-                if (self._mtx != np.diag(np.diag(self._mtx))).any()
+                if (self._mtx != mlxarr.diag(mlxarr.diag(self._mtx))).any()
                 else f"Affine2D().scale({self._mtx[0, 0]}, {self._mtx[1, 1]})"
                 if self._mtx[0, 0] != self._mtx[1, 1]
                 else f"Affine2D().scale({self._mtx[0, 0]})")
@@ -1989,7 +1989,7 @@ class Affine2D(Affine2DBase):
         .
         """
         return Affine2D(
-            np.array([a, c, e, b, d, f, 0.0, 0.0, 1.0], float).reshape((3, 3)))
+            mlxarr.array([a, c, e, b, d, f, 0.0, 0.0, 1.0], float).reshape((3, 3)))
 
     def get_matrix(self):
         """
@@ -2032,7 +2032,7 @@ class Affine2D(Affine2DBase):
         """
         Reset the underlying matrix to the identity transform.
         """
-        # A bit faster than np.identity(3).
+        # A bit faster than mlxarr.identity(3).
         self._mtx = IdentityTransform._mtx.copy()
         self.invalidate()
         return self
@@ -2047,7 +2047,7 @@ class Affine2D(Affine2DBase):
         """
         a = math.cos(theta)
         b = math.sin(theta)
-        rot = np.identity(3, dtype=self._mtx.dtype)
+        rot = mlxarr.identity(3, dtype=self._mtx.dtype)
         rot[0, 0] = a
         rot[0, 1] = -b
         rot[1, 0] = b
@@ -2086,8 +2086,8 @@ class Affine2D(Affine2DBase):
         and :meth:`scale`.
         """
         # Keep in MLX space (avoid Python scalar casts that break lazy graphs).
-        x = np.asarray(x, dtype=np.float64)
-        y = np.asarray(y, dtype=np.float64)
+        x = mlxarr.asarray(x, dtype=mlxarr.float64)
+        y = mlxarr.asarray(y, dtype=mlxarr.float64)
         return self.translate(-x, -y).rotate_deg(degrees).translate(x, y)
 
     def translate(self, tx, ty):
@@ -2098,7 +2098,7 @@ class Affine2D(Affine2DBase):
         calls to :meth:`rotate`, :meth:`rotate_deg`, :meth:`translate`
         and :meth:`scale`.
         """
-        t = np.identity(3, dtype=self._mtx.dtype)
+        t = mlxarr.identity(3, dtype=self._mtx.dtype)
         t[0, 2] = tx
         t[1, 2] = ty
         self._mtx = t @ self._mtx
@@ -2118,7 +2118,7 @@ class Affine2D(Affine2DBase):
         """
         if sy is None:
             sy = sx
-        s = np.identity(3, dtype=self._mtx.dtype)
+        s = mlxarr.identity(3, dtype=self._mtx.dtype)
         s[0, 0] = sx
         s[1, 1] = sy
         self._mtx = s @ self._mtx
@@ -2138,7 +2138,7 @@ class Affine2D(Affine2DBase):
         """
         rx = math.tan(xShear)
         ry = math.tan(yShear)
-        sh = np.identity(3, dtype=self._mtx.dtype)
+        sh = mlxarr.identity(3, dtype=self._mtx.dtype)
         sh[0, 1] = rx
         sh[1, 0] = ry
         self._mtx = sh @ self._mtx
@@ -2164,7 +2164,7 @@ class IdentityTransform(Affine2DBase):
     A special class that does one thing, the identity transform, in a
     fast way.
     """
-    _mtx = np.identity(3)
+    _mtx = mlxarr.identity(3)
 
     def frozen(self):
         # docstring inherited
@@ -2178,15 +2178,15 @@ class IdentityTransform(Affine2DBase):
 
     def transform(self, values):
         # docstring inherited
-        return np.asanyarray(values)
+        return mlxarr.asanyarray(values)
 
     def transform_affine(self, values):
         # docstring inherited
-        return np.asanyarray(values)
+        return mlxarr.asanyarray(values)
 
     def transform_non_affine(self, values):
         # docstring inherited
-        return np.asanyarray(values)
+        return mlxarr.asanyarray(values)
 
     def transform_path(self, path):
         # docstring inherited
@@ -2294,11 +2294,11 @@ class BlendedGenericTransform(_BlendedMixin, Transform):
             y_points = y.transform_non_affine(values[:, 1])
             y_points = y_points.reshape((len(y_points), 1))
 
-        if (isinstance(x_points, np.ma.MaskedArray) or
-                isinstance(y_points, np.ma.MaskedArray)):
-            return np.ma.concatenate((x_points, y_points), 1)
+        if (isinstance(x_points, mlxarr.ma.MaskedArray) or
+                isinstance(y_points, mlxarr.ma.MaskedArray)):
+            return mlxarr.ma.concatenate((x_points, y_points), 1)
         else:
-            return np.concatenate((x_points, y_points), 1)
+            return mlxarr.concatenate((x_points, y_points), 1)
 
     def inverted(self):
         # docstring inherited
@@ -2314,7 +2314,7 @@ class BlendedGenericTransform(_BlendedMixin, Transform):
                 y_mtx = self._y.get_affine().get_matrix()
                 # We already know the transforms are separable, so we can skip
                 # setting b and c to zero.
-                mtx = np.array([x_mtx[0], y_mtx[1], [0.0, 0.0, 1.0]])
+                mtx = mlxarr.array([x_mtx[0], y_mtx[1], [0.0, 0.0, 1.0]])
                 self._affine = Affine2D(mtx)
             self._invalid = 0
         return self._affine
@@ -2367,7 +2367,7 @@ class BlendedAffine2D(_BlendedMixin, Affine2DBase):
                 y_mtx = self._y.get_matrix()
                 # We already know the transforms are separable, so we can skip
                 # setting b and c to zero.
-                self._mtx = np.array([x_mtx[0], y_mtx[1], [0.0, 0.0, 1.0]])
+                self._mtx = mlxarr.array([x_mtx[0], y_mtx[1], [0.0, 0.0, 1.0]])
             self._inverted = None
             self._invalid = 0
         return self._mtx
@@ -2492,7 +2492,7 @@ class CompositeGenericTransform(Transform):
         if not self._b.is_affine:
             return self._b.get_affine()
         else:
-            return Affine2D(np.dot(self._b.get_affine().get_matrix(),
+            return Affine2D(mlxarr.dot(self._b.get_affine().get_matrix(),
                                    self._a.get_affine().get_matrix()))
 
     def inverted(self):
@@ -2546,7 +2546,7 @@ class CompositeAffine2D(Affine2DBase):
     def get_matrix(self):
         # docstring inherited
         if self._invalid:
-            self._mtx = np.dot(
+            self._mtx = mlxarr.dot(
                 self._b.get_matrix(),
                 self._a.get_matrix())
             self._inverted = None
@@ -2614,7 +2614,7 @@ class BboxTransform(Affine2DBase):
             if DEBUG and (x_scale == 0 or y_scale == 0):
                 raise ValueError(
                     "Transforming from or to a singular bounding box")
-            self._mtx = np.array([[x_scale,     0.0, -inl*x_scale+outl],
+            self._mtx = mlxarr.array([[x_scale,     0.0, -inl*x_scale+outl],
                                   [    0.0, y_scale, -inb*y_scale+outb],
                                   [    0.0,     0.0,               1.0]],
                                  float)
@@ -2652,7 +2652,7 @@ class BboxTransformTo(Affine2DBase):
             outl, outb, outw, outh = self._boxout.bounds
             if DEBUG and (outw == 0 or outh == 0):
                 raise ValueError("Transforming to a singular bounding box.")
-            self._mtx = np.array([[outw,  0.0, outl],
+            self._mtx = mlxarr.array([[outw,  0.0, outl],
                                   [ 0.0, outh, outb],
                                   [ 0.0,  0.0,  1.0]],
                                  float)
@@ -2687,7 +2687,7 @@ class BboxTransformFrom(Affine2DBase):
                 raise ValueError("Transforming from a singular bounding box.")
             x_scale = 1.0 / inw
             y_scale = 1.0 / inh
-            self._mtx = np.array([[x_scale,     0.0, -inl*x_scale],
+            self._mtx = mlxarr.array([[x_scale,     0.0, -inl*x_scale],
                                   [    0.0, y_scale, -inb*y_scale],
                                   [    0.0,     0.0,          1.0]],
                                  float)
@@ -2714,7 +2714,7 @@ class ScaledTranslation(Affine2DBase):
     def get_matrix(self):
         # docstring inherited
         if self._invalid:
-            # A bit faster than np.identity(3).
+            # A bit faster than mlxarr.identity(3).
             self._mtx = IdentityTransform._mtx.copy()
             self._mtx[:2, 2] = self._scale_trans.transform(self._t)
             self._invalid = 0
@@ -2900,7 +2900,7 @@ def nonsingular(vmin, vmax, expander=0.001, tiny=1e-15, increasing=True):
         close to zero, it returns -*expander*, *expander*.
     """
 
-    if (not np.isfinite(vmin)) or (not np.isfinite(vmax)):
+    if (not mlxarr.isfinite(vmin)) or (not mlxarr.isfinite(vmax)):
         return -expander, expander
 
     swapped = False
@@ -2909,11 +2909,11 @@ def nonsingular(vmin, vmax, expander=0.001, tiny=1e-15, increasing=True):
         swapped = True
 
     # Expand vmin, vmax to float: if they were integer types, they can wrap
-    # around in abs (abs(np.int8(-128)) == -128) and vmax - vmin can overflow.
+    # around in abs (abs(mlxarr.int8(-128)) == -128) and vmax - vmin can overflow.
     vmin, vmax = map(float, [vmin, vmax])
 
     maxabsvalue = max(abs(vmin), abs(vmax))
-    if maxabsvalue < (1e6 / tiny) * np.finfo(float).tiny:
+    if maxabsvalue < (1e6 / tiny) * mlxarr.finfo(float).tiny:
         vmin = -expander
         vmax = expander
 

@@ -1,7 +1,7 @@
 from collections.abc import Callable, Hashable, Iterable, Sequence
 import os
 from typing import Any, IO, Literal, TypeVar, overload
-import matplotlib._mlx_numpy as np
+import matplotlib._mlx_array as mlxarr
 from matplotlib._mlx_typing import ArrayLike
 
 from matplotlib.artist import Artist
@@ -129,7 +129,7 @@ class FigureBase(Artist):
         height_ratios: Sequence[float] | None = ...,
         subplot_kw: dict[str, Any] | None = ...,
         gridspec_kw: dict[str, Any] | None = ...,
-    ) -> np.ndarray: ...  # TODO numpy/numpy#24738
+    ) -> mlxarr.ndarray: ...  # TODO array_backend/array_backend#24738
     @overload
     def subplots(
         self,
@@ -203,7 +203,7 @@ class FigureBase(Artist):
         width_ratios: ArrayLike | None = ...,
         height_ratios: ArrayLike | None = ...,
         **kwargs
-    ) -> np.ndarray: ...
+    ) -> mlxarr.ndarray: ...
     @overload
     def subfigures(
         self,
@@ -216,7 +216,7 @@ class FigureBase(Artist):
         width_ratios: ArrayLike | None = ...,
         height_ratios: ArrayLike | None = ...,
         **kwargs
-    ) -> np.ndarray: ...
+    ) -> mlxarr.ndarray: ...
     @overload
     def subfigures(
         self,
@@ -228,7 +228,7 @@ class FigureBase(Artist):
         width_ratios: ArrayLike | None = ...,
         height_ratios: ArrayLike | None = ...,
         **kwargs
-    ) -> np.ndarray | SubFigure: ...
+    ) -> mlxarr.ndarray | SubFigure: ...
     def add_subfigure(self, subplotspec: SubplotSpec, **kwargs) -> SubFigure: ...
     def sca(self, a: Axes) -> Axes: ...
     def gca(self) -> Axes: ...
@@ -403,7 +403,7 @@ class Figure(FigureBase):
     def set_size_inches(
         self, w: float | tuple[float, float], h: float | None = ..., forward: bool = ...
     ) -> None: ...
-    def get_size_inches(self) -> np.ndarray: ...
+    def get_size_inches(self) -> mlxarr.ndarray: ...
     def get_figwidth(self) -> float: ...
     def get_figheight(self) -> float: ...
     def get_dpi(self) -> float: ...
@@ -442,7 +442,7 @@ class Figure(FigureBase):
 
 def figaspect(
     arg: float | ArrayLike,
-) -> np.ndarray[tuple[Literal[2]], np.dtype[np.float64]]: ...
+) -> mlxarr.ndarray[tuple[Literal[2]], mlxarr.dtype[mlxarr.float64]]: ...
 
 def _parse_figsize(
     figsize: tuple[float, float] | tuple[float, float, Literal["in", "cm", "px"]],

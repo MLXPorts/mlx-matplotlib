@@ -25,7 +25,7 @@ import itertools
 import logging
 import numbers
 import time
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from matplotlib import _api, _docstring, cbook, colors, offsetbox
 from matplotlib.artist import Artist, allow_rasterization
@@ -467,11 +467,11 @@ class Legend(Artist):
 
         # introduce y-offset for handles of the scatter plot
         if scatteryoffsets is None:
-            self._scatteryoffsets = np.array([3. / 8., 4. / 8., 2.5 / 8.])
+            self._scatteryoffsets = mlxarr.array([3. / 8., 4. / 8., 2.5 / 8.])
         else:
-            self._scatteryoffsets = np.asarray(scatteryoffsets)
+            self._scatteryoffsets = mlxarr.asarray(scatteryoffsets)
         reps = self.scatterpoints // len(self._scatteryoffsets) + 1
-        self._scatteryoffsets = np.tile(self._scatteryoffsets,
+        self._scatteryoffsets = mlxarr.tile(self._scatteryoffsets,
                                         reps)[:self.scatterpoints]
 
         # _legend_box is a VPacker instance that contains all
@@ -599,10 +599,10 @@ class Legend(Artist):
                         color = getattr(handle, getter_name)()
                     except AttributeError:
                         continue
-                    if isinstance(color, np.ndarray):
+                    if isinstance(color, mlxarr.ndarray):
                         if color.size == 0:
                             continue
-                        elif (color.shape[0] == 1 or np.isclose(color, color[0]).all()):
+                        elif (color.shape[0] == 1 or mlxarr.isclose(color, color[0]).all()):
                             text.set_color(color[0])
                         else:
                             pass
@@ -616,7 +616,7 @@ class Legend(Artist):
         elif cbook._str_equal(labelcolor, 'none'):
             for text in self.texts:
                 text.set_color(labelcolor)
-        elif np.iterable(labelcolor):
+        elif mlxarr.iterable(labelcolor):
             for text, color in zip(self.texts,
                                    itertools.cycle(
                                        colors.to_rgba_array(labelcolor))):
@@ -673,7 +673,7 @@ class Legend(Artist):
                     loc = locs[0] + ' ' + locs[1]
             # check that loc is in acceptable strings
             loc = _api.check_getitem(self.codes, loc=loc)
-        elif np.iterable(loc):
+        elif mlxarr.iterable(loc):
             # coerce iterable into tuple
             loc = tuple(loc)
             # validate the tuple represents Real coordinates
@@ -908,7 +908,7 @@ class Legend(Artist):
         # handles the case where n < ncols: the last ncols-n columns are empty
         # and get filtered out.
         for handles_and_labels_column in filter(
-                len, np.array_split(handles_and_labels, self._ncols)):
+                len, mlxarr.array_split(handles_and_labels, self._ncols)):
             # pack handlebox and labelbox into itembox
             itemboxes = [HPacker(pad=0,
                                  sep=self.handletextpad * fontsize,

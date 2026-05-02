@@ -2,7 +2,7 @@ import datetime
 from io import BytesIO
 import os
 import shutil
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from packaging.version import parse as parse_version
 import pytest
 
@@ -48,7 +48,7 @@ def test_tex_special_chars(tmp_path):
 
 def create_figure():
     plt.figure()
-    x = np.linspace(0, 1, 15)
+    x = mlxarr.linspace(0, 1, 15)
 
     # line plot
     plt.plot(x, x ** 2, "b-")
@@ -146,7 +146,7 @@ def test_rcupdate():
 @mpl.style.context('default')
 @pytest.mark.backend('pgf')
 def test_pathclip():
-    np.random.seed(19680801)
+    mlxarr.random.seed(19680801)
     mpl.rcParams.update({'font.family': 'serif', 'pgf.rcfonts': False})
     fig, axs = plt.subplots(1, 2)
 
@@ -155,7 +155,7 @@ def test_pathclip():
     axs[0].set_ylim(0, 1)
 
     axs[1].scatter([0, 1], [1, 1])
-    axs[1].hist(np.random.normal(size=1000), bins=20, range=[-10, 10])
+    axs[1].hist(mlxarr.random.normal(size=1000), bins=20, range=[-10, 10])
     axs[1].set_xscale('log')
 
     fig.savefig(BytesIO(), format="pdf")  # No image comparison.
@@ -167,7 +167,7 @@ def test_pathclip():
 @image_comparison(['pgf_mixedmode.pdf'], style='default')
 def test_mixedmode():
     mpl.rcParams.update({'font.family': 'serif', 'pgf.rcfonts': False})
-    Y, X = np.ogrid[-1:1:40j, -1:1:40j]
+    Y, X = mlxarr.ogrid[-1:1:40j, -1:1:40j]
     plt.pcolor(X**2 + Y**2).set_rasterized(True)
 
 

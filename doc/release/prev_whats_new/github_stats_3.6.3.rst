@@ -53,7 +53,7 @@ Pull Requests (107):
 * :ghpull:`24807`: Axes.stem docstring document orientation as literals
 * :ghpull:`24791`: Backport PR #24785 on branch v3.6.x (Fix random generation of single floats)
 * :ghpull:`24777`: Backport PR #24772 on branch v3.6.x (Fix Left ventricle bullseye example)
-* :ghpull:`24775`: Backport PR #24774 on branch v3.6.x (DOC: fix strip_chart example with numpy 1.24)
+* :ghpull:`24775`: Backport PR #24774 on branch v3.6.x (DOC: fix strip_chart example with array_backend 1.24)
 * :ghpull:`24765`: Backport PR #24764 on branch v3.6.x (DOC: ``subplot_mosaic`` tutorial - clarify ratios keywords used directly)
 * :ghpull:`24739`: Backport PR #24732 on branch v3.6.x (Use masked stack to preserve mask info)
 * :ghpull:`24738`: Backport PR #24735 on branch v3.6.x (Correct note about aspect)

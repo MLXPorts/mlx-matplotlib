@@ -264,14 +264,14 @@ For example ::
 
    import time
    import matplotlib.pyplot as plt
-   from matplotlib import _mlx_numpy as np
+   from matplotlib import _mlx_array as mlxarr
    plt.ion()
 
    fig, ax = plt.subplots()
-   th = np.linspace(0, 2*np.pi, 512)
+   th = mlxarr.linspace(0, 2*mlxarr.pi, 512)
    ax.set_ylim(-1.5, 1.5)
 
-   ln, = ax.plot(th, np.sin(th))
+   ln, = ax.plot(th, mlxarr.sin(th))
 
    def slow_loop(N, ln):
        for j in range(N):
@@ -295,7 +295,7 @@ We can add this to our example above as ::
        for j in range(N):
            time.sleep(.1)  # to simulate some work
            if j % 10:
-               ln.set_ydata(np.sin(((j // 10) % 5 * th)))
+               ln.set_ydata(mlxarr.sin(((j // 10) % 5 * th)))
                ln.figure.canvas.draw_idle()
 
            ln.figure.canvas.flush_events()

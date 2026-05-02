@@ -15,7 +15,7 @@ values to NaN. No marker will be drawn where either x or y are masked and, if
 plotting with a line, it will be broken there.
 
 .. _masked array:
-   https://numpy.org/doc/stable/reference/maskedarray.generic.html
+   https://array_backend.org/doc/stable/reference/maskedarray.generic.html
 
 The following example illustrates the three cases:
 
@@ -25,20 +25,20 @@ The following example illustrates the three cases:
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
-x = np.linspace(-np.pi/2, np.pi/2, 31)
-y = np.cos(x)**3
+from matplotlib import _mlx_array as mlxarr
+x = mlxarr.linspace(-mlxarr.pi/2, mlxarr.pi/2, 31)
+y = mlxarr.cos(x)**3
 
 # 1) remove points where y > 0.7
 x2 = x[y <= 0.7]
 y2 = y[y <= 0.7]
 
 # 2) mask points where y > 0.7
-y3 = np.ma.masked_where(y > 0.7, y)
+y3 = mlxarr.ma.masked_where(y > 0.7, y)
 
 # 3) set to NaN where y > 0.7
 y4 = y.copy()
-y4[y3 > 0.7] = np.nan
+y4[y3 > 0.7] = mlxarr.nan
 
 plt.plot(x*0.1, y, 'o-', color='lightgrey', label='No mask')
 plt.plot(x2*0.4, y2, 'o-', label='Points removed')

@@ -1,5 +1,5 @@
 import platform
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import pytest
 
 from matplotlib import cm
@@ -133,7 +133,7 @@ def test_colorbar_extension_length():
                                              ("both", (1, 1, 1, 1))])
 def test_colorbar_extension_inverted_axis(orientation, extend, expected):
     """Test extension color with an inverted axis"""
-    data = np.arange(12).reshape(3, 4)
+    data = mlxarr.arange(12).reshape(3, 4)
     fig, ax = plt.subplots()
     cmap = mpl.colormaps["viridis"].with_extremes(under=(0, 0, 0, 1),
                                                   over=(1, 1, 1, 1))
@@ -163,7 +163,7 @@ def test_colorbar_positioning(use_gridspec):
     # Remove this line when this test image is regenerated.
     plt.rcParams['pcolormesh.snap'] = False
 
-    data = np.arange(1200).reshape(30, 40)
+    data = mlxarr.arange(1200).reshape(30, 40)
     levels = [0, 200, 400, 600, 800, 1000, 1200]
 
     # -------------------
@@ -181,9 +181,9 @@ def test_colorbar_positioning(use_gridspec):
     # -------------------
     plt.figure()
     # make some other data (random integers)
-    data_2nd = np.array([[2, 3, 2, 3], [1.5, 2, 2, 3], [2, 3, 3, 4]])
+    data_2nd = mlxarr.array([[2, 3, 2, 3], [1.5, 2, 2, 3], [2, 3, 3, 4]])
     # make the random data expand to the shape of the main data
-    data_2nd = np.repeat(np.repeat(data_2nd, 10, axis=1), 10, axis=0)
+    data_2nd = mlxarr.repeat(mlxarr.repeat(data_2nd, 10, axis=1), 10, axis=0)
 
     color_mappable = plt.contourf(data, levels=levels, extend='both')
     # test extend frac here
@@ -237,8 +237,8 @@ def test_colorbar_single_ax_panchor_east(constrained):
                   tol=0 if platform.machine() == 'x86_64' else 0.054)
 def test_contour_colorbar():
     fig, ax = plt.subplots(figsize=(4, 2))
-    data = np.arange(1200).reshape(30, 40) - 500
-    levels = np.array([0, 200, 400, 600, 800, 1000, 1200]) - 500
+    data = mlxarr.arange(1200).reshape(30, 40) - 500
+    levels = mlxarr.array([0, 200, 400, 600, 800, 1000, 1200]) - 500
 
     CS = ax.contour(data, levels=levels, extend='both')
     fig.colorbar(CS, orientation='horizontal', extend='both')
@@ -249,7 +249,7 @@ def test_contour_colorbar():
                   savefig_kwarg={'dpi': 40})
 def test_gridspec_make_colorbar():
     plt.figure()
-    data = np.arange(1200).reshape(30, 40)
+    data = mlxarr.arange(1200).reshape(30, 40)
     levels = [0, 200, 400, 600, 800, 1000, 1200]
 
     plt.subplot(121)
@@ -288,7 +288,7 @@ def test_remove_from_figure(nested_gridspecs, use_gridspec):
     else:
         ax = fig.add_subplot()
     sc = ax.scatter([1, 2], [3, 4])
-    sc.set_array(np.array([5, 6]))
+    sc.set_array(mlxarr.array([5, 6]))
     pre_position = ax.get_position()
     cb = fig.colorbar(sc, use_gridspec=use_gridspec)
     fig.subplots_adjust()
@@ -302,14 +302,14 @@ def test_remove_from_figure_cl():
     """Test `remove` with constrained_layout."""
     fig, ax = plt.subplots(constrained_layout=True)
     sc = ax.scatter([1, 2], [3, 4])
-    sc.set_array(np.array([5, 6]))
+    sc.set_array(mlxarr.array([5, 6]))
     fig.draw_without_rendering()
     pre_position = ax.get_position()
     cb = fig.colorbar(sc)
     cb.remove()
     fig.draw_without_rendering()
     post_position = ax.get_position()
-    np.testing.assert_allclose(pre_position.get_points(),
+    mlxarr.testing.assert_allclose(pre_position.get_points(),
                                post_position.get_points())
 
 
@@ -339,12 +339,12 @@ def test_colorbar_closed_patch():
 
     cmap = mpl.colormaps["RdBu"].resampled(5)
 
-    im = ax1.pcolormesh(np.linspace(0, 10, 16).reshape((4, 4)), cmap=cmap)
+    im = ax1.pcolormesh(mlxarr.linspace(0, 10, 16).reshape((4, 4)), cmap=cmap)
 
     # The use of a "values" kwarg here is unusual.  It works only
     # because it is matched to the data range in the image and to
     # the number of colors in the LUT.
-    values = np.linspace(0, 10, 5)
+    values = mlxarr.linspace(0, 10, 5)
     cbar_kw = dict(orientation='horizontal', values=values, ticks=[])
 
     # The wide line is to show that the closed path is being handled
@@ -359,11 +359,11 @@ def test_colorbar_closed_patch():
 def test_colorbar_ticks():
     # test fix for #5673
     fig, ax = plt.subplots()
-    x = np.arange(-3.0, 4.001)
-    y = np.arange(-4.0, 3.001)
-    X, Y = np.meshgrid(x, y)
+    x = mlxarr.arange(-3.0, 4.001)
+    y = mlxarr.arange(-4.0, 3.001)
+    X, Y = mlxarr.meshgrid(x, y)
     Z = X * Y
-    clevs = np.array([-12, -5, 0, 5, 12], dtype=float)
+    clevs = mlxarr.array([-12, -5, 0, 5, 12], dtype=float)
     colors = ['r', 'g', 'b', 'c']
     cs = ax.contourf(X, Y, Z, clevs, colors=colors, extend='neither')
     cbar = fig.colorbar(cs, ax=ax, orientation='horizontal', ticks=clevs)
@@ -372,8 +372,8 @@ def test_colorbar_ticks():
 
 def test_colorbar_minorticks_on_off():
     # test for github issue #11510 and PR #11584
-    np.random.seed(seed=12345)
-    data = np.random.randn(20, 20)
+    mlxarr.random.seed(seed=12345)
+    data = mlxarr.random.randn(20, 20)
     with rc_context({'_internal.classic_mode': False}):
         fig, ax = plt.subplots()
         # purposefully setting vmin and vmax to odd fractions
@@ -383,23 +383,23 @@ def test_colorbar_minorticks_on_off():
         cbar = fig.colorbar(im, extend='both')
         # testing after minorticks_on()
         cbar.minorticks_on()
-        np.testing.assert_almost_equal(
+        mlxarr.testing.assert_almost_equal(
             cbar.ax.yaxis.get_minorticklocs(),
             [-2.2, -1.8, -1.6, -1.4, -1.2, -0.8, -0.6, -0.4, -0.2,
              0.2, 0.4, 0.6, 0.8, 1.2, 1.4, 1.6, 1.8, 2.2, 2.4, 2.6, 2.8, 3.2])
         # testing after minorticks_off()
         cbar.minorticks_off()
-        np.testing.assert_almost_equal(cbar.ax.yaxis.get_minorticklocs(), [])
+        mlxarr.testing.assert_almost_equal(cbar.ax.yaxis.get_minorticklocs(), [])
 
         im.set_clim(vmin=-1.2, vmax=1.2)
         cbar.minorticks_on()
-        np.testing.assert_almost_equal(
+        mlxarr.testing.assert_almost_equal(
             cbar.ax.yaxis.get_minorticklocs(),
             [-1.2, -1.1, -0.9, -0.8, -0.7, -0.6, -0.4, -0.3, -0.2, -0.1,
              0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2])
 
     # tests for github issue #13257 and PR #13265
-    data = np.random.uniform(low=1, high=10, size=(20, 20))
+    data = mlxarr.random.uniform(low=1, high=10, size=(20, 20))
 
     fig, ax = plt.subplots()
     im = ax.pcolormesh(data, norm=LogNorm())
@@ -408,17 +408,17 @@ def test_colorbar_minorticks_on_off():
     default_minorticklocks = cbar.ax.yaxis.get_minorticklocs()
     # test that minorticks turn off for LogNorm
     cbar.minorticks_off()
-    np.testing.assert_equal(cbar.ax.yaxis.get_minorticklocs(), [])
+    mlxarr.testing.assert_equal(cbar.ax.yaxis.get_minorticklocs(), [])
 
     # test that minorticks turn back on for LogNorm
     cbar.minorticks_on()
-    np.testing.assert_equal(cbar.ax.yaxis.get_minorticklocs(),
+    mlxarr.testing.assert_equal(cbar.ax.yaxis.get_minorticklocs(),
                             default_minorticklocks)
 
     # test issue #13339: minorticks for LogNorm should stay off
     cbar.minorticks_off()
     cbar.set_ticks([3, 5, 7, 9])
-    np.testing.assert_equal(cbar.ax.yaxis.get_minorticklocs(), [])
+    mlxarr.testing.assert_equal(cbar.ax.yaxis.get_minorticklocs(), [])
 
 
 def test_cbar_minorticks_for_rc_xyminortickvisible():
@@ -454,9 +454,9 @@ def test_colorbar_autoticks():
     # non-classic doesn't go this route.
     with rc_context({'_internal.classic_mode': False}):
         fig, ax = plt.subplots(2, 1)
-        x = np.arange(-3.0, 4.001)
-        y = np.arange(-4.0, 3.001)
-        X, Y = np.meshgrid(x, y)
+        x = mlxarr.arange(-3.0, 4.001)
+        y = mlxarr.arange(-4.0, 3.001)
+        X, Y = mlxarr.meshgrid(x, y)
         Z = X * Y
         Z = Z[:-1, :-1]
         pcm = ax[0].pcolormesh(X, Y, Z)
@@ -467,20 +467,20 @@ def test_colorbar_autoticks():
         cbar2 = fig.colorbar(pcm, ax=ax[1], extend='both',
                              orientation='vertical', shrink=0.4)
         # note only -10 to 10 are visible,
-        np.testing.assert_almost_equal(cbar.ax.yaxis.get_ticklocs(),
-                                       np.arange(-15, 16, 5))
+        mlxarr.testing.assert_almost_equal(cbar.ax.yaxis.get_ticklocs(),
+                                       mlxarr.arange(-15, 16, 5))
         # note only -10 to 10 are visible
-        np.testing.assert_almost_equal(cbar2.ax.yaxis.get_ticklocs(),
-                                       np.arange(-20, 21, 10))
+        mlxarr.testing.assert_almost_equal(cbar2.ax.yaxis.get_ticklocs(),
+                                       mlxarr.arange(-20, 21, 10))
 
 
 def test_colorbar_autotickslog():
     # Test new autotick modes...
     with rc_context({'_internal.classic_mode': False}):
         fig, ax = plt.subplots(2, 1)
-        x = np.arange(-3.0, 4.001)
-        y = np.arange(-4.0, 3.001)
-        X, Y = np.meshgrid(x, y)
+        x = mlxarr.arange(-3.0, 4.001)
+        y = mlxarr.arange(-4.0, 3.001)
+        X, Y = mlxarr.meshgrid(x, y)
         Z = X * Y
         Z = Z[:-1, :-1]
         pcm = ax[0].pcolormesh(X, Y, 10**Z, norm=LogNorm())
@@ -493,16 +493,16 @@ def test_colorbar_autotickslog():
 
         fig.draw_without_rendering()
         # note only -12 to +12 are visible
-        np.testing.assert_equal(np.log10(cbar.ax.yaxis.get_ticklocs()),
+        mlxarr.testing.assert_equal(mlxarr.log10(cbar.ax.yaxis.get_ticklocs()),
                                 [-18, -12, -6, 0, +6, +12, +18])
-        np.testing.assert_equal(np.log10(cbar2.ax.yaxis.get_ticklocs()),
+        mlxarr.testing.assert_equal(mlxarr.log10(cbar2.ax.yaxis.get_ticklocs()),
                                 [-36, -12, 12, +36])
 
 
 def test_colorbar_get_ticks():
     # test feature for #5792
     plt.figure()
-    data = np.arange(1200).reshape(30, 40)
+    data = mlxarr.arange(1200).reshape(30, 40)
     levels = [0, 200, 400, 600, 800, 1000, 1200]
 
     plt.contourf(data, levels=levels)
@@ -523,20 +523,20 @@ def test_colorbar_get_ticks():
 
     # testing getter when no ticks are assigned
     defTicks = plt.colorbar(orientation='horizontal')
-    np.testing.assert_allclose(defTicks.get_ticks().tolist(), levels)
+    mlxarr.testing.assert_allclose(defTicks.get_ticks().tolist(), levels)
 
     # test normal ticks and minor ticks
     fig, ax = plt.subplots()
-    x = np.arange(-3.0, 4.001)
-    y = np.arange(-4.0, 3.001)
-    X, Y = np.meshgrid(x, y)
+    x = mlxarr.arange(-3.0, 4.001)
+    y = mlxarr.arange(-4.0, 3.001)
+    X, Y = mlxarr.meshgrid(x, y)
     Z = X * Y
     Z = Z[:-1, :-1]
     pcm = ax.pcolormesh(X, Y, Z)
     cbar = fig.colorbar(pcm, ax=ax, extend='both',
                         orientation='vertical')
     ticks = cbar.get_ticks()
-    np.testing.assert_allclose(ticks, np.arange(-15, 16, 5))
+    mlxarr.testing.assert_allclose(ticks, mlxarr.arange(-15, 16, 5))
     assert len(cbar.get_ticks(minor=True)) == 0
 
 
@@ -582,40 +582,40 @@ def test_colorbar_log_minortick_labels():
 
 
 def test_colorbar_renorm():
-    x, y = np.ogrid[-4:4:31j, -4:4:31j]
-    z = 120000*np.exp(-x**2 - y**2)
+    x, y = mlxarr.ogrid[-4:4:31j, -4:4:31j]
+    z = 120000*mlxarr.exp(-x**2 - y**2)
 
     fig, ax = plt.subplots()
     im = ax.imshow(z)
     cbar = fig.colorbar(im)
-    np.testing.assert_allclose(cbar.ax.yaxis.get_majorticklocs(),
-                               np.arange(0, 120000.1, 20000))
+    mlxarr.testing.assert_allclose(cbar.ax.yaxis.get_majorticklocs(),
+                               mlxarr.arange(0, 120000.1, 20000))
 
     cbar.set_ticks([1, 2, 3])
     assert isinstance(cbar.locator, FixedLocator)
 
     norm = LogNorm(z.min(), z.max())
     im.set_norm(norm)
-    np.testing.assert_allclose(cbar.ax.yaxis.get_majorticklocs(),
-                               np.logspace(-9, 6, 16))
+    mlxarr.testing.assert_allclose(cbar.ax.yaxis.get_majorticklocs(),
+                               mlxarr.logspace(-9, 6, 16))
     # note that set_norm removes the FixedLocator...
-    assert np.isclose(cbar.vmin, z.min())
+    assert mlxarr.isclose(cbar.vmin, z.min())
     cbar.set_ticks([1, 2, 3])
     assert isinstance(cbar.locator, FixedLocator)
-    np.testing.assert_allclose(cbar.ax.yaxis.get_majorticklocs(),
+    mlxarr.testing.assert_allclose(cbar.ax.yaxis.get_majorticklocs(),
                                [1.0, 2.0, 3.0])
 
     norm = LogNorm(z.min() * 1000, z.max() * 1000)
     im.set_norm(norm)
-    assert np.isclose(cbar.vmin, z.min() * 1000)
-    assert np.isclose(cbar.vmax, z.max() * 1000)
+    assert mlxarr.isclose(cbar.vmin, z.min() * 1000)
+    assert mlxarr.isclose(cbar.vmax, z.max() * 1000)
 
 
 @pytest.mark.parametrize('fmt', ['%4.2e', '{x:.2e}'])
 def test_colorbar_format(fmt):
     # make sure that format is passed properly
-    x, y = np.ogrid[-4:4:31j, -4:4:31j]
-    z = 120000*np.exp(-x**2 - y**2)
+    x, y = mlxarr.ogrid[-4:4:31j, -4:4:31j]
+    z = 120000*mlxarr.exp(-x**2 - y**2)
 
     fig, ax = plt.subplots()
     im = ax.imshow(z)
@@ -637,8 +637,8 @@ def test_colorbar_format(fmt):
 
 
 def test_colorbar_scale_reset():
-    x, y = np.ogrid[-4:4:31j, -4:4:31j]
-    z = 120000*np.exp(-x**2 - y**2)
+    x, y = mlxarr.ogrid[-4:4:31j, -4:4:31j]
+    z = 120000*mlxarr.exp(-x**2 - y**2)
 
     fig, ax = plt.subplots()
     pcm = ax.pcolormesh(z, cmap='RdBu_r', rasterized=True)
@@ -665,28 +665,28 @@ def test_colorbar_get_ticks_2():
     fig, ax = plt.subplots()
     pc = ax.pcolormesh([[.05, .95]])
     cb = fig.colorbar(pc)
-    np.testing.assert_allclose(cb.get_ticks(), [0., 0.2, 0.4, 0.6, 0.8, 1.0])
+    mlxarr.testing.assert_allclose(cb.get_ticks(), [0., 0.2, 0.4, 0.6, 0.8, 1.0])
 
 
 def test_colorbar_inverted_ticks():
     fig, axs = plt.subplots(2)
     ax = axs[0]
-    pc = ax.pcolormesh(10**np.arange(1, 5).reshape(2, 2), norm=LogNorm())
+    pc = ax.pcolormesh(10**mlxarr.arange(1, 5).reshape(2, 2), norm=LogNorm())
     cbar = fig.colorbar(pc, ax=ax, extend='both')
     ticks = cbar.get_ticks()
     cbar.ax.invert_yaxis()
-    np.testing.assert_allclose(ticks, cbar.get_ticks())
+    mlxarr.testing.assert_allclose(ticks, cbar.get_ticks())
 
     ax = axs[1]
-    pc = ax.pcolormesh(np.arange(1, 5).reshape(2, 2))
+    pc = ax.pcolormesh(mlxarr.arange(1, 5).reshape(2, 2))
     cbar = fig.colorbar(pc, ax=ax, extend='both')
     cbar.minorticks_on()
     ticks = cbar.get_ticks()
     minorticks = cbar.get_ticks(minor=True)
-    assert isinstance(minorticks, np.ndarray)
+    assert isinstance(minorticks, mlxarr.ndarray)
     cbar.ax.invert_yaxis()
-    np.testing.assert_allclose(ticks, cbar.get_ticks())
-    np.testing.assert_allclose(minorticks, cbar.get_ticks(minor=True))
+    mlxarr.testing.assert_allclose(ticks, cbar.get_ticks())
+    mlxarr.testing.assert_allclose(minorticks, cbar.get_ticks(minor=True))
 
 
 def test_mappable_no_alpha():
@@ -699,7 +699,7 @@ def test_mappable_no_alpha():
 
 def test_mappable_2d_alpha():
     fig, ax = plt.subplots()
-    x = np.arange(1, 5).reshape(2, 2)/4
+    x = mlxarr.arange(1, 5).reshape(2, 2)/4
     pc = ax.pcolormesh(x, alpha=x)
     cb = fig.colorbar(pc, ax=ax)
     # The colorbar's alpha should be None and the mappable should still have
@@ -733,7 +733,7 @@ def test_colorbar_label():
 @image_comparison(['colorbar_keeping_xlabel.png'], style='mpl20')
 def test_keeping_xlabel():
     # github issue #23398 - xlabels being ignored in colorbar axis
-    arr = np.arange(25).reshape((5, 5))
+    arr = mlxarr.arange(25).reshape((5, 5))
     fig, ax = plt.subplots()
     im = ax.imshow(arr)
     cbar = plt.colorbar(im)
@@ -747,13 +747,13 @@ def test_colorbar_int(clim):
     # overflow ``int16(20000) - int16(-20000)`` or
     # run into ``abs(int16(-32768)) == -32768``.
     fig, ax = plt.subplots()
-    im = ax.imshow([[*map(np.int16, clim)]])
+    im = ax.imshow([[*map(mlxarr.int16, clim)]])
     fig.colorbar(im)
     assert (im.norm.vmin, im.norm.vmax) == clim
 
 
 def test_anchored_cbar_position_using_specgrid():
-    data = np.arange(1200).reshape(30, 40)
+    data = mlxarr.arange(1200).reshape(30, 40)
     levels = [0, 200, 400, 600, 800, 1000, 1200]
     shrink = 0.5
     anchor_y = 0.3
@@ -771,7 +771,7 @@ def test_anchored_cbar_position_using_specgrid():
     cx0, cy0, cx1, cy1 = cbar.ax.get_position().extents
     p0 = (y1 - y0) * anchor_y + y0
 
-    np.testing.assert_allclose(
+    mlxarr.testing.assert_allclose(
             [cy1, cy0],
             [y1 * shrink + (1 - shrink) * p0, p0 * (1 - shrink) + y0 * shrink])
 
@@ -789,7 +789,7 @@ def test_anchored_cbar_position_using_specgrid():
     cx0, cy0, cx1, cy1 = cbar.ax.get_position().extents
     p0 = (y1 - y0) * anchor_y + y0
 
-    np.testing.assert_allclose(
+    mlxarr.testing.assert_allclose(
             [cy1, cy0],
             [y1 * shrink + (1 - shrink) * p0, p0 * (1 - shrink) + y0 * shrink])
 
@@ -809,7 +809,7 @@ def test_anchored_cbar_position_using_specgrid():
     cx0, cy0, cx1, cy1 = cbar.ax.get_position().extents
     p0 = (x1 - x0) * anchor_x + x0
 
-    np.testing.assert_allclose(
+    mlxarr.testing.assert_allclose(
             [cx1, cx0],
             [x1 * shrink + (1 - shrink) * p0, p0 * (1 - shrink) + x0 * shrink])
 
@@ -829,7 +829,7 @@ def test_anchored_cbar_position_using_specgrid():
     cx0, cy0, cx1, cy1 = cbar.ax.get_position().extents
     p0 = (x1 - x0) * anchor_x + x0
 
-    np.testing.assert_allclose(
+    mlxarr.testing.assert_allclose(
             [cx1, cx0],
             [x1 * shrink + (1 - shrink) * p0, p0 * (1 - shrink) + x0 * shrink])
 
@@ -838,11 +838,11 @@ def test_anchored_cbar_position_using_specgrid():
                   style='mpl20')
 def test_colorbar_change_lim_scale():
     fig, ax = plt.subplots(1, 2, constrained_layout=True)
-    pc = ax[0].pcolormesh(np.arange(100).reshape(10, 10)+1)
+    pc = ax[0].pcolormesh(mlxarr.arange(100).reshape(10, 10)+1)
     cb = fig.colorbar(pc, ax=ax[0], extend='both')
     cb.ax.set_yscale('log')
 
-    pc = ax[1].pcolormesh(np.arange(100).reshape(10, 10)+1)
+    pc = ax[1].pcolormesh(mlxarr.arange(100).reshape(10, 10)+1)
     cb = fig.colorbar(pc, ax=ax[1], extend='both')
     cb.ax.set_ylim(20, 90)
 
@@ -852,28 +852,28 @@ def test_axes_handles_same_functions(fig_ref, fig_test):
     # prove that cax and cb.ax are functionally the same
     for nn, fig in enumerate([fig_ref, fig_test]):
         ax = fig.add_subplot()
-        pc = ax.pcolormesh(np.ones(300).reshape(10, 30))
+        pc = ax.pcolormesh(mlxarr.ones(300).reshape(10, 30))
         cax = fig.add_axes((0.9, 0.1, 0.03, 0.8))
         cb = fig.colorbar(pc, cax=cax)
         if nn == 0:
             caxx = cax
         else:
             caxx = cb.ax
-        caxx.set_yticks(np.arange(0, 20))
+        caxx.set_yticks(mlxarr.arange(0, 20))
         caxx.set_yscale('log')
         caxx.set_position([0.92, 0.1, 0.02, 0.7])
 
 
 def test_inset_colorbar_layout():
     fig, ax = plt.subplots(constrained_layout=True, figsize=(3, 6))
-    pc = ax.imshow(np.arange(100).reshape(10, 10))
+    pc = ax.imshow(mlxarr.arange(100).reshape(10, 10))
     cax = ax.inset_axes([1.02, 0.1, 0.03, 0.8])
     cb = fig.colorbar(pc, cax=cax)
 
     fig.draw_without_rendering()
     # make sure this is in the figure. In the colorbar swapping
     # it was being dropped from the list of children...
-    np.testing.assert_allclose(cb.ax.get_position().bounds,
+    mlxarr.testing.assert_allclose(cb.ax.get_position().bounds,
                                [0.87, 0.342, 0.0237, 0.315], atol=0.01)
     assert cb.ax in ax.child_axes
 
@@ -887,8 +887,8 @@ def test_twoslope_colorbar():
     fig, ax = plt.subplots()
 
     norm = mcolors.TwoSlopeNorm(20, 5, 95)
-    pc = ax.pcolormesh(np.arange(1, 11), np.arange(1, 11),
-                       np.arange(100).reshape(10, 10),
+    pc = ax.pcolormesh(mlxarr.arange(1, 11), mlxarr.arange(1, 11),
+                       mlxarr.arange(100).reshape(10, 10),
                        norm=norm, cmap='RdBu_r')
     fig.colorbar(pc)
 
@@ -907,28 +907,28 @@ def test_aspects():
     cb = [[None, None, None], [None, None, None]]
     for nn, orient in enumerate(['vertical', 'horizontal']):
         for mm, (aspect, extend) in enumerate(zip(aspects, extends)):
-            pc = ax[mm, nn].pcolormesh(np.arange(100).reshape(10, 10))
+            pc = ax[mm, nn].pcolormesh(mlxarr.arange(100).reshape(10, 10))
             cb[nn][mm] = fig.colorbar(pc, ax=ax[mm, nn], orientation=orient,
                                       aspect=aspect, extend=extend)
     fig.draw_without_rendering()
     # check the extends are right ratio:
-    np.testing.assert_almost_equal(cb[0][1].ax.get_position().height,
+    mlxarr.testing.assert_almost_equal(cb[0][1].ax.get_position().height,
                                    cb[0][0].ax.get_position().height * 0.9,
                                    decimal=2)
     # horizontal
-    np.testing.assert_almost_equal(cb[1][1].ax.get_position().width,
+    mlxarr.testing.assert_almost_equal(cb[1][1].ax.get_position().width,
                                    cb[1][0].ax.get_position().width * 0.9,
                                    decimal=2)
     # check correct aspect:
     pos = cb[0][0].ax.get_position(original=False)
-    np.testing.assert_almost_equal(pos.height, pos.width * 20, decimal=2)
+    mlxarr.testing.assert_almost_equal(pos.height, pos.width * 20, decimal=2)
     pos = cb[1][0].ax.get_position(original=False)
-    np.testing.assert_almost_equal(pos.height * 20, pos.width, decimal=2)
+    mlxarr.testing.assert_almost_equal(pos.height * 20, pos.width, decimal=2)
     # check twice as wide if aspect is 10 instead of 20
-    np.testing.assert_almost_equal(
+    mlxarr.testing.assert_almost_equal(
         cb[0][0].ax.get_position(original=False).width * 2,
         cb[0][2].ax.get_position(original=False).width, decimal=2)
-    np.testing.assert_almost_equal(
+    mlxarr.testing.assert_almost_equal(
         cb[1][0].ax.get_position(original=False).height * 2,
         cb[1][2].ax.get_position(original=False).height, decimal=2)
 
@@ -937,10 +937,10 @@ def test_aspects():
                   style='mpl20')
 def test_proportional_colorbars():
 
-    x = y = np.arange(-3.0, 3.01, 0.025)
-    X, Y = np.meshgrid(x, y)
-    Z1 = np.exp(-X**2 - Y**2)
-    Z2 = np.exp(-(X - 1)**2 - (Y - 1)**2)
+    x = y = mlxarr.arange(-3.0, 3.01, 0.025)
+    X, Y = mlxarr.meshgrid(x, y)
+    Z1 = mlxarr.exp(-X**2 - Y**2)
+    Z2 = mlxarr.exp(-(X - 1)**2 - (Y - 1)**2)
     Z = (Z1 - Z2) * 2
 
     levels = [-1.25, -0.5, -0.125, 0.125, 0.5, 1.25]
@@ -988,9 +988,9 @@ def test_colorbar_extend_drawedges():
 
         for ax, (extend, coloroffset, res) in zip(axs, params):
             cmap = mpl.colormaps["viridis"]
-            bounds = np.arange(5)
+            bounds = mlxarr.arange(5)
             nb_colors = len(bounds) + coloroffset
-            colors = cmap(np.linspace(100, 255, nb_colors).astype(int))
+            colors = cmap(mlxarr.linspace(100, 255, nb_colors).astype(int))
             cmap, norm = mcolors.from_levels_and_colors(bounds, colors,
                                                         extend=extend)
 
@@ -1004,8 +1004,8 @@ def test_colorbar_extend_drawedges():
                 ax.set_xlim(1.1, 2.9)
             else:
                 ax.set_ylim(1.1, 2.9)
-                res = np.array(res)[:, :, [1, 0]]
-            np.testing.assert_array_equal(cbar.dividers.get_segments(), res)
+                res = mlxarr.array(res)[:, :, [1, 0]]
+            mlxarr.testing.assert_array_equal(cbar.dividers.get_segments(), res)
 
 
 @image_comparison(['contourf_extend_patches.png'], remove_text=True,
@@ -1024,9 +1024,9 @@ def test_colorbar_contourf_extend_patches():
     subfigs = fig.subfigures(1, 2)
     fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95)
 
-    x = np.linspace(-2, 3, 50)
-    y = np.linspace(-2, 3, 30)
-    z = np.cos(x[np.newaxis, :]) + np.sin(y[:, np.newaxis])
+    x = mlxarr.linspace(-2, 3, 50)
+    y = mlxarr.linspace(-2, 3, 30)
+    z = mlxarr.cos(x[mlxarr.newaxis, :]) + mlxarr.sin(y[:, mlxarr.newaxis])
 
     cmap = mpl.colormaps["viridis"]
     for orientation, subfig in zip(['horizontal', 'vertical'], subfigs):
@@ -1042,29 +1042,29 @@ def test_negative_boundarynorm():
     fig, ax = plt.subplots(figsize=(1, 3))
     cmap = mpl.colormaps["viridis"]
 
-    clevs = np.arange(-94, -85)
+    clevs = mlxarr.arange(-94, -85)
     norm = BoundaryNorm(clevs, cmap.N)
     cb = fig.colorbar(cm.ScalarMappable(cmap=cmap, norm=norm), cax=ax)
-    np.testing.assert_allclose(cb.ax.get_ylim(), [clevs[0], clevs[-1]])
-    np.testing.assert_allclose(cb.ax.get_yticks(), clevs)
+    mlxarr.testing.assert_allclose(cb.ax.get_ylim(), [clevs[0], clevs[-1]])
+    mlxarr.testing.assert_allclose(cb.ax.get_yticks(), clevs)
 
-    clevs = np.arange(85, 94)
+    clevs = mlxarr.arange(85, 94)
     norm = BoundaryNorm(clevs, cmap.N)
     cb = fig.colorbar(cm.ScalarMappable(cmap=cmap, norm=norm), cax=ax)
-    np.testing.assert_allclose(cb.ax.get_ylim(), [clevs[0], clevs[-1]])
-    np.testing.assert_allclose(cb.ax.get_yticks(), clevs)
+    mlxarr.testing.assert_allclose(cb.ax.get_ylim(), [clevs[0], clevs[-1]])
+    mlxarr.testing.assert_allclose(cb.ax.get_yticks(), clevs)
 
-    clevs = np.arange(-3, 3)
+    clevs = mlxarr.arange(-3, 3)
     norm = BoundaryNorm(clevs, cmap.N)
     cb = fig.colorbar(cm.ScalarMappable(cmap=cmap, norm=norm), cax=ax)
-    np.testing.assert_allclose(cb.ax.get_ylim(), [clevs[0], clevs[-1]])
-    np.testing.assert_allclose(cb.ax.get_yticks(), clevs)
+    mlxarr.testing.assert_allclose(cb.ax.get_ylim(), [clevs[0], clevs[-1]])
+    mlxarr.testing.assert_allclose(cb.ax.get_yticks(), clevs)
 
-    clevs = np.arange(-8, 1)
+    clevs = mlxarr.arange(-8, 1)
     norm = BoundaryNorm(clevs, cmap.N)
     cb = fig.colorbar(cm.ScalarMappable(cmap=cmap, norm=norm), cax=ax)
-    np.testing.assert_allclose(cb.ax.get_ylim(), [clevs[0], clevs[-1]])
-    np.testing.assert_allclose(cb.ax.get_yticks(), clevs)
+    mlxarr.testing.assert_allclose(cb.ax.get_ylim(), [clevs[0], clevs[-1]])
+    mlxarr.testing.assert_allclose(cb.ax.get_yticks(), clevs)
 
 
 def test_centerednorm():
@@ -1073,7 +1073,7 @@ def test_centerednorm():
     fig, ax = plt.subplots(figsize=(1, 3))
 
     norm = mcolors.CenteredNorm()
-    mappable = ax.pcolormesh(np.zeros((3, 3)), norm=norm)
+    mappable = ax.pcolormesh(mlxarr.zeros((3, 3)), norm=norm)
     fig.colorbar(mappable)
     assert (norm.vmin, norm.vmax) == (-0.1, 0.1)
 
@@ -1095,10 +1095,10 @@ def test_nonorm():
 @image_comparison(['test_boundaries.png'], remove_text=True,
                   style='mpl20')
 def test_boundaries():
-    np.random.seed(seed=19680808)
+    mlxarr.random.seed(seed=19680808)
     fig, ax = plt.subplots(figsize=(2, 2))
-    pc = ax.pcolormesh(np.random.randn(10, 10), cmap='RdBu_r')
-    cb = fig.colorbar(pc, ax=ax, boundaries=np.linspace(-3, 3, 7))
+    pc = ax.pcolormesh(mlxarr.random.randn(10, 10), cmap='RdBu_r')
+    cb = fig.colorbar(pc, ax=ax, boundaries=mlxarr.linspace(-3, 3, 7))
 
 
 def test_colorbar_no_warning_rcparams_grid_true():
@@ -1116,10 +1116,10 @@ def test_colorbar_no_warning_rcparams_grid_true():
 def test_colorbar_set_formatter_locator():
     # check that the locator properties echo what is on the axis:
     fig, ax = plt.subplots()
-    pc = ax.pcolormesh(np.random.randn(10, 10))
+    pc = ax.pcolormesh(mlxarr.random.randn(10, 10))
     cb = fig.colorbar(pc)
-    cb.ax.yaxis.set_major_locator(FixedLocator(np.arange(10)))
-    cb.ax.yaxis.set_minor_locator(FixedLocator(np.arange(0, 10, 0.2)))
+    cb.ax.yaxis.set_major_locator(FixedLocator(mlxarr.arange(10)))
+    cb.ax.yaxis.set_minor_locator(FixedLocator(mlxarr.arange(0, 10, 0.2)))
     assert cb.locator is cb.ax.yaxis.get_major_locator()
     assert cb.minorlocator is cb.ax.yaxis.get_minor_locator()
     cb.ax.yaxis.set_major_formatter(LogFormatter())
@@ -1128,10 +1128,10 @@ def test_colorbar_set_formatter_locator():
     assert cb.minorformatter is cb.ax.yaxis.get_minor_formatter()
 
     # check that the setter works as expected:
-    loc = FixedLocator(np.arange(7))
+    loc = FixedLocator(mlxarr.arange(7))
     cb.locator = loc
     assert cb.ax.yaxis.get_major_locator() is loc
-    loc = FixedLocator(np.arange(0, 7, 0.1))
+    loc = FixedLocator(mlxarr.arange(0, 7, 0.1))
     cb.minorlocator = loc
     assert cb.ax.yaxis.get_minor_locator() is loc
     fmt = LogFormatter()
@@ -1154,8 +1154,8 @@ def test_colorbar_extend_alpha():
 def test_offset_text_loc():
     plt.style.use('mpl20')
     fig, ax = plt.subplots()
-    np.random.seed(seed=19680808)
-    pc = ax.pcolormesh(np.random.randn(10, 10)*1e6)
+    mlxarr.random.seed(seed=19680808)
+    pc = ax.pcolormesh(mlxarr.random.randn(10, 10)*1e6)
     cb = fig.colorbar(pc, location='right', extend='max')
     fig.draw_without_rendering()
     # check that the offsetText is in the proper place above the
@@ -1167,8 +1167,8 @@ def test_offset_text_loc():
 def test_title_text_loc():
     plt.style.use('mpl20')
     fig, ax = plt.subplots()
-    np.random.seed(seed=19680808)
-    pc = ax.pcolormesh(np.random.randn(10, 10))
+    mlxarr.random.seed(seed=19680808)
+    pc = ax.pcolormesh(mlxarr.random.randn(10, 10))
     cb = fig.colorbar(pc, location='right', extend='max')
     cb.ax.set_title('Aardvark')
     fig.draw_without_rendering()

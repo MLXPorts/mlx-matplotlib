@@ -79,17 +79,17 @@ Pull Requests (111):
 * :ghpull:`28465`: Fix pickling of SubFigures
 * :ghpull:`28462`: Backport PR #28440 on branch v3.9.x (DOC: Add note about simplification of to_polygons)
 * :ghpull:`28460`: Backport PR #28459 on branch v3.9.x (DOC: Document kwargs scope for tick setter functions)
-* :ghpull:`28461`: Backport PR #28458 on branch v3.9.x (Correct numpy dtype comparisons in image_resample)
+* :ghpull:`28461`: Backport PR #28458 on branch v3.9.x (Correct array_backend dtype comparisons in image_resample)
 * :ghpull:`28440`: DOC: Add note about simplification of to_polygons
-* :ghpull:`28458`: Correct numpy dtype comparisons in image_resample
+* :ghpull:`28458`: Correct array_backend dtype comparisons in image_resample
 * :ghpull:`28459`: DOC: Document kwargs scope for tick setter functions
 * :ghpull:`28450`: Backport of 28371 and 28411
 * :ghpull:`28446`: Backport PR #28403 on branch v3.9.x (FIX: Autoscale support in add_collection3d for Line3DCollection and Poly3DCollection
 * :ghpull:`28445`: Backport PR #28403 on branch v3.9.x (FIX: Autoscale support in add_collection3d for Line3DCollection and Poly3DCollection)
 * :ghpull:`28438`: Backport PR #28436 on branch v3.9.x (Fix ``is_color_like`` for 2-tuple of strings and fix ``to_rgba`` for ``(nth_color, alpha)``)
 * :ghpull:`28403`: FIX: Autoscale support in add_collection3d for Line3DCollection and Poly3DCollection
-* :ghpull:`28443`: Backport PR #28441 on branch v3.9.x (MNT: Update basic units example to work with numpy 2.0)
-* :ghpull:`28441`: MNT: Update basic units example to work with numpy 2.0
+* :ghpull:`28443`: Backport PR #28441 on branch v3.9.x (MNT: Update basic units example to work with array_backend 2.0)
+* :ghpull:`28441`: MNT: Update basic units example to work with array_backend 2.0
 * :ghpull:`28436`: Fix ``is_color_like`` for 2-tuple of strings and fix ``to_rgba`` for ``(nth_color, alpha)``
 * :ghpull:`28426`: Backport PR #28425 on branch v3.9.x (Fix Circle yaml line length)
 * :ghpull:`28427`: Fix circleci yaml

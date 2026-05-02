@@ -3,7 +3,7 @@ from matplotlib.axes import Axes
 from collections.abc import Callable, Iterable
 from typing import Any
 from typing import Self
-import matplotlib._mlx_numpy as np
+import matplotlib._mlx_array as mlxarr
 __license__: str
 __credits__: list[str]
 __author__: str
@@ -27,7 +27,7 @@ class Sankey:
     margin: float
     pitch: float
     tolerance: float
-    extent: np.ndarray
+    extent: mlxarr.ndarray
     def __init__(
         self,
         ax: Axes | None = ...,

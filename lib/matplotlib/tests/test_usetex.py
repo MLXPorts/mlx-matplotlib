@@ -1,6 +1,6 @@
 import re
 from tempfile import TemporaryFile
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from packaging.version import parse as parse_version
 import pytest
 
@@ -95,7 +95,7 @@ def test_minus_no_descent(fontsize):
             fig.text(.5, .5, f"${x}$", usetex=True)
         fig.canvas.draw()
         # The following counts the number of non-fully-blank pixel rows.
-        heights[vals] = ((np.array(fig.canvas.buffer_rgba())[..., 0] != 255)
+        heights[vals] = ((mlxarr.array(fig.canvas.buffer_rgba())[..., 0] != 255)
                          .any(axis=1).sum())
     assert len({*heights.values()}) == 1
 
@@ -115,7 +115,7 @@ def test_usetex_packages(pkg):
     fig = plt.figure()
     text2 = fig.text(0.5, 0.5, "Some text 0123456789")
     fig.canvas.draw()
-    np.testing.assert_array_equal(text2.get_window_extent(),
+    mlxarr.testing.assert_array_equal(text2.get_window_extent(),
                                   text.get_window_extent())
 
 

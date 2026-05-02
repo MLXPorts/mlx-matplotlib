@@ -5,7 +5,7 @@ axis_direction demo
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.projections import PolarAxes
 from matplotlib.transforms import Affine2D
 import mpl_toolkits.axisartist as axisartist
@@ -17,11 +17,11 @@ def setup_axes(fig, rect):
     """Polar projection, but in a rectangular box."""
     # see demo_curvelinear_grid.py for details
     grid_helper = GridHelperCurveLinear(
-        Affine2D().scale(np.pi/180., 1.) + PolarAxes.PolarTransform(),
+        Affine2D().scale(mlxarr.pi/180., 1.) + PolarAxes.PolarTransform(),
         extreme_finder=angle_helper.ExtremeFinderCycle(
             20, 20,
             lon_cycle=360, lat_cycle=None,
-            lon_minmax=None, lat_minmax=(0, np.inf),
+            lon_minmax=None, lat_minmax=(0, mlxarr.inf),
         ),
         grid_locator1=angle_helper.LocatorDMS(12),
         grid_locator2=grid_finder.MaxNLocator(5),

@@ -90,7 +90,7 @@ The following methods are no longer used and removed without a replacement:
 ``mlab.stride_windows``
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-... is removed. Use ``numpy.lib.stride_tricks.sliding_window_view`` instead.
+... is removed. Use ``array_backend.lib.stride_tricks.sliding_window_view`` instead.
 
 ``Axes3D``
 ~~~~~~~~~~
@@ -201,8 +201,8 @@ Miscellaneous internals
 - ``TextToPath.get_texmanager``; directly construct a `.texmanager.TexManager`
   instead.
 - ``ticker.is_close_to_int``; use ``math.isclose(x, round(x))`` instead.
-- ``ticker.is_decade``; use ``y = numpy.log(x)/numpy.log(base);
-  numpy.isclose(y, numpy.round(y))`` instead.
+- ``ticker.is_decade``; use ``y = array_backend.log(x)/array_backend.log(base);
+  array_backend.isclose(y, array_backend.round(y))`` instead.
 
 
 Backend-specific removals

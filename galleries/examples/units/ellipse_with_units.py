@@ -13,25 +13,25 @@ Compare the ellipse generated with arcs versus a polygonal approximation.
 from basic_units import cm
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib import patches
 
 xcenter, ycenter = 0.38*cm, 0.52*cm
 width, height = 1e-1*cm, 3e-1*cm
 angle = -30
 
-theta = np.deg2rad(np.arange(0.0, 360.0, 1.0))
-x = 0.5 * width * np.cos(theta)
-y = 0.5 * height * np.sin(theta)
+theta = mlxarr.deg2rad(mlxarr.arange(0.0, 360.0, 1.0))
+x = 0.5 * width * mlxarr.cos(theta)
+y = 0.5 * height * mlxarr.sin(theta)
 
-rtheta = np.radians(angle)
-R = np.array([
-    [np.cos(rtheta), -np.sin(rtheta)],
-    [np.sin(rtheta),  np.cos(rtheta)],
+rtheta = mlxarr.radians(angle)
+R = mlxarr.array([
+    [mlxarr.cos(rtheta), -mlxarr.sin(rtheta)],
+    [mlxarr.sin(rtheta),  mlxarr.cos(rtheta)],
     ])
 
 
-x, y = np.dot(R, [x, y])
+x, y = mlxarr.dot(R, [x, y])
 x += xcenter
 y += ycenter
 

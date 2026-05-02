@@ -8,22 +8,22 @@ tries to replicate the styles from FiveThirtyEight.com.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 plt.style.use('fivethirtyeight')
 
-x = np.linspace(0, 10)
+x = mlxarr.linspace(0, 10)
 
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 fig, ax = plt.subplots()
 
-ax.plot(x, np.sin(x) + x + np.random.randn(50))
-ax.plot(x, np.sin(x) + 0.5 * x + np.random.randn(50))
-ax.plot(x, np.sin(x) + 2 * x + np.random.randn(50))
-ax.plot(x, np.sin(x) - 0.5 * x + np.random.randn(50))
-ax.plot(x, np.sin(x) - 2 * x + np.random.randn(50))
-ax.plot(x, np.sin(x) + np.random.randn(50))
+ax.plot(x, mlxarr.sin(x) + x + mlxarr.random.randn(50))
+ax.plot(x, mlxarr.sin(x) + 0.5 * x + mlxarr.random.randn(50))
+ax.plot(x, mlxarr.sin(x) + 2 * x + mlxarr.random.randn(50))
+ax.plot(x, mlxarr.sin(x) - 0.5 * x + mlxarr.random.randn(50))
+ax.plot(x, mlxarr.sin(x) - 2 * x + mlxarr.random.randn(50))
+ax.plot(x, mlxarr.sin(x) + mlxarr.random.randn(50))
 ax.set_title("'fivethirtyeight' style sheet")
 
 plt.show()

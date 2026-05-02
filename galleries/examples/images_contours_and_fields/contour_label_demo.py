@@ -11,18 +11,18 @@ See also the :doc:`contour demo example
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.ticker as ticker
 
 # %%
 # Define our surface
 
 delta = 0.025
-x = np.arange(-3.0, 3.0, delta)
-y = np.arange(-2.0, 2.0, delta)
-X, Y = np.meshgrid(x, y)
-Z1 = np.exp(-X**2 - Y**2)
-Z2 = np.exp(-(X - 1)**2 - (Y - 1)**2)
+x = mlxarr.arange(-3.0, 3.0, delta)
+y = mlxarr.arange(-2.0, 2.0, delta)
+X, Y = mlxarr.meshgrid(x, y)
+Z1 = mlxarr.exp(-X**2 - Y**2)
+Z2 = mlxarr.exp(-(X - 1)**2 - (Y - 1)**2)
 Z = (Z1 - Z2) * 2
 
 # %%

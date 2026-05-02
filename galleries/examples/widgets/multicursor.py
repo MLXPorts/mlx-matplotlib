@@ -11,13 +11,13 @@ shown in all Axes.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.widgets import MultiCursor
 
-t = np.arange(0.0, 2.0, 0.01)
-s1 = np.sin(2*np.pi*t)
-s2 = np.sin(3*np.pi*t)
-s3 = np.sin(4*np.pi*t)
+t = mlxarr.arange(0.0, 2.0, 0.01)
+s1 = mlxarr.sin(2*mlxarr.pi*t)
+s2 = mlxarr.sin(3*mlxarr.pi*t)
+s3 = mlxarr.sin(4*mlxarr.pi*t)
 
 fig, (ax1, ax2) = plt.subplots(2, sharex=True)
 ax1.plot(t, s1)

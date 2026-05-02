@@ -11,12 +11,12 @@ For more options, see :doc:`/gallery/subplots_axes_and_figures/subplots_demo`.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 # Create some fake data.
-x1 = np.linspace(0.0, 5.0)
-y1 = np.cos(2 * np.pi * x1) * np.exp(-x1)
-x2 = np.linspace(0.0, 2.0)
-y2 = np.cos(2 * np.pi * x2)
+x1 = mlxarr.linspace(0.0, 5.0)
+y1 = mlxarr.cos(2 * mlxarr.pi * x1) * mlxarr.exp(-x1)
+x2 = mlxarr.linspace(0.0, 2.0)
+y2 = mlxarr.cos(2 * mlxarr.pi * x2)
 
 # %%
 # `~.pyplot.subplots()` is the recommended method to generate simple subplot

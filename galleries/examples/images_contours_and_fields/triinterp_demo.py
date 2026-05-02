@@ -6,19 +6,19 @@ Triinterp Demo
 Interpolation from triangular grid to quad grid.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.tri as mtri
 
 # Create triangulation.
-x = np.asarray([0, 1, 2, 3, 0.5, 1.5, 2.5, 1, 2, 1.5])
-y = np.asarray([0, 0, 0, 0, 1.0, 1.0, 1.0, 2, 2, 3.0])
+x = mlxarr.asarray([0, 1, 2, 3, 0.5, 1.5, 2.5, 1, 2, 1.5])
+y = mlxarr.asarray([0, 0, 0, 0, 1.0, 1.0, 1.0, 2, 2, 3.0])
 triangles = [[0, 1, 4], [1, 2, 5], [2, 3, 6], [1, 5, 4], [2, 6, 5], [4, 5, 7],
              [5, 6, 8], [5, 8, 7], [7, 8, 9]]
 triang = mtri.Triangulation(x, y, triangles)
 
 # Interpolate to regularly-spaced quad grid.
-z = np.cos(1.5 * x) * np.cos(1.5 * y)
-xi, yi = np.meshgrid(np.linspace(0, 3, 20), np.linspace(0, 3, 20))
+z = mlxarr.cos(1.5 * x) * mlxarr.cos(1.5 * y)
+xi, yi = mlxarr.meshgrid(mlxarr.linspace(0, 3, 20), mlxarr.linspace(0, 3, 20))
 
 interp_lin = mtri.LinearTriInterpolator(triang, z)
 zi_lin = interp_lin(xi, yi)

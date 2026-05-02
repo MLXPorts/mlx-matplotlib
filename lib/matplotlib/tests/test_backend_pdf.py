@@ -3,7 +3,7 @@ import decimal
 import io
 import os
 from pathlib import Path
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import pytest
 
 import matplotlib as mpl
@@ -80,8 +80,8 @@ def test_multipage_keep_empty(tmp_path):
 def test_composite_image():
     # Test that figures can be saved with and without combining multiple images
     # (on a single set of axes) into a single composite image.
-    X, Y = np.meshgrid(np.arange(-5, 5, 1), np.arange(-5, 5, 1))
-    Z = np.sin(Y ** 2)
+    X, Y = mlxarr.meshgrid(mlxarr.arange(-5, 5, 1), mlxarr.arange(-5, 5, 1))
+    Z = mlxarr.sin(Y ** 2)
     fig, ax = plt.subplots()
     ax.set_xlim(0, 3)
     ax.imshow(Z, extent=[0, 1, 0, 1])
@@ -100,8 +100,8 @@ def test_indexed_image():
     # An image with low color count should compress to a palette-indexed format.
     pikepdf = pytest.importorskip('pikepdf')
 
-    data = np.zeros((256, 1, 3), dtype=np.uint8)
-    data[:, 0, 0] = np.arange(256)  # Maximum unique colours for an indexed image.
+    data = mlxarr.zeros((256, 1, 3), dtype=mlxarr.uint8)
+    data[:, 0, 0] = mlxarr.arange(256)  # Maximum unique colours for an indexed image.
 
     rcParams['pdf.compression'] = True
     fig = plt.figure()
@@ -115,9 +115,9 @@ def test_indexed_image():
         pdf_image = pikepdf.PdfImage(image)
         assert pdf_image.indexed
         pil_image = pdf_image.as_pil_image()
-        rgb = np.asarray(pil_image.convert('RGB'))
+        rgb = mlxarr.asarray(pil_image.convert('RGB'))
 
-    np.testing.assert_array_equal(data, rgb)
+    mlxarr.testing.assert_array_equal(data, rgb)
 
 
 def test_savefig_metadata(monkeypatch):
@@ -311,9 +311,9 @@ def test_hatching_legend(text_placeholders):
 @image_comparison(['grayscale_alpha.pdf'])
 def test_grayscale_alpha():
     """Masking images with NaN did not work for grayscale images"""
-    x, y = np.ogrid[-2:2:.1, -2:2:.1]
-    dd = np.exp(-(x**2 + y**2))
-    dd[dd < .1] = np.nan
+    x, y = mlxarr.ogrid[-2:2:.1, -2:2:.1]
+    dd = mlxarr.exp(-(x**2 + y**2))
+    dd[dd < .1] = mlxarr.nan
     fig, ax = plt.subplots()
     ax.imshow(dd, interpolation='none', cmap='gray_r')
     ax.set_xticks([])
@@ -325,7 +325,7 @@ def test_grayscale_alpha():
 def test_pdf_eps_savefig_when_color_is_none(fig_test, fig_ref):
     ax_test = fig_test.add_subplot()
     ax_test.set_axis_off()
-    ax_test.plot(np.sin(np.linspace(-5, 5, 100)), "v", c="none")
+    ax_test.plot(mlxarr.sin(mlxarr.linspace(-5, 5, 100)), "v", c="none")
     ax_ref = fig_ref.add_subplot()
     ax_ref.set_axis_off()
 

@@ -14,7 +14,7 @@ help you get started with Matplotlib.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 # sphinx_gallery_thumbnail_number = 3
 
 # %%
@@ -115,29 +115,29 @@ plt.show()                           # Show the figure.
 # Types of inputs to plotting functions
 # =====================================
 #
-# Plotting functions expect `numpy.array` or `numpy.ma.masked_array` as
-# input, or objects that can be passed to `numpy.asarray`.
+# Plotting functions expect `array_backend.array` or `array_backend.ma.masked_array` as
+# input, or objects that can be passed to `array_backend.asarray`.
 # Classes that are similar to arrays ('array-like') such as `pandas`
-# data objects and `numpy.matrix` may not work as intended.  Common convention
-# is to convert these to `numpy.array` objects prior to plotting.
-# For example, to convert a `numpy.matrix` ::
+# data objects and `array_backend.matrix` may not work as intended.  Common convention
+# is to convert these to `array_backend.array` objects prior to plotting.
+# For example, to convert a `array_backend.matrix` ::
 #
-#   b = np.matrix([[1, 2], [3, 4]])
-#   b_asarray = np.asarray(b)
+#   b = mlxarr.matrix([[1, 2], [3, 4]])
+#   b_asarray = mlxarr.asarray(b)
 #
 # Most methods will also parse a string-indexable object like a *dict*, a
-# `structured numpy array`_, or a `pandas.DataFrame`.  Matplotlib allows you
+# `structured array_backend array`_, or a `pandas.DataFrame`.  Matplotlib allows you
 # to provide the ``data`` keyword argument and generate plots passing the
 # strings corresponding to the *x* and *y* variables.
 #
-# .. _structured numpy array: https://numpy.org/doc/stable/user/basics.rec.html#structured-arrays  # noqa: E501
+# .. _structured array_backend array: https://array_backend.org/doc/stable/user/basics.rec.html#structured-arrays  # noqa: E501
 
-np.random.seed(19680801)  # seed the random number generator.
-data = {'a': np.arange(50),
-        'c': np.random.randint(0, 50, 50),
-        'd': np.random.randn(50)}
-data['b'] = data['a'] + 10 * np.random.randn(50)
-data['d'] = np.abs(data['d']) * 100
+mlxarr.random.seed(19680801)  # seed the random number generator.
+data = {'a': mlxarr.arange(50),
+        'c': mlxarr.random.randint(0, 50, 50),
+        'd': mlxarr.random.randn(50)}
+data['b'] = data['a'] + 10 * mlxarr.random.randn(50)
+data['d'] = mlxarr.abs(data['d']) * 100
 
 fig, ax = plt.subplots(figsize=(5, 2.7), layout='constrained')
 ax.scatter('a', 'b', c='c', s='d', data=data)
@@ -165,7 +165,7 @@ ax.set_ylabel('entry b')
 #
 # So one can use the OO-style
 
-x = np.linspace(0, 2, 100)  # Sample data.
+x = mlxarr.linspace(0, 2, 100)  # Sample data.
 
 # Note that even in the OO-style, we use `.pyplot.figure` to create the Figure.
 fig, ax = plt.subplots(figsize=(5, 2.7), layout='constrained')
@@ -180,7 +180,7 @@ ax.legend()  # Add a legend.
 # %%
 # or the pyplot-style:
 
-x = np.linspace(0, 2, 100)  # Sample data.
+x = mlxarr.linspace(0, 2, 100)  # Sample data.
 
 plt.figure(figsize=(5, 2.7), layout='constrained')
 plt.plot(x, x, label='linear')  # Plot some data on the (implicit) Axes.
@@ -226,7 +226,7 @@ def my_plotter(ax, data1, data2, param_dict):
 # %%
 # which you would then use twice to populate two subplots:
 
-data1, data2, data3, data4 = np.random.randn(4, 100)  # make 4 random data sets
+data1, data2, data3, data4 = mlxarr.random.randn(4, 100)  # make 4 random data sets
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(5, 2.7))
 my_plotter(ax1, data1, data2, {'marker': 'x'})
 my_plotter(ax2, data3, data4, {'marker': 'o'})
@@ -248,9 +248,9 @@ my_plotter(ax2, data3, data4, {'marker': 'o'})
 # after the fact with `~.Line2D.set_linestyle`.
 
 fig, ax = plt.subplots(figsize=(5, 2.7))
-x = np.arange(len(data1))
-ax.plot(x, np.cumsum(data1), color='blue', linewidth=3, linestyle='--')
-l, = ax.plot(x, np.cumsum(data2), color='orange', linewidth=2)
+x = mlxarr.arange(len(data1))
+ax.plot(x, mlxarr.cumsum(data1), color='blue', linewidth=3, linestyle='--')
+l, = ax.plot(x, mlxarr.cumsum(data2), color='orange', linewidth=2)
 l.set_linestyle(':')
 
 # %%
@@ -304,7 +304,7 @@ ax.legend()
 # `~.Axes.text`:
 
 mu, sigma = 115, 15
-x = mu + sigma * np.random.randn(10000)
+x = mu + sigma * mlxarr.random.randn(10000)
 fig, ax = plt.subplots(figsize=(5, 2.7), layout='constrained')
 # the histogram of the data
 n, bins, patches = ax.hist(x, 50, density=True, facecolor='C0', alpha=0.75)
@@ -351,8 +351,8 @@ ax.grid(True)
 
 fig, ax = plt.subplots(figsize=(5, 2.7))
 
-t = np.arange(0.0, 5.0, 0.01)
-s = np.cos(2 * np.pi * t)
+t = mlxarr.arange(0.0, 5.0, 0.01)
+s = mlxarr.cos(2 * mlxarr.pi * t)
 line, = ax.plot(t, s, lw=2)
 
 ax.annotate('local max', xy=(2, 1), xytext=(3, 1.5),
@@ -373,9 +373,9 @@ ax.set_ylim(-2, 2)
 # Often we want to identify lines or markers with a `.Axes.legend`:
 
 fig, ax = plt.subplots(figsize=(5, 2.7))
-ax.plot(np.arange(len(data1)), data1, label='data1')
-ax.plot(np.arange(len(data2)), data2, label='data2')
-ax.plot(np.arange(len(data3)), data3, 'd', label='data3')
+ax.plot(mlxarr.arange(len(data1)), data1, label='data1')
+ax.plot(mlxarr.arange(len(data2)), data2, label='data2')
+ax.plot(mlxarr.arange(len(data3)), data3, 'd', label='data3')
 ax.legend()
 
 # %%
@@ -402,7 +402,7 @@ ax.legend()
 # manually:
 
 fig, axs = plt.subplots(1, 2, figsize=(5, 2.7), layout='constrained')
-xdata = np.arange(len(data1))  # make an ordinal for this
+xdata = mlxarr.arange(len(data1))  # make an ordinal for this
 data = 10**data1
 axs[0].plot(xdata, data)
 
@@ -427,7 +427,7 @@ axs[0].plot(xdata, data1)
 axs[0].set_title('Automatic ticks')
 
 axs[1].plot(xdata, data1)
-axs[1].set_xticks(np.arange(0, 100, 30), ['zero', '30', 'sixty', '90'])
+axs[1].set_xticks(mlxarr.arange(0, 100, 30), ['zero', '30', 'sixty', '90'])
 axs[1].set_yticks([-1.5, 0, 1.5])  # note that we don't need to specify labels
 axs[1].set_title('Manual ticks')
 
@@ -448,9 +448,9 @@ axs[1].set_title('Manual ticks')
 from matplotlib.dates import ConciseDateFormatter
 
 fig, ax = plt.subplots(figsize=(5, 2.7), layout='constrained')
-dates = np.arange(np.datetime64('2021-11-15'), np.datetime64('2021-12-25'),
-                  np.timedelta64(1, 'h'))
-data = np.cumsum(np.random.randn(len(dates)))
+dates = mlxarr.arange(mlxarr.datetime64('2021-11-15'), mlxarr.datetime64('2021-12-25'),
+                  mlxarr.timedelta64(1, 'h'))
+data = mlxarr.cumsum(mlxarr.random.randn(len(dates)))
 ax.plot(dates, data)
 ax.xaxis.set_major_formatter(ConciseDateFormatter(ax.xaxis.get_major_locator()))
 
@@ -464,7 +464,7 @@ ax.xaxis.set_major_formatter(ConciseDateFormatter(ax.xaxis.get_major_locator()))
 fig, ax = plt.subplots(figsize=(5, 2.7), layout='constrained')
 categories = ['turnips', 'rutabaga', 'cucumber', 'pumpkins']
 
-ax.bar(categories, np.random.rand(len(categories)))
+ax.bar(categories, mlxarr.random.rand(len(categories)))
 
 # %%
 # One caveat about categorical plotting is that some methods of parsing
@@ -496,7 +496,7 @@ ax2.legend([l1, l2], ['Sine (left)', 'Straight (right)'])
 
 ax3.plot(t, s)
 ax3.set_xlabel('Angle [rad]')
-ax4 = ax3.secondary_xaxis('top', (np.rad2deg, np.deg2rad))
+ax4 = ax3.secondary_xaxis('top', (mlxarr.rad2deg, mlxarr.deg2rad))
 ax4.set_xlabel('Angle [°]')
 
 # %%
@@ -508,15 +508,15 @@ ax4.set_xlabel('Angle [°]')
 
 from matplotlib.colors import LogNorm
 
-X, Y = np.meshgrid(np.linspace(-3, 3, 128), np.linspace(-3, 3, 128))
-Z = (1 - X/2 + X**5 + Y**3) * np.exp(-X**2 - Y**2)
+X, Y = mlxarr.meshgrid(mlxarr.linspace(-3, 3, 128), mlxarr.linspace(-3, 3, 128))
+Z = (1 - X/2 + X**5 + Y**3) * mlxarr.exp(-X**2 - Y**2)
 
 fig, axs = plt.subplots(2, 2, layout='constrained')
 pc = axs[0, 0].pcolormesh(X, Y, Z, vmin=-1, vmax=1, cmap='RdBu_r')
 fig.colorbar(pc, ax=axs[0, 0])
 axs[0, 0].set_title('pcolormesh()')
 
-co = axs[0, 1].contourf(X, Y, Z, levels=np.linspace(-1.25, 1.25, 11))
+co = axs[0, 1].contourf(X, Y, Z, levels=mlxarr.linspace(-1.25, 1.25, 11))
 fig.colorbar(co, ax=axs[0, 1])
 axs[0, 1].set_title('contourf()')
 

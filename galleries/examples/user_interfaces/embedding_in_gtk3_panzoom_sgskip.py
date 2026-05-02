@@ -10,7 +10,7 @@ import gi
 
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.backends.backend_gtk3 import NavigationToolbar2GTK3 as NavigationToolbar
 from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
 from matplotlib.figure import Figure
@@ -22,8 +22,8 @@ win.set_title("Embedded in GTK3")
 
 fig = Figure(figsize=(5, 4), dpi=100)
 ax = fig.add_subplot(1, 1, 1)
-t = np.arange(0.0, 3.0, 0.01)
-s = np.sin(2*np.pi*t)
+t = mlxarr.arange(0.0, 3.0, 0.01)
+s = mlxarr.sin(2*mlxarr.pi*t)
 ax.plot(t, s)
 
 vbox = Gtk.VBox()

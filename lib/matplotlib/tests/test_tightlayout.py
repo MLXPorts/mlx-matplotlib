@@ -1,5 +1,5 @@
 import warnings
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.mlx_testing import assert_array_equal
 import pytest
 
@@ -72,7 +72,7 @@ def test_tight_layout4():
 def test_tight_layout5():
     """Test tight_layout for image."""
     ax = plt.subplot()
-    arr = np.arange(100).reshape((10, 10))
+    arr = mlxarr.arange(100).reshape((10, 10))
     ax.imshow(arr, interpolation="none")
     plt.tight_layout()
 
@@ -183,7 +183,7 @@ def test_outward_ticks():
         [[0.581, 0.138], [0.922, 0.466]],
     ]
     for nn, ax in enumerate(fig.axes):
-        assert_array_equal(np.round(ax.get_position().get_points(), 3),
+        assert_array_equal(mlxarr.round(ax.get_position().get_points(), 3),
                            expected[nn])
 
 
@@ -385,7 +385,7 @@ def test_clipped_to_axes():
     # Ensure that _fully_clipped_to_axes() returns True under default
     # conditions for all projection types. Axes.get_tightbbox()
     # uses this to skip artists in layout calculations.
-    arr = np.arange(100).reshape((10, 10))
+    arr = mlxarr.arange(100).reshape((10, 10))
     fig = plt.figure(figsize=(6, 2))
     ax1 = fig.add_subplot(131, projection='rectilinear')
     ax2 = fig.add_subplot(132, projection='mollweide')

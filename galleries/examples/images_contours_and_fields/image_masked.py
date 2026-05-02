@@ -10,17 +10,17 @@ get a filled contour effect.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.colors as colors
 
 # compute some interesting data
 x0, x1 = -5, 5
 y0, y1 = -3, 3
-x = np.linspace(x0, x1, 500)
-y = np.linspace(y0, y1, 500)
-X, Y = np.meshgrid(x, y)
-Z1 = np.exp(-X**2 - Y**2)
-Z2 = np.exp(-(X - 1)**2 - (Y - 1)**2)
+x = mlxarr.linspace(x0, x1, 500)
+y = mlxarr.linspace(y0, y1, 500)
+X, Y = mlxarr.meshgrid(x, y)
+Z1 = mlxarr.exp(-X**2 - Y**2)
+Z2 = mlxarr.exp(-(X - 1)**2 - (Y - 1)**2)
 Z = (Z1 - Z2) * 2
 
 # Set up a colormap:
@@ -31,7 +31,7 @@ palette = plt.colormaps["gray"].with_extremes(over='r', under='g', bad='b')
 # If you comment out all the palette.set* lines, you will see
 # all the defaults; under and over will be colored with the
 # first and last colors in the palette, respectively.
-Zm = np.ma.masked_where(Z > 1.2, Z)
+Zm = mlxarr.ma.masked_where(Z > 1.2, Z)
 
 # By setting vmin and vmax in the norm, we establish the
 # range to which the regular palette color scale is applied.

@@ -19,19 +19,19 @@ want a legend item to show up for each one. If you simply plot the lines
 and call ``ax.legend()``, you will get the following:
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 # sphinx_gallery_thumbnail_number = 2
 import matplotlib as mpl
 from matplotlib import cycler
 
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 # %%
 N = 10
-data = (np.geomspace(1, 10, 100) + np.random.randn(N, 100)).T
+data = (mlxarr.geomspace(1, 10, 100) + mlxarr.random.randn(N, 100)).T
 cmap = plt.colormaps["coolwarm"]
-mpl.rcParams['axes.prop_cycle'] = cycler(color=cmap(np.linspace(0, 1, N)))
+mpl.rcParams['axes.prop_cycle'] = cycler(color=cmap(mlxarr.linspace(0, 1, N)))
 
 fig, ax = plt.subplots()
 lines = ax.plot(data)

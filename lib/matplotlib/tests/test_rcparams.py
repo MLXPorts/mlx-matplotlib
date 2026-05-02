@@ -12,7 +12,7 @@ import matplotlib as mpl
 from matplotlib import _api, _c_internal_utils
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.rcsetup import (
     validate_bool,
     validate_color,
@@ -232,7 +232,7 @@ def generate_validator_testcases(valid):
                      (['a', 'b'], ['a', 'b']),
                      (('a', 'b'), ['a', 'b']),
                      (iter(['a', 'b']), ['a', 'b']),
-                     (np.array(['a', 'b']), ['a', 'b']),
+                     (mlxarr.array(['a', 'b']), ['a', 'b']),
                      ),
          'fail': ((set(), ValueError),
                   (1, ValueError),
@@ -241,7 +241,7 @@ def generate_validator_testcases(valid):
         {'validator': _listify_validator(validate_int, n=2),
          'success': ((_, [1, 2])
                      for _ in ('1, 2', [1.5, 2.5], [1, 2],
-                               (1, 2), np.array((1, 2)))),
+                               (1, 2), mlxarr.array((1, 2)))),
          'fail': ((_, ValueError)
                   for _ in ('aardvark', ('a', 1),
                             (1, 2, 3)
@@ -250,7 +250,7 @@ def generate_validator_testcases(valid):
         {'validator': _listify_validator(validate_float, n=2),
          'success': ((_, [1.5, 2.5])
                      for _ in ('1.5, 2.5', [1.5, 2.5], [1.5, 2.5],
-                               (1.5, 2.5), np.array((1.5, 2.5)))),
+                               (1.5, 2.5), mlxarr.array((1.5, 2.5)))),
          'fail': ((_, ValueError)
                   for _ in ('aardvark', ('a', 1), (1, 2, 3), (None, ), None))
          },
@@ -322,10 +322,10 @@ def generate_validator_testcases(valid):
                      (['r', 'g', 'b'], ['r', 'g', 'b']),
                      ('r, ,', ['r']),
                      (['', 'g', 'blue'], ['g', 'blue']),
-                     ([np.array([1, 0, 0]), np.array([0, 1, 0])],
-                     np.array([[1, 0, 0], [0, 1, 0]])),
-                     (np.array([[1, 0, 0], [0, 1, 0]]),
-                     np.array([[1, 0, 0], [0, 1, 0]])),
+                     ([mlxarr.array([1, 0, 0]), mlxarr.array([0, 1, 0])],
+                     mlxarr.array([[1, 0, 0], [0, 1, 0]])),
+                     (mlxarr.array([[1, 0, 0], [0, 1, 0]]),
+                     mlxarr.array([[1, 0, 0], [0, 1, 0]])),
                      ),
          'fail': (('fish', ValueError),
                   ),
@@ -366,7 +366,7 @@ def generate_validator_testcases(valid):
                      ('10', 10),
                      ('1, 2, 3', [1, 2, 3]),
                      ([1, 2, 3], [1, 2, 3]),
-                     (np.arange(15), np.arange(15))
+                     (mlxarr.arange(15), mlxarr.arange(15))
                      ),
          'fail': (('aardvark', ValueError),
                   )
@@ -441,8 +441,8 @@ def generate_validator_testcases(valid):
                          generate_validator_testcases(True))
 def test_validator_valid(validator, arg, target):
     res = validator(arg)
-    if isinstance(target, np.ndarray):
-        np.testing.assert_equal(res, target)
+    if isinstance(target, mlxarr.ndarray):
+        mlxarr.testing.assert_equal(res, target)
     elif not isinstance(target, Cycler):
         assert res == target
     else:
@@ -468,7 +468,7 @@ def test_validate_cycler_bad_color_string():
     ('BOLD', ValueError),  # weight is case-sensitive
     (100, 100),
     ('100', 100),
-    (np.array(100), 100),
+    (mlxarr.array(100), 100),
     # fractional fontweights are not defined. This should actually raise a
     # ValueError, but historically did not.
     (20.6, 20),
@@ -488,7 +488,7 @@ def test_validate_fontweight(weight, parsed_weight):
     ('EXPANDED', ValueError),  # stretch is case-sensitive
     (100, 100),
     ('100', 100),
-    (np.array(100), 100),
+    (mlxarr.array(100), 100),
     # fractional fontweights are not defined. This should actually raise a
     # ValueError, but historically did not.
     (20.6, 20),

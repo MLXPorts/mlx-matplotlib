@@ -17,7 +17,7 @@ with a (N, 2) array of (x, y) vertices, and an N-length array of path
 codes.  For example to draw the unit rectangle from (0, 0) to (1, 1), we
 could use this code:
 """
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.pyplot as plt
 
 import matplotlib.patches as patches
@@ -144,22 +144,22 @@ plt.show()
 # for each histogram bar: the rectangle width is the bin width and the
 # rectangle height is the number of datapoints in that bin.  First we'll
 # create some random normally distributed data and compute the
-# histogram.  Because NumPy returns the bin edges and not centers, the
+# histogram.  Because MLXArrayBackend returns the bin edges and not centers, the
 # length of ``bins`` is one greater than the length of ``n`` in the
 # example below::
 #
-#     # histogram our data with numpy
-#     data = np.random.randn(1000)
-#     n, bins = np.histogram(data, 100)
+#     # histogram our data with array_backend
+#     data = mlxarr.random.randn(1000)
+#     n, bins = mlxarr.histogram(data, 100)
 #
 # We'll now extract the corners of the rectangles.  Each of the
 # ``left``, ``bottom``, etc., arrays below is ``len(n)``, where ``n`` is
 # the array of counts for each histogram bar::
 #
 #     # get the corners of the rectangles for the histogram
-#     left = np.array(bins[:-1])
-#     right = np.array(bins[1:])
-#     bottom = np.zeros(len(left))
+#     left = mlxarr.array(bins[:-1])
+#     right = mlxarr.array(bins[1:])
+#     bottom = mlxarr.zeros(len(left))
 #     top = bottom + n
 #
 # Now we have to construct our compound path, which will consist of a
@@ -170,8 +170,8 @@ plt.show()
 # need it to keep the codes aligned with the vertices::
 #
 #     nverts = nrects*(1+3+1)
-#     verts = np.zeros((nverts, 2))
-#     codes = np.ones(nverts, int) * path.Path.LINETO
+#     verts = mlxarr.zeros((nverts, 2))
+#     codes = mlxarr.ones(nverts, int) * path.Path.LINETO
 #     codes[0::5] = path.Path.MOVETO
 #     codes[4::5] = path.Path.CLOSEPOLY
 #     verts[0::5, 0] = left
@@ -193,22 +193,22 @@ plt.show()
 
 fig, ax = plt.subplots()
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
-# histogram our data with numpy
-data = np.random.randn(1000)
-n, bins = np.histogram(data, 100)
+# histogram our data with array_backend
+data = mlxarr.random.randn(1000)
+n, bins = mlxarr.histogram(data, 100)
 
 # get the corners of the rectangles for the histogram
-left = np.array(bins[:-1])
-right = np.array(bins[1:])
-bottom = np.zeros(len(left))
+left = mlxarr.array(bins[:-1])
+right = mlxarr.array(bins[1:])
+bottom = mlxarr.zeros(len(left))
 top = bottom + n
 nrects = len(left)
 
 nverts = nrects*(1+3+1)
-verts = np.zeros((nverts, 2))
-codes = np.full(nverts, Path.LINETO, dtype=int)
+verts = mlxarr.zeros((nverts, 2))
+codes = mlxarr.full(nverts, Path.LINETO, dtype=int)
 codes[0::5] = Path.MOVETO
 codes[4::5] = Path.CLOSEPOLY
 verts[0::5, 0] = left
