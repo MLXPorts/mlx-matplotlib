@@ -83,6 +83,7 @@ def _plain_float_buffer(values, empty_fallback=None):
     return memoryview(buf).cast("B").cast("d", shape=shape)
 
 
+
 def get_hinting_flag():
     mapping = {
         'default': LoadFlags.DEFAULT,
@@ -130,6 +131,7 @@ class RendererAgg(RendererBase):
     def _update_methods(self):
         self.draw_gouraud_triangles = self._renderer.draw_gouraud_triangles
         self.draw_image = self._renderer.draw_image
+
         self.copy_from_bbox = self._renderer.copy_from_bbox
 
     def draw_markers(self, gc, marker_path, marker_trans, path, transform,
