@@ -15,6 +15,7 @@ python_sources = [
   '_internal_utils.py',
   '_layoutgrid.py',
   '_mlx_numpy.py',
+  '_mlx_typing.py',
   '_mathtext.py',
   '_mathtext_data.py',
   '_pylab_helpers.py',

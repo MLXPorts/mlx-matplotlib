@@ -239,8 +239,8 @@ namespace PYBIND11_NAMESPACE { namespace detail {
             value.cap = src.attr("_capstyle").cast<agg::line_cap_e>();
             value.join = src.attr("_joinstyle").cast<agg::line_join_e>();
             value.dashes = src.attr("get_dashes")().cast<Dashes>();
-            value.cliprect = src.attr("_cliprect").cast<agg::rect_d>();
-            value.clippath = src.attr("get_clip_path")().cast<ClipPath>();
+            value.cliprect = src.attr("get_clip_rectangle_agg")().cast<agg::rect_d>();
+            value.clippath = src.attr("get_clip_path_agg")().cast<ClipPath>();
             value.snap_mode = src.attr("get_snap")().cast<e_snap_mode>();
             value.hatchpath = src.attr("get_hatch_path")().cast<mpl::PathIterator>();
             value.hatch_color = src.attr("get_hatch_color")().cast<agg::rgba>();

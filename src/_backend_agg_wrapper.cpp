@@ -89,8 +89,7 @@ PyRendererAgg_draw_text_image(RendererAgg *self,
         throw std::runtime_error("Should not happen");
     }
 
-    // TODO: This really shouldn't be mutable, but Agg's renderer buffers aren't const.
-    mpl::BufferView<agg::int8u, 2> image(image_obj, true);
+    mpl::BufferView<agg::int8u, 2> image(image_obj);
 
     self->draw_text_image(gc, image, x, y, angle);
 }

@@ -15,6 +15,115 @@ from typing import Any, Iterable, Iterator, List, Sequence, Tuple
 
 import mlx.core as mx
 
+# Matplotlib's NumPy-facing internals routinely request float64 arrays.
+# MLX's GPU backend rejects float64 constructors, so keep this compatibility
+# layer on CPU unless callers explicitly move arrays elsewhere.
+mx.set_default_device(mx.cpu)
+if not hasattr(mx.array, "copy"):
+    mx.array.copy = lambda self: mx.array(self)
+if not hasattr(mx.array, "ravel"):
+    mx.array.ravel = lambda self: mx.reshape(self, (self.size,))
+if not hasattr(mx.array, "searchsorted"):
+    mx.array.searchsorted = lambda self, v, side="left", sorter=None: searchsorted(
+        self, v, side=side)
+if not hasattr(mx.array, "__index__"):
+    mx.array.__index__ = lambda self: int(self.item())
+if not hasattr(mx.array, "__int__"):
+    mx.array.__int__ = lambda self: int(self.item())
+if not hasattr(mx.array, "__float__"):
+    mx.array.__float__ = lambda self: float(self.item())
+if not hasattr(mx.array, "__round__"):
+    mx.array.__round__ = lambda self, ndigits=None: round(
+        float(self.item()), ndigits) if ndigits is not None else round(
+            float(self.item()))
+if not hasattr(mx.array, "__divmod__"):
+    mx.array.__divmod__ = lambda self, other: divmod(
+        _to_scalar(self), _to_scalar(other))
+if not hasattr(mx.array, "__rdivmod__"):
+    mx.array.__rdivmod__ = lambda self, other: divmod(
+        _to_scalar(other), _to_scalar(self))
+if not hasattr(mx.array, "_mlx_numpy_orig_astype"):
+    mx.array._mlx_numpy_orig_astype = mx.array.astype
+
+    def _array_astype(self, dtype, *args, **kwargs):
+        return mx.array._mlx_numpy_orig_astype(
+            self, _unwrap_dtype(dtype), *args, **kwargs)
+
+    mx.array.astype = _array_astype
+if not hasattr(mx.array, "_mlx_numpy_orig_setitem"):
+    mx.array._mlx_numpy_orig_setitem = mx.array.__setitem__
+
+    def _array_setitem(self, key, value):
+        if isinstance(value, (list, tuple)):
+            value = mx.array(value, dtype=self.dtype)
+        return mx.array._mlx_numpy_orig_setitem(self, key, value)
+
+    mx.array.__setitem__ = _array_setitem
+if not hasattr(mx.array, "_mlx_numpy_orig_getitem"):
+    mx.array._mlx_numpy_orig_getitem = mx.array.__getitem__
+
+    def _array_getitem(self, key):
+        if isinstance(key, mx.array) and key.dtype == mx.bool_:
+            values = self.tolist()
+            mask = key.tolist()
+            return mx.array([value for value, keep in zip(values, mask) if keep],
+                            dtype=self.dtype)
+        return mx.array._mlx_numpy_orig_getitem(self, key)
+
+    mx.array.__getitem__ = _array_getitem
+if not hasattr(mx.array, "_mlx_numpy_orig_matmul"):
+    mx.array._mlx_numpy_orig_matmul = mx.array.__matmul__
+
+    def _array_matmul(self, other):
+        if isinstance(other, (list, tuple)):
+            other = mx.array([_to_scalar(item) for item in other],
+                             dtype=self.dtype)
+        return mx.array._mlx_numpy_orig_matmul(self, other)
+
+    mx.array.__matmul__ = _array_matmul
+if not hasattr(mx.array, "_mlx_numpy_orig_sub"):
+    mx.array._mlx_numpy_orig_sub = mx.array.__sub__
+
+    def _array_sub(self, other):
+        if isinstance(other, (list, tuple)):
+            other = mx.array([_to_scalar(item) for item in other],
+                             dtype=self.dtype)
+        return mx.array._mlx_numpy_orig_sub(self, other)
+
+    mx.array.__sub__ = _array_sub
+if not hasattr(mx.array, "_mlx_numpy_orig_add"):
+    mx.array._mlx_numpy_orig_add = mx.array.__add__
+
+    def _array_add(self, other):
+        if isinstance(other, (list, tuple)):
+            other = mx.array([_to_scalar(item) for item in other],
+                             dtype=self.dtype)
+        return mx.array._mlx_numpy_orig_add(self, other)
+
+    mx.array.__add__ = _array_add
+if not hasattr(mx.array, "flat"):
+    def _array_flat(self):
+        def flatten(value):
+            if isinstance(value, list):
+                for item in value:
+                    yield from flatten(item)
+            else:
+                yield value
+        return list(flatten(self.tolist()))
+
+    mx.array.flat = property(_array_flat)
+if not hasattr(mx.array, "flags"):
+    class _ArrayFlags:
+        @property
+        def writeable(self):
+            return True
+
+        @writeable.setter
+        def writeable(self, value):
+            pass
+
+    mx.array.flags = property(lambda self: _ArrayFlags())
+
 @dataclass(frozen=True)
 class DType:
     """A small callable dtype wrapper (NumPy-style) around an MLX dtype.
@@ -36,7 +145,34 @@ class DType:
 
 
 def _unwrap_dtype(dtype: Any | None) -> Any | None:
-    return dtype.mx_dtype if isinstance(dtype, DType) else dtype
+    if isinstance(dtype, DType):
+        return dtype.mx_dtype
+    if dtype is _builtins.bool:
+        return mx.bool_
+    if dtype is _builtins.int:
+        return mx.int64
+    if dtype is _builtins.float:
+        return mx.float64
+    if isinstance(dtype, str):
+        return {
+            "bool": mx.bool_,
+            "bool_": mx.bool_,
+            "float": mx.float64,
+            "float16": mx.float16,
+            "float32": mx.float32,
+            "float64": mx.float64,
+            "double": mx.float64,
+            "int": mx.int64,
+            "int8": mx.int8,
+            "int16": mx.int16,
+            "int32": mx.int32,
+            "int64": mx.int64,
+            "uint8": mx.uint8,
+            "uint16": mx.uint16,
+            "uint32": mx.uint32,
+            "uint64": mx.uint64,
+        }.get(dtype, dtype)
+    return dtype
 
 
 # Public dtypes (NumPy-like: usable as dtype= and callable constructors).
@@ -63,8 +199,91 @@ newaxis = None
 
 ndarray = mx.array
 
+
+class flatiter:
+    """Placeholder for NumPy's ndarray.flat iterator type."""
+
+
+@dataclass(frozen=True)
+class _FInfo:
+    _info: Any
+    tiny: float
+
+    @property
+    def dtype(self) -> Any:
+        return self._info.dtype
+
+    @property
+    def eps(self) -> float:
+        return self._info.eps
+
+    @property
+    def max(self) -> float:
+        return self._info.max
+
+    @property
+    def min(self) -> float:
+        return self._info.min
+
+
+def finfo(dtype: Any) -> _FInfo:
+    mx_dtype = _unwrap_dtype(dtype)
+    tiny = {
+        mx.float16: 6.103515625e-05,
+        mx.float32: 1.1754943508222875e-38,
+        mx.float64: 2.2250738585072014e-308,
+    }.get(mx_dtype, 0.0)
+    return _FInfo(mx.finfo(mx_dtype), tiny)
+
+
 _py_min = _builtins.min
 _py_max = _builtins.max
+
+
+class _ObjectNDArray:
+    def __init__(self, shape: Any):
+        if isinstance(shape, int):
+            shape = (shape,)
+        self.shape = tuple(shape)
+        self.ndim = len(self.shape)
+        self.size = math.prod(self.shape)
+        self._data = [None] * self.size
+
+    def _offset(self, key: Any) -> int:
+        if not isinstance(key, tuple):
+            key = (key,)
+        offset = 0
+        stride = self.size
+        for idx, dim in zip(key, self.shape):
+            stride //= dim
+            offset += idx * stride
+        return offset
+
+    def __getitem__(self, key: Any) -> Any:
+        return self._data[self._offset(key)]
+
+    def __setitem__(self, key: Any, value: Any) -> None:
+        self._data[self._offset(key)] = value
+
+    @property
+    def flat(self):
+        return iter(self._data)
+
+    def item(self):
+        if self.size != 1:
+            raise ValueError("can only convert an array of size 1 to a Python scalar")
+        return self._data[0]
+
+    def squeeze(self):
+        shape = tuple(dim for dim in self.shape if dim != 1)
+        if not shape:
+            return self.item()
+        squeezed = _ObjectNDArray(shape)
+        squeezed._data = list(self._data)
+        return squeezed
+
+    def tolist(self):
+        return list(self._data)
 
 
 def _to_mx(x: Any, dtype: Any | None = None) -> mx.array:
@@ -143,35 +362,42 @@ def full(shape: Any, fill_value: Any, dtype: Any | None = None) -> mx.array:
 
 
 def empty(shape: Any, dtype: Any | None = None) -> mx.array:
+    if dtype is _builtins.object or dtype == "object":
+        return _ObjectNDArray(shape)
     # MLX does not expose uninitialized arrays; use zeros as a safe fallback.
     return mx.zeros(shape, dtype=_unwrap_dtype(dtype))
 
 
 def zeros_like(a: Any, dtype: Any | None = None) -> mx.array:
     arr = _to_mx(a)
-    return mx.zeros(arr.shape, dtype=dtype or arr.dtype)
+    return mx.zeros(arr.shape, dtype=_unwrap_dtype(dtype) or arr.dtype)
 
 
 def ones_like(a: Any, dtype: Any | None = None) -> mx.array:
     arr = _to_mx(a)
-    return mx.ones(arr.shape, dtype=dtype or arr.dtype)
+    return mx.ones(arr.shape, dtype=_unwrap_dtype(dtype) or arr.dtype)
 
 
 def full_like(a: Any, fill_value: Any, dtype: Any | None = None) -> mx.array:
     arr = _to_mx(a)
-    return mx.full(arr.shape, fill_value, dtype=dtype or arr.dtype)
+    return mx.full(arr.shape, fill_value, dtype=_unwrap_dtype(dtype) or arr.dtype)
 
 
 def empty_like(a: Any, dtype: Any | None = None) -> mx.array:
     arr = _to_mx(a)
-    return mx.zeros(arr.shape, dtype=dtype or arr.dtype)
+    return mx.zeros(arr.shape, dtype=_unwrap_dtype(dtype) or arr.dtype)
 
 
 def arange(*args: Any, **kwargs: Any) -> mx.array:
+    args = tuple(_to_scalar(arg) if isinstance(arg, mx.array) else arg for arg in args)
+    if "dtype" in kwargs:
+        kwargs["dtype"] = _unwrap_dtype(kwargs["dtype"])
     return mx.arange(*args, **kwargs)
 
 
 def linspace(*args: Any, **kwargs: Any) -> mx.array:
+    if "dtype" in kwargs:
+        kwargs["dtype"] = _unwrap_dtype(kwargs["dtype"])
     return mx.linspace(*args, **kwargs)
 
 
@@ -367,12 +593,20 @@ def var(a: Any, axis: int | None = None) -> Any:
     return _to_scalar(mx.var(_to_mx(a), axis=axis))
 
 
-def min(a: Any, axis: int | None = None) -> Any:
-    return _to_scalar(mx.min(_to_mx(a), axis=axis))
+def min(a: Any, axis: int | None = None, initial: Any | None = None) -> Any:
+    arr = _to_mx(a)
+    result = mx.min(arr, axis=axis)
+    if initial is not None:
+        result = mx.minimum(result, mx.array(initial, dtype=arr.dtype))
+    return _to_scalar(result)
 
 
-def max(a: Any, axis: int | None = None) -> Any:
-    return _to_scalar(mx.max(_to_mx(a), axis=axis))
+def max(a: Any, axis: int | None = None, initial: Any | None = None) -> Any:
+    arr = _to_mx(a)
+    result = mx.max(arr, axis=axis)
+    if initial is not None:
+        result = mx.maximum(result, mx.array(initial, dtype=arr.dtype))
+    return _to_scalar(result)
 
 
 def prod(a: Any, axis: int | None = None) -> Any:
@@ -658,18 +892,30 @@ def isscalar(obj: Any) -> bool:
 
 
 def iterable(obj: Any) -> bool:
+    if isinstance(obj, mx.array):
+        return obj.ndim > 0
     try:
         iter(obj)
         return True
-    except TypeError:
+    except (TypeError, IndexError):
         return False
 
 
-def vectorize(pyfunc):
+class _ObjectArray(list):
+    def tolist(self):
+        return list(self)
+
+
+def vectorize(pyfunc, otypes: Any | None = None, **_kwargs: Any):
     def wrapped(*args, **kwargs):
         vectors = [list(_flatten(_to_mx(a).tolist())) if isinstance(a, mx.array) else list(_flatten(a)) for a in args]
         result = [pyfunc(*vals, **kwargs) for vals in zip(*vectors)]
-        return mx.array(result)
+        if otypes == "O" or otypes == ["O"] or otypes == ("O",):
+            return _ObjectArray(result)
+        try:
+            return mx.array(result)
+        except (TypeError, ValueError):
+            return _ObjectArray(result)
     return wrapped
 
 
@@ -795,6 +1041,7 @@ def interp(x: Any, xp: Any, fp: Any):
 
 def searchsorted(a: Any, v: Any, side: str = "left"):
     arr = sorted(_flatten(_to_mx(a).tolist()))
+    scalar = isscalar(v)
     values = _to_mx(v).tolist()
     if not isinstance(values, list):
         values = [values]
@@ -805,6 +1052,8 @@ def searchsorted(a: Any, v: Any, side: str = "left"):
         else:
             idx = next((i for i, x in enumerate(arr) if x > val), len(arr))
         result.append(idx)
+    if scalar:
+        return result[0]
     return mx.array(result)
 
 
@@ -1028,6 +1277,10 @@ def argwhere(a: Any):
 
 
 def unravel_index(indices: Any, shape: Sequence[int]):
+    if isinstance(indices, (list, tuple, mx.array)) and not isscalar(indices):
+        values = indices.tolist() if isinstance(indices, mx.array) else list(indices)
+        coords = [unravel_index(idx, shape) for idx in values]
+        return tuple(mx.array(axis) for axis in zip(*coords))
     idx = int(_to_mx(indices).item())
     coords = []
     for dim in reversed(shape):
@@ -1037,6 +1290,24 @@ def unravel_index(indices: Any, shape: Sequence[int]):
 
 
 def ravel_multi_index(multi_index: Sequence[Any], dims: Sequence[int]):
+    def ravel_one(indices: Sequence[Any]) -> int:
+        idx = 0
+        for i, dim in zip(indices, dims):
+            idx = idx * dim + int(i)
+        return idx
+
+    if _builtins.any(isinstance(i, (list, tuple, mx.array)) and not isscalar(i)
+                     for i in multi_index):
+        columns = []
+        for i in multi_index:
+            if isinstance(i, mx.array):
+                columns.append(i.tolist())
+            elif isinstance(i, (list, tuple)):
+                columns.append(list(i))
+            else:
+                columns.append([i])
+        return [ravel_one(values) for values in zip(*columns)]
+
     idx = 0
     for i, dim in zip(multi_index, dims):
         idx = idx * dim + int(i)
@@ -1317,7 +1588,7 @@ class _Random:
 
         mean_arr = asarray(mean, dtype=float32)
         cov_arr = asarray(cov, dtype=float32)
-        return mx.random.multivariate_normal(mean_arr, cov_arr, shape=shape, dtype=float32)
+        return mx.random.multivariate_normal(mean_arr, cov_arr, shape=shape, dtype=float32.mx_dtype)
 
     def random(self, size: Any | None = None):
         if size is None:
@@ -1388,6 +1659,7 @@ class MaskedArray:
 
 class _MA:
     masked = masked
+    MaskedArray = MaskedArray
 
     def array(self, data: Any, mask: Any | None = None, dtype: Any | None = None, copy: bool | None = None):
         return MaskedArray(data=_to_mx(data, dtype=dtype), mask=_to_mx(mask) if mask is not None else None)
@@ -1422,7 +1694,7 @@ class _MA:
         if isinstance(data, MaskedArray) and data.mask is not None:
             return data.mask
         arr = _to_mx(data)
-        return mx.zeros(arr.shape, dtype=bool_)
+        return mx.zeros(arr.shape, dtype=bool_.mx_dtype)
 
     def filled(self, data: Any, fill_value: Any = 0):
         if isinstance(data, MaskedArray):
@@ -1450,8 +1722,8 @@ class _MA:
         return MaskedArray(data=arr, mask=mx.greater(arr, value))
 
     def masked_all(self, shape: Any, dtype: Any | None = None):
-        arr = mx.zeros(shape, dtype=dtype or float32)
-        mask = mx.ones(shape, dtype=bool_)
+        arr = mx.zeros(shape, dtype=_unwrap_dtype(dtype) or float32.mx_dtype)
+        mask = mx.ones(shape, dtype=bool_.mx_dtype)
         return MaskedArray(data=arr, mask=mask)
 
     def count(self, data: Any):
