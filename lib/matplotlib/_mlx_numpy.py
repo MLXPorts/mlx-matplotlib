@@ -29,6 +29,69 @@ if not hasattr(mx.array, "searchsorted"):
         self, v, side=side)
 if not hasattr(mx.array, "nonzero"):
     mx.array.nonzero = lambda self: nonzero(self)
+if not hasattr(mx.array, "__index__"):
+    mx.array.__index__ = lambda self: int(self.item())
+if not hasattr(mx.array, "__int__"):
+    mx.array.__int__ = lambda self: int(self.item())
+if not hasattr(mx.array, "__float__"):
+    mx.array.__float__ = lambda self: float(self.item())
+if not hasattr(mx.array, "__round__"):
+    mx.array.__round__ = lambda self, ndigits=None: round(
+        float(self.item()), ndigits) if ndigits is not None else round(
+            float(self.item()))
+if not hasattr(mx.array, "__divmod__"):
+    mx.array.__divmod__ = lambda self, other: divmod(
+        _to_scalar(self), _to_scalar(other))
+if not hasattr(mx.array, "__rdivmod__"):
+    mx.array.__rdivmod__ = lambda self, other: divmod(
+        _to_scalar(other), _to_scalar(self))
+if not hasattr(mx.array, "__rand__"):
+    mx.array.__rand__ = lambda self, other: mx.logical_and(_to_mx(other), self)
+if not hasattr(mx.array, "__ror__"):
+    mx.array.__ror__ = lambda self, other: mx.logical_or(_to_mx(other), self)
+if not hasattr(mx.array, "__rxor__"):
+    mx.array.__rxor__ = lambda self, other: mx.not_equal(_to_mx(other), self)
+if not hasattr(mx.array, "data"):
+    mx.array.data = property(lambda self: self)
+if not hasattr(mx.array, "take"):
+    mx.array.take = lambda self, indices, axis=None, mode=None: take(
+        self, indices, axis=axis, mode=mode)
+if not hasattr(mx.array, "_mlx_numpy_orig_mul"):
+    mx.array._mlx_numpy_orig_mul = mx.array.__mul__
+
+    def _array_mul(self, other):
+        if isinstance(other, (list, tuple)):
+            other = mx.array(other, dtype=self.dtype)
+        return mx.array._mlx_numpy_orig_mul(self, other)
+
+    mx.array.__mul__ = _array_mul
+if not hasattr(mx.array, "_mlx_numpy_orig_rmul"):
+    mx.array._mlx_numpy_orig_rmul = mx.array.__rmul__
+
+    def _array_rmul(self, other):
+        if isinstance(other, (list, tuple)):
+            other = mx.array(other, dtype=self.dtype)
+        return mx.array._mlx_numpy_orig_rmul(self, other)
+
+    mx.array.__rmul__ = _array_rmul
+if not hasattr(mx.array, "_mlx_numpy_orig_truediv"):
+    mx.array._mlx_numpy_orig_truediv = mx.array.__truediv__
+
+    def _array_truediv(self, other):
+        if isinstance(other, (list, tuple)):
+            other = mx.array(other, dtype=self.dtype)
+        return mx.array._mlx_numpy_orig_truediv(self, other)
+
+    mx.array.__truediv__ = _array_truediv
+if not hasattr(mx.array, "_mlx_numpy_orig_rtruediv"):
+    mx.array._mlx_numpy_orig_rtruediv = mx.array.__rtruediv__
+
+    def _array_rtruediv(self, other):
+        if isinstance(other, (list, tuple)):
+            other = mx.array(other, dtype=self.dtype)
+        return mx.array._mlx_numpy_orig_rtruediv(self, other)
+
+    mx.array.__rtruediv__ = _array_rtruediv
 if not hasattr(mx.array, "_mlx_numpy_orig_astype"):
     mx.array._mlx_numpy_orig_astype = mx.array.astype
 
@@ -728,6 +791,311 @@ def full_like(a: Any, fill_value: Any, dtype: Any | None = None) -> mx.array:
     arr = _to_mx(a)
     if isinstance(arr, _PythonArray) or _contains_object_data(fill_value):
         return full(arr.shape, fill_value, dtype=dtype or _object_dtype)
+    return mx.full(arr.shape, fill_value, dtype=_unwrap_dtype(dtype) or arr.dtype)
+
+
+def empty_like(a: Any, dtype: Any | None = None) -> mx.array:
+    arr = _to_mx(a)
+    return mx.zeros(arr.shape, dtype=_unwrap_dtype(dtype) or arr.dtype)
+
+
+def arange(*args: Any, **kwargs: Any) -> mx.array:
+    args = tuple(_to_scalar(arg) if isinstance(arg, mx.array) else arg for arg in args)
+    if "dtype" in kwargs:
+        kwargs["dtype"] = _unwrap_dtype(kwargs["dtype"])
+    return mx.arange(*args, **kwargs)
+
+
+def linspace(*args: Any, **kwargs: Any) -> mx.array:
+    if "dtype" in kwargs:
+        kwargs["dtype"] = _unwrap_dtype(kwargs["dtype"])
+    return mx.linspace(*args, **kwargs)
+
+
+def logspace(start: float, stop: float, num: int = 50, base: float = 10.0) -> mx.array:
+    return mx.power(base, mx.linspace(start, stop, num))
+
+
+def geomspace(start: float, stop: float, num: int = 50) -> mx.array:
+    return mx.exp(mx.linspace(math.log(start), math.log(stop), num))
+
+
+def reshape(a: Any, newshape: Any) -> mx.array:
+    arr = _to_mx(a)
+    if isinstance(arr, _PythonArray):
+        return arr.reshape(_shape_tuple(newshape))
+    return mx.reshape(arr, newshape)
+
+
+def ravel(a: Any) -> mx.array:
+    arr = _to_mx(a)
+    if isinstance(arr, _PythonArray):
+        return arr.ravel()
+    return mx.reshape(arr, (arr.size,))
+
+
+def squeeze(a: Any, axis: Any | None = None) -> mx.array:
+    arr = _to_mx(a)
+    if isinstance(arr, _PythonArray):
+        return arr.squeeze()
+    return mx.squeeze(arr, axis=axis)
+
+
+def expand_dims(a: Any, axis: int) -> mx.array:
+    return mx.expand_dims(_to_mx(a), axis)
+
+
+def transpose(a: Any, axes: Any | None = None) -> mx.array:
+    return mx.transpose(_to_mx(a), axes=axes)
+
+
+def swapaxes(a: Any, axis1: int, axis2: int) -> mx.array:
+    return mx.swapaxes(_to_mx(a), axis1, axis2)
+
+
+def moveaxis(a: Any, source: Any, destination: Any) -> mx.array:
+    return mx.moveaxis(_to_mx(a), source, destination)
+
+
+def stack(arrays: Sequence[Any], axis: int = 0) -> mx.array:
+    return mx.stack([_to_mx(a) for a in arrays], axis=axis)
+
+
+def concatenate(arrays: Sequence[Any], axis: int = 0) -> mx.array:
+    converted = [_to_mx(a) for a in arrays]
+    try:
+        return mx.concatenate(converted, axis=axis)
+    except (TypeError, ValueError):
+        lists = [a.tolist() if hasattr(a, "tolist") else a for a in converted]
+        if axis in (0, None):
+            data = []
+            for item in lists:
+                if isinstance(item, list):
+                    data.extend(item)
+                else:
+                    data.append(item)
+            return _to_mx(data)
+        if axis == 1:
+            rows = []
+            for row_parts in zip(*lists):
+                row = []
+                for part in row_parts:
+                    row.extend(part if isinstance(part, list) else [part])
+                rows.append(row)
+            return _to_mx(rows)
+        raise
+
+
+def column_stack(tup: Sequence[Any]) -> mx.array:
+    arrays: List[mx.array] = []
+    for a in tup:
+        arr = _to_mx(a)
+        if arr.ndim == 1:
+            arr = mx.reshape(arr, (arr.shape[0], 1))
+        elif arr.ndim != 2:
+            raise ValueError("column_stack expects 1D or 2D arrays")
+        arrays.append(arr)
+    return mx.concatenate(arrays, axis=1)
+
+
+def row_stack(tup: Sequence[Any]) -> mx.array:
+    arrays = [atleast_2d(a) for a in tup]
+    return concatenate(arrays, axis=0)
+
+
+def dstack(tup: Sequence[Any]) -> mx.array:
+    arrays = [atleast_3d(a) for a in tup]
+    return concatenate(arrays, axis=2)
+
+
+def hstack(tup: Sequence[Any]) -> mx.array:
+    arrays = [atleast_1d(a) for a in tup]
+    return concatenate(arrays, axis=1 if arrays[0].ndim > 1 else 0)
+
+
+def vstack(tup: Sequence[Any]) -> mx.array:
+    arrays = [atleast_2d(a) for a in tup]
+    return concatenate(arrays, axis=0)
+
+
+def tile(a: Any, reps: Any) -> mx.array:
+    return mx.tile(_to_mx(a), reps)
+
+
+def repeat(a: Any, repeats: Any, axis: int | None = None) -> mx.array:
+    return mx.repeat(_to_mx(a), repeats, axis=axis)
+
+
+def append(arr: Any, values: Any, axis: int | None = None) -> mx.array:
+    arr_mx = _to_mx(arr)
+    val_mx = _to_mx(values)
+    if axis is None:
+        return concatenate([ravel(arr_mx), ravel(val_mx)], axis=0)
+    return concatenate([arr_mx, val_mx], axis=axis)
+
+
+def insert(arr: Any, obj: int, values: Any, axis: int | None = None) -> mx.array:
+    arr_mx = _to_mx(arr)
+    val_mx = _to_mx(values)
+    if axis is None:
+        arr_mx = ravel(arr_mx)
+        val_mx = ravel(val_mx)
+        axis = 0
+    before = take(arr_mx, arange(0, obj), axis=axis)
+    after = take(arr_mx, arange(obj, arr_mx.shape[axis]), axis=axis)
+    return concatenate([before, val_mx, after], axis=axis)
+
+
+def delete(arr: Any, obj: int, axis: int | None = None) -> mx.array:
+    arr_mx = _to_mx(arr)
+    if axis is None:
+        arr_mx = ravel(arr_mx)
+        axis = 0
+    before = take(arr_mx, arange(0, obj), axis=axis)
+    after = take(arr_mx, arange(obj + 1, arr_mx.shape[axis]), axis=axis)
+    return concatenate([before, after], axis=axis)
+
+
+def take(a: Any, indices: Any, axis: int | None = None,
+         mode: str | None = None) -> mx.array:
+    arr = _to_mx(a)
+    idx = _to_mx(indices)
+    if mode == "clip":
+        dim = arr.shape[axis or 0]
+        idx = mx.clip(idx, 0, _builtins.max(dim - 1, 0)).astype(mx.int64)
+    return mx.take(arr, idx, axis=axis)
+
+
+def put(a: Any, indices: Any, values: Any) -> mx.array:
+    arr = _to_mx(a)
+    idx = _to_mx(indices)
+    vals = _to_mx(values)
+    arr_list = arr.tolist()
+    flat = list(_flatten(arr_list))
+    idx_list = _to_mx(idx).tolist()
+    if not isinstance(idx_list, list):
+        idx_list = [idx_list]
+    val_list = _to_mx(vals).tolist()
+    if not isinstance(val_list, list):
+        val_list = [val_list]
+    for i, v in zip(idx_list, itertools.cycle(val_list)):
+        flat[i] = v
+    return mx.array(flat).reshape(arr.shape)
+
+
+def where(condition: Any, x: Any, y: Any) -> mx.array:
+    return mx.where(_to_mx(condition), _to_mx(x), _to_mx(y))
+
+
+def divide(a: Any, b: Any, dtype: Any | None = None, **kwargs: Any) -> mx.array:
+    result = mx.divide(_to_mx(a), _to_mx(b))
+    return result.astype(dtype) if dtype is not None else result
+
+
+true_divide = divide
+
+
+def mod(a: Any, b: Any) -> mx.array:
+    return _to_mx(a) % _to_mx(b)
+
+
+remainder = mod
+
+
+def copysign(x1: Any, x2: Any) -> mx.array:
+    return _to_scalar(mx.sign(_to_mx(x2)) * mx.abs(_to_mx(x1)))
+
+
+def clip(a: Any, a_min: Any, a_max: Any) -> mx.array:
+    return mx.clip(_to_mx(a), a_min, a_max)
+
+
+def diff(a: Any, n: int = 1, axis: int = -1) -> mx.array:
+    arr = _to_mx(a)
+    for _ in range(n):
+        slice1 = [slice(None)] * arr.ndim
+        slice2 = [slice(None)] * arr.ndim
+        slice1[axis] = slice(1, None)
+        slice2[axis] = slice(None, -1)
+        arr = arr[tuple(slice1)] - arr[tuple(slice2)]
+    return arr
+
+
+def unique(a: Any) -> mx.array:
+    values = sorted(set(_flatten(_to_mx(a).tolist())))
+    if values and _contains_object_data(values):
+        return _PythonArray(values, dtype=_object_dtype)
+    return mx.array(values)
+
+
+def intersect1d(ar1: Any, ar2: Any, assume_unique: bool = False,
+                return_indices: bool = False):
+    left = list(_flatten(_to_mx(ar1).tolist()))
+    right = list(_flatten(_to_mx(ar2).tolist()))
+    values = sorted(set(left).intersection(right))
+    out = (_PythonArray(values, dtype=_object_dtype)
+           if _contains_object_data(values) else mx.array(values))
+    if not return_indices:
+        return out
+    left_idx = mx.array([left.index(v) for v in values])
+    right_idx = mx.array([right.index(v) for v in values])
+    return out, left_idx, right_idx
+
+
+def isin(element: Any, test_elements: Any, assume_unique: bool = False,
+         invert: bool = False) -> mx.array:
+    tests = set(_flatten(_to_mx(test_elements).tolist()))
+
+    def contains(value: Any) -> Any:
+        if isinstance(value, list):
+            return [contains(v) for v in value]
+        present = value in tests
+        return not present if invert else present
+
+    return mx.array(contains(_to_mx(element).tolist()), dtype=mx.bool_)
+
+
+def in1d(ar1: Any, ar2: Any, assume_unique: bool = False,
+         invert: bool = False) -> mx.array:
+    return ravel(isin(ar1, ar2, assume_unique=assume_unique, invert=invert))
+
+
+def sort(a: Any, axis: int | None = -1) -> mx.array:
+    return mx.sort(_to_mx(a), axis=axis)
+
+
+def argsort(a: Any, axis: int | None = -1) -> mx.array:
+    return mx.argsort(_to_mx(a), axis=axis)
+
+
+def argmax(a: Any, axis: int | None = None) -> Any:
+    return _to_scalar(mx.argmax(_to_mx(a), axis=axis))
+
+
+def argmin(a: Any, axis: int | None = None) -> Any:
+    return _to_scalar(mx.argmin(_to_mx(a), axis=axis))
+
+
+def sum(a: Any, axis: int | None = None) -> Any:
+    return _to_scalar(mx.sum(_to_mx(a), axis=axis))
+
+
+def mean(a: Any, axis: int | None = None) -> Any:
+    return _to_scalar(mx.mean(_to_mx(a), axis=axis))
+
+
+def std(a: Any, axis: int | None = None) -> Any:
+    return _to_scalar(mx.std(_to_mx(a), axis=axis))
+
+
+def var(a: Any, axis: int | None = None) -> Any:
+    return _to_scalar(mx.var(_to_mx(a), axis=axis))
+
+
+def min(a: Any, axis: int | None = None, initial: Any | None = None) -> Any:
+    arr = _to_mx(a)
+    if arr.size == 0 and initial is not None:
+        return initial
     result = mx.min(arr, axis=axis)
     if initial is not None:
         result = mx.minimum(result, mx.array(initial, dtype=arr.dtype))
@@ -738,6 +1106,351 @@ def max(a: Any, axis: int | None = None, initial: Any | None = None) -> Any:
     arr = _to_mx(a)
     if arr.size == 0 and initial is not None:
         return initial
+    result = mx.max(arr, axis=axis)
+    if initial is not None:
+        result = mx.maximum(result, mx.array(initial, dtype=arr.dtype))
+    return _to_scalar(result)
+
+
+def prod(a: Any, axis: int | None = None) -> Any:
+    return mx.prod(_to_mx(a), axis=axis)
+
+
+def roots(p: Any) -> mx.array:
+    coeffs = [float(v) for v in _flatten(_to_mx(p).tolist())]
+    while coeffs and abs(coeffs[0]) == 0:
+        coeffs.pop(0)
+    degree = len(coeffs) - 1
+    if degree <= 0:
+        return mx.array([])
+    if degree == 1:
+        a, b = coeffs
+        return mx.array([-b / a])
+    if degree == 2:
+        a, b, c = coeffs
+        disc = b * b - 4 * a * c
+        if disc < 0:
+            return mx.array([])
+        root = math.sqrt(disc)
+        return mx.array([(-b + root) / (2 * a), (-b - root) / (2 * a)])
+    raise NotImplementedError("roots currently supports linear/quadratic polynomials")
+
+
+def cumsum(a: Any, axis: int | None = None) -> mx.array:
+    return mx.cumsum(_to_mx(a), axis=axis)
+
+
+def cumprod(a: Any, axis: int | None = None) -> mx.array:
+    return mx.cumprod(_to_mx(a), axis=axis)
+
+
+def ptp(a: Any, axis: int | None = None) -> Any:
+    arr = _to_mx(a)
+    return _to_scalar(mx.max(arr, axis=axis) - mx.min(arr, axis=axis))
+
+
+def all(a: Any, axis: int | None = None) -> Any:
+    return _to_scalar(mx.all(_to_mx(a), axis=axis))
+
+
+def any(a: Any, axis: int | None = None) -> Any:
+    return _to_scalar(mx.any(_to_mx(a), axis=axis))
+
+
+def isfinite(a: Any) -> mx.array:
+    return mx.isfinite(_to_mx(a))
+
+
+def isinf(a: Any) -> mx.array:
+    return mx.isinf(_to_mx(a))
+
+
+def isnan(a: Any) -> mx.array:
+    return mx.isnan(_to_mx(a))
+
+
+def isclose(a: Any, b: Any, rtol: float = 1e-5, atol: float = 1e-8) -> mx.array:
+    return mx.isclose(_to_mx(a), _to_mx(b), rtol=rtol, atol=atol)
+
+
+def allclose(a: Any, b: Any, rtol: float = 1e-5, atol: float = 1e-8) -> bool:
+    return bool(mx.all(isclose(a, b, rtol=rtol, atol=atol)).item())
+
+
+def array_equal(a: Any, b: Any) -> bool:
+    if isinstance(a, _PythonArray) or isinstance(b, _PythonArray):
+        a_list = a.tolist() if isinstance(a, _PythonArray) else _to_mx(a).tolist()
+        b_list = b.tolist() if isinstance(b, _PythonArray) else _to_mx(b).tolist()
+        return a_list == b_list
+    return bool(mx.all(mx.equal(_to_mx(a), _to_mx(b))).item())
+
+
+def equal(a: Any, b: Any) -> mx.array:
+    return mx.equal(_to_mx(a), _to_mx(b))
+
+
+def not_equal(a: Any, b: Any) -> mx.array:
+    return mx.not_equal(_to_mx(a), _to_mx(b))
+
+
+def less(a: Any, b: Any) -> mx.array:
+    return mx.less(_to_mx(a), _to_mx(b))
+
+
+def less_equal(a: Any, b: Any) -> mx.array:
+    return mx.less_equal(_to_mx(a), _to_mx(b))
+
+
+def greater(a: Any, b: Any) -> mx.array:
+    return mx.greater(_to_mx(a), _to_mx(b))
+
+
+def greater_equal(a: Any, b: Any) -> mx.array:
+    return mx.greater_equal(_to_mx(a), _to_mx(b))
+
+
+def logical_and(a: Any, b: Any) -> mx.array:
+    return mx.logical_and(_to_mx(a), _to_mx(b))
+
+
+def logical_or(a: Any, b: Any) -> mx.array:
+    return mx.logical_or(_to_mx(a), _to_mx(b))
+
+
+def logical_not(a: Any) -> mx.array:
+    return mx.logical_not(_to_mx(a))
+
+
+def logical_xor(a: Any, b: Any) -> mx.array:
+    return mx.not_equal(_to_mx(a), _to_mx(b))
+
+
+def _logical_reduce(func, arrays: Any, axis: int | None = 0):
+    seq = list(arrays)
+    if not seq:
+        return True
+    result = _to_mx(seq[0])
+    for item in seq[1:]:
+        result = func(result, item)
+    return result
+
+
+logical_and.reduce = lambda arrays, axis=0, dtype=None, out=None: _logical_reduce(
+    logical_and, arrays, axis=axis)
+logical_or.reduce = lambda arrays, axis=0, dtype=None, out=None: _logical_reduce(
+    logical_or, arrays, axis=axis)
+
+
+def sign(a: Any) -> mx.array:
+    return mx.sign(_to_mx(a))
+
+
+def abs(a: Any) -> mx.array:
+    return mx.abs(_to_mx(a))
+
+
+def sqrt(a: Any) -> mx.array:
+    return mx.sqrt(_to_mx(a))
+
+
+def exp(a: Any) -> mx.array:
+    return mx.exp(_to_mx(a))
+
+
+def log(a: Any) -> mx.array:
+    return mx.log(_to_mx(a))
+
+
+def log2(a: Any) -> mx.array:
+    return mx.log2(_to_mx(a))
+
+
+def log10(a: Any) -> mx.array:
+    return mx.log10(_to_mx(a))
+
+
+def power(a: Any, b: Any) -> mx.array:
+    return mx.power(_to_mx(a), _to_mx(b))
+
+
+def square(a: Any) -> mx.array:
+    return mx.square(_to_mx(a))
+
+
+def floor(a: Any) -> mx.array:
+    return mx.floor(_to_mx(a))
+
+
+def ceil(a: Any) -> mx.array:
+    return mx.ceil(_to_mx(a))
+
+
+def round(a: Any, decimals: int = 0) -> mx.array:
+    return mx.round(_to_mx(a), decimals=decimals)
+
+
+def tan(a: Any) -> mx.array:
+    return mx.tan(_to_mx(a))
+
+
+def sin(a: Any) -> mx.array:
+    return mx.sin(_to_mx(a))
+
+
+def cos(a: Any) -> mx.array:
+    return mx.cos(_to_mx(a))
+
+
+def arcsin(a: Any) -> mx.array:
+    return mx.arcsin(_to_mx(a))
+
+
+def arccos(a: Any) -> mx.array:
+    return mx.arccos(_to_mx(a))
+
+
+def arctan(a: Any) -> mx.array:
+    return mx.arctan(_to_mx(a))
+
+
+def arctan2(y: Any, x: Any) -> mx.array:
+    return mx.arctan2(_to_mx(y), _to_mx(x))
+
+
+def degrees(a: Any) -> mx.array:
+    return mx.degrees(_to_mx(a))
+
+
+def radians(a: Any) -> mx.array:
+    return mx.radians(_to_mx(a))
+
+
+def deg2rad(a: Any) -> mx.array:
+    return radians(a)
+
+
+def rad2deg(a: Any) -> mx.array:
+    return degrees(a)
+
+
+def hypot(x: Any, y: Any) -> mx.array:
+    x_mx = _to_mx(x)
+    y_mx = _to_mx(y)
+    return mx.sqrt(x_mx * x_mx + y_mx * y_mx)
+
+
+def matmul(a: Any, b: Any) -> mx.array:
+    return mx.matmul(_to_mx(a), _to_mx(b))
+
+
+def dot(a: Any, b: Any) -> mx.array:
+    return mx.matmul(_to_mx(a), _to_mx(b))
+
+
+def outer(a: Any, b: Any) -> mx.array:
+    a = _to_mx(a).reshape((-1, 1))
+    b = _to_mx(b).reshape((1, -1))
+    return mx.matmul(a, b)
+
+
+class _Power:
+    def __call__(self, a: Any, b: Any, **kwargs: Any) -> mx.array:
+        return mx.power(_to_mx(a), _to_mx(b))
+
+    def outer(self, a: Any, b: Any) -> mx.array:
+        a = _to_mx(a)
+        b = _to_mx(b)
+        if a.ndim == 0 or b.ndim == 0:
+            return mx.power(a, b)
+        return mx.power(a.reshape((-1, 1)), b.reshape((1, -1)))
+
+
+power = _Power()
+
+
+def tensordot(a: Any, b: Any, axes: int | Tuple[Any, Any] = 2) -> mx.array:
+    return mx.tensordot(_to_mx(a), _to_mx(b), axes=axes)
+
+
+def cross(a: Any, b: Any) -> mx.array:
+    return mx.linalg.cross(_to_mx(a), _to_mx(b))
+
+
+def diag(v: Any, k: int = 0) -> mx.array:
+    arr = _to_mx(v)
+    if arr.ndim == 1:
+        n = arr.shape[0] + abs(k)
+        out = mx.zeros((n, n), dtype=arr.dtype)
+        idx = mx.arange(arr.shape[0])
+        if k >= 0:
+            out[idx, idx + k] = arr
+        else:
+            out[idx - k, idx] = arr
+        return out
+    if arr.ndim == 2:
+        idx = mx.arange(_py_min(arr.shape))
+        if k >= 0:
+            return arr[idx, idx + k]
+        return arr[idx - k, idx]
+    raise ValueError("diag expects 1D or 2D array")
+
+
+def eye(n: int, m: int | None = None, k: int = 0, dtype: Any | None = None) -> mx.array:
+    if m is None:
+        m = n
+    out = mx.zeros((n, m), dtype=_unwrap_dtype(dtype) or float32.mx_dtype)
+    idx = mx.arange(_py_min(n, m))
+    if k >= 0:
+        out[idx, idx + k] = 1
+    else:
+        out[idx - k, idx] = 1
+    return out
+
+
+def identity(n: int, dtype: Any | None = None) -> mx.array:
+    return eye(n, n, dtype=dtype)
+
+
+def meshgrid(*arrays: Any, **kwargs: Any) -> List[mx.array]:
+    arrays = [_to_mx(a) for a in arrays]
+    return mx.meshgrid(*arrays, **kwargs)
+
+
+def broadcast_to(a: Any, shape: Any) -> mx.array:
+    return mx.broadcast_to(_to_mx(a), shape)
+
+
+def broadcast_arrays(*args: Any, **kwargs: Any) -> Tuple[mx.array, ...]:
+    return mx.broadcast_arrays(*[_to_mx(a) for a in args])
+
+
+def shape(a: Any) -> Tuple[int, ...]:
+    arr = _to_mx(a)
+    return tuple(arr.shape)
+
+
+def size(a: Any) -> int:
+    return int(_to_mx(a).size)
+
+
+def ndim(a: Any) -> int:
+    return int(_to_mx(a).ndim)
+
+
+def copy(a: Any) -> mx.array:
+    return _to_mx(a)
+
+
+def copyto(dst: Any, src: Any) -> mx.array:
+    return _to_mx(src)
+
+
+def isscalar(obj: Any) -> bool:
+    return not isinstance(obj, (list, tuple, dict, mx.array, _PythonArray))
+
+
+def iterable(obj: Any) -> bool:
+    if isinstance(obj, (mx.array, _PythonArray)):
         return obj.ndim > 0
     try:
         iter(obj)
