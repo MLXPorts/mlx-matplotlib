@@ -22,6 +22,7 @@ Still TODO:
 """
 
 from contextlib import nullcontext
+from array import array as _array
 from math import radians, cos, sin
 from matplotlib import _mlx_numpy as np
 from PIL import features
@@ -34,8 +35,27 @@ from matplotlib.font_manager import fontManager as _fontManager, get_font
 from matplotlib.ft2font import LoadFlags
 from matplotlib.mathtext import MathTextParser
 from matplotlib.path import Path
-from matplotlib.transforms import Bbox, BboxBase
+from matplotlib.transforms import Bbox, BboxBase, _as_float_memoryview
 from matplotlib.backends._backend_agg import RendererAgg as _RendererAgg
+
+
+class _BufferPath:
+    def __init__(self, path):
+        self.vertices = _as_float_memoryview(path.vertices)
+        self.codes = (
+            None if path.codes is None
+            else memoryview(_array("B", [int(code)
+                                         for code in path.codes.tolist()])))
+        self.should_simplify = path.should_simplify
+        self.simplify_threshold = path.simplify_threshold
+
+
+def _transform_to_memoryview(transform):
+    if hasattr(transform, "get_matrix"):
+        transform = transform.get_matrix()
+    elif hasattr(transform, "get_affine"):
+        transform = transform.get_affine().get_matrix()
+    return _as_float_memoryview(transform)
 
 
 def get_hinting_flag():
@@ -85,13 +105,22 @@ class RendererAgg(RendererBase):
     def _update_methods(self):
         self.draw_gouraud_triangles = self._renderer.draw_gouraud_triangles
         self.draw_image = self._renderer.draw_image
-        self.draw_markers = self._renderer.draw_markers
         self.draw_path_collection = self._renderer.draw_path_collection
         self.draw_quad_mesh = self._renderer.draw_quad_mesh
         self.copy_from_bbox = self._renderer.copy_from_bbox
 
+    def draw_markers(self, gc, marker_path, marker_trans, path, transform,
+                     rgbFace=None):
+        marker_trans = _transform_to_memoryview(marker_trans)
+        transform = _transform_to_memoryview(transform)
+        self._renderer.draw_markers(
+            gc, _BufferPath(marker_path), marker_trans,
+            _BufferPath(path), transform, rgbFace)
+
     def draw_path(self, gc, path, transform, rgbFace=None):
         # docstring inherited
+        transform = _transform_to_memoryview(transform)
+        path = _BufferPath(path)
         nmax = mpl.rcParams['agg.path.chunksize']  # here at least for testing
         npts = path.vertices.shape[0]
 

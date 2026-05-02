@@ -72,6 +72,12 @@ class PathIterator
     {
         m_vertices = other.m_vertices;
         m_codes = other.m_codes;
+        if (m_vertices) {
+            m_vertices_view = mpl::BufferView<double, 2>(m_vertices);
+        }
+        if (m_codes) {
+            m_codes_view = mpl::BufferView<uint8_t, 1>(m_codes);
+        }
 
         m_iterator = 0;
         m_total_vertices = other.m_total_vertices;
