@@ -48,35 +48,10 @@ jobs:
       matrix:
         include:
           - name-suffix: "(Minimum Versions)"
-            os: ubuntu-22.04
+            os: macos-14  # MLX wheels are available for macOS arm64.
             python-version: '3.11'
             extra-requirements: '-c requirements/testing/minver.txt'
             delete-font-cache: true
-            # https://github.com/matplotlib/matplotlib/issues/29844
-            pygobject-ver: '<3.52.0'
-          - os: ubuntu-22.04
-            python-version: '3.11'
-            CFLAGS: "-fno-lto"  # Ensure that disabling LTO works.
-            extra-requirements: '-r requirements/testing/extra.txt'
-            # https://github.com/matplotlib/matplotlib/issues/29844
-            pygobject-ver: '<3.52.0'
-          - name-suffix: "(Extra TeX packages)"
-            os: ubuntu-22.04
-            python-version: '3.13'
-            extra-packages: 'texlive-fonts-extra texlive-lang-cyrillic'
-            # https://github.com/matplotlib/matplotlib/issues/29844
-            pygobject-ver: '<3.52.0'
-          - name-suffix: "Free-threaded"
-            os: ubuntu-22.04
-            python-version: '3.13t'
-            # https://github.com/matplotlib/matplotlib/issues/29844
-            pygobject-ver: '<3.52.0'
-          - os: ubuntu-24.04
-            python-version: '3.12'
-          - os: ubuntu-24.04-arm
-            python-version: '3.12'
-          - os: macos-14  # This runner is on M1 (arm64) chips.
-            python-version: '3.11'
             # https://github.com/matplotlib/matplotlib/issues/29732
             pygobject-ver: '<3.52.0'
           - os: macos-14  # This runner is on M1 (arm64) chips.
@@ -227,9 +202,11 @@ jobs:
 
           # Install dependencies from PyPI.
           # Preinstall build requirements to enable no-build-isolation builds.
+          # MLX must be installed here because the editable install below uses
+          # --no-deps.
           python -m pip install --upgrade $PRE \
             'contourpy>=1.0.1' cycler fonttools kiwisolver importlib_resources \
-            packaging pillow 'pyparsing!=3.1.0' python-dateutil setuptools-scm \
+            mlx packaging pillow 'pyparsing!=3.1.0' python-dateutil setuptools-scm \
             'meson-python>=0.13.1' 'pybind11>=2.13.2' \
             -r requirements/testing/all.txt \
             ${{ matrix.extra-requirements }}
@@ -238,7 +215,6 @@ jobs:
           # Sphinx is needed to run sphinxext tests
           python -m pip install --upgrade sphinx!=6.1.2
 
-          if [[ "${{ matrix.python-version }}" != '3.13t' ]]; then
           # GUI toolkits are pip-installable only for some versions of Python
           # so don't fail if we can't install them.  Make it easier to check
           # whether the install was successful by trying to import the toolkit
@@ -287,17 +263,6 @@ jobs:
             echo 'wxPython is available' ||
             echo 'wxPython is not available'
 
-          fi  # Skip backends on Python 3.13t.
-
-      - name: Install the nightly dependencies
-        # Only install the nightly dependencies during the scheduled event
-        if: github.event_name == 'schedule' && matrix.name-suffix != '(Minimum Versions)'
-        run: |
-          python -m pip install pytz tzdata  # Must be installed for Pandas.
-          python -m pip install \
-            --index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple \
-            --upgrade --only-binary=:all: numpy pandas
-
       - name: Install Matplotlib
         run: |
           ccache -s
@@ -327,9 +292,6 @@ jobs:
 
       - name: Run pytest
         run: |
-          if [[ "${{ matrix.python-version }}" == '3.13t' ]]; then
-            export PYTHON_GIL=0
-          fi
           pytest -rfEsXR -n auto \
             --maxfail=50 --timeout=300 --durations=25 \
             --cov-report=xml --cov=lib --log-level=DEBUG --color=yes
@@ -420,7 +382,7 @@ jobs:
         with:
           title: "[TST] Upcoming dependency test failures"
           body: |
-            The weekly build with nightly wheels from numpy and pandas
+            The weekly build with pre-release dependencies
             has failed. Check the logs for any updates that need to be
             made in matplotlib.
             https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}

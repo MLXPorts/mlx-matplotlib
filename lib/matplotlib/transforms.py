@@ -40,15 +40,52 @@ import itertools
 import textwrap
 import weakref
 import math
+from array import array as _array
 from matplotlib import _mlx_numpy as np
 from matplotlib import _mlx_numpy as np
 inv = np.linalg.inv
 
 from matplotlib import _api
-from matplotlib._path import affine_transform, count_bboxes_overlapping_bbox
+from matplotlib._path import (
+    affine_transform as _path_affine_transform,
+    count_bboxes_overlapping_bbox,
+)
 from .path import Path
 
 DEBUG = False
+
+
+def _plain_float_data(values):
+    if isinstance(values, np.ndarray):
+        values = values.tolist()
+    if isinstance(values, (list, tuple)):
+        return [_plain_float_data(value) for value in values]
+    if hasattr(values, "item"):
+        values = values.item()
+    return float(values)
+
+
+def _as_float_memoryview(values):
+    values = _plain_float_data(values)
+    if (isinstance(values, list) and values
+            and isinstance(values[0], list)):
+        shape = (len(values), len(values[0]))
+        flat = [item for row in values for item in row]
+    else:
+        shape = (len(values),)
+        flat = values
+    buf = _array("d", flat)
+    return memoryview(buf).cast("B").cast("d", shape=shape)
+
+
+def affine_transform(values, mtx):
+    result = _path_affine_transform(
+        _as_float_memoryview(values), _as_float_memoryview(mtx))
+    return np.array(result.tolist(), dtype=float)
+
+
+def _maybe_scalar(value):
+    return value.item() if hasattr(value, "item") else value
 
 
 def _make_str_method(*args, **kwargs):
@@ -242,7 +279,7 @@ class BboxBase(TransformNode):
         This is not guaranteed to be less than :attr:`x1` (for that, use
         :attr:`~BboxBase.xmin`).
         """
-        return self.get_points()[0, 0]
+        return _maybe_scalar(self.get_points()[0, 0])
 
     @property
     def y0(self):
@@ -252,7 +289,7 @@ class BboxBase(TransformNode):
         This is not guaranteed to be less than :attr:`y1` (for that, use
         :attr:`~BboxBase.ymin`).
         """
-        return self.get_points()[0, 1]
+        return _maybe_scalar(self.get_points()[0, 1])
 
     @property
     def x1(self):
@@ -262,7 +299,7 @@ class BboxBase(TransformNode):
         This is not guaranteed to be greater than :attr:`x0` (for that, use
         :attr:`~BboxBase.xmax`).
         """
-        return self.get_points()[1, 0]
+        return _maybe_scalar(self.get_points()[1, 0])
 
     @property
     def y1(self):
@@ -272,7 +309,7 @@ class BboxBase(TransformNode):
         This is not guaranteed to be greater than :attr:`y0` (for that, use
         :attr:`~BboxBase.ymax`).
         """
-        return self.get_points()[1, 1]
+        return _maybe_scalar(self.get_points()[1, 1])
 
     @property
     def p0(self):
@@ -346,13 +383,15 @@ class BboxBase(TransformNode):
     def width(self):
         """The (signed) width of the bounding box."""
         points = self.get_points()
-        return points[1, 0] - points[0, 0]
+        width = points[1, 0] - points[0, 0]
+        return _maybe_scalar(width)
 
     @property
     def height(self):
         """The (signed) height of the bounding box."""
         points = self.get_points()
-        return points[1, 1] - points[0, 1]
+        height = points[1, 1] - points[0, 1]
+        return _maybe_scalar(height)
 
     @property
     def size(self):
