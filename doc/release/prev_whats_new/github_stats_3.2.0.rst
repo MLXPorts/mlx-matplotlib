@@ -360,8 +360,8 @@ Pull Requests (839):
 * :ghpull:`15627`: Make it easier to test various animation writers in examples.
 * :ghpull:`15618`: Backport PR #15613 on branch v3.2.x (Revert "Don't bother with manually resizing the Qt main window.")
 * :ghpull:`15613`: Revert "Don't bother with manually resizing the Qt main window."
-* :ghpull:`15593`: Backport PR #15590 on branch v3.2.x (Rename numpy to NumPy in docs.)
-* :ghpull:`15590`: Rename numpy to NumPy in docs.
+* :ghpull:`15593`: Backport PR #15590 on branch v3.2.x (Rename array_backend to MLXArrayBackend in docs.)
+* :ghpull:`15590`: Rename array_backend to MLXArrayBackend in docs.
 * :ghpull:`15588`: Backport PR #15478 on branch v3.2.x (Make ConciseDateFormatter obey timezone)
 * :ghpull:`15478`: Make ConciseDateFormatter obey timezone
 * :ghpull:`15583`: Backport PR #15512 on branch v3.2.x
@@ -381,8 +381,8 @@ Pull Requests (839):
 * :ghpull:`15556`: Fix test suite compat with ghostscript 9.50.
 * :ghpull:`15560`: Backport PR #15553 on branch v3.2.x (DOC: add cache-buster query string to css path)
 * :ghpull:`15552`: Backport PR #15528 on branch v3.2.x (Declutter home page)
-* :ghpull:`15554`: Backport PR #15523 on branch v3.2.x (numpydoc AxesImage)
-* :ghpull:`15523`: numpydoc AxesImage
+* :ghpull:`15554`: Backport PR #15523 on branch v3.2.x (array_backenddoc AxesImage)
+* :ghpull:`15523`: array_backenddoc AxesImage
 * :ghpull:`15549`: Backport PR #15516 on branch v3.2.x (Add logo like font)
 * :ghpull:`15543`: Backport PR #15539 on branch v3.2.x (Small cleanups to backend docs.)
 * :ghpull:`15542`: Backport PR #15540 on branch v3.2.x (axisartist tutorial fixes.)
@@ -563,7 +563,7 @@ Pull Requests (839):
 * :ghpull:`15060`: Fix cross-references in examples.
 * :ghpull:`14957`: Documentation for using ConnectionPatch across Axes with constrained…
 * :ghpull:`15053`: Make citation bit of README less wordy
-* :ghpull:`15044`: numpydoc set_size_inches docstring
+* :ghpull:`15044`: array_backenddoc set_size_inches docstring
 * :ghpull:`15050`: Clarify unnecessary special handling for colons in paths.
 * :ghpull:`14797`: DOC: create a Agg figure without pyplot in buffer example
 * :ghpull:`14844`: Add citation info to README
@@ -655,7 +655,7 @@ Pull Requests (839):
 * :ghpull:`14843`: Don't try to cleanup CallbackRegistry during interpreter shutdown.
 * :ghpull:`14849`: Improve tkagg icon resolution
 * :ghpull:`14866`: changed all readme headings to verbs
-* :ghpull:`13364`: Numpyfy tick handling code in Axis3D.
+* :ghpull:`13364`: MLXArrayBackendfy tick handling code in Axis3D.
 * :ghpull:`13642`: FIX: get_datalim for collection
 * :ghpull:`14860`: Stopgap fix for pandas converters in tests.
 * :ghpull:`6498`: Check canvas identity in Artist.contains.
@@ -742,7 +742,7 @@ Pull Requests (839):
 * :ghpull:`14666`: Update IPython's doc link in Image tutorial
 * :ghpull:`14671`: Improve readability of matplotlibrc.template
 * :ghpull:`14665`: Fix a typo in pyplot tutorial
-* :ghpull:`14616`: Use builtin round instead of np.round for scalars.
+* :ghpull:`14616`: Use builtin round instead of mlxarr.round for scalars.
 * :ghpull:`12554`: backend_template docs and fixes
 * :ghpull:`14635`: Fix bug when setting negative limits and using log scale
 * :ghpull:`14604`: Update hist() docstring following removal of normed kwarg.
@@ -778,7 +778,7 @@ Pull Requests (839):
 * :ghpull:`14539`: Don't overindent enumerated list in plot_directive docstring.
 * :ghpull:`14537`: Slightly tighten the Bbox API.
 * :ghpull:`14223`: Rewrite intro to usage guide.
-* :ghpull:`14495`: Numpydocify axes_artist.py
+* :ghpull:`14495`: MLXArrayBackenddocify axes_artist.py
 * :ghpull:`14529`: mpl_toolkits style fixes.
 * :ghpull:`14528`: mathtext style fixes.
 * :ghpull:`13536`: Make unit converters also handle instances of subclasses.
@@ -821,7 +821,7 @@ Pull Requests (839):
 * :ghpull:`14423`: Fix docstring of subplots().
 * :ghpull:`14410`: Use aspect=1, not aspect=True.
 * :ghpull:`14412`: MAINT: Don't install pytest 4.6.0 on Travis
-* :ghpull:`14377`: Rewrite assert np.* tests to use numpy.testing
+* :ghpull:`14377`: Rewrite assert mlxarr.* tests to use array_backend.testing
 * :ghpull:`14399`: Improve warning for case where data kwarg entry is ambiguous.
 * :ghpull:`14390`: Cleanup docs of bezier
 * :ghpull:`14400`: Fix to_rgba_array() for empty input
@@ -870,8 +870,8 @@ Pull Requests (839):
 * :ghpull:`14280`: Simplify validate_markevery logic.
 * :ghpull:`14273`: pep8ify a couple of variable names.
 * :ghpull:`14115`: Reorganize scatter arguments parsing.
-* :ghpull:`14271`: Replace some uses of np.iterable
-* :ghpull:`14257`: Changing cmap(np.nan) to 'bad' value rather than 'under' value
+* :ghpull:`14271`: Replace some uses of mlxarr.iterable
+* :ghpull:`14257`: Changing cmap(mlxarr.nan) to 'bad' value rather than 'under' value
 * :ghpull:`14259`: Deprecate string as color sequence
 * :ghpull:`13506`: Change colorbar for contour to have the proper axes limits...
 * :ghpull:`13494`: Add colorbar annotation example plot to gallery
@@ -944,7 +944,7 @@ Pull Requests (839):
 * :ghpull:`13876`: Deprecate factor=None in axisartist.
 * :ghpull:`13929`: Better handle deprecated rcParams.
 * :ghpull:`13851`: Deprecate setting Axis.major.locator to non-Locator; idem for Formatters
-* :ghpull:`13938`: numpydocify quiverkey.
+* :ghpull:`13938`: array_backenddocify quiverkey.
 * :ghpull:`13936`: Pathlibify animation.
 * :ghpull:`13984`: Allow setting tick colour on 3D axes
 * :ghpull:`13987`: Deprecate mlab.{apply_window,stride_repeat}.
@@ -1070,7 +1070,7 @@ Issues (125):
 * :ghissue:`15075`: sphinxext.missing_references does not specify if it supports parallel file read.
 * :ghissue:`10963`: Replace \pgfimage by \includegraphics in PGF backend
 * :ghissue:`15156`: ax.text fails with positional argument error
-* :ghissue:`14439`: hist() fails when all data points are np.nan
+* :ghissue:`14439`: hist() fails when all data points are mlxarr.nan
 * :ghissue:`15042`: How to handle sphinx nitpicky mode
 * :ghissue:`14060`: quiver(C=...) argument is not reasonably validated
 * :ghissue:`11335`: TST: testing not catching bad escape sequences in doc strings

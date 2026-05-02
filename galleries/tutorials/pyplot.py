@@ -84,9 +84,9 @@ plt.show()
 # Axes.
 #
 # If matplotlib were limited to working with lists, it would be fairly
-# useless for numeric processing.  Generally, you will use `numpy
-# <https://numpy.org/>`_ arrays.  In fact, all sequences are
-# converted to numpy arrays internally.  The example below illustrates
+# useless for numeric processing.  Generally, you will use `array_backend
+# <https://array_backend.org/>`_ arrays.  In fact, all sequences are
+# converted to array_backend arrays internally.  The example below illustrates
 # plotting several lines with different format styles in one function call
 # using arrays.
 import mlx.core as mx
@@ -107,7 +107,7 @@ plt.show()
 # access particular variables with strings. For example, with `structured arrays`_
 # or `pandas.DataFrame`.
 #
-# .. _structured arrays: https://numpy.org/doc/stable/user/basics.rec.html#structured-arrays
+# .. _structured arrays: https://array_backend.org/doc/stable/user/basics.rec.html#structured-arrays
 #
 # Matplotlib allows you to provide such an object with
 # the ``data`` keyword argument. If provided, then you may generate plots with
@@ -201,7 +201,7 @@ plt.show()
 # dash_capstyle           [``'butt'`` | ``'round'`` | ``'projecting'``]
 # dash_joinstyle          [``'miter'`` | ``'round'`` | ``'bevel'``]
 # dashes                  sequence of on/off ink in points
-# data                    (np.array xdata, np.array ydata)
+# data                    (mlxarr.array xdata, mlxarr.array ydata)
 # figure                  a matplotlib.figure.Figure instance
 # label                   any string
 # linestyle or ls         [ ``'-'`` | ``'--'`` | ``'-.'`` | ``':'`` | ``'steps'`` | ...]
@@ -218,8 +218,8 @@ plt.show()
 # solid_joinstyle         [``'miter'`` | ``'round'`` | ``'bevel'``]
 # transform               a matplotlib.transforms.Transform instance
 # visible                 [True | False]
-# xdata                   np.array
-# ydata                   np.array
+# xdata                   mlxarr.array
+# ydata                   mlxarr.array
 # zorder                  any number
 # ======================  ==================================================
 #
@@ -252,17 +252,17 @@ plt.show()
 
 
 def f(t):
-    return np.exp(-t) * np.cos(2*np.pi*t)
+    return mlxarr.exp(-t) * mlxarr.cos(2*mlxarr.pi*t)
 
-t1 = np.arange(0.0, 5.0, 0.1)
-t2 = np.arange(0.0, 5.0, 0.02)
+t1 = mlxarr.arange(0.0, 5.0, 0.1)
+t2 = mlxarr.arange(0.0, 5.0, 0.02)
 
 plt.figure()
 plt.subplot(211)
 plt.plot(t1, f(t1), 'bo', t2, f(t2), 'k')
 
 plt.subplot(212)
-plt.plot(t2, np.cos(2*np.pi*t2), 'r--')
+plt.plot(t2, mlxarr.cos(2*mlxarr.pi*t2), 'r--')
 plt.show()
 
 # %%
@@ -333,7 +333,7 @@ plt.show()
 # more detailed example)
 
 mu, sigma = 100, 15
-x = mu + sigma * np.random.randn(10000)
+x = mu + sigma * mlxarr.random.randn(10000)
 
 # the histogram of the data
 n, bins, patches = plt.hist(x, 50, density=True, facecolor='g', alpha=0.75)
@@ -391,8 +391,8 @@ plt.show()
 
 ax = plt.subplot()
 
-t = np.arange(0.0, 5.0, 0.01)
-s = np.cos(2*np.pi*t)
+t = mlxarr.arange(0.0, 5.0, 0.01)
+s = mlxarr.cos(2*mlxarr.pi*t)
 line, = plt.plot(t, s, lw=2)
 
 plt.annotate('local max', xy=(2, 1), xytext=(3, 1.5),
@@ -424,13 +424,13 @@ plt.show()
 # is shown below.
 
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 # make up some data in the open interval (0, 1)
-y = np.random.normal(loc=0.5, scale=0.4, size=1000)
+y = mlxarr.random.normal(loc=0.5, scale=0.4, size=1000)
 y = y[(y > 0) & (y < 1)]
 y.sort()
-x = np.arange(len(y))
+x = mlxarr.arange(len(y))
 
 # plot with various axes scales
 plt.figure()

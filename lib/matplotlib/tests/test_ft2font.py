@@ -1,7 +1,7 @@
 import itertools
 import io
 from pathlib import Path
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import pytest
 
 import matplotlib as mpl
@@ -20,16 +20,16 @@ def test_ft2image_draw_rect_filled():
         with pytest.warns(mpl.MatplotlibDeprecationWarning):
             im = ft2font.FT2Image(width, height)
         im.draw_rect_filled(x0, y0, x1, y1)
-        a = np.asarray(im)
-        assert a.dtype == np.uint8
+        a = mlxarr.asarray(im)
+        assert a.dtype == mlxarr.uint8
         assert a.shape == (height, width)
         if x0 == 100 or y0 == 200:
             # All the out-of-bounds starts should get automatically clipped.
-            assert np.sum(a) == 0
+            assert mlxarr.sum(a) == 0
         else:
             # Otherwise, ends are clipped to the dimension, but are also _inclusive_.
             filled = (min(x1 + 1, width) - x0) * (min(y1 + 1, height) - y0)
-            assert np.sum(a) == 255 * filled
+            assert mlxarr.sum(a) == 255 * filled
 
 
 def test_ft2font_dejavu_attrs():
@@ -757,14 +757,14 @@ def test_ft2font_set_text():
     file = fm.findfont('DejaVu Sans')
     font = ft2font.FT2Font(file, hinting_factor=1, _kerning_factor=0)
     xys = font.set_text('')
-    np.testing.assert_array_equal(xys, np.empty((0, 2)))
+    mlxarr.testing.assert_array_equal(xys, mlxarr.empty((0, 2)))
     assert font.get_width_height() == (0, 0)
     assert font.get_num_glyphs() == 0
     assert font.get_descent() == 0
     assert font.get_bitmap_offset() == (0, 0)
     # This string uses all the kerning pairs defined for test_ft2font_get_kerning.
     xys = font.set_text('AADAT.XC-J')
-    np.testing.assert_array_equal(
+    mlxarr.testing.assert_array_equal(
         xys,
         [(0, 0), (512, 0), (1024, 0), (1600, 0), (2112, 0), (2496, 0), (2688, 0),
          (3200, 0), (3712, 0), (4032, 0)])
@@ -811,7 +811,7 @@ def test_ft2font_drawing():
         '1      1  ',
         '          ',
     )
-    expected = np.array([
+    expected = mlxarr.array([
         [int(c) for c in line.replace(' ', '0')] for line in expected_str
     ])
     expected *= 255
@@ -820,12 +820,12 @@ def test_ft2font_drawing():
     font.set_text('M')
     font.draw_glyphs_to_bitmap(antialiased=False)
     image = font.get_image()
-    np.testing.assert_array_equal(image, expected)
+    mlxarr.testing.assert_array_equal(image, expected)
     font = ft2font.FT2Font(file, hinting_factor=1, _kerning_factor=0)
     glyph = font.load_char(ord('M'))
-    image = np.zeros(expected.shape, np.uint8)
+    image = mlxarr.zeros(expected.shape, mlxarr.uint8)
     font.draw_glyph_to_bitmap(image, -1, 1, glyph, antialiased=False)
-    np.testing.assert_array_equal(image, expected)
+    mlxarr.testing.assert_array_equal(image, expected)
 
 
 def test_ft2font_get_path():
@@ -836,7 +836,7 @@ def test_ft2font_get_path():
     assert codes.shape == (0, )
     font.load_char(ord('M'))
     vertices, codes = font.get_path()
-    expected_vertices = np.array([
+    expected_vertices = mlxarr.array([
         (0.843750, 9.000000), (2.609375, 9.000000),  # Top left.
         (4.906250, 2.875000),  # Top of midpoint.
         (7.218750, 9.000000), (8.968750, 9.000000),  # Top right.
@@ -848,12 +848,12 @@ def test_ft2font_get_path():
         (0.843750, 9.000000),  # Back to top left corner.
         (0.000000, 0.000000),
     ])
-    np.testing.assert_array_equal(vertices, expected_vertices)
-    expected_codes = np.full(expected_vertices.shape[0], mpath.Path.LINETO,
+    mlxarr.testing.assert_array_equal(vertices, expected_vertices)
+    expected_codes = mlxarr.full(expected_vertices.shape[0], mpath.Path.LINETO,
                              dtype=mpath.Path.code_type)
     expected_codes[0] = mpath.Path.MOVETO
     expected_codes[-1] = mpath.Path.CLOSEPOLY
-    np.testing.assert_array_equal(codes, expected_codes)
+    mlxarr.testing.assert_array_equal(codes, expected_codes)
 
 
 @pytest.mark.parametrize('fmt', ['pdf', 'png', 'ps', 'raw', 'svg'])

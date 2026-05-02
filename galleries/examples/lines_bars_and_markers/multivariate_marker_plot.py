@@ -10,7 +10,7 @@ the take-off angle, and thrust to the marker color.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.colors import Normalize
 from matplotlib.markers import MarkerStyle
 from matplotlib.text import TextPath
@@ -23,12 +23,12 @@ SUCCESS_SYMBOLS = [
 ]
 
 N = 25
-np.random.seed(42)
-skills = np.random.uniform(5, 80, size=N) * 0.1 + 5
-takeoff_angles = np.random.normal(0, 90, N)
-thrusts = np.random.uniform(size=N)
-successful = np.random.randint(0, 3, size=N)
-positions = np.random.normal(size=(N, 2)) * 5
+mlxarr.random.seed(42)
+skills = mlxarr.random.uniform(5, 80, size=N) * 0.1 + 5
+takeoff_angles = mlxarr.random.normal(0, 90, N)
+thrusts = mlxarr.random.uniform(size=N)
+successful = mlxarr.random.randint(0, 3, size=N)
+positions = mlxarr.random.normal(size=(N, 2)) * 5
 data = zip(skills, takeoff_angles, thrusts, successful, positions)
 
 cmap = plt.colormaps["plasma"]

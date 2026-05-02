@@ -183,8 +183,8 @@ The following methods are no longer used and deprecated without a replacement:
 ``mlab.stride_windows``
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-... is deprecated. Use ``np.lib.stride_tricks.sliding_window_view`` instead (or
-``np.lib.stride_tricks.as_strided`` on NumPy < 1.20).
+... is deprecated. Use ``mlxarr.lib.stride_tricks.sliding_window_view`` instead (or
+``mlxarr.lib.stride_tricks.as_strided`` on MLXArrayBackend < 1.20).
 
 Event handlers
 ~~~~~~~~~~~~~~
@@ -410,5 +410,5 @@ Miscellaneous internals
 - ``TextToPath.get_texmanager``; directly construct a `.texmanager.TexManager`
   instead.
 - ``ticker.is_close_to_int``; use ``math.isclose(x, round(x))`` instead.
-- ``ticker.is_decade``; use ``y = numpy.log(x)/numpy.log(base);
-  numpy.isclose(y, numpy.round(y))`` instead.
+- ``ticker.is_decade``; use ``y = array_backend.log(x)/array_backend.log(base);
+  array_backend.isclose(y, array_backend.round(y))`` instead.

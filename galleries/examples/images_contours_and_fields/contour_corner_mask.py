@@ -9,19 +9,19 @@ Illustrate the difference between ``corner_mask=False`` and
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 # Data to plot.
-x, y = np.meshgrid(np.arange(7), np.arange(10))
-z = np.sin(0.5 * x) * np.cos(0.52 * y)
+x, y = mlxarr.meshgrid(mlxarr.arange(7), mlxarr.arange(10))
+z = mlxarr.sin(0.5 * x) * mlxarr.cos(0.52 * y)
 
 # Mask various z values.
-mask = np.zeros_like(z, dtype=bool)
+mask = mlxarr.zeros_like(z, dtype=bool)
 mask[2, 3:5] = True
 mask[3:5, 4] = True
 mask[7, 2] = True
 mask[5, 0] = True
 mask[0, 6] = True
-z = np.ma.array(z, mask=mask)
+z = mlxarr.ma.array(z, mask=mask)
 
 corner_masks = [False, True]
 fig, axs = plt.subplots(ncols=2)
@@ -34,7 +34,7 @@ for ax, corner_mask in zip(axs, corner_masks):
     ax.grid(c='k', ls='-', alpha=0.3)
 
     # Indicate masked points with red circles.
-    ax.plot(np.ma.array(x, mask=~mask), y, 'ro')
+    ax.plot(mlxarr.ma.array(x, mask=~mask), y, 'ro')
 
 plt.show()
 

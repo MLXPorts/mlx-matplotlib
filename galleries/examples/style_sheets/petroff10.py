@@ -14,22 +14,22 @@ distinction between data series.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 def colored_lines_example(ax):
-    t = np.linspace(-10, 10, 100)
+    t = mlxarr.linspace(-10, 10, 100)
     nb_colors = len(plt.rcParams['axes.prop_cycle'])
-    shifts = np.linspace(-5, 5, nb_colors)
-    amplitudes = np.linspace(1, 1.5, nb_colors)
+    shifts = mlxarr.linspace(-5, 5, nb_colors)
+    amplitudes = mlxarr.linspace(1, 1.5, nb_colors)
     for t0, a in zip(shifts, amplitudes):
-        y = a / (1 + np.exp(-(t - t0)))
+        y = a / (1 + mlxarr.exp(-(t - t0)))
         line, = ax.plot(t, y, '-')
-        point_indices = np.linspace(0, len(t) - 1, 20, dtype=int)
+        point_indices = mlxarr.linspace(0, len(t) - 1, 20, dtype=int)
         ax.plot(t[point_indices], y[point_indices], 'o', color=line.get_color())
     ax.set_xlim(-10, 10)
 
 
 def image_and_patch_example(ax):
-    ax.imshow(np.random.random(size=(20, 20)), interpolation='none')
+    ax.imshow(mlxarr.random.random(size=(20, 20)), interpolation='none')
     c = plt.Circle((5, 5), radius=5, label='patch')
     ax.add_patch(c)
 

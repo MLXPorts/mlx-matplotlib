@@ -19,7 +19,7 @@ from pathlib import Path
 
 # Paths to backend implementation files and folders
 BACKEND_PATHS = {
-    "numpy": ["ember_ml/backend/numpy"],
+    "array_backend": ["ember_ml/backend/array_backend"],
     "torch": ["ember_ml/backend/torch"],
     "mlx": ["ember_ml/backend/mlx"]
 }

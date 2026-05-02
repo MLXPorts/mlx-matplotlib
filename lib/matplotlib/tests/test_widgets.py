@@ -9,7 +9,7 @@ import matplotlib.widgets as widgets
 import matplotlib.pyplot as plt
 from matplotlib.testing.decorators import check_figures_equal, image_comparison
 from matplotlib.testing.widgets import click_and_drag, get_ax, noop
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.mlx_testing import assert_allclose
 
 import pytest
@@ -456,7 +456,7 @@ def test_rectangle_rotate(ax, selector_class):
     assert tool.rotation == 45
     # Corners should move
     assert_allclose(tool.corners,
-                    np.array([[118.53, 139.75, 111.46, 90.25],
+                    mlxarr.array([[118.53, 139.75, 111.46, 90.25],
                               [95.25, 116.46, 144.75, 123.54]]), atol=0.01)
 
     # Scale using top-right corner
@@ -874,8 +874,8 @@ def test_span_selector_bound(direction):
 @pytest.mark.backend('QtAgg', skip_on_importerror=True)
 def test_span_selector_animated_artists_callback():
     """Check that the animated artists changed in callbacks are updated."""
-    x = np.linspace(0, 2 * np.pi, 100)
-    values = np.sin(x)
+    x = mlxarr.linspace(0, 2 * mlxarr.pi, 100)
+    values = mlxarr.sin(x)
 
     fig, ax = plt.subplots()
     ln, = ax.plot(x, values, animated=True)
@@ -890,9 +890,9 @@ def test_span_selector_animated_artists_callback():
 
     def mean(vmin, vmax):
         # Return mean of values in x between *vmin* and *vmax*
-        indmin, indmax = np.searchsorted(x, (vmin, vmax))
+        indmin, indmax = mlxarr.searchsorted(x, (vmin, vmax))
         v = values[indmin:indmax].mean()
-        ln2.set_data(x, np.full_like(x, v))
+        ln2.set_data(x, mlxarr.full_like(x, v))
 
     span = widgets.SpanSelector(ax, mean, direction='horizontal',
                                 onmove_callback=mean,
@@ -929,9 +929,9 @@ def test_snapping_values_span_selector(ax):
     tool = widgets.SpanSelector(ax, onselect, direction='horizontal',)
     snap_function = tool._snap
 
-    snap_values = np.linspace(0, 5, 11)
-    values = np.array([-0.1, 0.1, 0.2, 0.5, 0.6, 0.7, 0.9, 4.76, 5.0, 5.5])
-    expect = np.array([00.0, 0.0, 0.0, 0.5, 0.5, 0.5, 1.0, 5.00, 5.0, 5.0])
+    snap_values = mlxarr.linspace(0, 5, 11)
+    values = mlxarr.array([-0.1, 0.1, 0.2, 0.5, 0.6, 0.7, 0.9, 4.76, 5.0, 5.5])
+    expect = mlxarr.array([00.0, 0.0, 0.0, 0.5, 0.5, 0.5, 1.0, 5.00, 5.0, 5.0])
     values = snap_function(values, snap_values)
     assert_allclose(values, expect)
 
@@ -940,7 +940,7 @@ def test_span_selector_snap(ax):
     def onselect(vmin, vmax):
         ax._got_onselect = True
 
-    snap_values = np.arange(50) * 4
+    snap_values = mlxarr.arange(50) * 4
 
     tool = widgets.SpanSelector(ax, onselect, direction='horizontal',
                                 snap_values=snap_values)
@@ -1632,25 +1632,25 @@ def test_polygon_selector_box(ax):
     MouseEvent._from_ax_coords("button_press_event", ax, (40, 40), 1)._process()
     MouseEvent._from_ax_coords("motion_notify_event", ax, (20, 20))._process()
     MouseEvent._from_ax_coords("button_release_event", ax, (20, 20), 1)._process()
-    np.testing.assert_allclose(
+    mlxarr.testing.assert_allclose(
         tool.verts, [(10, 0), (0, 10), (10, 20), (20, 10)])
 
     # Move using the center of the bounding box
     MouseEvent._from_ax_coords("button_press_event", ax, (10, 10), 1)._process()
     MouseEvent._from_ax_coords("motion_notify_event", ax, (30, 30))._process()
     MouseEvent._from_ax_coords("button_release_event", ax, (30, 30), 1)._process()
-    np.testing.assert_allclose(
+    mlxarr.testing.assert_allclose(
         tool.verts, [(30, 20), (20, 30), (30, 40), (40, 30)])
 
     # Remove a point from the polygon and check that the box extents update
-    np.testing.assert_allclose(
+    mlxarr.testing.assert_allclose(
         tool._box.extents, (20.0, 40.0, 20.0, 40.0))
 
     MouseEvent._from_ax_coords("button_press_event", ax, (30, 20), 3)._process()
     MouseEvent._from_ax_coords("button_release_event", ax, (30, 20), 3)._process()
-    np.testing.assert_allclose(
+    mlxarr.testing.assert_allclose(
         tool.verts, [(20, 30), (30, 40), (40, 30)])
-    np.testing.assert_allclose(
+    mlxarr.testing.assert_allclose(
         tool._box.extents, (20.0, 40.0, 30.0, 40.0))
 
 
@@ -1669,12 +1669,12 @@ def test_polygon_selector_clear_method(ax):
         assert tool._selection_completed
         assert tool.get_visible()
         assert artist.get_visible()
-        np.testing.assert_equal(artist.get_xydata(), result)
+        mlxarr.testing.assert_equal(artist.get_xydata(), result)
         assert onselect.call_args == ((result[:-1],), {})
 
         tool.clear()
         assert not tool._selection_completed
-        np.testing.assert_equal(artist.get_xydata(), [(0, 0)])
+        mlxarr.testing.assert_equal(artist.get_xydata(), [(0, 0)])
 
 
 @pytest.mark.parametrize("horizOn", [False, True])

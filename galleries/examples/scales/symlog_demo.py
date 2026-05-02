@@ -11,10 +11,10 @@ are significant differences between the magnitudes of the numbers involved.
 Example use of symlog (symmetric log) axis scaling.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 dt = 0.01
-x = np.arange(-50.0, 50.0, dt)
-y = np.arange(0, 100.0, dt)
+x = mlxarr.arange(-50.0, 50.0, dt)
+y = mlxarr.arange(0, 100.0, dt)
 
 fig, (ax0, ax1, ax2) = plt.subplots(nrows=3)
 
@@ -28,7 +28,7 @@ ax1.plot(y, x)
 ax1.set_yscale('symlog')
 ax1.set_ylabel('symlogy')
 
-ax2.plot(x, np.sin(x / 3.0))
+ax2.plot(x, mlxarr.sin(x / 3.0))
 ax2.set_xscale('symlog')
 ax2.set_yscale('symlog', linthresh=0.015)
 ax2.grid()
@@ -58,8 +58,8 @@ def format_axes(ax, title=None):
         ax.set_title(title.format(linthresh=linthresh, linscale=linscale))
 
 
-x = np.linspace(-60, 60, 201)
-y = np.linspace(0, 100.0, 201)
+x = mlxarr.linspace(-60, 60, 201)
+y = mlxarr.linspace(0, 100.0, 201)
 
 fig, (ax1, ax2) = plt.subplots(nrows=2, layout="constrained")
 

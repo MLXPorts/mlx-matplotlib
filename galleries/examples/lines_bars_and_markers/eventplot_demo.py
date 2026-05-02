@@ -8,17 +8,17 @@ properties. The plot is shown in both horizontal and vertical orientations.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib
 
 matplotlib.rcParams['font.size'] = 8.0
 
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 
 # create random data
-data1 = np.random.random([6, 50])
+data1 = mlxarr.random.random([6, 50])
 
 # set different colors for each set of positions
 colors1 = [f'C{i}' for i in range(6)]
@@ -40,7 +40,7 @@ axs[1, 0].eventplot(data1, colors=colors1, lineoffsets=lineoffsets1,
 
 # create another set of random data.
 # the gamma distribution is only used for aesthetic purposes
-data2 = np.random.gamma(4, size=[60, 50])
+data2 = mlxarr.random.gamma(4, size=[60, 50])
 
 # use individual values for the parameters this time
 # these values will be used for all data sets (except lineoffsets2, which

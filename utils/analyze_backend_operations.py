@@ -2,9 +2,9 @@
 """
 Analyze operations across different backends to identify gaps and inconsistencies.
 
-This script examines the implementation files for each backend (NumPy, PyTorch, MLX)
+This script examines the implementation files for each backend (MLXArrayBackend, PyTorch, MLX)
 and generates a report of operations that are missing in one or more backends.
-It also helps with migrating operations from ops/torch, ops/mlx, and ops/numpy
+It also helps with migrating operations from ops/torch, ops/mlx, and ops/array_backend
 to the backend directory, as per the architectural rules.
 """
 
@@ -18,7 +18,7 @@ import pandas as pd
 
 # Paths to backend implementation files and folders
 BACKEND_PATHS = {
-    "numpy": ["ember_ml/backend/numpy"],
+    "array_backend": ["ember_ml/backend/array_backend"],
     "torch": ["ember_ml/backend/torch"],
     "mlx": ["ember_ml/backend/mlx"]
 }
@@ -26,7 +26,7 @@ BACKEND_PATHS = {
 # Paths to ops implementation directories (legacy, may not exist in new structure)
 # These are no longer used in the new structure, but kept for backward compatibility
 OPS_PATHS = {
-    "numpy": "ember_ml/backend/numpy",
+    "array_backend": "ember_ml/backend/array_backend",
     "torch": "ember_ml/backend/torch",
     "mlx": "ember_ml/backend/mlx"
 }
@@ -557,7 +557,7 @@ def main():
     parser.add_argument("--output-dir", "-o", default=".", help="Directory to save output files")
     parser.add_argument("--check-file", help="Check a specific file for backend consistency")
     parser.add_argument("--migrate", action="store_true", help="Migrate operations from ops to backend")
-    parser.add_argument("--backend", choices=["numpy", "torch", "mlx", "all"], default="all", 
+    parser.add_argument("--backend", choices=["array_backend", "torch", "mlx", "all"], default="all",
                         help="Backend to migrate (default: all)")
     parser.add_argument("--operation", help="Specific operation to migrate")
     parser.add_argument("--dry-run", action="store_true", help="Don't actually modify files")

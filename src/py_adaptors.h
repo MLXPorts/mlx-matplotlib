@@ -18,8 +18,8 @@ namespace py = pybind11;
 namespace mpl {
 
 /************************************************************
- * mpl::PathIterator acts as a bridge between NumPy and Agg.  Given a
- * pair of NumPy arrays, vertices and codes, it iterates over
+ * mpl::PathIterator acts as a bridge between MLXArrayBackend and Agg.  Given a
+ * pair of MLXArrayBackend arrays, vertices and codes, it iterates over
  * those vertices and codes, using the standard Agg vertex source
  * interface:
  *

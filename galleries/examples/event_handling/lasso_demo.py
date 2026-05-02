@@ -16,7 +16,7 @@ A callback is used to change the color of the selected points.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib import colors as mcolors
 from matplotlib import path
 from matplotlib.collections import RegularPolyCollection
@@ -30,7 +30,7 @@ class LassoManager:
         # (out) and red (in).
         self.collection = RegularPolyCollection(
             6, sizes=(100,), offset_transform=ax.transData,
-            offsets=data, array=np.zeros(len(data)),
+            offsets=data, array=mlxarr.zeros(len(data)),
             clim=(0, 1), cmap=mcolors.ListedColormap(["tab:blue", "tab:red"]))
         ax.add_collection(self.collection)
         canvas = ax.figure.canvas
@@ -58,8 +58,8 @@ class LassoManager:
 
 
 if __name__ == '__main__':
-    np.random.seed(19680801)
+    mlxarr.random.seed(19680801)
     ax = plt.figure().add_subplot(
         xlim=(0, 1), ylim=(0, 1), title='Lasso points using left mouse button')
-    manager = LassoManager(ax, np.random.rand(100, 2))
+    manager = LassoManager(ax, mlxarr.random.rand(100, 2))
     plt.show()

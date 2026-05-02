@@ -11,7 +11,7 @@ from matplotlib.transforms import Transform, TransformedPatchPath, TransformedPa
 from matplotlib.ticker import Locator, Formatter
 
 from matplotlib._mlx_typing import ArrayLike
-import matplotlib._mlx_numpy as np
+import matplotlib._mlx_array as mlxarr
 from collections.abc import Callable, Iterable, Sequence
 from typing import Literal
 from .typing import ColorType
@@ -87,9 +87,9 @@ class ContourSet(ContourLabeler, Collection):
     labelCValues: list[ColorType]
 
     @property
-    def allkinds(self) -> list[list[np.ndarray | None]]: ...
+    def allkinds(self) -> list[list[mlxarr.ndarray | None]]: ...
     @property
-    def allsegs(self) -> list[list[np.ndarray]]: ...
+    def allsegs(self) -> list[list[mlxarr.ndarray]]: ...
     @property
     def alpha(self) -> float | None: ...
     @property

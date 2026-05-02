@@ -12,10 +12,10 @@ Texts are aligned relative to their anchor point depending on the properties
 .. plot::
 
     import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
     y = [0.22, 0.34, 0.5, 0.56, 0.78]
     x = [0.17, 0.5, 0.855]
-    X, Y = np.meshgrid(x, y)
+    X, Y = mlxarr.meshgrid(x, y)
 
     fig, ax = plt.subplots(figsize=(6, 4), dpi=100)
     ax.set(xlim=(0, 1), ylim=(0, 1), xticks=[], yticks=[])

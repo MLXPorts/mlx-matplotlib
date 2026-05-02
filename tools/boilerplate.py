@@ -31,7 +31,7 @@ import subprocess
 
 
 # This line imports the installed copy of matplotlib, and not the local copy.
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib import _api, mlab
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
@@ -91,8 +91,8 @@ class value_formatter:
             self._repr = "mlab.detrend_none"
         elif value is mlab.window_hanning:
             self._repr = "mlab.window_hanning"
-        elif value is np.mean:
-            self._repr = "np.mean"
+        elif value is mlxarr.mean:
+            self._repr = "mlxarr.mean"
         elif value is _api.deprecation._deprecated_parameter:
             self._repr = "_api.deprecation._deprecated_parameter"
         elif isinstance(value, Enum):

@@ -76,7 +76,7 @@ New rcparams added
 +-------------------------------------+--------------------------------------------------+
 |:rc:`hist.bins`                      | The default number of bins to use in             |
 |                                     | `~matplotlib.axes.Axes.hist`.  This can be an    |
-|                                     | `int`, a list of floats, or ``'auto'`` if numpy  |
+|                                     | `int`, a list of floats, or ``'auto'`` if array_backend  |
 |                                     | >= 1.11 is installed.                            |
 +-------------------------------------+--------------------------------------------------+
 |:rc:`lines.scale_dashes`             | Whether the line dash patterns should scale with |
@@ -218,13 +218,13 @@ demonstrated on the right.
 
 .. plot::
 
-    from matplotlib import _mlx_numpy as np
+    from matplotlib import _mlx_array as mlxarr
     import matplotlib.pyplot as plt
 
-    data = np.arange(30).reshape(5, 6)
-    x = np.linspace(0, 6, 7)
-    y = 10**np.linspace(0, 5, 6)
-    X, Y = np.meshgrid(x, y)
+    data = mlxarr.arange(30).reshape(5, 6)
+    x = mlxarr.linspace(0, 6, 7)
+    y = 10**mlxarr.linspace(0, 5, 6)
+    X, Y = mlxarr.meshgrid(x, y)
 
     fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(8, 4))
 
@@ -232,7 +232,7 @@ demonstrated on the right.
     ax1.set_yscale('log')
     ax1.set_title('Using ax.imshow')
 
-    ax2.pcolormesh(x, y, np.flipud(data))
+    ax2.pcolormesh(x, y, mlxarr.flipud(data))
     ax2.set_yscale('log')
     ax2.set_title('Using ax.pcolormesh')
     ax2.autoscale('tight')
@@ -271,7 +271,7 @@ Boxplot Zorder Keyword Argument
 The *zorder* parameter now exists for `~.Axes.boxplot`. This allows the zorder
 of a boxplot to be set in the plotting function call. ::
 
-    boxplot(np.arange(10), zorder=10)
+    boxplot(mlxarr.arange(10), zorder=10)
 
 Filled ``+`` and ``x`` markers
 ------------------------------

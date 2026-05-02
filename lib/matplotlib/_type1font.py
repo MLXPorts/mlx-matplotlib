@@ -32,7 +32,7 @@ import re
 import string
 import struct
 import typing as T
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.cbook import _format_approx
 from . import _api
 
@@ -733,16 +733,16 @@ class Type1Font:
             float(x) for x in (self.prop['FontMatrix']
                                .lstrip('[').rstrip(']').split())
         ]
-        oldmatrix = np.eye(3, 3)
+        oldmatrix = mlxarr.eye(3, 3)
         oldmatrix[0:3, 0] = array[::2]
         oldmatrix[0:3, 1] = array[1::2]
-        modifier = np.eye(3, 3)
+        modifier = mlxarr.eye(3, 3)
 
         if 'slant' in effects:
             slant = effects['slant']
             fontname += f'_Slant_{int(1000 * slant)}'
             italicangle = round(
-                float(italicangle) - np.arctan(slant) / np.pi * 180,
+                float(italicangle) - mlxarr.arctan(slant) / mlxarr.pi * 180,
                 5
             )
             modifier[1, 0] = slant
@@ -752,7 +752,7 @@ class Type1Font:
             fontname += f'_Extend_{int(1000 * extend)}'
             modifier[0, 0] = extend
 
-        newmatrix = np.dot(modifier, oldmatrix)
+        newmatrix = mlxarr.dot(modifier, oldmatrix)
         array[::2] = newmatrix[0:3, 0]
         array[1::2] = newmatrix[0:3, 1]
         fontmatrix = (

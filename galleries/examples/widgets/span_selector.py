@@ -16,16 +16,16 @@ selected range is then plotted on the lower axis.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.widgets import SpanSelector
 
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 fig, (ax1, ax2) = plt.subplots(2, figsize=(8, 6))
 
-x = np.arange(0.0, 5.0, 0.01)
-y = np.sin(2 * np.pi * x) + 0.5 * np.random.randn(len(x))
+x = mlxarr.arange(0.0, 5.0, 0.01)
+y = mlxarr.sin(2 * mlxarr.pi * x) + 0.5 * mlxarr.random.randn(len(x))
 
 ax1.plot(x, y)
 ax1.set_ylim(-2, 2)
@@ -36,7 +36,7 @@ line2, = ax2.plot([], [])
 
 
 def onselect(xmin, xmax):
-    indmin, indmax = np.searchsorted(x, (xmin, xmax))
+    indmin, indmax = mlxarr.searchsorted(x, (xmin, xmax))
     indmax = min(len(x) - 1, indmax)
 
     region_x = x[indmin:indmax]

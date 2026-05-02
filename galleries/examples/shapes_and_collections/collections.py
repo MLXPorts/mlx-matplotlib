@@ -18,21 +18,21 @@ units.  This behavior is available only for the LineCollection.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib import collections, transforms
 
 nverts = 50
 npts = 100
 
 # Make some spirals
-r = np.arange(nverts)
-theta = np.linspace(0, 2*np.pi, nverts)
-xx = r * np.sin(theta)
-yy = r * np.cos(theta)
-spiral = np.column_stack([xx, yy])
+r = mlxarr.arange(nverts)
+theta = mlxarr.linspace(0, 2*mlxarr.pi, nverts)
+xx = r * mlxarr.sin(theta)
+yy = r * mlxarr.cos(theta)
+spiral = mlxarr.column_stack([xx, yy])
 
 # Fixing random state for reproducibility
-rs = np.random.RandomState(19680801)
+rs = mlxarr.random.RandomState(19680801)
 
 # Make some offsets
 xyo = rs.randn(npts, 2)
@@ -65,7 +65,7 @@ ax2.set_title('PolyCollection using offsets')
 
 # 7-sided regular polygons
 col = collections.RegularPolyCollection(
-    7, sizes=np.abs(xx) * 10.0, offsets=xyo, offset_transform=ax3.transData,
+    7, sizes=mlxarr.abs(xx) * 10.0, offsets=xyo, offset_transform=ax3.transData,
     color=colors)
 trans = transforms.Affine2D().scale(fig.dpi / 72.0)
 col.set_transform(trans)  # the points to pixels transform
@@ -80,13 +80,13 @@ nverts = 60
 ncurves = 20
 offs = (0.1, 0.0)
 
-yy = np.linspace(0, 2*np.pi, nverts)
-ym = np.max(yy)
-xx = (0.2 + (ym - yy) / ym) ** 2 * np.cos(yy - 0.4) * 0.5
+yy = mlxarr.linspace(0, 2*mlxarr.pi, nverts)
+ym = mlxarr.max(yy)
+xx = (0.2 + (ym - yy) / ym) ** 2 * mlxarr.cos(yy - 0.4) * 0.5
 segs = []
 for i in range(ncurves):
     xxx = xx + 0.02*rs.randn(nverts)
-    curve = np.column_stack([xxx, yy * 100])
+    curve = mlxarr.column_stack([xxx, yy * 100])
     segs.append(curve)
 
 col = collections.LineCollection(segs, offsets=offs, color=colors)

@@ -11,11 +11,11 @@ Flow"`_ in a 3-dimensional space using mplot3d.
 
 .. note::
    Because this is a simple non-linear ODE, it would be more easily done using
-   SciPy's ODE solver, but this approach depends only upon NumPy.
+   SciPy's ODE solver, but this approach depends only upon MLXArrayBackend.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 def lorenz(xyz, *, s=10, r=28, b=2.667):
     """
     Parameters
@@ -34,13 +34,13 @@ def lorenz(xyz, *, s=10, r=28, b=2.667):
     x_dot = s*(y - x)
     y_dot = r*x - y - x*z
     z_dot = x*y - b*z
-    return np.array([x_dot, y_dot, z_dot])
+    return mlxarr.array([x_dot, y_dot, z_dot])
 
 
 dt = 0.01
 num_steps = 10000
 
-xyzs = np.empty((num_steps + 1, 3))  # Need one more for the initial values
+xyzs = mlxarr.empty((num_steps + 1, 3))  # Need one more for the initial values
 xyzs[0] = (0., 1., 1.05)  # Set initial values
 # Step through "time", calculating the partial derivatives at the current point
 # and using them to estimate the next point

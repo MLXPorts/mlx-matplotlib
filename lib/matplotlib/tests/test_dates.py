@@ -3,7 +3,7 @@ import datetime
 import dateutil.tz
 import dateutil.rrule
 import functools
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import pytest
 
 from matplotlib import rc_context, style
@@ -13,22 +13,22 @@ from matplotlib.testing.decorators import image_comparison
 import matplotlib.ticker as mticker
 
 
-def test_date_numpyx():
-    # test that numpy dates work properly...
+def test_date_mlx_arrays():
+    # test that MLX-backed date arrays work properly...
     base = datetime.datetime(2017, 1, 1)
     time = [base + datetime.timedelta(days=x) for x in range(0, 3)]
-    timenp = np.array(time, dtype='datetime64[ns]')
-    data = np.array([0., 2., 1.])
+    time_mlx = mlxarr.array(time, dtype='datetime64[ns]')
+    data = mlxarr.array([0., 2., 1.])
     fig = plt.figure(figsize=(10, 2))
     ax = fig.add_subplot(1, 1, 1)
     h, = ax.plot(time, data)
-    hnp, = ax.plot(timenp, data)
-    np.testing.assert_equal(h.get_xdata(orig=False), hnp.get_xdata(orig=False))
+    h_mlx, = ax.plot(time_mlx, data)
+    mlxarr.testing.assert_equal(h.get_xdata(orig=False), h_mlx.get_xdata(orig=False))
     fig = plt.figure(figsize=(10, 2))
     ax = fig.add_subplot(1, 1, 1)
     h, = ax.plot(data, time)
-    hnp, = ax.plot(data, timenp)
-    np.testing.assert_equal(h.get_ydata(orig=False), hnp.get_ydata(orig=False))
+    h_mlx, = ax.plot(data, time_mlx)
+    mlxarr.testing.assert_equal(h.get_ydata(orig=False), h_mlx.get_ydata(orig=False))
 
 
 @pytest.mark.parametrize('t0', [datetime.datetime(2017, 1, 1, 0, 1, 1),
@@ -44,11 +44,11 @@ def test_date_numpyx():
                                    'datetime64[us]',
                                    'datetime64[ms]',
                                    'datetime64[ns]'])
-def test_date_date2num_numpy(t0, dtype):
+def test_date_date2num_array_backend(t0, dtype):
     time = mdates.date2num(t0)
-    tnp = np.array(t0, dtype=dtype)
-    nptime = mdates.date2num(tnp)
-    np.testing.assert_equal(time, nptime)
+    t_mlx = mlxarr.array(t0, dtype=dtype)
+    mlx_time = mdates.date2num(t_mlx)
+    mlxarr.testing.assert_equal(time, mlx_time)
 
 
 @pytest.mark.parametrize('dtype', ['datetime64[s]',
@@ -57,34 +57,34 @@ def test_date_date2num_numpy(t0, dtype):
                                    'datetime64[ns]'])
 def test_date2num_NaT(dtype):
     t0 = datetime.datetime(2017, 1, 1, 0, 1, 1)
-    tmpl = [mdates.date2num(t0), np.nan]
-    tnp = np.array([t0, 'NaT'], dtype=dtype)
-    nptime = mdates.date2num(tnp)
-    np.testing.assert_array_equal(tmpl, nptime)
+    tmpl = [mdates.date2num(t0), mlxarr.nan]
+    t_mlx = mlxarr.array([t0, 'NaT'], dtype=dtype)
+    mlx_time = mdates.date2num(t_mlx)
+    mlxarr.testing.assert_array_equal(tmpl, mlx_time)
 
 
 @pytest.mark.parametrize('units', ['s', 'ms', 'us', 'ns'])
 def test_date2num_NaT_scalar(units):
-    tmpl = mdates.date2num(np.datetime64('NaT', units))
-    assert np.isnan(tmpl)
+    tmpl = mdates.date2num(mlxarr.datetime64('NaT', units))
+    assert mlxarr.isnan(tmpl)
 
 
 def test_date2num_masked():
     # Without tzinfo
     base = datetime.datetime(2022, 12, 15)
-    dates = np.ma.array([base + datetime.timedelta(days=(2 * i))
+    dates = mlxarr.ma.array([base + datetime.timedelta(days=(2 * i))
                          for i in range(7)], mask=[0, 1, 1, 0, 0, 0, 1])
     npdates = mdates.date2num(dates)
-    np.testing.assert_array_equal(np.ma.getmask(npdates),
+    mlxarr.testing.assert_array_equal(mlxarr.ma.getmask(npdates),
                                   (False, True, True, False, False, False,
                                    True))
 
     # With tzinfo
     base = datetime.datetime(2022, 12, 15, tzinfo=mdates.UTC)
-    dates = np.ma.array([base + datetime.timedelta(days=(2 * i))
+    dates = mlxarr.ma.array([base + datetime.timedelta(days=(2 * i))
                          for i in range(7)], mask=[0, 1, 1, 0, 0, 0, 1])
     npdates = mdates.date2num(dates)
-    np.testing.assert_array_equal(np.ma.getmask(npdates),
+    mlxarr.testing.assert_array_equal(mlxarr.ma.getmask(npdates),
                                   (False, True, True, False, False, False,
                                    True))
 
@@ -96,18 +96,18 @@ def test_date_empty():
     fig, ax = plt.subplots()
     ax.xaxis_date()
     fig.draw_without_rendering()
-    np.testing.assert_allclose(ax.get_xlim(),
-                               [mdates.date2num(np.datetime64('1970-01-01')),
-                                mdates.date2num(np.datetime64('1970-01-02'))])
+    mlxarr.testing.assert_allclose(ax.get_xlim(),
+                               [mdates.date2num(mlxarr.datetime64('1970-01-01')),
+                                mdates.date2num(mlxarr.datetime64('1970-01-02'))])
 
     mdates._reset_epoch_test_example()
     mdates.set_epoch('0000-12-31')
     fig, ax = plt.subplots()
     ax.xaxis_date()
     fig.draw_without_rendering()
-    np.testing.assert_allclose(ax.get_xlim(),
-                               [mdates.date2num(np.datetime64('1970-01-01')),
-                                mdates.date2num(np.datetime64('1970-01-02'))])
+    mlxarr.testing.assert_allclose(ax.get_xlim(),
+                               [mdates.date2num(mlxarr.datetime64('1970-01-01')),
+                                mdates.date2num(mlxarr.datetime64('1970-01-02'))])
     mdates._reset_epoch_test_example()
 
 
@@ -117,26 +117,26 @@ def test_date_not_empty():
 
     ax.plot([50, 70], [1, 2])
     ax.xaxis.axis_date()
-    np.testing.assert_allclose(ax.get_xlim(), [50, 70])
+    mlxarr.testing.assert_allclose(ax.get_xlim(), [50, 70])
 
 
 def test_axhline():
     # make sure that axhline doesn't set the xlimits...
     fig, ax = plt.subplots()
     ax.axhline(1.5)
-    ax.plot([np.datetime64('2016-01-01'), np.datetime64('2016-01-02')], [1, 2])
-    np.testing.assert_allclose(ax.get_xlim(),
-                               [mdates.date2num(np.datetime64('2016-01-01')),
-                                mdates.date2num(np.datetime64('2016-01-02'))])
+    ax.plot([mlxarr.datetime64('2016-01-01'), mlxarr.datetime64('2016-01-02')], [1, 2])
+    mlxarr.testing.assert_allclose(ax.get_xlim(),
+                               [mdates.date2num(mlxarr.datetime64('2016-01-01')),
+                                mdates.date2num(mlxarr.datetime64('2016-01-02'))])
 
     mdates._reset_epoch_test_example()
     mdates.set_epoch('0000-12-31')
     fig, ax = plt.subplots()
     ax.axhline(1.5)
-    ax.plot([np.datetime64('2016-01-01'), np.datetime64('2016-01-02')], [1, 2])
-    np.testing.assert_allclose(ax.get_xlim(),
-                               [mdates.date2num(np.datetime64('2016-01-01')),
-                                mdates.date2num(np.datetime64('2016-01-02'))])
+    ax.plot([mlxarr.datetime64('2016-01-01'), mlxarr.datetime64('2016-01-02')], [1, 2])
+    mlxarr.testing.assert_allclose(ax.get_xlim(),
+                               [mdates.date2num(mlxarr.datetime64('2016-01-01')),
+                                mdates.date2num(mlxarr.datetime64('2016-01-02'))])
     mdates._reset_epoch_test_example()
 
 
@@ -657,7 +657,7 @@ def test_concise_converter_stays():
     # This test demonstrates problems introduced by gh-23417 (reverted in gh-25278)
     # In particular, downstream libraries like Pandas had their designated converters
     # overridden by actions like setting xlim (or plotting additional points using
-    # stdlib/numpy dates and string date representation, which otherwise work fine with
+    # stdlib/array_backend dates and string date representation, which otherwise work fine with
     # their date converters)
     # While this is a bit of a toy example that would be unusual to see it demonstrates
     # the same ideas (namely having a valid converter already applied that is desired)
@@ -981,7 +981,7 @@ def _test_date2num_dst(date_range, tz_convert):
 
     dt_utc = date_range(start=dtstart, freq=interval, periods=N)
     dt_bxl = tz_convert(dt_utc, BRUSSELS)
-    t0 = 735322.0 + mdates.date2num(np.datetime64('0000-12-31'))
+    t0 = 735322.0 + mdates.date2num(mlxarr.datetime64('0000-12-31'))
     expected_ordinalf = [t0 + (i * interval_days) for i in range(N)]
     actual_ordinalf = list(mdates.date2num(dt_bxl))
 
@@ -1121,23 +1121,23 @@ def test_yearlocator_pytz():
     locator.create_dummy_axis()
     locator.axis.set_view_interval(mdates.date2num(x[0])-1.0,
                                    mdates.date2num(x[-1])+1.0)
-    t = np.array([733408.208333, 733773.208333, 734138.208333,
+    t = mlxarr.array([733408.208333, 733773.208333, 734138.208333,
                   734503.208333, 734869.208333, 735234.208333, 735599.208333])
     # convert to new epoch from old...
-    t = t + mdates.date2num(np.datetime64('0000-12-31'))
-    np.testing.assert_allclose(t, locator())
+    t = t + mdates.date2num(mlxarr.datetime64('0000-12-31'))
+    mlxarr.testing.assert_allclose(t, locator())
     expected = ['2009-01-01 00:00:00-05:00',
                 '2010-01-01 00:00:00-05:00', '2011-01-01 00:00:00-05:00',
                 '2012-01-01 00:00:00-05:00', '2013-01-01 00:00:00-05:00',
                 '2014-01-01 00:00:00-05:00', '2015-01-01 00:00:00-05:00']
     st = list(map(str, mdates.num2date(locator(), tz=tz)))
     assert st == expected
-    assert np.allclose(locator.tick_values(x[0], x[1]), np.array(
+    assert mlxarr.allclose(locator.tick_values(x[0], x[1]), mlxarr.array(
         [14610.20833333, 14610.33333333, 14610.45833333, 14610.58333333,
          14610.70833333, 14610.83333333, 14610.95833333, 14611.08333333,
          14611.20833333]))
-    assert np.allclose(locator.get_locator(x[1], x[0]).tick_values(x[0], x[1]),
-                       np.array(
+    assert mlxarr.allclose(locator.get_locator(x[1], x[0]).tick_values(x[0], x[1]),
+                       mlxarr.array(
         [14610.20833333, 14610.33333333, 14610.45833333, 14610.58333333,
          14610.70833333, 14610.83333333, 14610.95833333, 14611.08333333,
          14611.20833333]))
@@ -1209,16 +1209,16 @@ def test_num2timedelta(x, tdelta):
 
 
 def test_datetime64_in_list():
-    dt = [np.datetime64('2000-01-01'), np.datetime64('2001-01-01')]
+    dt = [mlxarr.datetime64('2000-01-01'), mlxarr.datetime64('2001-01-01')]
     dn = mdates.date2num(dt)
     # convert fixed values from old to new epoch
-    t = (np.array([730120.,  730486.]) +
-         mdates.date2num(np.datetime64('0000-12-31')))
-    np.testing.assert_equal(dn, t)
+    t = (mlxarr.array([730120.,  730486.]) +
+         mdates.date2num(mlxarr.datetime64('0000-12-31')))
+    mlxarr.testing.assert_equal(dn, t)
 
 
 def test_change_epoch():
-    date = np.datetime64('2000-01-01')
+    date = mlxarr.datetime64('2000-01-01')
 
     # use private method to clear the epoch and allow it to be set...
     mdates._reset_epoch_test_example()
@@ -1231,26 +1231,26 @@ def test_change_epoch():
 
     mdates._reset_epoch_test_example()
     mdates.set_epoch('1970-01-01')
-    dt = (date - np.datetime64('1970-01-01')).astype('datetime64[D]')
+    dt = (date - mlxarr.datetime64('1970-01-01')).astype('datetime64[D]')
     dt = dt.astype('int')
-    np.testing.assert_equal(mdates.date2num(date), float(dt))
+    mlxarr.testing.assert_equal(mdates.date2num(date), float(dt))
 
     mdates._reset_epoch_test_example()
     mdates.set_epoch('0000-12-31')
-    np.testing.assert_equal(mdates.date2num(date), 730120.0)
+    mlxarr.testing.assert_equal(mdates.date2num(date), 730120.0)
 
     mdates._reset_epoch_test_example()
     mdates.set_epoch('1970-01-01T01:00:00')
-    np.testing.assert_allclose(mdates.date2num(date), dt - 1./24.)
+    mlxarr.testing.assert_allclose(mdates.date2num(date), dt - 1./24.)
     mdates._reset_epoch_test_example()
     mdates.set_epoch('1970-01-01T00:00:00')
-    np.testing.assert_allclose(
-        mdates.date2num(np.datetime64('1970-01-01T12:00:00')),
+    mlxarr.testing.assert_allclose(
+        mdates.date2num(mlxarr.datetime64('1970-01-01T12:00:00')),
         0.5)
 
 
 def test_warn_notintervals():
-    dates = np.arange('2001-01-10', '2001-03-04', dtype='datetime64[D]')
+    dates = mlxarr.arange('2001-01-10', '2001-03-04', dtype='datetime64[D]')
     locator = mdates.AutoDateLocator(interval_multiples=False)
     locator.intervald[3] = [2]
     locator.create_dummy_axis()
@@ -1262,10 +1262,10 @@ def test_warn_notintervals():
 
 def test_change_converter():
     plt.rcParams['date.converter'] = 'concise'
-    dates = np.arange('2020-01-01', '2020-05-01', dtype='datetime64[D]')
+    dates = mlxarr.arange('2020-01-01', '2020-05-01', dtype='datetime64[D]')
     fig, ax = plt.subplots()
 
-    ax.plot(dates, np.arange(len(dates)))
+    ax.plot(dates, mlxarr.arange(len(dates)))
     fig.canvas.draw()
     assert ax.get_xticklabels()[0].get_text() == 'Jan'
     assert ax.get_xticklabels()[1].get_text() == '15'
@@ -1273,7 +1273,7 @@ def test_change_converter():
     plt.rcParams['date.converter'] = 'auto'
     fig, ax = plt.subplots()
 
-    ax.plot(dates, np.arange(len(dates)))
+    ax.plot(dates, mlxarr.arange(len(dates)))
     fig.canvas.draw()
     assert ax.get_xticklabels()[0].get_text() == 'Jan 01 2020'
     assert ax.get_xticklabels()[1].get_text() == 'Jan 15 2020'
@@ -1283,10 +1283,10 @@ def test_change_converter():
 
 def test_change_interval_multiples():
     plt.rcParams['date.interval_multiples'] = False
-    dates = np.arange('2020-01-10', '2020-05-01', dtype='datetime64[D]')
+    dates = mlxarr.arange('2020-01-10', '2020-05-01', dtype='datetime64[D]')
     fig, ax = plt.subplots()
 
-    ax.plot(dates, np.arange(len(dates)))
+    ax.plot(dates, mlxarr.arange(len(dates)))
     fig.canvas.draw()
     assert ax.get_xticklabels()[0].get_text() == 'Jan 10 2020'
     assert ax.get_xticklabels()[1].get_text() == 'Jan 24 2020'
@@ -1294,7 +1294,7 @@ def test_change_interval_multiples():
     plt.rcParams['date.interval_multiples'] = 'True'
     fig, ax = plt.subplots()
 
-    ax.plot(dates, np.arange(len(dates)))
+    ax.plot(dates, mlxarr.arange(len(dates)))
     fig.canvas.draw()
     assert ax.get_xticklabels()[0].get_text() == 'Jan 15 2020'
     assert ax.get_xticklabels()[1].get_text() == 'Feb 01 2020'
@@ -1303,7 +1303,7 @@ def test_change_interval_multiples():
 def test_DateLocator():
     locator = mdates.DateLocator()
     # Test nonsingular
-    assert locator.nonsingular(0, np.inf) == (0, 1)
+    assert locator.nonsingular(0, mlxarr.inf) == (0, 1)
     assert locator.nonsingular(0, 1) == (0, 1)
     assert locator.nonsingular(1, 0) == (0, 1)
     assert locator.nonsingular(0, 0) == (-2, 2)
@@ -1350,9 +1350,9 @@ def test_datestr2num():
     assert mdates.datestr2num('2022-01-10') == 19002.0
     dt = datetime.date(year=2022, month=1, day=10)
     assert mdates.datestr2num('2022-01', default=dt) == 19002.0
-    assert np.all(mdates.datestr2num(
+    assert mlxarr.all(mdates.datestr2num(
         ['2022-01', '2022-02'], default=dt
-        ) == np.array([19002., 19033.]))
+        ) == mlxarr.array([19002., 19033.]))
     assert mdates.datestr2num([]).size == 0
     assert mdates.datestr2num([], datetime.date(year=2022,
                                                 month=1, day=10)).size == 0
@@ -1378,9 +1378,9 @@ def test_concise_formatter_call():
 def test_datetime_masked():
     # make sure that all-masked data falls back to the viewlim
     # set in convert.axisinfo....
-    x = np.array([datetime.datetime(2017, 1, n) for n in range(1, 6)])
-    y = np.array([1, 2, 3, 4, 5])
-    m = np.ma.masked_greater(y, 0)
+    x = mlxarr.array([datetime.datetime(2017, 1, n) for n in range(1, 6)])
+    y = mlxarr.array([1, 2, 3, 4, 5])
+    m = mlxarr.ma.masked_greater(y, 0)
 
     fig, ax = plt.subplots()
     ax.plot(x, m)

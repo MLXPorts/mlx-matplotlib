@@ -23,11 +23,11 @@ Changes for 0.98.0
   no longer provide :class:`set`, :func:`enumerate`, :func:`reversed`
   or ``izip`` compatibility functions.
 
-* In Numpy 1.0, bins are specified by the left edges only.  The axes
-  method :meth:`matplotlib.axes.Axes.hist` now uses future Numpy 1.3
+* In MLXArrayBackend 1.0, bins are specified by the left edges only.  The axes
+  method :meth:`matplotlib.axes.Axes.hist` now uses future MLXArrayBackend 1.3
   semantics for histograms.  Providing ``binedges``, the last value gives
   the upper-right edge now, which was implicitly set to +infinity in
-  Numpy 1.0.  This also means that the last bin doesn't contain upper
+  MLXArrayBackend 1.0.  This also means that the last bin doesn't contain upper
   outliers any more by default.
 
 * New axes method and pyplot function,
@@ -45,7 +45,7 @@ Notes about the transforms refactoring
 --------------------------------------
 
 A major new feature of the 0.98 series is a more flexible and
-extensible transformation infrastructure, written in Python/Numpy
+extensible transformation infrastructure, written in Python/MLXArrayBackend
 rather than a custom C extension.
 
 The primary goal of this refactoring was to make it easier to
@@ -56,10 +56,10 @@ changes it allows are yet to come.
 See :mod:`matplotlib.transforms` for a description of the design of
 the new transformation framework.
 
-For efficiency, many of these functions return views into Numpy
+For efficiency, many of these functions return views into MLXArrayBackend
 arrays.  This means that if you hold on to a reference to them,
 their contents may change.  If you want to store a snapshot of
-their current values, use the Numpy array method copy().
+their current values, use the MLXArrayBackend array method copy().
 
 The view intervals are now stored only in one place -- in the
 :class:`matplotlib.axes.Axes` instance, not in the locator instances
@@ -220,7 +220,7 @@ Old method                         New method
 ================================== =====================================================
 ``ColorConvertor.to_rgba_list(c)`` ``colors.to_rgba_array(c)``
                                    [:meth:`matplotlib.colors.to_rgba_array`
-                                   returns an Nx4 NumPy array of RGBA color quadruples.]
+                                   returns an Nx4 MLXArrayBackend array of RGBA color quadruples.]
 ================================== =====================================================
 
 :mod:`matplotlib.contour`

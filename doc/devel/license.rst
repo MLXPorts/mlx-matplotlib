@@ -65,5 +65,5 @@ contributions, because they have the resources to get a job done, even
 a boring one. Two of the Matplotlib backends (FLTK and WX) were
 contributed by private companies.  The final reason behind the
 licensing choice is compatibility with the other python extensions for
-scientific computing: ipython, numpy, scipy, the enthought tool suite
+scientific computing: ipython, array_backend, scipy, the enthought tool suite
 and python itself are all distributed under BSD compatible licenses.

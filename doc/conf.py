@@ -121,7 +121,6 @@ extensions = [
     'sphinx.ext.ifconfig',
     'IPython.sphinxext.ipython_console_highlighting',
     'IPython.sphinxext.ipython_directive',
-    'numpydoc',  # Needs to be loaded *after* autodoc.
     'sphinx_gallery.gen_gallery',
     'matplotlib.sphinxext.mathmpl',
     'matplotlib.sphinxext.plot_directive',
@@ -269,7 +268,7 @@ intersphinx_mapping = {
     'cycler': ('https://matplotlib.org/cycler/', None),
     'dateutil': ('https://dateutil.readthedocs.io/en/stable/', None),
     'ipykernel': ('https://ipykernel.readthedocs.io/en/latest/', None),
-    'numpy': ('https://numpy.org/doc/stable/', None),
+    'array_backend': ('https://array_backend.org/doc/stable/', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
     'pytest': ('https://pytest.org/en/stable/', None),
     'python': ('https://docs.python.org/3/', None),
@@ -775,10 +774,6 @@ texinfo_documents = [
      1),
 ]
 
-# numpydoc config
-
-numpydoc_show_class_members = False
-
 # We want to prevent any size limit, as we'll add scroll bars with CSS.
 inheritance_graph_attrs = dict(size='1000.0', splines='polyline')
 # Also remove minimum node dimensions, and increase line size a bit.
@@ -863,7 +858,6 @@ else:
 def generate_ScalarMappable_docs():
 
     import matplotlib.colorizer
-    from numpydoc.docscrape_sphinx import get_doc_object
     from pathlib import Path
     import textwrap
     from sphinx.util.inspect import stringify_signature
@@ -902,7 +896,7 @@ def generate_ScalarMappable_docs():
                 name = meth.__name__
                 sig = stringify_signature(inspect.signature(meth))
                 docstring = textwrap.indent(
-                    str(get_doc_object(meth)),
+                    inspect.getdoc(meth) or "",
                     '      '
                 ).rstrip()
                 fout.write(f"""

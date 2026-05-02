@@ -34,7 +34,6 @@ dependencies:
   - graphviz
   - ipython
   - ipywidgets
-  - numpydoc>=1.0
   - packaging>=20
   - pydata-sphinx-theme~=0.15.0
   - pyyaml

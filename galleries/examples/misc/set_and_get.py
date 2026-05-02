@@ -32,9 +32,9 @@ instance in the sequence is used.  When actually setting values, all
 the instances will be set.  For example, suppose you have a list of
 two lines, the following will make both lines thicker and red::
 
-    >>> x = np.arange(0, 1, 0.01)
-    >>> y1 = np.sin(2*np.pi*x)
-    >>> y2 = np.sin(4*np.pi*x)
+    >>> x = mlxarr.arange(0, 1, 0.01)
+    >>> y1 = mlxarr.sin(2*mlxarr.pi*x)
+    >>> y2 = mlxarr.sin(4*mlxarr.pi*x)
     >>> lines = plt.plot(x, y1, x, y2)
     >>> plt.setp(lines, linewidth=2, color='r')
 
@@ -70,10 +70,10 @@ these properties will be listed as 'fullname' or 'aliasname'.
 
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
-x = np.arange(0, 1.0, 0.01)
-y1 = np.sin(2*np.pi*x)
-y2 = np.sin(4*np.pi*x)
+from matplotlib import _mlx_array as mlxarr
+x = mlxarr.arange(0, 1.0, 0.01)
+y1 = mlxarr.sin(2*mlxarr.pi*x)
+y2 = mlxarr.sin(4*mlxarr.pi*x)
 lines = plt.plot(x, y1, x, y2)
 l1, l2 = lines
 plt.setp(lines, linestyle='--')       # set both to dashed

@@ -17,8 +17,8 @@ formatting and axis labeling.
 from basic_units import cos, degrees, radians
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
-x = [val*radians for val in np.arange(0, 15, 0.01)]
+from matplotlib import _mlx_array as mlxarr
+x = [val*radians for val in mlxarr.arange(0, 15, 0.01)]
 
 fig, axs = plt.subplots(2)
 

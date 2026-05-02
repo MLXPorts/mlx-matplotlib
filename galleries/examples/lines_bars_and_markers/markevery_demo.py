@@ -20,7 +20,7 @@ In short:
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 # define a list of markevery cases to plot
 cases = [
     None,
@@ -36,8 +36,8 @@ cases = [
 
 # data points
 delta = 0.11
-x = np.linspace(0, 10 - 2 * delta, 200) + delta
-y = np.sin(x) + 1.0 + delta
+x = mlxarr.linspace(0, 10 - 2 * delta, 200) + delta
+y = mlxarr.sin(x) + 1.0 + delta
 
 # %%
 # markevery with linear scales
@@ -85,8 +85,8 @@ for ax, markevery in zip(axs.flat, cases):
 # markevery on polar plots
 # ------------------------
 
-r = np.linspace(0, 3.0, 200)
-theta = 2 * np.pi * r
+r = mlxarr.linspace(0, 3.0, 200)
+theta = 2 * mlxarr.pi * r
 
 fig, axs = plt.subplots(3, 3, figsize=(10, 6), layout='constrained',
                         subplot_kw={'projection': 'polar'})

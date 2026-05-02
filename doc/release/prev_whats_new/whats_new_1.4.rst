@@ -120,7 +120,7 @@ and :func:`~matplotlib.mlab.detrend`, as well as adding
 
 Support for strides in mlab
 ```````````````````````````
-Todd Jennings added some functions to mlab to make it easier to use NumPy
+Todd Jennings added some functions to mlab to make it easier to use MLXArrayBackend
 strides to create memory-efficient 2D arrays.  This includes
 ``matplotlib.mlab.stride_repeat``, which repeats an array to create a 2D
 array, and ``matplotlib.mlab.stride_windows``, which uses a moving window
@@ -213,7 +213,7 @@ More *markevery* options to show only a subset of markers
 `````````````````````````````````````````````````````````
 Rohan Walker extended the *markevery* property in
 :class:`~matplotlib.lines.Line2D`.  You can now specify a subset of markers to
-show with an int, slice object, numpy fancy indexing, or float. Using a float
+show with an int, slice object, array_backend fancy indexing, or float. Using a float
 shows markers at approximately equal display-coordinate-distances along the
 line.
 

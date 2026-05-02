@@ -15,16 +15,16 @@ that subfigures can also have their own child subfigures.
 
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 def example_plot(ax, fontsize=12, hide_labels=False):
-    pc = ax.pcolormesh(np.random.randn(30, 30), vmin=-2.5, vmax=2.5)
+    pc = ax.pcolormesh(mlxarr.random.randn(30, 30), vmin=-2.5, vmax=2.5)
     if not hide_labels:
         ax.set_xlabel('x-label', fontsize=fontsize)
         ax.set_ylabel('y-label', fontsize=fontsize)
         ax.set_title('Title', fontsize=fontsize)
     return pc
 
-np.random.seed(19680808)
+mlxarr.random.seed(19680808)
 # gridspec inside gridspec
 fig = plt.figure(layout='constrained', figsize=(10, 4))
 subfigs = fig.subfigures(1, 2, wspace=0.07)
@@ -66,7 +66,7 @@ for a in axs[:, 0]:
 
 # plot data in remaining Axes:
 for a in axs[:, 1:].flat:
-    a.plot(np.arange(10))
+    a.plot(mlxarr.arange(10))
 
 # make the subfigure in the empty gridspec slots:
 subfig = fig.add_subfigure(gridspec[:, 0])

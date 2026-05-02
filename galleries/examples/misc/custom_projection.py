@@ -5,7 +5,7 @@ Custom projection
 
 Showcase Hammer projection by alleviating many features of Matplotlib.
 """
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib
 from matplotlib.axes import Axes
 import matplotlib.axis as maxis
@@ -38,7 +38,7 @@ class GeoAxes(Axes):
             self._round_to = round_to
 
         def __call__(self, x, pos=None):
-            degrees = round(np.rad2deg(x) / self._round_to) * self._round_to
+            degrees = round(mlxarr.rad2deg(x) / self._round_to) * self._round_to
             return f"{degrees:0.0f}\N{DEGREE SIGN}"
 
     RESOLUTION = 75
@@ -67,8 +67,8 @@ class GeoAxes(Axes):
 
         self.grid(rcParams['axes.grid'])
 
-        Axes.set_xlim(self, -np.pi, np.pi)
-        Axes.set_ylim(self, -np.pi / 2.0, np.pi / 2.0)
+        Axes.set_xlim(self, -mlxarr.pi, mlxarr.pi)
+        Axes.set_ylim(self, -mlxarr.pi / 2.0, mlxarr.pi / 2.0)
 
     def _set_lim_and_transforms(self):
         # A (possibly non-linear) projection on the (already scaled) data
@@ -150,7 +150,7 @@ class GeoAxes(Axes):
         # (1, ymax).  The goal of these transforms is to go from that
         # space to display space.  The tick labels will be offset 4
         # pixels from the edge of the Axes ellipse.
-        yaxis_stretch = Affine2D().scale(np.pi*2, 1).translate(-np.pi, 0)
+        yaxis_stretch = Affine2D().scale(mlxarr.pi*2, 1).translate(-mlxarr.pi, 0)
         yaxis_space = Affine2D().scale(1.0, 1.1)
         self._yaxis_transform = \
             yaxis_stretch + \
@@ -170,8 +170,8 @@ class GeoAxes(Axes):
 
     def _get_affine_transform(self):
         transform = self._get_core_transform(1)
-        xscale, _ = transform.transform((np.pi, 0))
-        _, yscale = transform.transform((0, np.pi/2))
+        xscale, _ = transform.transform((mlxarr.pi, 0))
+        _, yscale = transform.transform((0, mlxarr.pi/2))
         return Affine2D() \
             .scale(0.5 / xscale, 0.5 / yscale) \
             .translate(0.5, 0.5)
@@ -268,7 +268,7 @@ class GeoAxes(Axes):
 
         In this case, we want them to be displayed in degrees N/S/E/W.
         """
-        lon, lat = np.rad2deg([lon, lat])
+        lon, lat = mlxarr.rad2deg([lon, lat])
         ns = 'N' if lat >= 0.0 else 'S'
         ew = 'E' if lon >= 0.0 else 'W'
         return ('%f\N{DEGREE SIGN}%s, %f\N{DEGREE SIGN}%s'
@@ -283,8 +283,8 @@ class GeoAxes(Axes):
         ticking than set_xticks would.
         """
         # Skip -180 and 180, which are the fixed limits.
-        grid = np.arange(-180 + degrees, 180, degrees)
-        self.xaxis.set_major_locator(FixedLocator(np.deg2rad(grid)))
+        grid = mlxarr.arange(-180 + degrees, 180, degrees)
+        self.xaxis.set_major_locator(FixedLocator(mlxarr.deg2rad(grid)))
         self.xaxis.set_major_formatter(self.ThetaFormatter(degrees))
 
     def set_latitude_grid(self, degrees):
@@ -296,8 +296,8 @@ class GeoAxes(Axes):
         set_yticks would.
         """
         # Skip -90 and 90, which are the fixed limits.
-        grid = np.arange(-90 + degrees, 90, degrees)
-        self.yaxis.set_major_locator(FixedLocator(np.deg2rad(grid)))
+        grid = mlxarr.arange(-90 + degrees, 90, degrees)
+        self.yaxis.set_major_locator(FixedLocator(mlxarr.deg2rad(grid)))
         self.yaxis.set_major_formatter(self.ThetaFormatter(degrees))
 
     def set_longitude_grid_ends(self, degrees):
@@ -312,7 +312,7 @@ class GeoAxes(Axes):
         class -- it provides an interface to something that has no
         analogy in the base Axes class.
         """
-        self._longitude_cap = np.deg2rad(degrees)
+        self._longitude_cap = mlxarr.deg2rad(degrees)
         self._xaxis_pretransform \
             .clear() \
             .scale(1.0, self._longitude_cap * 2.0) \
@@ -386,13 +386,13 @@ class HammerAxes(GeoAxes):
 
             # Pre-compute some values
             half_long = longitude / 2
-            cos_latitude = np.cos(latitude)
-            sqrt2 = np.sqrt(2)
+            cos_latitude = mlxarr.cos(latitude)
+            sqrt2 = mlxarr.sqrt(2)
 
-            alpha = np.sqrt(1 + cos_latitude * np.cos(half_long))
-            x = (2 * sqrt2) * (cos_latitude * np.sin(half_long)) / alpha
-            y = (sqrt2 * np.sin(latitude)) / alpha
-            return np.column_stack([x, y])
+            alpha = mlxarr.sqrt(1 + cos_latitude * mlxarr.cos(half_long))
+            x = (2 * sqrt2) * (cos_latitude * mlxarr.sin(half_long)) / alpha
+            y = (sqrt2 * mlxarr.sin(latitude)) / alpha
+            return mlxarr.column_stack([x, y])
 
         def transform_path_non_affine(self, path):
             # vertices = path.vertices
@@ -411,16 +411,16 @@ class HammerAxes(GeoAxes):
 
         def transform_non_affine(self, xy):
             x, y = xy.T
-            z = np.sqrt(1 - (x / 4) ** 2 - (y / 2) ** 2)
-            longitude = 2 * np.arctan((z * x) / (2 * (2 * z ** 2 - 1)))
-            latitude = np.arcsin(y*z)
-            return np.column_stack([longitude, latitude])
+            z = mlxarr.sqrt(1 - (x / 4) ** 2 - (y / 2) ** 2)
+            longitude = 2 * mlxarr.arctan((z * x) / (2 * (2 * z ** 2 - 1)))
+            latitude = mlxarr.arcsin(y*z)
+            return mlxarr.column_stack([longitude, latitude])
 
         def inverted(self):
             return HammerAxes.HammerTransform(self._resolution)
 
     def __init__(self, *args, **kwargs):
-        self._longitude_cap = np.pi / 2.0
+        self._longitude_cap = mlxarr.pi / 2.0
         super().__init__(*args, **kwargs)
         self.set_aspect(0.5, adjustable='box', anchor='C')
         self.clear()

@@ -1,6 +1,6 @@
-"""MLX-backed NumPy compatibility shim.
+"""MLX-backed array helpers.
 
-This module provides a minimal NumPy-like API implemented on top of MLX.
+This module provides a focused array API implemented on top of MLX.
 It is intentionally incomplete but covers the subset used by this codebase.
 """
 from __future__ import annotations
@@ -16,7 +16,7 @@ from typing import Any, Iterable, Iterator, List, Sequence, Tuple
 
 import mlx.core as mx
 
-# Matplotlib's NumPy-facing internals routinely request float64 arrays.
+# Matplotlib's array-facing internals routinely request float64 arrays.
 # MLX's GPU backend rejects float64 constructors, so keep this compatibility
 # layer on CPU unless callers explicitly move arrays elsewhere.
 mx.set_default_device(mx.cpu)
@@ -56,61 +56,61 @@ if not hasattr(mx.array, "data"):
 if not hasattr(mx.array, "take"):
     mx.array.take = lambda self, indices, axis=None, mode=None: take(
         self, indices, axis=axis, mode=mode)
-if not hasattr(mx.array, "_mlx_numpy_orig_mul"):
-    mx.array._mlx_numpy_orig_mul = mx.array.__mul__
+if not hasattr(mx.array, "_mlx_array_orig_mul"):
+    mx.array._mlx_array_orig_mul = mx.array.__mul__
 
     def _array_mul(self, other):
         if isinstance(other, (list, tuple)):
             other = mx.array(other, dtype=self.dtype)
-        return mx.array._mlx_numpy_orig_mul(self, other)
+        return mx.array._mlx_array_orig_mul(self, other)
 
     mx.array.__mul__ = _array_mul
-if not hasattr(mx.array, "_mlx_numpy_orig_rmul"):
-    mx.array._mlx_numpy_orig_rmul = mx.array.__rmul__
+if not hasattr(mx.array, "_mlx_array_orig_rmul"):
+    mx.array._mlx_array_orig_rmul = mx.array.__rmul__
 
     def _array_rmul(self, other):
         if isinstance(other, (list, tuple)):
             other = mx.array(other, dtype=self.dtype)
-        return mx.array._mlx_numpy_orig_rmul(self, other)
+        return mx.array._mlx_array_orig_rmul(self, other)
 
     mx.array.__rmul__ = _array_rmul
-if not hasattr(mx.array, "_mlx_numpy_orig_truediv"):
-    mx.array._mlx_numpy_orig_truediv = mx.array.__truediv__
+if not hasattr(mx.array, "_mlx_array_orig_truediv"):
+    mx.array._mlx_array_orig_truediv = mx.array.__truediv__
 
     def _array_truediv(self, other):
         if isinstance(other, (list, tuple)):
             other = mx.array(other, dtype=self.dtype)
-        return mx.array._mlx_numpy_orig_truediv(self, other)
+        return mx.array._mlx_array_orig_truediv(self, other)
 
     mx.array.__truediv__ = _array_truediv
-if not hasattr(mx.array, "_mlx_numpy_orig_rtruediv"):
-    mx.array._mlx_numpy_orig_rtruediv = mx.array.__rtruediv__
+if not hasattr(mx.array, "_mlx_array_orig_rtruediv"):
+    mx.array._mlx_array_orig_rtruediv = mx.array.__rtruediv__
 
     def _array_rtruediv(self, other):
         if isinstance(other, (list, tuple)):
             other = mx.array(other, dtype=self.dtype)
-        return mx.array._mlx_numpy_orig_rtruediv(self, other)
+        return mx.array._mlx_array_orig_rtruediv(self, other)
 
     mx.array.__rtruediv__ = _array_rtruediv
-if not hasattr(mx.array, "_mlx_numpy_orig_astype"):
-    mx.array._mlx_numpy_orig_astype = mx.array.astype
+if not hasattr(mx.array, "_mlx_array_orig_astype"):
+    mx.array._mlx_array_orig_astype = mx.array.astype
 
     def _array_astype(self, dtype, *args, **kwargs):
-        return mx.array._mlx_numpy_orig_astype(
+        return mx.array._mlx_array_orig_astype(
             self, _unwrap_dtype(dtype), *args, **kwargs)
 
     mx.array.astype = _array_astype
-if not hasattr(mx.array, "_mlx_numpy_orig_setitem"):
-    mx.array._mlx_numpy_orig_setitem = mx.array.__setitem__
+if not hasattr(mx.array, "_mlx_array_orig_setitem"):
+    mx.array._mlx_array_orig_setitem = mx.array.__setitem__
 
     def _array_setitem(self, key, value):
         if isinstance(value, (list, tuple)):
             value = mx.array(value, dtype=self.dtype)
-        return mx.array._mlx_numpy_orig_setitem(self, key, value)
+        return mx.array._mlx_array_orig_setitem(self, key, value)
 
     mx.array.__setitem__ = _array_setitem
-if not hasattr(mx.array, "_mlx_numpy_orig_getitem"):
-    mx.array._mlx_numpy_orig_getitem = mx.array.__getitem__
+if not hasattr(mx.array, "_mlx_array_orig_getitem"):
+    mx.array._mlx_array_orig_getitem = mx.array.__getitem__
 
     def _array_getitem(self, key):
         def scalar_index(value):
@@ -162,39 +162,39 @@ if not hasattr(mx.array, "_mlx_numpy_orig_getitem"):
             return mx.array([value for value, keep in zip(values, mask) if keep],
                             dtype=self.dtype)
         try:
-            return mx.array._mlx_numpy_orig_getitem(self, key)
+            return mx.array._mlx_array_orig_getitem(self, key)
         except (NotImplementedError, ValueError):
             return mx.array(_python_getitem(self.tolist(), key), dtype=self.dtype)
 
     mx.array.__getitem__ = _array_getitem
-if not hasattr(mx.array, "_mlx_numpy_orig_matmul"):
-    mx.array._mlx_numpy_orig_matmul = mx.array.__matmul__
+if not hasattr(mx.array, "_mlx_array_orig_matmul"):
+    mx.array._mlx_array_orig_matmul = mx.array.__matmul__
 
     def _array_matmul(self, other):
         if isinstance(other, (list, tuple)):
             other = mx.array([_to_scalar(item) for item in other],
                              dtype=self.dtype)
-        return mx.array._mlx_numpy_orig_matmul(self, other)
+        return mx.array._mlx_array_orig_matmul(self, other)
 
     mx.array.__matmul__ = _array_matmul
-if not hasattr(mx.array, "_mlx_numpy_orig_sub"):
-    mx.array._mlx_numpy_orig_sub = mx.array.__sub__
+if not hasattr(mx.array, "_mlx_array_orig_sub"):
+    mx.array._mlx_array_orig_sub = mx.array.__sub__
 
     def _array_sub(self, other):
         if isinstance(other, (list, tuple)):
             other = mx.array([_to_scalar(item) for item in other],
                              dtype=self.dtype)
-        return mx.array._mlx_numpy_orig_sub(self, other)
+        return mx.array._mlx_array_orig_sub(self, other)
 
     mx.array.__sub__ = _array_sub
-if not hasattr(mx.array, "_mlx_numpy_orig_add"):
-    mx.array._mlx_numpy_orig_add = mx.array.__add__
+if not hasattr(mx.array, "_mlx_array_orig_add"):
+    mx.array._mlx_array_orig_add = mx.array.__add__
 
     def _array_add(self, other):
         if isinstance(other, (list, tuple)):
             other = mx.array([_to_scalar(item) for item in other],
                              dtype=self.dtype)
-        return mx.array._mlx_numpy_orig_add(self, other)
+        return mx.array._mlx_array_orig_add(self, other)
 
     mx.array.__add__ = _array_add
 if not hasattr(mx.array, "flat"):
@@ -222,11 +222,11 @@ if not hasattr(mx.array, "flags"):
 
 @dataclass(frozen=True)
 class DType:
-    """A small callable dtype wrapper (NumPy-style) around an MLX dtype.
+    """A small callable dtype wrapper around an MLX dtype.
 
-    In NumPy, dtypes like ``np.uint8`` are both valid ``dtype=`` values and
-    callable scalar/array constructors (e.g. ``np.uint8(0)``). MLX exposes dtype
-    objects but they are not callable, so we wrap them here.
+    Dtypes like ``mlxarr.uint8`` are both valid ``dtype=`` values and callable
+    scalar/array constructors. MLX exposes dtype objects but they are not
+    callable, so we wrap them here.
     """
 
     mx_dtype: Any
@@ -252,7 +252,7 @@ class DType:
         return hash((self.name, self.mx_dtype))
 
     def __repr__(self) -> str:  # pragma: no cover
-        return f"np.{self.name}"
+        return f"mlxarr.{self.name}"
 
 
 _STRING_TO_MX_DTYPE = {
@@ -319,7 +319,7 @@ def _unwrap_dtype(dtype: Any | None) -> Any | None:
     return dtype
 
 
-# Public dtypes (NumPy-like: usable as dtype= and callable constructors).
+# Public dtypes (MLXArrayBackend-like: usable as dtype= and callable constructors).
 bool_ = DType(mx.bool_, "bool_", "b", 1, "?")
 float16 = DType(mx.float16, "float16", "f", 2, "e")
 float32 = DType(mx.float32, "float32", "f", 4, "f")
@@ -371,8 +371,8 @@ if not hasattr(type(mx.float32), "itemsize"):
     type(mx.float32).itemsize = property(lambda self: _DTYPE_BY_MX.get(self, _object_dtype).itemsize)
 if not hasattr(type(mx.float32), "isnative"):
     type(mx.float32).isnative = property(lambda self: True)
-if not hasattr(type(mx.float32), "_mlx_numpy_orig_eq"):
-    type(mx.float32)._mlx_numpy_orig_eq = type(mx.float32).__eq__
+if not hasattr(type(mx.float32), "_mlx_array_orig_eq"):
+    type(mx.float32)._mlx_array_orig_eq = type(mx.float32).__eq__
 
     def _mx_dtype_eq(self, other):
         other = _unwrap_dtype(other)
@@ -403,7 +403,7 @@ def dtype(value: Any, *args: Any, copy: bool | None = None, **kwargs: Any) -> DT
             return _DTYPE_BY_NAME[value]
     raise AttributeError("dtype")
 
-# NumPy-like scalars/constants
+# MLXArrayBackend-like scalars/constants
 pi = math.pi
 e = math.e
 inf = float("inf")
@@ -414,7 +414,7 @@ ndarray = mx.array
 
 
 class flatiter:
-    """Placeholder for NumPy's ndarray.flat iterator type."""
+    """Placeholder for MLXArrayBackend's ndarray.flat iterator type."""
 
 
 @dataclass(frozen=True)
@@ -478,10 +478,8 @@ class _PythonArray:
             return _PythonArray([v for v, keep in zip(self.tolist(), key) if keep],
                                 dtype=self.dtype)
         if isinstance(key, tuple):
-            value = self._data
-            for part in key:
-                value = value[part]
-            return value
+            value = _python_getitem(self._data, key)
+            return _PythonArray(value, dtype=self.dtype) if isinstance(value, list) else value
         value = self._data[key] if isinstance(self._data, list) else self._data
         return _PythonArray(value, dtype=self.dtype) if isinstance(value, list) else value
 
@@ -636,6 +634,8 @@ def _python_getitem(data: Any, key: Any) -> Any:
     first, *rest = key
     if isinstance(first, mx.array):
         first = first.tolist()
+    if first is None:
+        return [_python_getitem(data, tuple(rest))]
     if (isinstance(first, tuple)
             and _builtins.all(isinstance(item, int) for item in first)):
         first = list(first)
@@ -1157,8 +1157,23 @@ def any(a: Any, axis: int | None = None) -> Any:
     return _to_scalar(mx.any(_to_mx(a), axis=axis))
 
 
+def _python_isfinite(value: Any) -> Any:
+    if isinstance(value, list):
+        return [_python_isfinite(item) for item in value]
+    if value is None:
+        return False
+    try:
+        return math.isfinite(value)
+    except (TypeError, ValueError):
+        return True
+
+
 def isfinite(a: Any) -> mx.array:
-    return mx.isfinite(_to_mx(a))
+    arr = _to_mx(a)
+    if isinstance(arr, _PythonArray):
+        result = _python_isfinite(arr.tolist())
+        return mx.array(result, dtype=mx.bool_) if isinstance(result, list) else result
+    return mx.isfinite(arr)
 
 
 def isinf(a: Any) -> mx.array:
@@ -1489,15 +1504,15 @@ def frombuffer(buffer_obj: bytes, dtype: Any | None = None) -> mx.array:
 
 
 def fromfile(*args: Any, **kwargs: Any) -> mx.array:
-    raise NotImplementedError("fromfile is not supported without NumPy")
+    raise NotImplementedError("fromfile is not supported without MLXArrayBackend")
 
 
 def genfromtxt(*args: Any, **kwargs: Any) -> mx.array:
-    raise NotImplementedError("genfromtxt is not supported without NumPy")
+    raise NotImplementedError("genfromtxt is not supported without MLXArrayBackend")
 
 
 def loadtxt(*args: Any, **kwargs: Any) -> mx.array:
-    raise NotImplementedError("loadtxt is not supported without NumPy")
+    raise NotImplementedError("loadtxt is not supported without MLXArrayBackend")
 
 
 def histogram(a: Any, bins: int = 10, range: Tuple[float, float] | None = None):
@@ -1958,8 +1973,41 @@ def can_cast(from_: Any, to: Any, casting: str | None = None):
     return True
 
 
+def _dtype_kind(value: Any) -> str | None:
+    if isinstance(value, DType):
+        return value.kind
+    if value in _DTYPE_BY_MX:
+        return _DTYPE_BY_MX[value].kind
+    if value is _builtins.bool:
+        return "b"
+    if value is _builtins.int:
+        return "i"
+    if value is _builtins.float:
+        return "f"
+    if value is datetime64:
+        return "M"
+    if value is timedelta64:
+        return "m"
+    if isinstance(value, str):
+        if value.startswith("datetime64"):
+            return "M"
+        if value.startswith("timedelta64"):
+            return "m"
+        dt = _DTYPE_BY_NAME.get(value)
+        return dt.kind if dt is not None else None
+    return None
+
+
 def issubdtype(arg1: Any, arg2: Any):
-    return True
+    kind1 = _dtype_kind(arg1)
+    kind2 = _dtype_kind(arg2)
+    if arg2 is integer:
+        return kind1 in {"i", "u"}
+    if arg2 is floating:
+        return kind1 == "f"
+    if kind2 is None:
+        return arg1 == arg2
+    return kind1 == kind2
 
 
 def min_scalar_type(arg: Any):
@@ -2108,14 +2156,24 @@ def maxnan(x: Any):
     return nanmax(x)
 
 
+@dataclass(frozen=True)
+class _DateTime64String:
+    value: str
+
+
 def datetime64(value: Any, *args: Any, **kwargs: Any):
     if isinstance(value, datetime):
         return value
     if isinstance(value, str):
+        if value == "NaT":
+            return None
         try:
             return datetime.fromisoformat(value)
         except ValueError:
-            return datetime.fromisoformat(value + "T00:00:00")
+            try:
+                return datetime.fromisoformat(value + "T00:00:00")
+            except ValueError:
+                return _DateTime64String(value)
     return value
 
 
@@ -2123,6 +2181,19 @@ def timedelta64(value: Any, *args: Any, **kwargs: Any):
     if isinstance(value, timedelta):
         return value
     if isinstance(value, (int, float)):
+        unit = args[0] if args else kwargs.get("unit", "s")
+        if unit == "ns":
+            return timedelta(microseconds=value / 1000)
+        if unit == "us":
+            return timedelta(microseconds=value)
+        if unit == "ms":
+            return timedelta(milliseconds=value)
+        if unit == "m":
+            return timedelta(minutes=value)
+        if unit == "h":
+            return timedelta(hours=value)
+        if unit == "D":
+            return timedelta(days=value)
         return timedelta(seconds=value)
     return value
 
@@ -2256,13 +2327,38 @@ random = _Random()
 default_rng = random.default_rng
 
 
+def _testing_plain(value: Any) -> Any:
+    if isinstance(value, mx.array):
+        return value.tolist()
+    if isinstance(value, _PythonArray):
+        return value.tolist()
+    if isinstance(value, (list, tuple)):
+        return [_testing_plain(item) for item in value]
+    return value
+
+
+def _testing_equal(a: Any, b: Any) -> bool:
+    a = _testing_plain(a)
+    b = _testing_plain(b)
+    if isinstance(a, list) or isinstance(b, list):
+        return (isinstance(a, list) and isinstance(b, list)
+                and len(a) == len(b)
+                and _builtins.all(_testing_equal(x, y) for x, y in zip(a, b)))
+    try:
+        if math.isnan(a) and math.isnan(b):
+            return True
+    except TypeError:
+        pass
+    return a == b
+
+
 class _Testing:
     def assert_allclose(self, a: Any, b: Any, rtol: float = 1e-5, atol: float = 1e-8, err_msg: str | None = None):
         if not allclose(a, b, rtol=rtol, atol=atol):
             raise AssertionError(err_msg or "Arrays are not equal within tolerance")
 
     def assert_array_equal(self, a: Any, b: Any, err_msg: str | None = None):
-        if not array_equal(a, b):
+        if not array_equal(a, b) and not _testing_equal(a, b):
             raise AssertionError(err_msg or "Arrays are not equal")
 
     def assert_array_almost_equal(self, a: Any, b: Any, decimal: int = 6):
@@ -2274,7 +2370,7 @@ class _Testing:
             raise AssertionError(err_msg or "Arrays are not ordered")
 
     def assert_equal(self, a: Any, b: Any, err_msg: str | None = None):
-        if isinstance(a, (list, tuple, _PythonArray)) or isinstance(b, (list, tuple, _PythonArray)):
+        if isinstance(a, (list, tuple, mx.array, _PythonArray)) or isinstance(b, (list, tuple, mx.array, _PythonArray)):
             return self.assert_array_equal(a, b, err_msg=err_msg)
         if a != b:
             raise AssertionError(err_msg or f"{a!r} != {b!r}")

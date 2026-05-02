@@ -33,7 +33,7 @@ supplied.
     :align: center
 
     import matplotlib.pyplot as plt
-    from matplotlib import _mlx_numpy as np
+    from matplotlib import _mlx_array as mlxarr
 
     fig, ax = plt.subplots(1, 2, layout='constrained', figsize=(6, 2))
 
@@ -44,14 +44,14 @@ supplied.
     ax[0].tick_params(axis='x', labelcolor='red', labelsize=14)
 
     ax[1].set_title('Many ticks')
-    x = [str(xx) for xx in np.arange(100)]  # strings
-    y = np.arange(100)
+    x = [str(xx) for xx in mlxarr.arange(100)]  # strings
+    y = mlxarr.arange(100)
     ax[1].plot(x, y)
     ax[1].tick_params(axis='x', labelcolor='red', labelsize=14)
 
 The solution is to convert the list of strings to numbers or
-datetime objects (often ``np.asarray(numeric_strings, dtype='float')`` or
-``np.asarray(datetime_strings, dtype='datetime64[s]')``).
+datetime objects (often ``mlxarr.asarray(numeric_strings, dtype='float')`` or
+``mlxarr.asarray(datetime_strings, dtype='datetime64[s]')``).
 
 For more information see :doc:`/gallery/ticks/ticks_too_many`.
 
@@ -253,19 +253,19 @@ locators as desired because the two axes are independent.
 
 .. plot::
 
-    from matplotlib import _mlx_numpy as np
+    from matplotlib import _mlx_array as mlxarr
     import matplotlib.pyplot as plt
 
     fig = plt.figure()
     ax1 = fig.add_subplot(111)
-    t = np.arange(0.01, 10.0, 0.01)
-    s1 = np.exp(t)
+    t = mlxarr.arange(0.01, 10.0, 0.01)
+    s1 = mlxarr.exp(t)
     ax1.plot(t, s1, 'b-')
     ax1.set_xlabel('time (s)')
     ax1.set_ylabel('exp')
 
     ax2 = ax1.twinx()
-    s2 = np.sin(2*np.pi*t)
+    s2 = mlxarr.sin(2*mlxarr.pi*t)
     ax2.plot(t, s2, 'r.')
     ax2.set_ylabel('sin')
     plt.show()

@@ -1,4 +1,4 @@
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib import _docstring
 from matplotlib.contour import ContourSet
 from matplotlib.tri._triangulation import Triangulation
@@ -53,22 +53,22 @@ class TriContourSet(ContourSet):
         tri, args, kwargs = Triangulation.get_from_args_and_kwargs(*args,
                                                                    **kwargs)
         z, *args = args
-        z = np.ma.asarray(z)
+        z = mlxarr.ma.asarray(z)
         if z.shape != tri.x.shape:
             raise ValueError('z array must have same length as triangulation x'
                              ' and y arrays')
 
         # z values must be finite, only need to check points that are included
         # in the triangulation.
-        z_check = z[np.unique(tri.get_masked_triangles())]
-        if np.ma.is_masked(z_check):
+        z_check = z[mlxarr.unique(tri.get_masked_triangles())]
+        if mlxarr.ma.is_masked(z_check):
             raise ValueError('z must not contain masked points within the '
                              'triangulation')
-        if not np.isfinite(z_check).all():
+        if not mlxarr.isfinite(z_check).all():
             raise ValueError('z array must not contain non-finite values '
                              'within the triangulation')
 
-        z = np.ma.masked_invalid(z, copy=False)
+        z = mlxarr.ma.masked_invalid(z, copy=False)
         self.zmax = float(z_check.max())
         self.zmin = float(z_check.min())
         if self.logscale and self.zmin <= 0:

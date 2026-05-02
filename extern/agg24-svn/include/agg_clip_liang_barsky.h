@@ -99,7 +99,7 @@ namespace agg
         double tin1;
         double tin2;
         double tout1;
-        unsigned np = 0;
+        unsigned point_count = 0;
 
         if(deltax == 0.0) 
         {   
@@ -159,7 +159,7 @@ namespace agg
             {
                 *x++ = (T)xin;
                 *y++ = (T)yin;
-                ++np;
+                ++point_count;
             }
 
             if(tin2 <= 1.0)
@@ -185,7 +185,7 @@ namespace agg
                                 *x++ = (T)(x1 + tiny * deltax);
                                 *y++ = (T)yin;
                             }
-                            ++np;
+                            ++point_count;
                         }
 
                         if(tout1 < 1.0) 
@@ -206,7 +206,7 @@ namespace agg
                             *x++ = x2;
                             *y++ = y2;
                         }
-                        ++np;
+                        ++point_count;
                     }
                     else 
                     {
@@ -220,12 +220,12 @@ namespace agg
                             *x++ = (T)xout;
                             *y++ = (T)yin;
                         }
-                        ++np;
+                        ++point_count;
                     }
                 }
             }
         }
-        return np;
+        return point_count;
     }
 
 

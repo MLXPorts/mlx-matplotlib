@@ -41,14 +41,14 @@ See :doc:`/gallery/subplots_axes_and_figures/subfigures` for further details.
 .. plot::
 
     def example_plot(ax, fontsize=12, hide_labels=False):
-        pc = ax.pcolormesh(np.random.randn(30, 30))
+        pc = ax.pcolormesh(mlxarr.random.randn(30, 30))
         if not hide_labels:
             ax.set_xlabel('x-label', fontsize=fontsize)
             ax.set_ylabel('y-label', fontsize=fontsize)
             ax.set_title('Title', fontsize=fontsize)
         return pc
 
-    np.random.seed(19680808)
+    mlxarr.random.seed(19680808)
     fig = plt.figure(constrained_layout=True, figsize=(10, 4))
     subfigs = fig.subfigures(1, 2, wspace=0.07)
 
@@ -211,8 +211,8 @@ For example, the following will cycle through the line styles:
 .. plot::
     :include-source:
 
-    x = np.arange(0.1, 4, 0.5)
-    y = np.exp(-x)
+    x = mlxarr.arange(0.1, 4, 0.5)
+    y = mlxarr.exp(-x)
     offsets = [0, 1]
 
     plt.rcParams['axes.prop_cycle'] = plt.cycler('linestyle', ['-', '--'])
@@ -225,12 +225,12 @@ For example, the following will cycle through the line styles:
 -------------------------------------------------------
 
 Similar to the *markevery* parameter to `~.Axes.plot`, the *errorevery*
-parameter of `~.Axes.errorbar` now accept slices and NumPy fancy indexes (which
+parameter of `~.Axes.errorbar` now accept slices and MLXArrayBackend fancy indexes (which
 must match the size of *x*).
 
 .. plot::
 
-    x = np.linspace(0, 1, 15)
+    x = mlxarr.linspace(0, 1, 15)
     y = x * (1-x)
     yerr = y/6
 
@@ -252,9 +252,9 @@ parameter using a data reference.
     :include-source:
 
     data = {
-        'a': np.random.rand(1000),
-        'b': np.random.rand(1000),
-        'c': np.random.rand(1000),
+        'a': mlxarr.random.rand(1000),
+        'b': mlxarr.random.rand(1000),
+        'c': mlxarr.random.rand(1000),
     }
 
     fig, ax = plt.subplots()
@@ -332,16 +332,16 @@ New ``stairs`` method and ``StepPatch`` artist
 `.pyplot.stairs` and the underlying artist `~.matplotlib.patches.StepPatch`
 provide a cleaner interface for plotting stepwise constant functions for the
 common case that you know the step edges. This supersedes many use cases of
-`.pyplot.step`, for instance when plotting the output of `numpy.histogram`.
+`.pyplot.step`, for instance when plotting the output of `array_backend.histogram`.
 
 For both the artist and the function, the x-like edges input is one element
 longer than the y-like values input
 
 .. plot::
 
-    np.random.seed(0)
-    h, edges = np.histogram(np.random.normal(5, 2, 5000),
-                            bins=np.linspace(0,10,20))
+    mlxarr.random.seed(0)
+    h, edges = mlxarr.histogram(mlxarr.random.normal(5, 2, 5000),
+                            bins=mlxarr.linspace(0,10,20))
 
     fig, ax = plt.subplots(constrained_layout=True)
 
@@ -359,8 +359,8 @@ the *orientation* parameter of `.Axes.stem` or `.pyplot.stem`:
 
 .. plot::
 
-    locs = np.linspace(0.1, 2 * np.pi, 25)
-    heads = np.cos(locs)
+    locs = mlxarr.linspace(0.1, 2 * mlxarr.pi, 25)
+    heads = mlxarr.cos(locs)
 
     fig, ax = plt.subplots()
     ax.stem(locs, heads, orientation='horizontal')
@@ -432,15 +432,15 @@ Now it is possible to supply alpha as an array with one value for each element
 
 .. plot::
 
-    x = np.arange(5, dtype=float)
-    y = np.arange(5, dtype=float)
+    x = mlxarr.arange(5, dtype=float)
+    y = mlxarr.arange(5, dtype=float)
     # z and zalpha for demo pcolormesh
-    z = x[1:, np.newaxis] + y[np.newaxis, 1:]
-    zalpha = np.ones_like(z)
+    z = x[1:, mlxarr.newaxis] + y[mlxarr.newaxis, 1:]
+    zalpha = mlxarr.ones_like(z)
     zalpha[::2, ::2] = 0.3  # alternate patches are partly transparent
     # s and salpha for demo scatter
     s = x
-    salpha = np.linspace(0.1, 0.9, len(x))  # just a ramp
+    salpha = mlxarr.linspace(0.1, 0.9, len(x))  # just a ramp
 
     fig, axs = plt.subplots(2, 2, constrained_layout=True)
     axs[0, 0].pcolormesh(x, y, z, alpha=zalpha)
@@ -466,7 +466,7 @@ default. To restore the old behavior (e.g., for test images), you may set
     # Use old pcolormesh snapping values
     plt.rcParams['pcolormesh.snap'] = False
     fig, ax = plt.subplots()
-    xx, yy = np.meshgrid(np.arange(10), np.arange(10))
+    xx, yy = mlxarr.meshgrid(mlxarr.arange(10), mlxarr.arange(10))
     z = (xx + 1) * (yy + 1)
     mesh = ax.pcolormesh(xx, yy, z, shading='auto', alpha=0.5)
     fig.colorbar(mesh, orientation='vertical')
@@ -481,7 +481,7 @@ boundaries disappear.
 .. plot::
 
     fig, ax = plt.subplots()
-    xx, yy = np.meshgrid(np.arange(10), np.arange(10))
+    xx, yy = mlxarr.meshgrid(mlxarr.arange(10), mlxarr.arange(10))
     z = (xx + 1) * (yy + 1)
     mesh = ax.pcolormesh(xx, yy, z, shading='auto', alpha=0.5)
     fig.colorbar(mesh, orientation='vertical')
@@ -565,8 +565,8 @@ unsaturated color in its center.
 
     from matplotlib.colors import CenteredNorm
 
-    np.random.seed(20201004)
-    data = np.random.normal(size=(3, 4), loc=1)
+    mlxarr.random.seed(20201004)
+    data = mlxarr.random.normal(size=(3, 4), loc=1)
 
     fig, ax = plt.subplots()
     pc = ax.pcolormesh(data, cmap=plt.get_cmap('RdGy'), norm=CenteredNorm())
@@ -600,12 +600,12 @@ forward and inverse.
     def forward(x):
         return x**2
     def inverse(x):
-        return np.sqrt(x)
+        return mlxarr.sqrt(x)
 
     norm = FuncNorm((forward, inverse), vmin=0, vmax=3)
 
-    np.random.seed(20201004)
-    data = np.random.normal(size=(3, 4), loc=1)
+    mlxarr.random.seed(20201004)
+    data = mlxarr.random.normal(size=(3, 4), loc=1)
 
     fig, ax = plt.subplots()
     pc = ax.pcolormesh(data, norm=norm)
@@ -641,13 +641,13 @@ It is possible to add x- and y-labels to a whole figure, analogous to
 
 .. plot::
 
-    np.random.seed(19680801)
+    mlxarr.random.seed(19680801)
     fig, axs = plt.subplots(3, 2, figsize=(5, 5), constrained_layout=True,
                             sharex=True, sharey=True)
 
     for nn, ax in enumerate(axs.flat):
         ax.set_title(f'Channel {nn}')
-        ax.plot(np.cumsum(np.random.randn(50)))
+        ax.plot(mlxarr.cumsum(mlxarr.random.randn(50)))
 
     fig.supxlabel('Time [s]')
     fig.supylabel('Data [V]')
@@ -778,8 +778,8 @@ evenly spaced ticks that start wherever the timeseries starts:
 .. plot::
     :include-source:
 
-    dates = np.arange('2001-01-10', '2001-05-23', dtype='datetime64[D]')
-    y = np.sin(dates.astype(float) / 10)
+    dates = mlxarr.arange('2001-01-10', '2001-05-23', dtype='datetime64[D]')
+    y = mlxarr.sin(dates.astype(float) / 10)
     fig, axs = plt.subplots(nrows=2, constrained_layout=True)
 
     plt.rcParams['date.converter'] = 'concise'
@@ -872,9 +872,9 @@ Stem plots are now supported on 3D Axes. Much like 2D stems,
 
 .. plot::
 
-    theta = np.linspace(0, 2*np.pi)
-    x = np.cos(theta - np.pi/2)
-    y = np.sin(theta - np.pi/2)
+    theta = mlxarr.linspace(0, 2*mlxarr.pi)
+    x = mlxarr.cos(theta - mlxarr.pi/2)
+    y = mlxarr.sin(theta - mlxarr.pi/2)
     z = theta
     directions = ['z', 'x', 'y']
     names = [r'$\theta$', r'$\cos\theta$', r'$\sin\theta$']

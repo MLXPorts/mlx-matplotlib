@@ -197,8 +197,8 @@ Pull Requests (156):
 * :ghpull:`25411`: Backport PR #25409 on branch v3.7.x (Improve/correct documentation)
 * :ghpull:`25409`: Improve/correct documentation
 * :ghpull:`25402`: Merge v3.7.1-doc into v3.7.x
-* :ghpull:`25397`: Backport PR #25384 on branch v3.7.x (FIX: Remove some numpy function overrides from pylab)
-* :ghpull:`25384`: FIX: Remove some numpy function overrides from pylab
+* :ghpull:`25397`: Backport PR #25384 on branch v3.7.x (FIX: Remove some array_backend function overrides from pylab)
+* :ghpull:`25384`: FIX: Remove some array_backend function overrides from pylab
 * :ghpull:`25392`: Backport PR #25388 on branch v3.7.x (Better axis labels for examples)
 
 Issues (36):

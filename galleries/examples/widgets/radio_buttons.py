@@ -15,13 +15,13 @@ settings with length matching the number of buttons.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.widgets import RadioButtons
 
-t = np.arange(0.0, 2.0, 0.01)
-s0 = np.sin(2*np.pi*t)
-s1 = np.sin(4*np.pi*t)
-s2 = np.sin(8*np.pi*t)
+t = mlxarr.arange(0.0, 2.0, 0.01)
+s0 = mlxarr.sin(2*mlxarr.pi*t)
+s1 = mlxarr.sin(4*mlxarr.pi*t)
+s2 = mlxarr.sin(8*mlxarr.pi*t)
 
 fig, ax = plt.subplot_mosaic(
     [

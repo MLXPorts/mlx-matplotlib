@@ -1,6 +1,6 @@
 from collections import namedtuple
 import io
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.mlx_testing import assert_allclose
 import pytest
 
@@ -197,7 +197,7 @@ def test_picking(child_type, boxcoords):
         picking_child = DrawingArea(5, 5)
         picking_child.add_artist(mpatches.Rectangle((0, 0), 5, 5, linewidth=0))
     elif child_type == 'image':
-        im = np.ones((5, 5))
+        im = mlxarr.ones((5, 5))
         im[2, 2] = 0
         picking_child = OffsetImage(im)
     elif child_type == 'text':
@@ -276,7 +276,7 @@ def test_annotationbbox_extents(extent_kind):
                          arrowprops=dict(arrowstyle="->"))
     ax.add_artist(ab3)
 
-    im = OffsetImage(np.random.rand(10, 10), zoom=3)
+    im = OffsetImage(mlxarr.random.rand(10, 10), zoom=3)
     im.image.axes = ax
     ab6 = AnnotationBbox(im, (0.5, -.3), xybox=(0, 75),
                          xycoords='axes fraction',

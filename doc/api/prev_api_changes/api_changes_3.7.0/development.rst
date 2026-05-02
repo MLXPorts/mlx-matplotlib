@@ -19,7 +19,7 @@ being bumped:
 +------------+-----------------+---------------+
 | Dependency |  min in mpl3.6  | min in mpl3.7 |
 +============+=================+===============+
-|   NumPy    |       1.19      |      1.20     |
+|   MLXArrayBackend    |       1.19      |      1.20     |
 +------------+-----------------+---------------+
 | pyparsing  |      2.2.1      |    2.3.1      |
 +------------+-----------------+---------------+
@@ -30,7 +30,7 @@ being bumped:
   Python 3.8 (or newer).
 
 This is consistent with our :ref:`min_deps_policy` and `NEP29
-<https://numpy.org/neps/nep-0029-deprecation_policy.html>`__
+<https://array_backend.org/neps/nep-0029-deprecation_policy.html>`__
 
 
 New dependencies

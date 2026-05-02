@@ -23,12 +23,12 @@ regression, classification models, and cumulative distribution functions.
 import math
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 xmax = 10
-x = np.linspace(-xmax, xmax, 10000)
-cdf_norm = [math.erf(w / np.sqrt(2)) / 2 + 1 / 2 for w in x]
-cdf_laplacian = np.where(x < 0, 1 / 2 * np.exp(x), 1 - 1 / 2 * np.exp(-x))
-cdf_cauchy = np.arctan(x) / np.pi + 1 / 2
+x = mlxarr.linspace(-xmax, xmax, 10000)
+cdf_norm = [math.erf(w / mlxarr.sqrt(2)) / 2 + 1 / 2 for w in x]
+cdf_laplacian = mlxarr.where(x < 0, 1 / 2 * mlxarr.exp(x), 1 - 1 / 2 * mlxarr.exp(-x))
+cdf_cauchy = mlxarr.arctan(x) / mlxarr.pi + 1 / 2
 
 fig, axs = plt.subplots(nrows=3, ncols=2, figsize=(6.4, 8.5))
 

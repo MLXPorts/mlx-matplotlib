@@ -23,7 +23,7 @@ But this approach is not suitable if the planes intersect.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.colors import Normalize
 
 
@@ -37,7 +37,7 @@ def imshow3d(ax, array, value_direction='z', pos=0, norm=None, cmap=None):
     ----------
     ax : Axes3D
         The 3D Axes to plot into.
-    array : 2D numpy array
+    array : 2D array_backend array
         The image values.
     value_direction : {'x', 'y', 'z'}
         The axis normal to the image plane.
@@ -56,16 +56,16 @@ def imshow3d(ax, array, value_direction='z', pos=0, norm=None, cmap=None):
 
     if value_direction == 'x':
         nz, ny = array.shape
-        zi, yi = np.mgrid[0:nz + 1, 0:ny + 1]
-        xi = np.full_like(yi, pos)
+        zi, yi = mlxarr.mgrid[0:nz + 1, 0:ny + 1]
+        xi = mlxarr.full_like(yi, pos)
     elif value_direction == 'y':
         nx, nz = array.shape
-        xi, zi = np.mgrid[0:nx + 1, 0:nz + 1]
-        yi = np.full_like(zi, pos)
+        xi, zi = mlxarr.mgrid[0:nx + 1, 0:nz + 1]
+        yi = mlxarr.full_like(zi, pos)
     elif value_direction == 'z':
         ny, nx = array.shape
-        yi, xi = np.mgrid[0:ny + 1, 0:nx + 1]
-        zi = np.full_like(xi, pos)
+        yi, xi = mlxarr.mgrid[0:ny + 1, 0:nx + 1]
+        zi = mlxarr.full_like(xi, pos)
     else:
         raise ValueError(f"Invalid value_direction: {value_direction!r}")
     ax.plot_surface(xi, yi, zi, rstride=1, cstride=1, facecolors=colors, shade=False)
@@ -76,9 +76,9 @@ ax = fig.add_subplot(projection='3d')
 ax.set(xlabel="x", ylabel="y", zlabel="z")
 
 nx, ny, nz = 8, 10, 5
-data_xy = np.arange(ny * nx).reshape(ny, nx) + 15 * np.random.random((ny, nx))
-data_yz = np.arange(nz * ny).reshape(nz, ny) + 10 * np.random.random((nz, ny))
-data_zx = np.arange(nx * nz).reshape(nx, nz) + 8 * np.random.random((nx, nz))
+data_xy = mlxarr.arange(ny * nx).reshape(ny, nx) + 15 * mlxarr.random.random((ny, nx))
+data_yz = mlxarr.arange(nz * ny).reshape(nz, ny) + 10 * mlxarr.random.random((nz, ny))
+data_zx = mlxarr.arange(nx * nz).reshape(nx, nz) + 8 * mlxarr.random.random((nx, nz))
 
 imshow3d(ax, data_xy)
 imshow3d(ax, data_yz, value_direction='x', cmap='magma')

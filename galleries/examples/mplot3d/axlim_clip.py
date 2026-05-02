@@ -9,15 +9,15 @@ functions.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
 
 # Make the data
-x = np.arange(-5, 5, 0.5)
-y = np.arange(-5, 5, 0.5)
-X, Y = np.meshgrid(x, y)
-R = np.sqrt(X**2 + Y**2)
-Z = np.sin(R)
+x = mlxarr.arange(-5, 5, 0.5)
+y = mlxarr.arange(-5, 5, 0.5)
+X, Y = mlxarr.meshgrid(x, y)
+R = mlxarr.sqrt(X**2 + Y**2)
+Z = mlxarr.sin(R)
 
 # Default behavior is axlim_clip=False
 ax.plot_wireframe(X, Y, Z, color='C0')

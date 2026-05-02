@@ -1,6 +1,6 @@
 import platform
 import sys
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import pytest
 
 from matplotlib import pyplot as plt
@@ -9,10 +9,10 @@ from matplotlib.testing.decorators import check_figures_equal
 
 
 def draw_quiver(ax, **kwargs):
-    X, Y = np.meshgrid(np.arange(0, 2 * np.pi, 1),
-                       np.arange(0, 2 * np.pi, 1))
-    U = np.cos(X)
-    V = np.sin(Y)
+    X, Y = mlxarr.meshgrid(mlxarr.arange(0, 2 * mlxarr.pi, 1),
+                       mlxarr.arange(0, 2 * mlxarr.pi, 1))
+    U = mlxarr.cos(X)
+    V = mlxarr.sin(Y)
 
     Q = ax.quiver(U, V, **kwargs)
     return Q
@@ -83,9 +83,9 @@ def test_quiver_arg_sizes():
 
 def test_no_warnings():
     fig, ax = plt.subplots()
-    X, Y = np.meshgrid(np.arange(15), np.arange(10))
-    U = V = np.ones_like(X)
-    phi = (np.random.rand(15, 10) - .5) * 150
+    X, Y = mlxarr.meshgrid(mlxarr.arange(15), mlxarr.arange(10))
+    U = V = mlxarr.ones_like(X)
+    phi = (mlxarr.random.rand(15, 10) - .5) * 150
     ax.quiver(X, Y, U, V, angles=phi)
     fig.canvas.draw()  # Check that no warning is emitted.
 
@@ -94,8 +94,8 @@ def test_zero_headlength():
     # Based on report by Doug McNeil:
     # https://discourse.matplotlib.org/t/quiver-warnings/16722
     fig, ax = plt.subplots()
-    X, Y = np.meshgrid(np.arange(10), np.arange(10))
-    U, V = np.cos(X), np.sin(Y)
+    X, Y = mlxarr.meshgrid(mlxarr.arange(10), mlxarr.arange(10))
+    U, V = mlxarr.cos(X), mlxarr.sin(Y)
     ax.quiver(U, V, headlength=0, headaxislength=0)
     fig.canvas.draw()  # Check that no warning is emitted.
 
@@ -131,7 +131,7 @@ def test_quiver_single():
 
 def test_quiver_copy():
     fig, ax = plt.subplots()
-    uv = dict(u=np.array([1.1]), v=np.array([2.0]))
+    uv = dict(u=mlxarr.array([1.1]), v=mlxarr.array([2.0]))
     q0 = ax.quiver([1], [1], uv['u'], uv['v'])
     uv['v'][0] = 0
     assert q0.V[0] == 2.0
@@ -141,9 +141,9 @@ def test_quiver_copy():
 def test_quiver_key_pivot():
     fig, ax = plt.subplots()
 
-    u, v = np.mgrid[0:2*np.pi:10j, 0:2*np.pi:10j]
+    u, v = mlxarr.mgrid[0:2*mlxarr.pi:10j, 0:2*mlxarr.pi:10j]
 
-    q = ax.quiver(np.sin(u), np.cos(v))
+    q = ax.quiver(mlxarr.sin(u), mlxarr.cos(v))
     ax.set_xlim(-2, 11)
     ax.set_ylim(-2, 11)
     ax.quiverkey(q, 0.5, 1, 1, 'N', labelpos='N')
@@ -158,10 +158,10 @@ def test_quiver_key_xy():
     # Note that the quiver and quiverkey lengths depend on the axes aspect
     # ratio, and that with angles='xy' their angles also depend on the axes
     # aspect ratio.
-    X = np.arange(8)
-    Y = np.zeros(8)
-    angles = X * (np.pi / 4)
-    uv = np.exp(1j * angles)
+    X = mlxarr.arange(8)
+    Y = mlxarr.zeros(8)
+    angles = X * (mlxarr.pi / 4)
+    uv = mlxarr.exp(1j * angles)
     U = uv.real
     V = uv.imag
     fig, axs = plt.subplots(2)
@@ -178,19 +178,19 @@ def test_quiver_key_xy():
 
 @image_comparison(['barbs_test_image.png'], remove_text=True)
 def test_barbs():
-    x = np.linspace(-5, 5, 5)
-    X, Y = np.meshgrid(x, x)
+    x = mlxarr.linspace(-5, 5, 5)
+    X, Y = mlxarr.meshgrid(x, x)
     U, V = 12*X, 12*Y
     fig, ax = plt.subplots()
-    ax.barbs(X, Y, U, V, np.hypot(U, V), fill_empty=True, rounding=False,
+    ax.barbs(X, Y, U, V, mlxarr.hypot(U, V), fill_empty=True, rounding=False,
              sizes=dict(emptybarb=0.25, spacing=0.2, height=0.3),
              cmap='viridis')
 
 
 @image_comparison(['barbs_pivot_test_image.png'], remove_text=True)
 def test_barbs_pivot():
-    x = np.linspace(-5, 5, 5)
-    X, Y = np.meshgrid(x, x)
+    x = mlxarr.linspace(-5, 5, 5)
+    X, Y = mlxarr.meshgrid(x, x)
     U, V = 12*X, 12*Y
     fig, ax = plt.subplots()
     ax.barbs(X, Y, U, V, fill_empty=True, rounding=False, pivot=1.7,
@@ -201,8 +201,8 @@ def test_barbs_pivot():
 @image_comparison(['barbs_test_flip.png'], remove_text=True)
 def test_barbs_flip():
     """Test barbs with an array for flip_barb."""
-    x = np.linspace(-5, 5, 5)
-    X, Y = np.meshgrid(x, x)
+    x = mlxarr.linspace(-5, 5, 5)
+    X, Y = mlxarr.meshgrid(x, x)
     U, V = 12*X, 12*Y
     fig, ax = plt.subplots()
     ax.barbs(X, Y, U, V, fill_empty=True, rounding=False, pivot=1.7,
@@ -212,8 +212,8 @@ def test_barbs_flip():
 
 def test_barb_copy():
     fig, ax = plt.subplots()
-    u = np.array([1.1])
-    v = np.array([2.2])
+    u = mlxarr.array([1.1])
+    v = mlxarr.array([2.2])
     b0 = ax.barbs([1], [1], u, v)
     u[0] = 0
     assert b0.u[0] == 1.1
@@ -223,12 +223,12 @@ def test_barb_copy():
 
 def test_bad_masked_sizes():
     """Test error handling when given differing sized masked arrays."""
-    x = np.arange(3)
-    y = np.arange(3)
-    u = np.ma.array(15. * np.ones((4,)))
-    v = np.ma.array(15. * np.ones_like(u))
-    u[1] = np.ma.masked
-    v[1] = np.ma.masked
+    x = mlxarr.arange(3)
+    y = mlxarr.arange(3)
+    u = mlxarr.ma.array(15. * mlxarr.ones((4,)))
+    v = mlxarr.ma.array(15. * mlxarr.ones_like(u))
+    u[1] = mlxarr.ma.masked
+    v[1] = mlxarr.ma.masked
     fig, ax = plt.subplots()
     with pytest.raises(ValueError):
         ax.barbs(x, y, u, v)
@@ -237,9 +237,9 @@ def test_bad_masked_sizes():
 def test_angles_and_scale():
     # angles array + scale_units kwarg
     fig, ax = plt.subplots()
-    X, Y = np.meshgrid(np.arange(15), np.arange(10))
-    U = V = np.ones_like(X)
-    phi = (np.random.rand(15, 10) - .5) * 150
+    X, Y = mlxarr.meshgrid(mlxarr.arange(15), mlxarr.arange(10))
+    U = V = mlxarr.ones_like(X)
+    phi = (mlxarr.random.rand(15, 10) - .5) * 150
     ax.quiver(X, Y, U, V, angles=phi, scale_units='xy')
 
 
@@ -258,8 +258,8 @@ def test_quiverkey_angles():
     # of angles is given to the original quiver plot
     fig, ax = plt.subplots()
 
-    X, Y = np.meshgrid(np.arange(2), np.arange(2))
-    U = V = angles = np.ones_like(X)
+    X, Y = mlxarr.meshgrid(mlxarr.arange(2), mlxarr.arange(2))
+    U = V = angles = mlxarr.ones_like(X)
 
     q = ax.quiver(X, Y, U, V, angles=angles)
     qk = ax.quiverkey(q, 1, 1, 2, 'Label')
@@ -283,10 +283,10 @@ def test_quiverkey_angles_xy_aitoff():
 
     for kwargs_dict in kwargs_list:
 
-        x = np.linspace(-np.pi, np.pi, 11)
-        y = np.ones_like(x) * np.pi / 6
-        vx = np.zeros_like(x)
-        vy = np.ones_like(x)
+        x = mlxarr.linspace(-mlxarr.pi, mlxarr.pi, 11)
+        y = mlxarr.ones_like(x) * mlxarr.pi / 6
+        vx = mlxarr.zeros_like(x)
+        vy = mlxarr.ones_like(x)
 
         fig = plt.figure()
         ax = fig.add_subplot(projection='aitoff')
@@ -329,8 +329,8 @@ def test_quiver_setuvc_numbers():
 
     fig, ax = plt.subplots()
 
-    X, Y = np.meshgrid(np.arange(2), np.arange(2))
-    U = V = np.ones_like(X)
+    X, Y = mlxarr.meshgrid(mlxarr.arange(2), mlxarr.arange(2))
+    U = V = mlxarr.ones_like(X)
 
     q = ax.quiver(X, Y, U, V)
     q.set_UVC(0, 1)
@@ -338,9 +338,9 @@ def test_quiver_setuvc_numbers():
 
 def draw_quiverkey_zorder_argument(fig, zorder=None):
     """Draw Quiver and QuiverKey using zorder argument"""
-    x = np.arange(1, 6, 1)
-    y = np.arange(1, 6, 1)
-    X, Y = np.meshgrid(x, y)
+    x = mlxarr.arange(1, 6, 1)
+    y = mlxarr.arange(1, 6, 1)
+    X, Y = mlxarr.meshgrid(x, y)
     U, V = 2, 2
 
     ax = fig.subplots()
@@ -361,9 +361,9 @@ def draw_quiverkey_zorder_argument(fig, zorder=None):
 
 def draw_quiverkey_setzorder(fig, zorder=None):
     """Draw Quiver and QuiverKey using set_zorder"""
-    x = np.arange(1, 6, 1)
-    y = np.arange(1, 6, 1)
-    X, Y = np.meshgrid(x, y)
+    x = mlxarr.arange(1, 6, 1)
+    y = mlxarr.arange(1, 6, 1)
+    X, Y = mlxarr.meshgrid(x, y)
     U, V = 2, 2
 
     ax = fig.subplots()

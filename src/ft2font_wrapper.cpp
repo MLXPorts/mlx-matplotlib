@@ -704,7 +704,7 @@ const char *PyFT2Font_set_text__doc__ = R"""(
 
     Returns
     -------
-    np.ndarray[double]
+    mlxarr.ndarray[double]
         A sequence of x,y glyph positions in 26.6 subpixels; divide by 64 for pixels.
 )""";
 
@@ -1394,9 +1394,9 @@ const char *PyFT2Font_get_path__doc__ = R"""(
 
     Returns
     -------
-    vertices : np.ndarray[double]
+    vertices : mlxarr.ndarray[double]
         The (N, 2) array of vertices describing the current glyph.
-    codes : np.ndarray[np.uint8]
+    codes : mlxarr.ndarray[mlxarr.uint8]
         The (N, ) array of codes corresponding to the vertices.
 
     See Also
@@ -1448,7 +1448,7 @@ const char *PyFT2Font_get_image__doc__ = R"""(
 
     Returns
     -------
-    np.ndarray[int]
+    mlxarr.ndarray[int]
 
     See Also
     --------

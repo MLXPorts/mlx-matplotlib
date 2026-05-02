@@ -6,17 +6,17 @@ Layer images with alpha blending
 Layer images above one another using alpha blending
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 def func3(x, y):
-    return (1 - x / 2 + x**5 + y**3) * np.exp(-(x**2 + y**2))
+    return (1 - x / 2 + x**5 + y**3) * mlxarr.exp(-(x**2 + y**2))
 
 
 # make these smaller to increase the resolution
 dx, dy = 0.05, 0.05
 
-x = np.arange(-3.0, 3.0, dx)
-y = np.arange(-3.0, 3.0, dy)
-X, Y = np.meshgrid(x, y)
+x = mlxarr.arange(-3.0, 3.0, dx)
+y = mlxarr.arange(-3.0, 3.0, dy)
+X, Y = mlxarr.meshgrid(x, y)
 
 # when layering multiple images, the images need to have the same
 # extent.  This does not mean they need to have the same shape, but
@@ -25,10 +25,10 @@ X, Y = np.meshgrid(x, y)
 # for the images their apparent extent could be different due to
 # interpolation edge effects
 
-extent = np.min(x), np.max(x), np.min(y), np.max(y)
+extent = mlxarr.min(x), mlxarr.max(x), mlxarr.min(y), mlxarr.max(y)
 fig = plt.figure(frameon=False)
 
-Z1 = np.add.outer(range(8), range(8)) % 2  # chessboard
+Z1 = mlxarr.add.outer(range(8), range(8)) % 2  # chessboard
 im1 = plt.imshow(Z1, cmap="gray", interpolation='nearest',
                  extent=extent)
 

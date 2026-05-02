@@ -9,12 +9,12 @@ Use a format string to prepend dollar signs on y-axis labels.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 fig, ax = plt.subplots()
-ax.plot(100*np.random.rand(20))
+ax.plot(100*mlxarr.random.rand(20))
 
 # Use automatic StrMethodFormatter
 ax.yaxis.set_major_formatter('${x:1.2f}')

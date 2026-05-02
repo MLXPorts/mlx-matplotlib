@@ -9,7 +9,7 @@ from typing import Any
 from unittest.mock import patch, Mock
 
 from datetime import datetime, date, timedelta
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.mlx_testing import (assert_array_equal, assert_approx_equal,
                            assert_array_almost_equal)
 import pytest
@@ -23,29 +23,29 @@ from types import ModuleType
 class Test_delete_masked_points:
     def test_bad_first_arg(self):
         with pytest.raises(ValueError):
-            delete_masked_points('a string', np.arange(1.0, 7.0))
+            delete_masked_points('a string', mlxarr.arange(1.0, 7.0))
 
     def test_string_seq(self):
         a1 = ['a', 'b', 'c', 'd', 'e', 'f']
-        a2 = [1, 2, 3, np.nan, np.nan, 6]
+        a2 = [1, 2, 3, mlxarr.nan, mlxarr.nan, 6]
         result1, result2 = delete_masked_points(a1, a2)
         ind = [0, 1, 2, 5]
-        assert_array_equal(result1, np.array(a1)[ind])
-        assert_array_equal(result2, np.array(a2)[ind])
+        assert_array_equal(result1, mlxarr.array(a1)[ind])
+        assert_array_equal(result2, mlxarr.array(a2)[ind])
 
     def test_datetime(self):
         dates = [datetime(2008, 1, 1), datetime(2008, 1, 2),
                  datetime(2008, 1, 3), datetime(2008, 1, 4),
                  datetime(2008, 1, 5), datetime(2008, 1, 6)]
-        a_masked = np.ma.array([1, 2, 3, np.nan, np.nan, 6],
+        a_masked = mlxarr.ma.array([1, 2, 3, mlxarr.nan, mlxarr.nan, 6],
                                mask=[False, False, True, True, False, False])
         actual = delete_masked_points(dates, a_masked)
         ind = [0, 1, 5]
-        assert_array_equal(actual[0], np.array(dates)[ind])
+        assert_array_equal(actual[0], mlxarr.array(dates)[ind])
         assert_array_equal(actual[1], a_masked[ind].compressed())
 
     def test_rgba(self):
-        a_masked = np.ma.array([1, 2, 3, np.nan, np.nan, 6],
+        a_masked = mlxarr.ma.array([1, 2, 3, mlxarr.nan, mlxarr.nan, 6],
                                mask=[False, False, True, True, False, False])
         a_rgba = mcolors.to_rgba_array(['r', 'g', 'b', 'c', 'm', 'y'])
         actual = delete_masked_points(a_masked, a_rgba)
@@ -56,10 +56,10 @@ class Test_delete_masked_points:
 
 class Test_boxplot_stats:
     def setup_method(self):
-        np.random.seed(937)
+        mlxarr.random.seed(937)
         self.nrows = 37
         self.ncols = 4
-        self.data = np.random.lognormal(size=(self.nrows, self.ncols),
+        self.data = mlxarr.random.lognormal(size=(self.nrows, self.ncols),
                                         mean=1.5, sigma=1.75)
         self.known_keys = sorted([
             'mean', 'med', 'q1', 'q3', 'iqr',
@@ -74,7 +74,7 @@ class Test_boxplot_stats:
             'iqr': 13.492709959447094,
             'mean': 13.00447442387868,
             'med': 3.3335733967038079,
-            'fliers': np.array([
+            'fliers': mlxarr.array([
                 92.55467075,  87.03819018,  42.23204914,  39.29390996
             ]),
             'q1': 1.3597529879465153,
@@ -91,7 +91,7 @@ class Test_boxplot_stats:
         self.known_whis3_res = {
             'whishi': 42.232049135969874,
             'whislo': 0.042143774965502923,
-            'fliers': np.array([92.55467075, 87.03819018]),
+            'fliers': mlxarr.array([92.55467075, 87.03819018]),
         }
 
         self.known_res_percentiles = {
@@ -161,13 +161,13 @@ class Test_boxplot_stats:
             cbook.boxplot_stats(self.data, labels=labels)
 
     def test_bad_dims(self):
-        data = np.random.normal(size=(34, 34, 34))
+        data = mlxarr.random.normal(size=(34, 34, 34))
         with pytest.raises(ValueError):
             cbook.boxplot_stats(data)
 
     def test_boxplot_stats_autorange_false(self):
-        x = np.zeros(shape=140)
-        x = np.hstack([-25, x, 25])
+        x = mlxarr.zeros(shape=140)
+        x = mlxarr.hstack([-25, x, 25])
         bstats_false = cbook.boxplot_stats(x, autorange=False)
         bstats_true = cbook.boxplot_stats(x, autorange=True)
 
@@ -210,13 +210,13 @@ class Test_callback_registry:
         return count1
 
     def is_empty(self):
-        np.testing.break_cycles()
+        mlxarr.testing.break_cycles()
         assert [*self.callbacks._func_cid_map] == []
         assert self.callbacks.callbacks == {}
         assert self.callbacks._pickled_cids == set()
 
     def is_not_empty(self):
-        np.testing.break_cycles()
+        mlxarr.testing.break_cycles()
         assert [*self.callbacks._func_cid_map] != []
         assert self.callbacks.callbacks != {}
 
@@ -464,7 +464,7 @@ def test_sanitize_sequence():
 
 def test_resize_sequence():
     a_list = [1, 2, 3]
-    arr = np.array([1, 2, 3])
+    arr = mlxarr.array([1, 2, 3])
 
     # already same length: passthrough
     assert cbook._resize_sequence(a_list, 3) is a_list
@@ -529,15 +529,15 @@ def test_warn_external_frame_embedded_python():
 
 
 def test_to_prestep():
-    x = np.arange(4)
-    y1 = np.arange(4)
-    y2 = np.arange(4)[::-1]
+    x = mlxarr.arange(4)
+    y1 = mlxarr.arange(4)
+    y2 = mlxarr.arange(4)[::-1]
 
     xs, y1s, y2s = cbook.pts_to_prestep(x, y1, y2)
 
-    x_target = np.asarray([0, 0, 1, 1, 2, 2, 3], dtype=float)
-    y1_target = np.asarray([0, 1, 1, 2, 2, 3, 3], dtype=float)
-    y2_target = np.asarray([3, 2, 2, 1, 1, 0, 0], dtype=float)
+    x_target = mlxarr.asarray([0, 0, 1, 1, 2, 2, 3], dtype=float)
+    y1_target = mlxarr.asarray([0, 1, 1, 2, 2, 3, 3], dtype=float)
+    y2_target = mlxarr.asarray([3, 2, 2, 1, 1, 0, 0], dtype=float)
 
     assert_array_equal(x_target, xs)
     assert_array_equal(y1_target, y1s)
@@ -554,15 +554,15 @@ def test_to_prestep_empty():
 
 
 def test_to_poststep():
-    x = np.arange(4)
-    y1 = np.arange(4)
-    y2 = np.arange(4)[::-1]
+    x = mlxarr.arange(4)
+    y1 = mlxarr.arange(4)
+    y2 = mlxarr.arange(4)[::-1]
 
     xs, y1s, y2s = cbook.pts_to_poststep(x, y1, y2)
 
-    x_target = np.asarray([0, 1, 1, 2, 2, 3, 3], dtype=float)
-    y1_target = np.asarray([0, 0, 1, 1, 2, 2, 3], dtype=float)
-    y2_target = np.asarray([3, 3, 2, 2, 1, 1, 0], dtype=float)
+    x_target = mlxarr.asarray([0, 1, 1, 2, 2, 3, 3], dtype=float)
+    y1_target = mlxarr.asarray([0, 0, 1, 1, 2, 2, 3], dtype=float)
+    y2_target = mlxarr.asarray([3, 3, 2, 2, 1, 1, 0], dtype=float)
 
     assert_array_equal(x_target, xs)
     assert_array_equal(y1_target, y1s)
@@ -579,15 +579,15 @@ def test_to_poststep_empty():
 
 
 def test_to_midstep():
-    x = np.arange(4)
-    y1 = np.arange(4)
-    y2 = np.arange(4)[::-1]
+    x = mlxarr.arange(4)
+    y1 = mlxarr.arange(4)
+    y2 = mlxarr.arange(4)[::-1]
 
     xs, y1s, y2s = cbook.pts_to_midstep(x, y1, y2)
 
-    x_target = np.asarray([0, .5, .5, 1.5, 1.5, 2.5, 2.5, 3], dtype=float)
-    y1_target = np.asarray([0, 0, 1, 1, 2, 2, 3, 3], dtype=float)
-    y2_target = np.asarray([3, 3, 2, 2, 1, 1, 0, 0], dtype=float)
+    x_target = mlxarr.asarray([0, .5, .5, 1.5, 1.5, 2.5, 2.5, 3], dtype=float)
+    y1_target = mlxarr.asarray([0, 0, 1, 1, 2, 2, 3, 3], dtype=float)
+    y2_target = mlxarr.asarray([3, 3, 2, 2, 1, 1, 0, 0], dtype=float)
 
     assert_array_equal(x_target, xs)
     assert_array_equal(y1_target, y1s)
@@ -605,9 +605,9 @@ def test_to_midstep_empty():
 
 @pytest.mark.parametrize(
     "args",
-    [(np.arange(12).reshape(3, 4), 'a'),
-     (np.arange(12), 'a'),
-     (np.arange(12), np.arange(3))])
+    [(mlxarr.arange(12).reshape(3, 4), 'a'),
+     (mlxarr.arange(12), 'a'),
+     (mlxarr.arange(12), mlxarr.arange(3))])
 def test_step_fails(args):
     with pytest.raises(ValueError):
         cbook.pts_to_prestep(*args)
@@ -651,7 +651,7 @@ def test_grouper_private():
 
 
 def test_flatiter():
-    x = np.arange(5)
+    x = mlxarr.arange(5)
     it = x.flat
     assert 0 == next(it)
     assert 1 == next(it)
@@ -663,15 +663,15 @@ def test_flatiter():
 
 
 def test__safe_first_finite_all_nan():
-    arr = np.full(2, np.nan)
+    arr = mlxarr.full(2, mlxarr.nan)
     ret = cbook._safe_first_finite(arr)
-    assert np.isnan(ret)
+    assert mlxarr.isnan(ret)
 
 
 def test__safe_first_finite_all_inf():
-    arr = np.full(2, np.inf)
+    arr = mlxarr.full(2, mlxarr.inf)
     ret = cbook._safe_first_finite(arr)
-    assert np.isinf(ret)
+    assert mlxarr.isinf(ret)
 
 
 def test_reshape2d():
@@ -680,67 +680,67 @@ def test_reshape2d():
         pass
 
     xnew = cbook._reshape_2D([], 'x')
-    assert np.shape(xnew) == (1, 0)
+    assert mlxarr.shape(xnew) == (1, 0)
 
     x = [Dummy() for _ in range(5)]
 
     xnew = cbook._reshape_2D(x, 'x')
-    assert np.shape(xnew) == (1, 5)
+    assert mlxarr.shape(xnew) == (1, 5)
 
-    x = np.arange(5)
+    x = mlxarr.arange(5)
     xnew = cbook._reshape_2D(x, 'x')
-    assert np.shape(xnew) == (1, 5)
+    assert mlxarr.shape(xnew) == (1, 5)
 
     x = [[Dummy() for _ in range(5)] for _ in range(3)]
     xnew = cbook._reshape_2D(x, 'x')
-    assert np.shape(xnew) == (3, 5)
+    assert mlxarr.shape(xnew) == (3, 5)
 
     # this is strange behaviour, but...
-    x = np.random.rand(3, 5)
+    x = mlxarr.random.rand(3, 5)
     xnew = cbook._reshape_2D(x, 'x')
-    assert np.shape(xnew) == (5, 3)
+    assert mlxarr.shape(xnew) == (5, 3)
 
     # Test a list of lists which are all of length 1
     x = [[1], [2], [3]]
     xnew = cbook._reshape_2D(x, 'x')
     assert isinstance(xnew, list)
-    assert isinstance(xnew[0], np.ndarray) and xnew[0].shape == (1,)
-    assert isinstance(xnew[1], np.ndarray) and xnew[1].shape == (1,)
-    assert isinstance(xnew[2], np.ndarray) and xnew[2].shape == (1,)
+    assert isinstance(xnew[0], mlxarr.ndarray) and xnew[0].shape == (1,)
+    assert isinstance(xnew[1], mlxarr.ndarray) and xnew[1].shape == (1,)
+    assert isinstance(xnew[2], mlxarr.ndarray) and xnew[2].shape == (1,)
 
     # Test a list of zero-dimensional arrays
-    x = [np.array(0), np.array(1), np.array(2)]
+    x = [mlxarr.array(0), mlxarr.array(1), mlxarr.array(2)]
     xnew = cbook._reshape_2D(x, 'x')
     assert isinstance(xnew, list)
     assert len(xnew) == 1
-    assert isinstance(xnew[0], np.ndarray) and xnew[0].shape == (3,)
+    assert isinstance(xnew[0], mlxarr.ndarray) and xnew[0].shape == (3,)
 
     # Now test with a list of lists with different lengths, which means the
     # array will internally be converted to a 1D object array of lists
     x = [[1, 2, 3], [3, 4], [2]]
     xnew = cbook._reshape_2D(x, 'x')
     assert isinstance(xnew, list)
-    assert isinstance(xnew[0], np.ndarray) and xnew[0].shape == (3,)
-    assert isinstance(xnew[1], np.ndarray) and xnew[1].shape == (2,)
-    assert isinstance(xnew[2], np.ndarray) and xnew[2].shape == (1,)
+    assert isinstance(xnew[0], mlxarr.ndarray) and xnew[0].shape == (3,)
+    assert isinstance(xnew[1], mlxarr.ndarray) and xnew[1].shape == (2,)
+    assert isinstance(xnew[2], mlxarr.ndarray) and xnew[2].shape == (1,)
 
-    # We now need to make sure that this works correctly for Numpy subclasses
+    # We now need to make sure that this works correctly for MLXArrayBackend subclasses
     # where iterating over items can return subclasses too, which may be
-    # iterable even if they are scalars. To emulate this, we make a Numpy
-    # array subclass that returns Numpy 'scalars' when iterating or accessing
+    # iterable even if they are scalars. To emulate this, we make a MLXArrayBackend
+    # array subclass that returns MLXArrayBackend 'scalars' when iterating or accessing
     # values, and these are technically iterable if checking for example
     # isinstance(x, collections.abc.Iterable).
 
-    class ArraySubclass(np.ndarray):
+    class ArraySubclass(mlxarr.ndarray):
 
         def __iter__(self):
             for value in super().__iter__():
-                yield np.array(value)
+                yield mlxarr.array(value)
 
         def __getitem__(self, item):
-            return np.array(super().__getitem__(item))
+            return mlxarr.array(super().__getitem__(item))
 
-    v = np.arange(10, dtype=float)
+    v = mlxarr.arange(10, dtype=float)
     x = ArraySubclass((10,), dtype=float, buffer=v.data)
 
     xnew = cbook._reshape_2D(x, 'x')
@@ -754,47 +754,47 @@ def test_reshape2d():
     x = ['a', 'b', 'c', 'c', 'dd', 'e', 'f', 'ff', 'f']
     xnew = cbook._reshape_2D(x, 'x')
     assert len(xnew[0]) == len(x)
-    assert isinstance(xnew[0], np.ndarray)
+    assert isinstance(xnew[0], mlxarr.ndarray)
 
 
 def test_reshape2d_pandas(pd):
     # separate to allow the rest of the tests to run if no pandas...
-    X = np.arange(30).reshape(10, 3)
+    X = mlxarr.arange(30).reshape(10, 3)
     x = pd.DataFrame(X, columns=["a", "b", "c"])
     Xnew = cbook._reshape_2D(x, 'x')
     # Need to check each row because _reshape_2D returns a list of arrays:
     for x, xnew in zip(X.T, Xnew):
-        np.testing.assert_array_equal(x, xnew)
+        mlxarr.testing.assert_array_equal(x, xnew)
 
 
 def test_reshape2d_xarray(xr):
     # separate to allow the rest of the tests to run if no xarray...
-    X = np.arange(30).reshape(10, 3)
+    X = mlxarr.arange(30).reshape(10, 3)
     x = xr.DataArray(X, dims=["x", "y"])
     Xnew = cbook._reshape_2D(x, 'x')
     # Need to check each row because _reshape_2D returns a list of arrays:
     for x, xnew in zip(X.T, Xnew):
-        np.testing.assert_array_equal(x, xnew)
+        mlxarr.testing.assert_array_equal(x, xnew)
 
 
 def test_index_of_pandas(pd):
     # separate to allow the rest of the tests to run if no pandas...
-    X = np.arange(30).reshape(10, 3)
+    X = mlxarr.arange(30).reshape(10, 3)
     x = pd.DataFrame(X, columns=["a", "b", "c"])
     Idx, Xnew = cbook.index_of(x)
-    np.testing.assert_array_equal(X, Xnew)
-    IdxRef = np.arange(10)
-    np.testing.assert_array_equal(Idx, IdxRef)
+    mlxarr.testing.assert_array_equal(X, Xnew)
+    IdxRef = mlxarr.arange(10)
+    mlxarr.testing.assert_array_equal(Idx, IdxRef)
 
 
 def test_index_of_xarray(xr):
     # separate to allow the rest of the tests to run if no xarray...
-    X = np.arange(30).reshape(10, 3)
+    X = mlxarr.arange(30).reshape(10, 3)
     x = xr.DataArray(X, dims=["x", "y"])
     Idx, Xnew = cbook.index_of(x)
-    np.testing.assert_array_equal(X, Xnew)
-    IdxRef = np.arange(10)
-    np.testing.assert_array_equal(Idx, IdxRef)
+    mlxarr.testing.assert_array_equal(X, Xnew)
+    IdxRef = mlxarr.arange(10)
+    mlxarr.testing.assert_array_equal(Idx, IdxRef)
 
 
 def test_contiguous_regions():
@@ -840,8 +840,8 @@ def test_array_patch_perimeters():
                 # +1 ensures we share edges between polygons
                 ps = cbook._array_perimeter(x[rs:rs_next+1, cs:cs_next+1]).T
                 polys.append(ps)
-        polys = np.asarray(polys)
-        assert np.array_equal(polys,
+        polys = mlxarr.asarray(polys)
+        assert mlxarr.array_equal(polys,
                               cbook._array_patch_perimeters(
                                   x, rstride=rstride, cstride=cstride))
 
@@ -849,7 +849,7 @@ def test_array_patch_perimeters():
         return [i for i in range(1, n + 1) if n % i == 0]
 
     for rows, cols in [(5, 5), (7, 14), (13, 9)]:
-        x = np.arange(rows * cols).reshape(rows, cols)
+        x = mlxarr.arange(rows * cols).reshape(rows, cols)
         for rstride, cstride in itertools.product(divisors(rows - 1),
                                                   divisors(cols - 1)):
             check(x, rstride=rstride, cstride=cstride)
@@ -975,12 +975,12 @@ def test_strip_math():
 def test_auto_format_str(fmt, value, result):
     """Apply *value* to the format string *fmt*."""
     assert cbook._auto_format_str(fmt, value) == result
-    assert cbook._auto_format_str(fmt, np.float64(value)) == result
+    assert cbook._auto_format_str(fmt, mlxarr.float64(value)) == result
 
 
-def test_unpack_to_numpy_from_torch():
+def test_unpack_to_array_backend_from_torch():
     """
-    Test that torch tensors are converted to NumPy arrays.
+    Test that torch tensors are converted to MLXArrayBackend arrays.
 
     We don't want to create a dependency on torch in the test suite, so we mock it.
     """
@@ -995,20 +995,20 @@ def test_unpack_to_numpy_from_torch():
     torch.Tensor = Tensor
     sys.modules['torch'] = torch
 
-    data = np.arange(10)
+    data = mlxarr.arange(10)
     torch_tensor = torch.Tensor(data)
 
-    result = cbook._unpack_to_numpy(torch_tensor)
-    assert isinstance(result, np.ndarray)
+    result = cbook._unpack_to_array_backend(torch_tensor)
+    assert isinstance(result, mlxarr.ndarray)
     # compare results, do not check for identity: the latter would fail
     # if not mocked, and the implementation does not guarantee it
     # is the same Python object, just the same values.
     assert_array_equal(result, data)
 
 
-def test_unpack_to_numpy_from_jax():
+def test_unpack_to_array_backend_from_jax():
     """
-    Test that jax arrays are converted to NumPy arrays.
+    Test that jax arrays are converted to MLXArrayBackend arrays.
 
     We don't want to create a dependency on jax in the test suite, so we mock it.
     """
@@ -1024,20 +1024,20 @@ def test_unpack_to_numpy_from_jax():
 
     sys.modules['jax'] = jax
 
-    data = np.arange(10)
+    data = mlxarr.arange(10)
     jax_array = jax.Array(data)
 
-    result = cbook._unpack_to_numpy(jax_array)
-    assert isinstance(result, np.ndarray)
+    result = cbook._unpack_to_array_backend(jax_array)
+    assert isinstance(result, mlxarr.ndarray)
     # compare results, do not check for identity: the latter would fail
     # if not mocked, and the implementation does not guarantee it
     # is the same Python object, just the same values.
     assert_array_equal(result, data)
 
 
-def test_unpack_to_numpy_from_tensorflow():
+def test_unpack_to_array_backend_from_tensorflow():
     """
-    Test that tensorflow arrays are converted to NumPy arrays.
+    Test that tensorflow arrays are converted to MLXArrayBackend arrays.
 
     We don't want to create a dependency on tensorflow in the test suite, so we mock it.
     """
@@ -1054,11 +1054,11 @@ def test_unpack_to_numpy_from_tensorflow():
 
     sys.modules['tensorflow'] = tensorflow
 
-    data = np.arange(10)
+    data = mlxarr.arange(10)
     tf_tensor = tensorflow.Tensor(data)
 
-    result = cbook._unpack_to_numpy(tf_tensor)
-    assert isinstance(result, np.ndarray)
+    result = cbook._unpack_to_array_backend(tf_tensor)
+    assert isinstance(result, mlxarr.ndarray)
     # compare results, do not check for identity: the latter would fail
     # if not mocked, and the implementation does not guarantee it
     # is the same Python object, just the same values.

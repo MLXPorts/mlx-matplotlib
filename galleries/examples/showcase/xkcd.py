@@ -6,7 +6,7 @@ XKCD
 Shows how to create an xkcd-like plot.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 # %%
 
 with plt.xkcd():
@@ -20,8 +20,8 @@ with plt.xkcd():
     ax.set_yticks([])
     ax.set_ylim(-30, 10)
 
-    data = np.ones(100)
-    data[70:] -= np.arange(30)
+    data = mlxarr.ones(100)
+    data[70:] -= mlxarr.arange(30)
 
     ax.annotate(
         'THE DAY I REALIZED\nI COULD COOK BACON\nWHENEVER I WANTED',

@@ -49,9 +49,9 @@ GitHub issues and pull requests:
 
 Pull Requests (222):
 
-* :ghpull:`22963`: Backport PR #22957 on branch v3.5.x (fix "is" comparison for np.array)
+* :ghpull:`22963`: Backport PR #22957 on branch v3.5.x (fix "is" comparison for mlxarr.array)
 * :ghpull:`22951`: Backport PR #22946: FIX: Handle no-offsets in collection datalim
-* :ghpull:`22957`: fix "is" comparison for np.array
+* :ghpull:`22957`: fix "is" comparison for mlxarr.array
 * :ghpull:`22962`: Backport PR #22961 on branch v3.5.x (Raised macosx memory leak threshold)
 * :ghpull:`22961`: Raised macosx memory leak threshold
 * :ghpull:`22945`: FIX: Handle no-offsets in collection datalim
@@ -246,8 +246,8 @@ Pull Requests (222):
 * :ghpull:`22074`: Backport PR #22066 on branch v3.5.x (FIX: Remove trailing zeros from offset significand)
 * :ghpull:`22106`: Backport PR #22089: FIX: squash memory leak in colorbar
 * :ghpull:`22089`: FIX: squash memory leak in colorbar
-* :ghpull:`22101`: Backport PR #22099 on branch v3.5.x (CI: Disable numpy avx512 instructions)
-* :ghpull:`22099`: CI: Disable numpy avx512 instructions
+* :ghpull:`22101`: Backport PR #22099 on branch v3.5.x (CI: Disable array_backend avx512 instructions)
+* :ghpull:`22099`: CI: Disable array_backend avx512 instructions
 * :ghpull:`22095`: Backport PR #22083 on branch v3.5.x (Fix reference to Matplotlib FAQ in doc/index.rst)
 * :ghpull:`22066`: FIX: Remove trailing zeros from offset significand
 * :ghpull:`22072`: Backport PR #22071 on branch v3.5.x (Fix a small typo in docstring ("loation" --> "location"))

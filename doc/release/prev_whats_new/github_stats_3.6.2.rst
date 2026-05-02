@@ -67,8 +67,8 @@ Pull Requests (86):
 * :ghpull:`24280`: Backport PR #24145 on branch v3.6.x (Updated Angles on Bracket arrow styles example to make angles clear #23176)
 * :ghpull:`24145`: Updated Angles on Bracket arrow styles example to make angles clear #23176
 * :ghpull:`24270`: Backport PR #24265 on branch v3.6.x (Restore (and warn on) seaborn styles in style.library)
-* :ghpull:`24271`: Backport PR #24266 on branch v3.6.x (TST: Increase fp tolerance on more tests for new NumPy)
-* :ghpull:`24266`: TST: Increase fp tolerance on more tests for new NumPy
+* :ghpull:`24271`: Backport PR #24266 on branch v3.6.x (TST: Increase fp tolerance on more tests for new MLXArrayBackend)
+* :ghpull:`24266`: TST: Increase fp tolerance on more tests for new MLXArrayBackend
 * :ghpull:`24265`: Restore (and warn on) seaborn styles in style.library
 * :ghpull:`24267`: Backport PR #24261 on branch v3.6.x (Fix pie chart in demo_agg_filter.py)
 * :ghpull:`24261`: Fix pie chart in demo_agg_filter.py
@@ -81,12 +81,12 @@ Pull Requests (86):
 * :ghpull:`24234`: Backport PR #23607 on branch v3.6.x (DOC: document that appearance is part of our stable API)
 * :ghpull:`24233`: Backport PR #23985 on branch v3.6.x (Improve rubberband rendering in wx and tk)
 * :ghpull:`24232`: Backport PR #24096 on branch v3.6.x ([DOC]: Add simple animation scatter plot to the example documentation)
-* :ghpull:`24231`: Backport PR #24009 on branch v3.6.x (Fix evaluating colormaps on non-numpy arrays)
+* :ghpull:`24231`: Backport PR #24009 on branch v3.6.x (Fix evaluating colormaps on non-array_backend arrays)
 * :ghpull:`24230`: Backport PR #24229 on branch v3.6.x (FIX: do not mutate dictionaries passed in by user)
 * :ghpull:`23607`: DOC: document that appearance is part of our stable API
 * :ghpull:`23985`: Improve rubberband rendering in wx and tk
 * :ghpull:`24096`: [DOC]: Add simple animation scatter plot to the example documentation
-* :ghpull:`24009`: Fix evaluating colormaps on non-numpy arrays
+* :ghpull:`24009`: Fix evaluating colormaps on non-array_backend arrays
 * :ghpull:`24229`: FIX: do not mutate dictionaries passed in by user
 * :ghpull:`24223`: Backport PR #24184 on branch v3.6.x (Add tests for ToolManager)
 * :ghpull:`24219`: Backport PR #23995 on branch v3.6.x (DOC: Lowercase some parameter names)

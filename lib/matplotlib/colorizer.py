@@ -20,8 +20,8 @@ normalization and a colormap.
 """
 
 import functools
-from matplotlib import _mlx_numpy as np
-from matplotlib._mlx_numpy import ma
+from matplotlib import _mlx_array as mlxarr
+from matplotlib._mlx_array import ma
 
 from matplotlib import _api, colors, cbook, scale, artist
 import matplotlib as mpl
@@ -121,15 +121,15 @@ class Colorizer:
         Return a normalized RGBA array corresponding to *x*.
 
         In the normal case, *x* is a 1D or 2D sequence of scalars, and
-        the corresponding `~numpy.ndarray` of RGBA values will be returned,
+        the corresponding `~array_backend.ndarray` of RGBA values will be returned,
         based on the norm and colormap set for this Colorizer.
 
         There is one special case, for handling images that are already
         RGB or RGBA, such as might have been read from an image file.
-        If *x* is an `~numpy.ndarray` with 3 dimensions,
+        If *x* is an `~array_backend.ndarray` with 3 dimensions,
         and the last dimension is either 3 or 4, then it will be
         treated as an RGB or RGBA array, and no mapping will be done.
-        The array can be `~numpy.uint8`, or it can be floats with
+        The array can be `~array_backend.uint8`, or it can be floats with
         values in the 0-1 range; otherwise a ValueError will be raised.
         Any NaNs or masked elements will be set to 0 alpha.
         If the last dimension is 3, the *alpha* kwarg (defaulting to 1)
@@ -140,14 +140,14 @@ class Colorizer:
 
         In either case, if *bytes* is *False* (default), the RGBA
         array will be floats in the 0-1 range; if it is *True*,
-        the returned RGBA array will be `~numpy.uint8` in the 0 to 255 range.
+        the returned RGBA array will be `~array_backend.uint8` in the 0 to 255 range.
 
         If norm is False, no normalization of the input data is
         performed, and it is assumed to be in the range (0-1).
 
         """
         # First check for special case, image input:
-        if isinstance(x, np.ndarray) and x.ndim == 3:
+        if isinstance(x, mlxarr.ndarray) and x.ndim == 3:
             return self._pass_image_data(x, alpha, bytes, norm)
 
         # Otherwise run norm -> colormap pipeline
@@ -166,10 +166,10 @@ class Colorizer:
         if x.shape[2] == 3:
             if alpha is None:
                 alpha = 1
-            if x.dtype == np.uint8:
-                alpha = np.uint8(alpha * 255)
+            if x.dtype == mlxarr.uint8:
+                alpha = mlxarr.uint8(alpha * 255)
             m, n = x.shape[:2]
-            xx = np.empty(shape=(m, n, 4), dtype=x.dtype)
+            xx = mlxarr.empty(shape=(m, n, 4), dtype=x.dtype)
             xx[:, :, :3] = x
             xx[:, :, 3] = alpha
         elif x.shape[2] == 4:
@@ -178,26 +178,26 @@ class Colorizer:
             raise ValueError("Third dimension must be 3 or 4")
         if xx.dtype.kind == 'f':
             # If any of R, G, B, or A is nan, set to 0
-            if np.any(nans := np.isnan(x)):
+            if mlxarr.any(nans := mlxarr.isnan(x)):
                 if x.shape[2] == 4:
                     xx = xx.copy()
-                xx[np.any(nans, axis=2), :] = 0
+                xx[mlxarr.any(nans, axis=2), :] = 0
 
             if norm and (xx.max() > 1 or xx.min() < 0):
                 raise ValueError("Floating point image RGB values "
                                  "must be in the 0..1 range.")
             if bytes:
-                xx = (xx * 255).astype(np.uint8)
-        elif xx.dtype == np.uint8:
+                xx = (xx * 255).astype(mlxarr.uint8)
+        elif xx.dtype == mlxarr.uint8:
             if not bytes:
-                xx = xx.astype(np.float32) / 255
+                xx = xx.astype(mlxarr.float32) / 255
         else:
             raise ValueError("Image RGB array must be uint8 or "
                              "floating point; found %s" % xx.dtype)
         # Account for any masked entries in the original array
         # If any of R, G, B, or A are masked for an entry, we set alpha to 0
-        if np.ma.is_masked(x):
-            xx[np.any(np.ma.getmaskarray(x), axis=2), 3] = 0
+        if mlxarr.ma.is_masked(x):
+            xx[mlxarr.any(mlxarr.ma.getmaskarray(x), axis=2), 3] = 0
         return xx
 
     def autoscale(self, A):
@@ -338,15 +338,15 @@ class _ColorizerInterface:
         Return a normalized RGBA array corresponding to *x*.
 
         In the normal case, *x* is a 1D or 2D sequence of scalars, and
-        the corresponding `~numpy.ndarray` of RGBA values will be returned,
+        the corresponding `~array_backend.ndarray` of RGBA values will be returned,
         based on the norm and colormap set for this Colorizer.
 
         There is one special case, for handling images that are already
         RGB or RGBA, such as might have been read from an image file.
-        If *x* is an `~numpy.ndarray` with 3 dimensions,
+        If *x* is an `~array_backend.ndarray` with 3 dimensions,
         and the last dimension is either 3 or 4, then it will be
         treated as an RGB or RGBA array, and no mapping will be done.
-        The array can be `~numpy.uint8`, or it can be floats with
+        The array can be `~array_backend.uint8`, or it can be floats with
         values in the 0-1 range; otherwise a ValueError will be raised.
         Any NaNs or masked elements will be set to 0 alpha.
         If the last dimension is 3, the *alpha* kwarg (defaulting to 1)
@@ -357,7 +357,7 @@ class _ColorizerInterface:
 
         In either case, if *bytes* is *False* (default), the RGBA
         array will be floats in the 0-1 range; if it is *True*,
-        the returned RGBA array will be `~numpy.uint8` in the 0 to 255 range.
+        the returned RGBA array will be `~array_backend.uint8` in the 0 to 255 range.
 
         If norm is False, no normalization of the input data is
         performed, and it is assumed to be in the range (0-1).
@@ -476,25 +476,25 @@ class _ColorizerInterface:
         # Note if cm.ScalarMappable is depreciated, this functionality should be
         # implemented as format_cursor_data() on ColorizingArtist.
         n = self.cmap.N
-        if np.ma.getmask(data):
+        if mlxarr.ma.getmask(data):
             return "[]"
         normed = self.norm(data)
-        if np.isfinite(normed):
+        if mlxarr.isfinite(normed):
             if isinstance(self.norm, colors.BoundaryNorm):
                 # not an invertible normalization mapping
-                cur_idx = np.argmin(np.abs(self.norm.boundaries - data))
+                cur_idx = mlxarr.argmin(mlxarr.abs(self.norm.boundaries - data))
                 neigh_idx = max(0, cur_idx - 1)
                 # use max diff to prevent delta == 0
-                delta = np.diff(
+                delta = mlxarr.diff(
                     self.norm.boundaries[neigh_idx:cur_idx + 2]
                 ).max()
             elif self.norm.vmin == self.norm.vmax:
                 # singular norms, use delta of 10% of only value
-                delta = np.abs(self.norm.vmin * .1)
+                delta = mlxarr.abs(self.norm.vmin * .1)
             else:
                 # Midpoints of neighboring color intervals.
                 neighbors = self.norm.inverse(
-                    (int(normed * n) + np.array([0, 1])) / n)
+                    (int(normed * n) + mlxarr.array([0, 1])) / n)
                 delta = abs(neighbors - data).max()
             g_sig_digits = cbook._g_sig_digits(data, delta)
         else:
@@ -563,7 +563,7 @@ class _ScalarMappable(_ColorizerInterface):
             return
 
         A = cbook.safe_masked_invalid(A, copy=True)
-        if not np.can_cast(A.dtype, float, "same_kind"):
+        if not mlxarr.can_cast(A.dtype, float, "same_kind"):
             raise TypeError(f"Image data of dtype {A.dtype} cannot be "
                             "converted to float")
 

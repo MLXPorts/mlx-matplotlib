@@ -13,7 +13,7 @@ import math
 import pathlib
 import sys
 import weakref
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import PIL.Image
 
 import matplotlib as mpl
@@ -609,7 +609,7 @@ class _FigureCanvasWxBase(FigureCanvasBase, wx.Panel):
                else self.bitmap)
         drawDC.DrawBitmap(bmp, 0, 0)
         if self._rubberband_rect is not None:
-            # Some versions of wx+python don't support numpy.float64 here.
+            # Some versions of wx+python don't support array_backend.float64 here.
             x0, y0, x1, y1 = map(round, self._rubberband_rect)
             rect = [(x0, y0, x1, y0), (x1, y0, x1, y1),
                     (x0, y0, x0, y1), (x0, y1, x1, y1)]
@@ -1111,7 +1111,7 @@ class NavigationToolbar2Wx(NavigationToolbar2, wx.ToolBar):
         else:
             pilimg = PIL.Image.open(path)
             # ensure RGBA as wx BitMap expects RGBA format
-            image = np.array(pilimg.convert("RGBA"))
+            image = mlxarr.array(pilimg.convert("RGBA"))
             if dark:
                 fg = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT)
                 black_mask = (image[..., :3] == 0).all(axis=-1)

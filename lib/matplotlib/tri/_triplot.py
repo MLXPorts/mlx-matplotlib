@@ -1,4 +1,4 @@
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.tri._triangulation import Triangulation
 import matplotlib.cbook as cbook
 import matplotlib.lines as mlines
@@ -64,8 +64,8 @@ def triplot(ax, *args, **kwargs):
         'zorder': kw.get('zorder', 1),  # Path default zorder is used.
     }
     if linestyle not in [None, 'None', '', ' ']:
-        tri_lines_x = np.insert(x[edges], 2, np.nan, axis=1)
-        tri_lines_y = np.insert(y[edges], 2, np.nan, axis=1)
+        tri_lines_x = mlxarr.insert(x[edges], 2, mlxarr.nan, axis=1)
+        tri_lines_y = mlxarr.insert(y[edges], 2, mlxarr.nan, axis=1)
         tri_lines = ax.plot(tri_lines_x.ravel(), tri_lines_y.ravel(),
                             **kw_lines)
     else:

@@ -9,7 +9,7 @@ This examples plots a scatter plot. You can then select a few points by drawing
 a lasso loop around the points on the graph. To draw, just click
 on the graph, hold, and drag it around the points you need to select.
 """
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.path import Path
 from matplotlib.widgets import LassoSelector
 
@@ -50,14 +50,14 @@ class SelectFromCollection:
         if len(self.fc) == 0:
             raise ValueError('Collection must have a facecolor')
         elif len(self.fc) == 1:
-            self.fc = np.tile(self.fc, (self.Npts, 1))
+            self.fc = mlxarr.tile(self.fc, (self.Npts, 1))
 
         self.lasso = LassoSelector(ax, onselect=self.onselect)
         self.ind = []
 
     def onselect(self, verts):
         path = Path(verts)
-        self.ind = np.nonzero(path.contains_points(self.xys))[0]
+        self.ind = mlxarr.nonzero(path.contains_points(self.xys))[0]
         self.fc[:, -1] = self.alpha_other
         self.fc[self.ind, -1] = 1
         self.collection.set_facecolors(self.fc)
@@ -74,9 +74,9 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
     # Fixing random state for reproducibility
-    np.random.seed(19680801)
+    mlxarr.random.seed(19680801)
 
-    data = np.random.rand(100, 2)
+    data = mlxarr.random.rand(100, 2)
 
     subplot_kw = dict(xlim=(0, 1), ylim=(0, 1), autoscale_on=False)
     fig, ax = plt.subplots(subplot_kw=subplot_kw)

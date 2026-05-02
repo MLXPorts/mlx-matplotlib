@@ -6,7 +6,7 @@ Table Demo
 Demo of table function to display a table within a plot.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 data = [[ 66386, 174296,  75131, 577908,  32015],
         [ 58230, 381139,  78045,  99308, 160454],
         [ 89135,  80552, 152558, 497981, 603535],
@@ -16,18 +16,18 @@ data = [[ 66386, 174296,  75131, 577908,  32015],
 columns = ('Freeze', 'Wind', 'Flood', 'Quake', 'Hail')
 rows = ['%d year' % x for x in (100, 50, 20, 10, 5)]
 
-values = np.arange(0, 2500, 500)
+values = mlxarr.arange(0, 2500, 500)
 value_increment = 1000
 
 # Get some pastel shades for the colors
-colors = plt.colormaps["BuPu"](np.linspace(0, 0.5, len(rows)))
+colors = plt.colormaps["BuPu"](mlxarr.linspace(0, 0.5, len(rows)))
 n_rows = len(data)
 
-index = np.arange(len(columns)) + 0.3
+index = mlxarr.arange(len(columns)) + 0.3
 bar_width = 0.4
 
 # Initialize the vertical-offset for the stacked bar chart.
-y_offset = np.zeros(len(columns))
+y_offset = mlxarr.zeros(len(columns))
 
 # Plot bars and create text labels for the table
 cell_text = []

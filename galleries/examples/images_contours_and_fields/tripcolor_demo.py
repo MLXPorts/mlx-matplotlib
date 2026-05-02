@@ -6,7 +6,7 @@ Tripcolor Demo
 Pseudocolor plots of unstructured triangular grids.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.tri as tri
 
 # %%
@@ -17,21 +17,21 @@ import matplotlib.tri as tri
 n_angles = 36
 n_radii = 8
 min_radius = 0.25
-radii = np.linspace(min_radius, 0.95, n_radii)
+radii = mlxarr.linspace(min_radius, 0.95, n_radii)
 
-angles = np.linspace(0, 2 * np.pi, n_angles, endpoint=False)
-angles = np.repeat(angles[..., np.newaxis], n_radii, axis=1)
-angles[:, 1::2] += np.pi / n_angles
+angles = mlxarr.linspace(0, 2 * mlxarr.pi, n_angles, endpoint=False)
+angles = mlxarr.repeat(angles[..., mlxarr.newaxis], n_radii, axis=1)
+angles[:, 1::2] += mlxarr.pi / n_angles
 
-x = (radii * np.cos(angles)).flatten()
-y = (radii * np.sin(angles)).flatten()
-z = (np.cos(radii) * np.cos(3 * angles)).flatten()
+x = (radii * mlxarr.cos(angles)).flatten()
+y = (radii * mlxarr.sin(angles)).flatten()
+z = (mlxarr.cos(radii) * mlxarr.cos(3 * angles)).flatten()
 
 # Create the Triangulation; no triangles so Delaunay triangulation created.
 triang = tri.Triangulation(x, y)
 
 # Mask off unwanted triangles.
-triang.set_mask(np.hypot(x[triang.triangles].mean(axis=1),
+triang.set_mask(mlxarr.hypot(x[triang.triangles].mean(axis=1),
                          y[triang.triangles].mean(axis=1))
                 < min_radius)
 
@@ -60,7 +60,7 @@ ax2.set_title('tripcolor of Delaunay triangulation, gouraud shading')
 # the three points that make up the triangle, ordered in either a clockwise or
 # anticlockwise manner.
 
-xy = np.asarray([
+xy = mlxarr.asarray([
     [-0.101, 0.872], [-0.080, 0.883], [-0.069, 0.888], [-0.054, 0.890],
     [-0.045, 0.897], [-0.057, 0.895], [-0.073, 0.900], [-0.087, 0.898],
     [-0.090, 0.904], [-0.069, 0.907], [-0.069, 0.921], [-0.080, 0.919],
@@ -80,9 +80,9 @@ xy = np.asarray([
     [-0.057, 0.881], [-0.062, 0.876], [-0.078, 0.876], [-0.087, 0.872],
     [-0.030, 0.907], [-0.007, 0.905], [-0.057, 0.916], [-0.025, 0.933],
     [-0.077, 0.990], [-0.059, 0.993]])
-x, y = np.rad2deg(xy).T
+x, y = mlxarr.rad2deg(xy).T
 
-triangles = np.asarray([
+triangles = mlxarr.asarray([
     [67, 66,  1], [65,  2, 66], [ 1, 66,  2], [64,  2, 65], [63,  3, 64],
     [60, 59, 57], [ 2, 64,  3], [ 3, 63,  4], [ 0, 67,  1], [62,  4, 63],
     [57, 59, 56], [59, 58, 56], [61, 60, 69], [57, 69, 60], [ 4, 62, 68],
@@ -104,7 +104,7 @@ xmid = x[triangles].mean(axis=1)
 ymid = y[triangles].mean(axis=1)
 x0 = -5
 y0 = 52
-zfaces = np.exp(-0.01 * ((xmid - x0) * (xmid - x0) +
+zfaces = mlxarr.exp(-0.01 * ((xmid - x0) * (xmid - x0) +
                          (ymid - y0) * (ymid - y0)))
 
 # %%

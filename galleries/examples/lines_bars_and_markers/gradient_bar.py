@@ -18,8 +18,8 @@ transform=ax.transAxes``) to be independent of the data coordinates.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
-np.random.seed(19680801)
+from matplotlib import _mlx_array as mlxarr
+mlxarr.random.seed(19680801)
 
 
 def gradient_image(ax, direction=0.3, cmap_range=(0, 1), **kwargs):
@@ -40,9 +40,9 @@ def gradient_image(ax, direction=0.3, cmap_range=(0, 1), **kwargs):
         Other parameters are passed on to `.Axes.imshow()`.
         In particular, *cmap*, *extent*, and *transform* may be useful.
     """
-    phi = direction * np.pi / 2
-    v = np.array([np.cos(phi), np.sin(phi)])
-    X = np.array([[v @ [1, 0], v @ [1, 1]],
+    phi = direction * mlxarr.pi / 2
+    v = mlxarr.array([mlxarr.cos(phi), mlxarr.sin(phi)])
+    X = mlxarr.array([[v @ [1, 0], v @ [1, 1]],
                   [v @ [0, 0], v @ [0, 1]]])
     a, b = cmap_range
     X = a + (b - a) / X.max() * X
@@ -66,8 +66,8 @@ gradient_image(ax, direction=1, extent=(0, 1, 0, 1), transform=ax.transAxes,
                cmap="RdYlGn", cmap_range=(0.2, 0.8), alpha=0.5)
 
 N = 10
-x = np.arange(N) + 0.15
-y = np.random.rand(N)
+x = mlxarr.arange(N) + 0.15
+y = mlxarr.random.rand(N)
 gradient_bar(ax, x, y, width=0.7)
 plt.show()
 

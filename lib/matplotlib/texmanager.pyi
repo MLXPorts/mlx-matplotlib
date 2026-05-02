@@ -1,7 +1,7 @@
 from .backend_bases import RendererBase
 
 from matplotlib.typing import ColorType
-import matplotlib._mlx_numpy as np
+import matplotlib._mlx_array as mlxarr
 class TexManager:
     texcache: str
     @classmethod
@@ -21,7 +21,7 @@ class TexManager:
     @classmethod
     def get_grey(
         cls, tex: str, fontsize: float | None = ..., dpi: float | None = ...
-    ) -> np.ndarray: ...
+    ) -> mlxarr.ndarray: ...
     @classmethod
     def get_rgba(
         cls,
@@ -29,7 +29,7 @@ class TexManager:
         fontsize: float | None = ...,
         dpi: float | None = ...,
         rgb: ColorType = ...,
-    ) -> np.ndarray: ...
+    ) -> mlxarr.ndarray: ...
     @classmethod
     def get_text_width_height_descent(
         cls, tex: str, fontsize, renderer: RendererBase | None = ...

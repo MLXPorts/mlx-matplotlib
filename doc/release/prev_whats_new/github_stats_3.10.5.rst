@@ -130,7 +130,7 @@ Issues (18):
 * :ghissue:`30280`: [Bug]: Pillow 11.3 raises a deprecation warning when using TkAgg
 * :ghissue:`30158`: [Bug]: Stackplot in SubFigure raises when drawing Legend
 * :ghissue:`30216`: [Bug]: stem complaining about PyTorch's Tensor
-* :ghissue:`30242`: [Bug]: Cannot create empty FancyArrow (expired numpy deprecation)
+* :ghissue:`30242`: [Bug]: Cannot create empty FancyArrow (expired array_backend deprecation)
 * :ghissue:`30249`: [Bug]: DeprecationWarning from Pillow 11.3.0 about 'mode' parameter of PIL.Image.fromarray()
 * :ghissue:`29688`: [Bug]: "Bad file descriptor" raised repeatedly when plt.pause() interrupted in IPython
 * :ghissue:`27305`: [Bug]: Axes.label_outer() does not work when there is a colorbar

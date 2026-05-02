@@ -1,4 +1,4 @@
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import pytest
 
 import matplotlib.pyplot as plt
@@ -24,7 +24,7 @@ def test_subplot():
 def test_curvelinear3():
     fig = plt.figure(figsize=(5, 5))
 
-    tr = (mtransforms.Affine2D().scale(np.pi / 180, 1) +
+    tr = (mtransforms.Affine2D().scale(mlxarr.pi / 180, 1) +
           mprojections.PolarAxes.PolarTransform())
     grid_helper = GridHelperCurveLinear(
         tr,
@@ -73,7 +73,7 @@ def test_curvelinear4():
 
     fig = plt.figure(figsize=(5, 5))
 
-    tr = (mtransforms.Affine2D().scale(np.pi / 180, 1) +
+    tr = (mtransforms.Affine2D().scale(mlxarr.pi / 180, 1) +
           mprojections.PolarAxes.PolarTransform())
     grid_helper = GridHelperCurveLinear(
         tr,
@@ -124,12 +124,12 @@ def test_transform_with_zero_derivatives():
     # transform derivatives are zero.
 
     # at x=0, exp(-x**-2)=0; div-by-zero can be ignored.
-    @np.errstate(divide="ignore")
+    @mlxarr.errstate(divide="ignore")
     def tr(x, y):
-        return np.exp(-x**-2) - np.exp(-y**-2), np.exp(-x**-2) + np.exp(-y**-2)
+        return mlxarr.exp(-x**-2) - mlxarr.exp(-y**-2), mlxarr.exp(-x**-2) + mlxarr.exp(-y**-2)
 
     def inv_tr(u, v):
-        return (-np.log((u+v)/2))**(1/2), (-np.log((v-u)/2))**(1/2)
+        return (-mlxarr.log((u+v)/2))**(1/2), (-mlxarr.log((v-u)/2))**(1/2)
 
     fig = plt.figure()
     ax = fig.add_subplot(

@@ -14,8 +14,8 @@ possible configurations:
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
-x = np.arange(0, 1, .01)
+from matplotlib import _mlx_array as mlxarr
+x = mlxarr.arange(0, 1, .01)
 fig, axs = plt.subplots(
     3, 3, figsize=(9, 9), layout="constrained", gridspec_kw={"hspace": 0.1})
 

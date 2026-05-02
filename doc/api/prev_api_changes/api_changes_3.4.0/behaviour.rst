@@ -333,10 +333,10 @@ be made via::
 
     fig.add_subplot(projection='3d')
 
-``mplot3d.art3d.get_dir_vector`` always returns NumPy arrays
+``mplot3d.art3d.get_dir_vector`` always returns MLXArrayBackend arrays
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For consistency, `~.mplot3d.art3d.get_dir_vector` now always returns NumPy
+For consistency, `~.mplot3d.art3d.get_dir_vector` now always returns MLXArrayBackend
 arrays, even if the input is a 3-element iterable.
 
 Changed cursive and fantasy font definitions

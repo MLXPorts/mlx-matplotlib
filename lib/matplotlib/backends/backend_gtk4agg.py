@@ -1,4 +1,4 @@
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from .. import cbook
 from . import backend_agg, backend_gtk4
 from .backend_gtk4 import GLib, Gtk, _BackendGTK4
@@ -24,7 +24,7 @@ class FigureCanvasGTK4Agg(backend_agg.FigureCanvasAgg,
             allocation.width, allocation.height)
 
         buf = cbook._unmultiplied_rgba8888_to_premultiplied_argb32(
-            np.asarray(self.get_renderer().buffer_rgba()))
+            mlxarr.asarray(self.get_renderer().buffer_rgba()))
         height, width, _ = buf.shape
         image = cairo.ImageSurface.create_for_data(
             buf.ravel().data, cairo.FORMAT_ARGB32, width, height)

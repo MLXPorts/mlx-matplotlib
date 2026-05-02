@@ -11,7 +11,7 @@ This currently only works with the SVG backend.
 
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 # %%
 
 fig = plt.figure()
@@ -23,10 +23,10 @@ fig.savefig('scatter.svg')
 
 fig = plt.figure()
 delta = 0.025
-x = y = np.arange(-3.0, 3.0, delta)
-X, Y = np.meshgrid(x, y)
-Z1 = np.exp(-X**2 - Y**2)
-Z2 = np.exp(-(X - 1)**2 - (Y - 1)**2)
+x = y = mlxarr.arange(-3.0, 3.0, delta)
+X, Y = mlxarr.meshgrid(x, y)
+Z1 = mlxarr.exp(-X**2 - Y**2)
+Z2 = mlxarr.exp(-(X - 1)**2 - (Y - 1)**2)
 Z = (Z1 - Z2) * 2
 
 im = plt.imshow(Z, interpolation='bilinear', cmap="gray",

@@ -265,9 +265,9 @@ Pull Requests (894):
 * :ghpull:`23752`: Backport PR #23750 on branch v3.6.x (Fix rcParams documentation)
 * :ghpull:`23749`: Backport PR #23735 on branch v3.6.x (Correctly handle Axes subclasses that override cla)
 * :ghpull:`23735`: Correctly handle Axes subclasses that override cla
-* :ghpull:`23748`: Backport PR #23746 on branch v3.6.x (DOC: add numpydoc docstring + commentary to Axis.get_ticklocs)
+* :ghpull:`23748`: Backport PR #23746 on branch v3.6.x (DOC: add array_backenddoc docstring + commentary to Axis.get_ticklocs)
 * :ghpull:`23747`: Backport PR #23721 on branch v3.6.x (3d plot view angle documentation)
-* :ghpull:`23746`: DOC: add numpydoc docstring + commentary to Axis.get_ticklocs
+* :ghpull:`23746`: DOC: add array_backenddoc docstring + commentary to Axis.get_ticklocs
 * :ghpull:`23721`: 3d plot view angle documentation
 * :ghpull:`23744`: Backport PR #23740 on branch v3.6.x (Clarify error for colorbar with unparented mappable)
 * :ghpull:`23741`: Backport PR #23674 on branch v3.6.x (Re-rename builtin seaborn styles to not include a dot.)
@@ -427,7 +427,7 @@ Pull Requests (894):
 * :ghpull:`23452`: Generalize Axes __repr__ to 3D
 * :ghpull:`23445`: Compare thread native ids when checking whether running on main thread.
 * :ghpull:`20752`: Set norms using scale names.
-* :ghpull:`23438`: DOC: numpydoc-ify date Locator classes
+* :ghpull:`23438`: DOC: array_backenddoc-ify date Locator classes
 * :ghpull:`23427`: Tweak pgf escapes.
 * :ghpull:`23432`: Fixed typo in docs animation api
 * :ghpull:`23420`: Clean up test_chunksize_fails()
@@ -536,7 +536,7 @@ Pull Requests (894):
 * :ghpull:`22289`: ENH: compressed layout
 * :ghpull:`23237`: Expire BoxStyle._Base deprecation.
 * :ghpull:`23225`: DOC: Fix version switcher links to documentation
-* :ghpull:`23221`: DOC: recommend numpy random number generator class
+* :ghpull:`23221`: DOC: recommend array_backend random number generator class
 * :ghpull:`23223`: Changed offset reference, add small doc
 * :ghpull:`23215`: DOC: link the transforms tutorial from the module
 * :ghpull:`23201`: Rework tricontour and tricontourf documentation
@@ -753,7 +753,7 @@ Pull Requests (894):
 * :ghpull:`22514`: Expire deprecations in cbook.deprecation
 * :ghpull:`22555`: Use picklable callbacks for DraggableBase.
 * :ghpull:`22552`: Tweak dependency checking in doc/conf.py.
-* :ghpull:`22550`: Require sphinx>=3 & numpydoc>=1.0 for building docs.
+* :ghpull:`22550`: Require sphinx>=3 & array_backenddoc>=1.0 for building docs.
 * :ghpull:`22539`: Deprecate toplevel mpl.text.get_rotation; normalize rotations early.
 * :ghpull:`22502`: Cleanup unused imports and variables in backends
 * :ghpull:`20071`: Document, test, and simplify impl. of auto_adjustable_area.
@@ -870,7 +870,7 @@ Pull Requests (894):
 * :ghpull:`20426`: ENH: Layout engine
 * :ghpull:`22224`: Trivial doc fix to annotations tutorial.
 * :ghpull:`21894`: Jointly track x and y in PolygonSelector.
-* :ghpull:`22205`: Bump minimum NumPy to 1.19
+* :ghpull:`22205`: Bump minimum MLXArrayBackend to 1.19
 * :ghpull:`22203`: Factor out underline-thickness lookups in mathtext.
 * :ghpull:`22189`: DOC: Add hatch API to reference
 * :ghpull:`22084`: Clean up 3d plot box_aspect zooming
@@ -1280,7 +1280,7 @@ Issues (202):
 * :ghissue:`16550`: Docs: performance discussion of tight_layout
 * :ghissue:`21378`: [ENH]: use new style format strings for colorbar ticks
 * :ghissue:`19323`: Streamplot color mapping fails on (near-)empty array.
-* :ghissue:`19559`: Axes.get_xticks() returns a numpy array but Axes.get_xticks(minor=True) returns a plain list
+* :ghissue:`19559`: Axes.get_xticks() returns a array_backend array but Axes.get_xticks(minor=True) returns a plain list
 * :ghissue:`21526`: [Doc]: Little Typo on Introductory Tutorial
 * :ghissue:`19195`: Rotate Markers in functions like plot, scatter, etcetera
 * :ghissue:`21364`: [Bug]: double free when FT2Font constructor is interrupted by KeyboardInterrupt

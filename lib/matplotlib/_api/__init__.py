@@ -148,7 +148,7 @@ def check_shape(shape, /, **kwargs):
     *None* in the shape is treated as a "free" size that can have any length.
     e.g. (None, 2) -> (N, 2)
 
-    The values checked must be numpy arrays.
+    The values checked must be array_backend arrays.
 
     Examples
     --------

@@ -38,7 +38,7 @@ universal function.
 
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib
 import matplotlib as mpl
 
@@ -49,7 +49,7 @@ vegetables = ["cucumber", "tomato", "lettuce", "asparagus",
 farmers = ["Farmer Joe", "Upland Bros.", "Smith Gardening",
            "Agrifun", "Organiculture", "BioGoods Ltd.", "Cornylee Corp."]
 
-harvest = np.array([[0.8, 2.4, 2.5, 3.9, 0.0, 4.0, 0.0],
+harvest = mlxarr.array([[0.8, 2.4, 2.5, 3.9, 0.0, 4.0, 0.0],
                     [2.4, 0.0, 4.0, 1.0, 2.7, 0.0, 0.0],
                     [1.1, 2.4, 0.8, 4.3, 1.9, 4.4, 0.0],
                     [0.6, 0.0, 0.3, 0.0, 3.1, 0.0, 0.0],
@@ -98,12 +98,12 @@ plt.show()
 def heatmap(data, row_labels, col_labels, ax=None,
             cbar_kw=None, cbarlabel="", **kwargs):
     """
-    Create a heatmap from a numpy array and two lists of labels.
+    Create a heatmap from a array_backend array and two lists of labels.
 
     Parameters
     ----------
     data
-        A 2D numpy array of shape (M, N).
+        A 2D array_backend array of shape (M, N).
     row_labels
         A list or array of length M with the labels for the rows.
     col_labels
@@ -144,8 +144,8 @@ def heatmap(data, row_labels, col_labels, ax=None,
     # Turn spines off and create white grid.
     ax.spines[:].set_visible(False)
 
-    ax.set_xticks(np.arange(data.shape[1]+1)-.5, minor=True)
-    ax.set_yticks(np.arange(data.shape[0]+1)-.5, minor=True)
+    ax.set_xticks(mlxarr.arange(data.shape[1]+1)-.5, minor=True)
+    ax.set_yticks(mlxarr.arange(data.shape[0]+1)-.5, minor=True)
     ax.grid(which="minor", color="w", linestyle='-', linewidth=3)
     ax.tick_params(which="minor", bottom=False, left=False)
 
@@ -180,7 +180,7 @@ def annotate_heatmap(im, data=None, valfmt="{x:.2f}",
         the text labels.
     """
 
-    if not isinstance(data, (list, np.ndarray)):
+    if not isinstance(data, (list, mlxarr.ndarray)):
         data = im.get_array()
 
     # Normalize the threshold to the images color range.
@@ -233,7 +233,7 @@ plt.show()
 # functions by applying it in different cases and using different arguments.
 #
 
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 fig, ((ax, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(8, 6))
 
@@ -246,7 +246,7 @@ annotate_heatmap(im, valfmt="{x:.1f}", size=7)
 # Create some new data, give further arguments to imshow (vmin),
 # use an integer format on the annotations and provide some colors.
 
-data = np.random.randint(2, 100, size=(7, 7))
+data = mlxarr.random.randint(2, 100, size=(7, 7))
 y = [f"Book {i}" for i in range(1, 8)]
 x = [f"Store {i}" for i in list("ABCDEFG")]
 im, _ = heatmap(data, y, x, ax=ax2, vmin=0,
@@ -259,17 +259,17 @@ annotate_heatmap(im, valfmt="{x:d}", size=7, threshold=20,
 # and use this to colorize the plot, but also to obtain the class
 # labels from an array of classes.
 
-data = np.random.randn(6, 6)
+data = mlxarr.random.randn(6, 6)
 y = [f"Prod. {i}" for i in range(10, 70, 10)]
 x = [f"Cycle {i}" for i in range(1, 7)]
 
 qrates = list("ABCDEFG")
-norm = matplotlib.colors.BoundaryNorm(np.linspace(-3.5, 3.5, 8), 7)
+norm = matplotlib.colors.BoundaryNorm(mlxarr.linspace(-3.5, 3.5, 8), 7)
 fmt = matplotlib.ticker.FuncFormatter(lambda x, pos: qrates[::-1][norm(x)])
 
 im, _ = heatmap(data, y, x, ax=ax3,
                 cmap=mpl.colormaps["PiYG"].resampled(7), norm=norm,
-                cbar_kw=dict(ticks=np.arange(-3, 4), format=fmt),
+                cbar_kw=dict(ticks=mlxarr.arange(-3, 4), format=fmt),
                 cbarlabel="Quality Rating")
 
 annotate_heatmap(im, valfmt=fmt, size=9, fontweight="bold", threshold=-1,
@@ -280,7 +280,7 @@ annotate_heatmap(im, valfmt=fmt, size=9, fontweight="bold", threshold=-1,
 # the diagonal elements (which are all 1) by using a
 # `matplotlib.ticker.FuncFormatter`.
 
-corr_matrix = np.corrcoef(harvest)
+corr_matrix = mlxarr.corrcoef(harvest)
 im, _ = heatmap(corr_matrix, vegetables, vegetables, ax=ax4,
                 cmap="PuOr", vmin=-1, vmax=1,
                 cbarlabel="correlation coeff.")

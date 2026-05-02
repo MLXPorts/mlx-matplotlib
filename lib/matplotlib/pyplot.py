@@ -12,11 +12,11 @@ screen, and acts as the figure GUI manager.
 
 pyplot is mainly intended for interactive plots and simple cases of
 programmatic plot generation::
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
     import matplotlib.pyplot as plt
 
-    x = np.arange(0, 5, 0.1)
-    y = np.sin(x)
+    x = mlxarr.arange(0, 5, 0.1)
+    y = mlxarr.sin(x)
     plt.plot(x, y)
     plt.show()
 
@@ -25,11 +25,11 @@ pyplot is still usually used to create the figure and often the Axes in the
 figure. See `.pyplot.figure`, `.pyplot.subplots`, and
 `.pyplot.subplot_mosaic` to create figures, and
 :doc:`Axes API </api/axes_api>` for the plotting methods on an Axes::
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
     import matplotlib.pyplot as plt
 
-    x = np.arange(0, 5, 0.1)
-    y = np.sin(x)
+    x = mlxarr.arange(0, 5, 0.1)
+    y = mlxarr.sin(x)
     fig, ax = plt.subplots()
     ax.plot(x, y)
     plt.show()
@@ -82,7 +82,7 @@ from matplotlib.scale import get_scale_names  # noqa: F401
 
 from matplotlib.cm import _colormaps
 from matplotlib.colors import _color_sequences, Colormap
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 if TYPE_CHECKING:
     from collections.abc import Callable, Hashable, Iterable, Sequence
     import pathlib
@@ -224,8 +224,8 @@ def _add_pyplot_note(func, wrapped_func):
     Add a note to the docstring of *func* that it is a pyplot wrapper.
 
     The note is added to the "Notes" section of the docstring. If that does
-    not exist, a "Notes" section is created. In numpydoc, the "Notes"
-    section is the third last possible section, only potentially followed by
+    not exist, a "Notes" section is created. The "Notes" section is only
+    potentially followed by
     "References" and "Examples".
     """
     if not func.__doc__:
@@ -260,8 +260,8 @@ def _add_pyplot_note(func, wrapped_func):
 
     # Find the correct insert position:
     # - either we already have a "Notes" section into which we can insert
-    # - or we create one before the next present section. Note that in numpydoc, the
-    #   "Notes" section is the third last possible section, only potentially followed
+    # - or we create one before the next present section. The "Notes" section
+    #   is only potentially followed
     #   by "References" and "Examples".
     # - or we append a new "Notes" section at the end.
     doc = inspect.cleandoc(func.__doc__)
@@ -1676,7 +1676,7 @@ def subplots(
     subplot_kw: dict[str, Any] | None = ...,
     gridspec_kw: dict[str, Any] | None = ...,
     **fig_kw
-) -> tuple[Figure, np.ndarray]:  # TODO numpy/numpy#24738
+) -> tuple[Figure, mlxarr.ndarray]:  # TODO array_backend/array_backend#24738
     ...
 
 
@@ -1745,7 +1745,7 @@ def subplots(
 
           - if only one subplot is constructed (nrows=ncols=1), the
             resulting single Axes object is returned as a scalar.
-          - for Nx1 or 1xM subplots, the returned object is a 1D numpy
+          - for Nx1 or 1xM subplots, the returned object is a 1D array_backend
             object array of Axes objects.
           - for NxM, subplots with N>1 and M>1 are returned as a 2D array.
 
@@ -1816,8 +1816,8 @@ def subplots(
     ::
 
         # First create some toy data:
-        x = np.linspace(0, 2*np.pi, 400)
-        y = np.sin(x**2)
+        x = mlxarr.linspace(0, 2*mlxarr.pi, 400)
+        y = mlxarr.sin(x**2)
 
         # Create just a figure and only one subplot
         fig, ax = plt.subplots()
@@ -2283,7 +2283,7 @@ def xticks(
     *,
     minor: bool = False,
     **kwargs
-) -> tuple[list[Tick] | np.ndarray, list[Text]]:
+) -> tuple[list[Tick] | mlxarr.ndarray, list[Text]]:
     """
     Get or set the current tick locations and labels of the x-axis.
 
@@ -2335,15 +2335,15 @@ def xticks(
     Examples
     --------
     >>> locs, labels = xticks()  # Get the current locations and labels.
-    >>> xticks(np.arange(0, 1, step=0.2))  # Set label locations.
-    >>> xticks(np.arange(3), ['Tom', 'Dick', 'Sue'])  # Set text labels.
+    >>> xticks(mlxarr.arange(0, 1, step=0.2))  # Set label locations.
+    >>> xticks(mlxarr.arange(3), ['Tom', 'Dick', 'Sue'])  # Set text labels.
     >>> xticks([0, 1, 2], ['January', 'February', 'March'],
     ...        rotation=20)  # Set text labels and properties.
     >>> xticks([])  # Disable xticks.
     """
     ax = gca()
 
-    locs: list[Tick] | np.ndarray
+    locs: list[Tick] | mlxarr.ndarray
     if ticks is None:
         locs = ax.get_xticks(minor=minor)
         if labels is not None:
@@ -2369,7 +2369,7 @@ def yticks(
     *,
     minor: bool = False,
     **kwargs
-) -> tuple[list[Tick] | np.ndarray, list[Text]]:
+) -> tuple[list[Tick] | mlxarr.ndarray, list[Text]]:
     """
     Get or set the current tick locations and labels of the y-axis.
 
@@ -2420,15 +2420,15 @@ def yticks(
     Examples
     --------
     >>> locs, labels = yticks()  # Get the current locations and labels.
-    >>> yticks(np.arange(0, 1, step=0.2))  # Set label locations.
-    >>> yticks(np.arange(3), ['Tom', 'Dick', 'Sue'])  # Set text labels.
+    >>> yticks(mlxarr.arange(0, 1, step=0.2))  # Set label locations.
+    >>> yticks(mlxarr.arange(3), ['Tom', 'Dick', 'Sue'])  # Set text labels.
     >>> yticks([0, 1, 2], ['January', 'February', 'March'],
     ...        rotation=45)  # Set text labels and properties.
     >>> yticks([])  # Disable yticks.
     """
     ax = gca()
 
-    locs: list[Tick] | np.ndarray
+    locs: list[Tick] | mlxarr.ndarray
     if ticks is None:
         locs = ax.get_yticks(minor=minor)
         if labels is not None:
@@ -2725,7 +2725,7 @@ def set_cmap(cmap: Colormap | str) -> None:
 @_copy_docstring_and_deprecators(matplotlib.image.imread)
 def imread(
         fname: str | pathlib.Path | BinaryIO, format: str | None = None
-) -> np.ndarray:
+) -> mlxarr.ndarray:
     return matplotlib.image.imread(fname, format)
 
 
@@ -2780,7 +2780,7 @@ def matshow(A: ArrayLike, fignum: None | int = None, **kwargs) -> AxesImage:
     **kwargs : `~matplotlib.axes.Axes.imshow` arguments
 
     """
-    A = np.asanyarray(A)
+    A = mlxarr.asanyarray(A)
     if fignum == 0:
         ax = gca()
     else:
@@ -2968,7 +2968,7 @@ def waitforbuttonpress(timeout: float = -1) -> None | bool:
 @_copy_docstring_and_deprecators(Axes.acorr)
 def acorr(
     x: ArrayLike, *, data=None, **kwargs
-) -> tuple[np.ndarray, np.ndarray, LineCollection | Line2D, Line2D | None]:
+) -> tuple[mlxarr.ndarray, mlxarr.ndarray, LineCollection | Line2D, Line2D | None]:
     return gca().acorr(x, **({"data": data} if data is not None else {}), **kwargs)
 
 
@@ -2984,7 +2984,7 @@ def angle_spectrum(
     *,
     data=None,
     **kwargs,
-) -> tuple[np.ndarray, np.ndarray, Line2D]:
+) -> tuple[mlxarr.ndarray, mlxarr.ndarray, Line2D]:
     return gca().angle_spectrum(
         x,
         Fs=Fs,
@@ -3275,7 +3275,7 @@ def cohere(
     *,
     data=None,
     **kwargs,
-) -> tuple[np.ndarray, np.ndarray]:
+) -> tuple[mlxarr.ndarray, mlxarr.ndarray]:
     return gca().cohere(
         x,
         y,
@@ -3335,7 +3335,7 @@ def csd(
     *,
     data=None,
     **kwargs,
-) -> tuple[np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, Line2D]:
+) -> tuple[mlxarr.ndarray, mlxarr.ndarray] | tuple[mlxarr.ndarray, mlxarr.ndarray, Line2D]:
     return gca().csd(
         x,
         y,
@@ -3521,7 +3521,7 @@ def grid(
 # Autogenerated by boilerplate.py.  Do not edit as changes will be lost.
 @_copy_docstring_and_deprecators(Axes.grouped_bar)
 def grouped_bar(
-    heights: Sequence[ArrayLike] | dict[str, ArrayLike] | np.ndarray | pd.DataFrame,
+    heights: Sequence[ArrayLike] | dict[str, ArrayLike] | mlxarr.ndarray | pd.DataFrame,
     *,
     positions: ArrayLike | None = None,
     group_spacing: float | None = 1.5,
@@ -3563,7 +3563,7 @@ def hexbin(
     alpha: float | None = None,
     linewidths: float | None = None,
     edgecolors: Literal["face", "none"] | ColorType = "face",
-    reduce_C_function: Callable[[np.ndarray | list[float]], float] = np.mean,
+    reduce_C_function: Callable[[mlxarr.ndarray | list[float]], float] = mlxarr.mean,
     mincnt: int | None = None,
     marginals: bool = False,
     colorizer: Colorizer | None = None,
@@ -3620,8 +3620,8 @@ def hist(
     data=None,
     **kwargs,
 ) -> tuple[
-    np.ndarray | list[np.ndarray],
-    np.ndarray,
+    mlxarr.ndarray | list[mlxarr.ndarray],
+    mlxarr.ndarray,
     BarContainer | Polygon | list[BarContainer | Polygon],
 ]:
     return gca().hist(
@@ -3682,7 +3682,7 @@ def hist2d(
     *,
     data=None,
     **kwargs,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, QuadMesh]:
+) -> tuple[mlxarr.ndarray, mlxarr.ndarray, mlxarr.ndarray, QuadMesh]:
     __ret = gca().hist2d(
         x,
         y,
@@ -3804,7 +3804,7 @@ def magnitude_spectrum(
     *,
     data=None,
     **kwargs,
-) -> tuple[np.ndarray, np.ndarray, Line2D]:
+) -> tuple[mlxarr.ndarray, mlxarr.ndarray, Line2D]:
     return gca().magnitude_spectrum(
         x,
         Fs=Fs,
@@ -3915,7 +3915,7 @@ def phase_spectrum(
     *,
     data=None,
     **kwargs,
-) -> tuple[np.ndarray, np.ndarray, Line2D]:
+) -> tuple[mlxarr.ndarray, mlxarr.ndarray, Line2D]:
     return gca().phase_spectrum(
         x,
         Fs=Fs,
@@ -4012,7 +4012,7 @@ def psd(
     *,
     data=None,
     **kwargs,
-) -> tuple[np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, Line2D]:
+) -> tuple[mlxarr.ndarray, mlxarr.ndarray] | tuple[mlxarr.ndarray, mlxarr.ndarray, Line2D]:
     return gca().psd(
         x,
         NFFT=NFFT,
@@ -4127,7 +4127,7 @@ def specgram(
     *,
     data=None,
     **kwargs,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, AxesImage]:
+) -> tuple[mlxarr.ndarray, mlxarr.ndarray, mlxarr.ndarray, AxesImage]:
     __ret = gca().specgram(
         x,
         NFFT=NFFT,
@@ -4494,7 +4494,7 @@ def xcorr(
     *,
     data=None,
     **kwargs,
-) -> tuple[np.ndarray, np.ndarray, LineCollection | Line2D, Line2D | None]:
+) -> tuple[mlxarr.ndarray, mlxarr.ndarray, LineCollection | Line2D, Line2D | None]:
     return gca().xcorr(
         x,
         y,

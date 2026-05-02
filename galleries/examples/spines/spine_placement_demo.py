@@ -9,11 +9,11 @@ Note: If you want to obtain arrow heads at the ends of the axes, also check
 out the :doc:`/gallery/spines/centered_spines_with_arrows` example.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 # %%
 
-x = np.linspace(0, 2*np.pi, 100)
-y = 2 * np.sin(x)
+x = mlxarr.linspace(0, 2*mlxarr.pi, 100)
+y = 2 * mlxarr.sin(x)
 
 fig, ax_dict = plt.subplot_mosaic(
     [['center', 'zero'],

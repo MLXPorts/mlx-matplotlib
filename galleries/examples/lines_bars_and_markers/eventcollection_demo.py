@@ -8,14 +8,14 @@ and y data points on the respective Axes for each curve.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.collections import EventCollection
 
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 # create random data
-xdata = np.random.random([2, 10])
+xdata = mlxarr.random.random([2, 10])
 
 # split the data into two parts
 xdata1 = xdata[0, :]

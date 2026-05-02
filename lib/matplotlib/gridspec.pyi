@@ -1,7 +1,7 @@
 from typing import Any, Literal, overload
 
 from matplotlib._mlx_typing import ArrayLike
-import matplotlib._mlx_numpy as np
+import matplotlib._mlx_array as mlxarr
 from matplotlib._api import _Unset
 from matplotlib.axes import Axes
 from matplotlib.backend_bases import RendererBase
@@ -31,7 +31,7 @@ class GridSpecBase:
     def get_height_ratios(self) -> ArrayLike: ...
     def get_grid_positions(
         self, fig: Figure
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]: ...
+    ) -> tuple[mlxarr.ndarray, mlxarr.ndarray, mlxarr.ndarray, mlxarr.ndarray]: ...
     @staticmethod
     def _check_gridspec_exists(figure: Figure, nrows: int, ncols: int) -> GridSpec: ...
     def __getitem__(
@@ -45,7 +45,7 @@ class GridSpecBase:
         sharey: bool | Literal["all", "row", "col", "none"] = ...,
         squeeze: Literal[False],
         subplot_kw: dict[str, Any] | None = ...
-    ) -> np.ndarray: ...
+    ) -> mlxarr.ndarray: ...
     @overload
     def subplots(
         self,
@@ -54,7 +54,7 @@ class GridSpecBase:
         sharey: bool | Literal["all", "row", "col", "none"] = ...,
         squeeze: Literal[True] = ...,
         subplot_kw: dict[str, Any] | None = ...
-    ) -> np.ndarray | Axes: ...
+    ) -> mlxarr.ndarray | Axes: ...
 
 class GridSpec(GridSpecBase):
     left: float | None

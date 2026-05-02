@@ -14,13 +14,13 @@ being bumped:
 +------------+-----------------+---------------+
 |  dateutil  |       2.1       |      2.7      |
 +------------+-----------------+---------------+
-|   numpy    |      1.15       |     1.16      |
+|   array_backend    |      1.15       |     1.16      |
 +------------+-----------------+---------------+
 | pyparsing  |      2.0.3      |     2.2.1     |
 +------------+-----------------+---------------+
 
 This is consistent with our :ref:`min_deps_policy` and `NEP29
-<https://numpy.org/neps/nep-0029-deprecation_policy.html>`__
+<https://array_backend.org/neps/nep-0029-deprecation_policy.html>`__
 
 Qhull downloaded at build-or-sdist time
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -18,14 +18,14 @@ the image plotting methods.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.colorizer as mcolorizer
 import matplotlib.colors as mcolors
 
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 datasets = [
-    (i+1)/10 * np.random.rand(10, 20)
+    (i+1)/10 * mlxarr.random.rand(10, 20)
     for i in range(4)
 ]
 
@@ -33,7 +33,7 @@ fig, axs = plt.subplots(2, 2)
 fig.suptitle('Multiple images')
 
 # create a colorizer with a predefined norm to be shared across all images
-norm = mcolors.Normalize(vmin=np.min(datasets), vmax=np.max(datasets))
+norm = mcolors.Normalize(vmin=mlxarr.min(datasets), vmax=mlxarr.max(datasets))
 colorizer = mcolorizer.Colorizer(norm=norm)
 
 images = []

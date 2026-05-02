@@ -1,6 +1,6 @@
 import io
 from itertools import chain
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import pytest
 
 import matplotlib.colors as mcolors
@@ -142,8 +142,8 @@ def test_clipping_zoom(fig_test, fig_ref):
 
 
 def test_cull_markers():
-    x = np.random.random(20000)
-    y = np.random.random(20000)
+    x = mlxarr.random.random(20000)
+    y = mlxarr.random.random(20000)
 
     fig, ax = plt.subplots()
     ax.plot(x, y, 'k.')
@@ -186,7 +186,7 @@ def test_hatching():
 
 def test_remove():
     fig, ax = plt.subplots()
-    im = ax.imshow(np.arange(36).reshape(6, 6))
+    im = ax.imshow(mlxarr.arange(36).reshape(6, 6))
     ln, = ax.plot(range(5))
 
     assert fig.stale
@@ -220,9 +220,9 @@ def test_default_edges():
 
     fig, [[ax1, ax2], [ax3, ax4]] = plt.subplots(2, 2)
 
-    ax1.plot(np.arange(10), np.arange(10), 'x',
-             np.arange(10) + 1, np.arange(10), 'o')
-    ax2.bar(np.arange(10), np.arange(10), align='edge')
+    ax1.plot(mlxarr.arange(10), mlxarr.arange(10), 'x',
+             mlxarr.arange(10) + 1, mlxarr.arange(10), 'o')
+    ax2.bar(mlxarr.arange(10), mlxarr.arange(10), align='edge')
     ax3.text(0, 0, "BOX", size=24, bbox=dict(boxstyle='sawtooth'))
     ax3.set_xlim(-1, 1)
     ax3.set_ylim(-1, 1)
@@ -306,7 +306,7 @@ def test_set_alpha():
     with pytest.raises(ValueError, match="outside 0-1 range"):
         art.set_alpha(1.1)
     with pytest.raises(ValueError, match="outside 0-1 range"):
-        art.set_alpha(np.nan)
+        art.set_alpha(mlxarr.nan)
 
 
 def test_set_alpha_for_array():
@@ -316,11 +316,11 @@ def test_set_alpha_for_array():
     with pytest.raises(ValueError, match="outside 0-1 range"):
         art._set_alpha_for_array(1.1)
     with pytest.raises(ValueError, match="outside 0-1 range"):
-        art._set_alpha_for_array(np.nan)
+        art._set_alpha_for_array(mlxarr.nan)
     with pytest.raises(ValueError, match="alpha must be between 0 and 1"):
         art._set_alpha_for_array([0.5, 1.1])
     with pytest.raises(ValueError, match="alpha must be between 0 and 1"):
-        art._set_alpha_for_array([0.5, np.nan])
+        art._set_alpha_for_array([0.5, mlxarr.nan])
 
 
 def test_callbacks():
@@ -377,7 +377,7 @@ def test_set_is_overwritten():
 
 def test_format_cursor_data_BoundaryNorm():
     """Test if cursor data is correct when using BoundaryNorm."""
-    X = np.empty((3, 3))
+    X = mlxarr.empty((3, 3))
     X[0, 0] = 0.9
     X[0, 1] = 0.99
     X[0, 2] = 0.999
@@ -391,7 +391,7 @@ def test_format_cursor_data_BoundaryNorm():
     # map range -1..1 to 0..256 in 0.1 steps
     fig, ax = plt.subplots()
     fig.suptitle("-1..1 to 0..256 in 0.1")
-    norm = mcolors.BoundaryNorm(np.linspace(-1, 1, 20), 256)
+    norm = mcolors.BoundaryNorm(mlxarr.linspace(-1, 1, 20), 256)
     img = ax.imshow(X, cmap='RdBu_r', norm=norm)
 
     labels_list = [
@@ -415,7 +415,7 @@ def test_format_cursor_data_BoundaryNorm():
     fig, ax = plt.subplots()
     fig.suptitle("-1..1 to 0..256 in 0.01")
     cmap = mpl.colormaps['RdBu_r'].resampled(200)
-    norm = mcolors.BoundaryNorm(np.linspace(-1, 1, 200), 200)
+    norm = mcolors.BoundaryNorm(mlxarr.linspace(-1, 1, 200), 200)
     img = ax.imshow(X, cmap=cmap, norm=norm)
 
     labels_list = [
@@ -439,7 +439,7 @@ def test_format_cursor_data_BoundaryNorm():
     fig, ax = plt.subplots()
     fig.suptitle("-1..1 to 0..256 in 0.001")
     cmap = mpl.colormaps['RdBu_r'].resampled(2000)
-    norm = mcolors.BoundaryNorm(np.linspace(-1, 1, 2000), 2000)
+    norm = mcolors.BoundaryNorm(mlxarr.linspace(-1, 1, 2000), 2000)
     img = ax.imshow(X, cmap=cmap, norm=norm)
 
     labels_list = [
@@ -461,7 +461,7 @@ def test_format_cursor_data_BoundaryNorm():
 
     # different testing data set with
     # out of bounds values for 0..1 range
-    X = np.empty((7, 1))
+    X = mlxarr.empty((7, 1))
     X[0] = -1.0
     X[1] = 0.0
     X[2] = 0.1
@@ -483,7 +483,7 @@ def test_format_cursor_data_BoundaryNorm():
     fig, ax = plt.subplots()
     fig.suptitle("noclip, neither")
     norm = mcolors.BoundaryNorm(
-        np.linspace(0, 1, 4, endpoint=True), 256, clip=False, extend='neither')
+        mlxarr.linspace(0, 1, 4, endpoint=True), 256, clip=False, extend='neither')
     img = ax.imshow(X, cmap='RdBu_r', norm=norm)
     for v, label in zip(X.flat, labels_list):
         # label = "[{:-#.{}g}]".format(v, cbook._g_sig_digits(v, 0.33))
@@ -494,7 +494,7 @@ def test_format_cursor_data_BoundaryNorm():
     fig, ax = plt.subplots()
     fig.suptitle("noclip, min")
     norm = mcolors.BoundaryNorm(
-        np.linspace(0, 1, 4, endpoint=True), 256, clip=False, extend='min')
+        mlxarr.linspace(0, 1, 4, endpoint=True), 256, clip=False, extend='min')
     img = ax.imshow(X, cmap='RdBu_r', norm=norm)
     for v, label in zip(X.flat, labels_list):
         # label = "[{:-#.{}g}]".format(v, cbook._g_sig_digits(v, 0.33))
@@ -505,7 +505,7 @@ def test_format_cursor_data_BoundaryNorm():
     fig, ax = plt.subplots()
     fig.suptitle("noclip, max")
     norm = mcolors.BoundaryNorm(
-        np.linspace(0, 1, 4, endpoint=True), 256, clip=False, extend='max')
+        mlxarr.linspace(0, 1, 4, endpoint=True), 256, clip=False, extend='max')
     img = ax.imshow(X, cmap='RdBu_r', norm=norm)
     for v, label in zip(X.flat, labels_list):
         # label = "[{:-#.{}g}]".format(v, cbook._g_sig_digits(v, 0.33))
@@ -516,7 +516,7 @@ def test_format_cursor_data_BoundaryNorm():
     fig, ax = plt.subplots()
     fig.suptitle("noclip, both")
     norm = mcolors.BoundaryNorm(
-        np.linspace(0, 1, 4, endpoint=True), 256, clip=False, extend='both')
+        mlxarr.linspace(0, 1, 4, endpoint=True), 256, clip=False, extend='both')
     img = ax.imshow(X, cmap='RdBu_r', norm=norm)
     for v, label in zip(X.flat, labels_list):
         # label = "[{:-#.{}g}]".format(v, cbook._g_sig_digits(v, 0.33))
@@ -527,7 +527,7 @@ def test_format_cursor_data_BoundaryNorm():
     fig, ax = plt.subplots()
     fig.suptitle("clip, neither")
     norm = mcolors.BoundaryNorm(
-        np.linspace(0, 1, 4, endpoint=True), 256, clip=True, extend='neither')
+        mlxarr.linspace(0, 1, 4, endpoint=True), 256, clip=True, extend='neither')
     img = ax.imshow(X, cmap='RdBu_r', norm=norm)
     for v, label in zip(X.flat, labels_list):
         # label = "[{:-#.{}g}]".format(v, cbook._g_sig_digits(v, 0.33))

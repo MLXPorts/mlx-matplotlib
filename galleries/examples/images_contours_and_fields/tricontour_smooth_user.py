@@ -7,7 +7,7 @@ Demonstrates high-resolution tricontouring on user-defined triangular grids
 with `matplotlib.tri.UniformTriRefiner`.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.tri as tri
 
 
@@ -15,14 +15,14 @@ import matplotlib.tri as tri
 # Analytical test function
 # ----------------------------------------------------------------------------
 def function_z(x, y):
-    r1 = np.sqrt((0.5 - x)**2 + (0.5 - y)**2)
-    theta1 = np.arctan2(0.5 - x, 0.5 - y)
-    r2 = np.sqrt((-x - 0.2)**2 + (-y - 0.2)**2)
-    theta2 = np.arctan2(-x - 0.2, -y - 0.2)
-    z = -(2 * (np.exp((r1 / 10)**2) - 1) * 30. * np.cos(7. * theta1) +
-          (np.exp((r2 / 10)**2) - 1) * 30. * np.cos(11. * theta2) +
+    r1 = mlxarr.sqrt((0.5 - x)**2 + (0.5 - y)**2)
+    theta1 = mlxarr.arctan2(0.5 - x, 0.5 - y)
+    r2 = mlxarr.sqrt((-x - 0.2)**2 + (-y - 0.2)**2)
+    theta2 = mlxarr.arctan2(-x - 0.2, -y - 0.2)
+    z = -(2 * (mlxarr.exp((r1 / 10)**2) - 1) * 30. * mlxarr.cos(7. * theta1) +
+          (mlxarr.exp((r2 / 10)**2) - 1) * 30. * mlxarr.cos(11. * theta2) +
           0.7 * (x**2 + y**2))
-    return (np.max(z) - z) / (np.max(z) - np.min(z))
+    return (mlxarr.max(z) - z) / (mlxarr.max(z) - mlxarr.min(z))
 
 # ----------------------------------------------------------------------------
 # Creating a Triangulation
@@ -31,14 +31,14 @@ def function_z(x, y):
 n_angles = 20
 n_radii = 10
 min_radius = 0.15
-radii = np.linspace(min_radius, 0.95, n_radii)
+radii = mlxarr.linspace(min_radius, 0.95, n_radii)
 
-angles = np.linspace(0, 2 * np.pi, n_angles, endpoint=False)
-angles = np.repeat(angles[..., np.newaxis], n_radii, axis=1)
-angles[:, 1::2] += np.pi / n_angles
+angles = mlxarr.linspace(0, 2 * mlxarr.pi, n_angles, endpoint=False)
+angles = mlxarr.repeat(angles[..., mlxarr.newaxis], n_radii, axis=1)
+angles[:, 1::2] += mlxarr.pi / n_angles
 
-x = (radii * np.cos(angles)).flatten()
-y = (radii * np.sin(angles)).flatten()
+x = (radii * mlxarr.cos(angles)).flatten()
+y = (radii * mlxarr.sin(angles)).flatten()
 z = function_z(x, y)
 
 # Now create the Triangulation.
@@ -47,7 +47,7 @@ z = function_z(x, y)
 triang = tri.Triangulation(x, y)
 
 # Mask off unwanted triangles.
-triang.set_mask(np.hypot(x[triang.triangles].mean(axis=1),
+triang.set_mask(mlxarr.hypot(x[triang.triangles].mean(axis=1),
                          y[triang.triangles].mean(axis=1))
                 < min_radius)
 
@@ -64,7 +64,7 @@ fig, ax = plt.subplots()
 ax.set_aspect('equal')
 ax.triplot(triang, lw=0.5, color='white')
 
-levels = np.arange(0., 1., 0.025)
+levels = mlxarr.arange(0., 1., 0.025)
 ax.tricontourf(tri_refi, z_test_refi, levels=levels, cmap='terrain')
 ax.tricontour(tri_refi, z_test_refi, levels=levels,
               colors=['0.25', '0.5', '0.5', '0.5', '0.5'],

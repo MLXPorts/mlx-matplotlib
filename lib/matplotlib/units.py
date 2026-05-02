@@ -42,8 +42,8 @@ datetime objects::
 
 from decimal import Decimal
 from numbers import Number
-from matplotlib import _mlx_numpy as np
-from matplotlib._mlx_numpy import ma
+from matplotlib import _mlx_array as mlxarr
+from matplotlib._mlx_array import ma
 
 from matplotlib import cbook
 
@@ -58,7 +58,7 @@ def _is_natively_supported(x):
     array of objects of such types.
     """
     # Matplotlib natively supports all number types except Decimal.
-    if np.iterable(x):
+    if mlxarr.iterable(x):
         # Assume lists are homogeneous as other functions in unit system.
         for thisx in x:
             if thisx is ma.masked:
@@ -126,7 +126,7 @@ class ConversionInterface:
         Convert *obj* using *unit* for the specified *axis*.
 
         If *obj* is a sequence, return the converted sequence.  The output must
-        be a sequence of scalars that can be used by the numpy array layer.
+        be a sequence of scalars that can be used by the array_backend array layer.
         """
         return obj
 
@@ -152,7 +152,7 @@ class DecimalConverter(ConversionInterface):
         elif isinstance(value, ma.MaskedArray):
             return ma.asarray(value, dtype=float)
         else:
-            return np.asarray(value, dtype=float)
+            return mlxarr.asarray(value, dtype=float)
 
     # axisinfo and default_units can be inherited as Decimals are Numbers.
 
@@ -163,16 +163,16 @@ class Registry(dict):
     def get_converter(self, x):
         """Get the converter interface instance for *x*, or None."""
         # Unpack in case of e.g. Pandas or xarray object
-        x = cbook._unpack_to_numpy(x)
+        x = cbook._unpack_to_array_backend(x)
 
-        if isinstance(x, np.ndarray):
+        if isinstance(x, mlxarr.ndarray):
             # In case x in a masked array, access the underlying data (only its
             # type matters).  If x is a regular ndarray, getdata() just returns
             # the array itself.
-            x = np.ma.getdata(x).ravel()
+            x = mlxarr.ma.getdata(x).ravel()
             # If there are no elements in x, infer the units from its dtype
             if not x.size:
-                return self.get_converter(np.array([0], dtype=x.dtype))
+                return self.get_converter(mlxarr.array([0], dtype=x.dtype))
         for cls in type(x).__mro__:  # Look up in the cache.
             try:
                 return self[cls]

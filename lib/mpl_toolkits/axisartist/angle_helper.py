@@ -1,4 +1,4 @@
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import math
 
 from matplotlib.transforms import Bbox
@@ -14,17 +14,17 @@ def select_step_degree(dv):
     minsec_limits_ = [1.5, 2.5, 3.5, 8, 11, 18, 25, 45]
     minsec_steps_  = [1,   2,   3,   5, 10, 15, 20, 30]
 
-    minute_limits_ = np.array(minsec_limits_) / 60
+    minute_limits_ = mlxarr.array(minsec_limits_) / 60
     minute_factors = [60.] * len(minute_limits_)
 
-    second_limits_ = np.array(minsec_limits_) / 3600
+    second_limits_ = mlxarr.array(minsec_limits_) / 3600
     second_factors = [3600.] * len(second_limits_)
 
     degree_limits = [*second_limits_, *minute_limits_, *degree_limits_]
     degree_steps = [*minsec_steps_, *minsec_steps_, *degree_steps_]
     degree_factors = [*second_factors, *minute_factors, *degree_factors]
 
-    n = np.searchsorted(degree_limits, dv)
+    n = mlxarr.searchsorted(degree_limits, dv)
     step = degree_steps[n]
     factor = degree_factors[n]
 
@@ -40,17 +40,17 @@ def select_step_hour(dv):
     minsec_limits_ = [1.5, 2.5, 3.5, 4.5, 5.5, 8, 11, 14, 18, 25, 45]
     minsec_steps_  = [1,   2,   3,   4,   5,   6, 10, 12, 15, 20, 30]
 
-    minute_limits_ = np.array(minsec_limits_) / 60
+    minute_limits_ = mlxarr.array(minsec_limits_) / 60
     minute_factors = [60.] * len(minute_limits_)
 
-    second_limits_ = np.array(minsec_limits_) / 3600
+    second_limits_ = mlxarr.array(minsec_limits_) / 3600
     second_factors = [3600.] * len(second_limits_)
 
     hour_limits = [*second_limits_, *minute_limits_, *hour_limits_]
     hour_steps = [*minsec_steps_, *minsec_steps_, *hour_steps_]
     hour_factors = [*second_factors, *minute_factors, *hour_factors]
 
-    n = np.searchsorted(hour_limits, dv)
+    n = mlxarr.searchsorted(hour_limits, dv)
     step = hour_steps[n]
     factor = hour_factors[n]
 
@@ -100,8 +100,8 @@ def select_step(v1, v2, nv, hour=False, include_last=True,
 
         factor = factor * threshold_factor
 
-    levs = np.arange(np.floor(v1 * factor / step),
-                     np.ceil(v2 * factor / step) + 0.5,
+    levs = mlxarr.arange(mlxarr.floor(v1 * factor / step),
+                     mlxarr.ceil(v2 * factor / step) + 0.5,
                      dtype=int) * step
 
     # n : number of valid levels. If there is a cycle, e.g., [0, 90, 180,
@@ -117,13 +117,13 @@ def select_step(v1, v2, nv, hour=False, include_last=True,
     if factor == 1. and levs[-1] >= levs[0] + cycle:  # check for cycle
         nv = int(cycle / step)
         if include_last:
-            levs = levs[0] + np.arange(0, nv+1, 1) * step
+            levs = levs[0] + mlxarr.arange(0, nv+1, 1) * step
         else:
-            levs = levs[0] + np.arange(0, nv, 1) * step
+            levs = levs[0] + mlxarr.arange(0, nv, 1) * step
 
         n = len(levs)
 
-    return np.array(levs), n, factor
+    return mlxarr.array(levs), n, factor
 
 
 def select_step24(v1, v2, nv, include_last=True, threshold_factor=3600):
@@ -210,7 +210,7 @@ class FormatterDMS:
                 break
 
             d = factor // threshold
-            int_log_d = int(np.floor(np.log10(d)))
+            int_log_d = int(mlxarr.floor(mlxarr.log10(d)))
             if 10**int_log_d == d and d != 1:
                 number_fraction = int_log_d
                 factor = factor // 10**int_log_d
@@ -222,12 +222,12 @@ class FormatterDMS:
         if len(values) == 0:
             return []
 
-        ss = np.sign(values)
+        ss = mlxarr.sign(values)
         signs = ["-" if v < 0 else "" for v in values]
 
         factor, number_fraction = self._get_number_fraction(factor)
 
-        values = np.abs(values)
+        values = mlxarr.abs(values)
 
         if number_fraction is not None:
             values, frac_part = divmod(values, 10 ** number_fraction)
@@ -305,7 +305,7 @@ class FormatterHMS(FormatterDMS):
     fmt_ss_partial = "%02d.%s" + sec_mark + "$"
 
     def __call__(self, direction, factor, values):  # hour
-        return super().__call__(direction, factor, np.asarray(values) / 15)
+        return super().__call__(direction, factor, mlxarr.asarray(values) / 15)
 
 
 class ExtremeFinderCycle(ExtremeFinderSimple):
@@ -350,27 +350,27 @@ class ExtremeFinderCycle(ExtremeFinderSimple):
 
     def _find_transformed_bbox(self, trans, bbox):
         # docstring inherited
-        grid = np.reshape(np.meshgrid(np.linspace(bbox.x0, bbox.x1, self.nx),
-                                      np.linspace(bbox.y0, bbox.y1, self.ny)),
+        grid = mlxarr.reshape(mlxarr.meshgrid(mlxarr.linspace(bbox.x0, bbox.x1, self.nx),
+                                      mlxarr.linspace(bbox.y0, bbox.y1, self.ny)),
                           (2, -1)).T
         lon, lat = trans.transform(grid).T
 
         # iron out jumps, but algorithm should be improved.
         # This is just naive way of doing and my fail for some cases.
-        # Consider replacing this with numpy.unwrap
+        # Consider replacing this with array_backend.unwrap
         # We are ignoring invalid warnings. They are triggered when
         # comparing arrays with NaNs using > We are already handling
-        # that correctly using np.nanmin and np.nanmax
-        with np.errstate(invalid='ignore'):
+        # that correctly using mlxarr.nanmin and mlxarr.nanmax
+        with mlxarr.errstate(invalid='ignore'):
             if self.lon_cycle is not None:
-                lon0 = np.nanmin(lon)
+                lon0 = mlxarr.nanmin(lon)
                 lon -= 360. * ((lon - lon0) > 180.)
             if self.lat_cycle is not None:
-                lat0 = np.nanmin(lat)
+                lat0 = mlxarr.nanmin(lat)
                 lat -= 360. * ((lat - lat0) > 180.)
 
         tbbox = Bbox.null()
-        tbbox.update_from_data_xy(np.column_stack([lon, lat]))
+        tbbox.update_from_data_xy(mlxarr.column_stack([lon, lat]))
         tbbox = tbbox.expanded(1 + 2 / self.nx, 1 + 2 / self.ny)
         lon_min, lat_min, lon_max, lat_max = tbbox.extents
 

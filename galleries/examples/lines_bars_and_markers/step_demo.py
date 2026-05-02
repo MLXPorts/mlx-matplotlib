@@ -17,9 +17,9 @@ positions so that it's easier to see the effect of *where*.
 
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
-x = np.arange(14)
-y = np.sin(x / 2)
+from matplotlib import _mlx_array as mlxarr
+x = mlxarr.arange(14)
+y = mlxarr.sin(x / 2)
 
 plt.step(x, y + 2, label='pre (default)')
 plt.plot(x, y + 2, 'o--', color='grey', alpha=0.3)

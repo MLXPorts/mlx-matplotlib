@@ -11,15 +11,15 @@ Changed the default value of :rc:`axes.formatter.limits` from -7, 7 to
 .. plot::
 
    import matplotlib.pyplot as plt
-   from matplotlib import _mlx_numpy as np
+   from matplotlib import _mlx_array as mlxarr
 
    fig, (ax_old, ax_new) = plt.subplots(1, 2, constrained_layout=True)
 
    ax_new.set_title('new values (-5, 6)')
    ax_old.set_title('old values (-7, 7)')
 
-   x = np.logspace(-8, 8, 1024)
-   y = 1e-5 * np.exp(-x / 1e5) + 1e-6
+   x = mlxarr.logspace(-8, 8, 1024)
+   y = 1e-5 * mlxarr.exp(-x / 1e5) + 1e-6
 
    ax_old.xaxis.get_major_formatter().set_powerlimits((-7, 7))
    ax_old.yaxis.get_major_formatter().set_powerlimits((-7, 7))
@@ -315,7 +315,7 @@ longer necessary to import mplot3d to create 3d axes with ::
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Previously, `.SymLogNorm` had no *base* keyword argument and the base was
-hard-coded to ``base=np.e``. This was inconsistent with the default behavior of
+hard-coded to ``base=mlxarr.e``. This was inconsistent with the default behavior of
 `.SymmetricalLogScale` (which defaults to ``base=10``) and the use of the word
 "decade" in the documentation.
 

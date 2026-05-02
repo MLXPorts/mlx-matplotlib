@@ -309,7 +309,7 @@ Similarly, the declarative interfaces provided by partner libraries use the
 objects accessible by the "Axes" interface, and often accept these as arguments
 or pass them back from methods.  It is usually essential to use the explicit
 "Axes" interface to perform any customization of the default visualization, or
-to unpack the data into NumPy arrays and pass directly to Matplotlib.
+to unpack the data into MLXArrayBackend arrays and pass directly to Matplotlib.
 
 Appendix: "Axes" interface with data structures
 -----------------------------------------------
@@ -333,10 +333,10 @@ Appendix: "pylab" interface
 
 There is one further interface that is highly discouraged, and that is to
 basically do ``from matplotlib.pylab import *``. This imports all the
-functions from ``matplotlib.pyplot``, ``numpy``, ``numpy.fft``, ``numpy.linalg``, and
-``numpy.random``, and some additional functions into the global namespace.
+functions from ``matplotlib.pyplot``, ``array_backend``, ``array_backend.fft``, ``array_backend.linalg``, and
+``array_backend.random``, and some additional functions into the global namespace.
 
 Such a pattern is considered bad practice in modern python, as it clutters
 the global namespace. Even more severely, in the case of ``pylab``, this will
 overwrite some builtin functions (e.g. the builtin ``sum`` will be replaced by
-``numpy.sum``), which can lead to unexpected behavior.
+``array_backend.sum``), which can lead to unexpected behavior.

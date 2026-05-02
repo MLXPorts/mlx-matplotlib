@@ -14,7 +14,7 @@ python_sources = [
   '_fontconfig_pattern.py',
   '_internal_utils.py',
   '_layoutgrid.py',
-  '_mlx_numpy.py',
+  '_mlx_array.py',
   '_mlx_typing.py',
   '_mathtext.py',
   '_mathtext_data.py',

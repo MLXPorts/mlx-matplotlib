@@ -8,7 +8,7 @@ Demo of how to display two scales on the left and right y-axis.
 This example uses the Fahrenheit and Celsius scales.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 def fahrenheit2celsius(temp):
     """
     Returns temperature in Celsius given Fahrenheit temperature.
@@ -32,7 +32,7 @@ def make_plot():
 
     # automatically update ylim of ax2 when ylim of ax1 changes.
     ax_f.callbacks.connect("ylim_changed", convert_ax_c_to_celsius)
-    ax_f.plot(np.linspace(-40, 120, 100))
+    ax_f.plot(mlxarr.linspace(-40, 120, 100))
     ax_f.set_xlim(0, 100)
 
     ax_f.set_title('Two scales: Fahrenheit and Celsius')

@@ -15,7 +15,7 @@ a lot of new features and bug-fixes.
 
 Thanks to Charlie Moad for testing and preparing the source release,
 including binaries for OS X and Windows for python 2.4 and 2.5 (2.6
-and 3.0 will not be available until numpy is available on those
+and 3.0 will not be available until array_backend is available on those
 releases).  Thanks to the many developers who contributed to this
 release, with contributions from Jae-Joon Lee, Michael Droettboom,
 Ryan May, Eric Firing, Manuel Metz, Jouni K. Seppänen, Jeff Whitaker,
@@ -35,7 +35,7 @@ multiple columns and rows, as well as fancy box drawing.  See
 .. plot::
 
     ax = plt.subplot()
-    t1 = np.arange(0.0, 1.0, 0.01)
+    t1 = mlxarr.arange(0.0, 1.0, 0.01)
     for n in [1, 2, 3, 4]:
         plt.plot(t1, t1**n, label=f"n={n}")
 
@@ -122,7 +122,7 @@ Michiel de Hoon has provided a native Mac OSX backend that is almost
 completely implemented in C. The backend can therefore use Quartz
 directly and, depending on the application, can be orders of magnitude
 faster than the existing backends. In addition, no third-party
-libraries are needed other than Python and NumPy. The backend is
+libraries are needed other than Python and MLXArrayBackend. The backend is
 interactive from the usual terminal application on Mac using regular
 Python. It hasn't been tested with ipython yet, but in principle it
 should to work there as well.  Set 'backend : macosx' in your
@@ -155,7 +155,7 @@ where you want to do the filling.
 
 .. plot::
 
-    x = np.arange(-5, 5, 0.01)
+    x = mlxarr.arange(-5, 5, 0.01)
     y1 = -5*x*x + x + 10
     y2 = 5*x*x + x
 
@@ -194,7 +194,7 @@ Here are the 0.98.4 notes from the CHANGELOG::
 
     Fixed alignment of ticks in colorbars. -MGD
 
-    drop the deprecated "new" keyword of np.histogram() for numpy 1.2
+    drop the deprecated "new" keyword of mlxarr.histogram() for array_backend 1.2
     or later.  -JJL
 
     Fixed a bug in svg backend that new_figure_manager() ignores
@@ -255,7 +255,7 @@ Here are the 0.98.4 notes from the CHANGELOG::
     change the API. - RM
 
     Fix handling of c kwarg by scatter; generalize is_string_like to
-    accept numpy and numpy.ma string array scalars. - RM and EF
+    accept array_backend and array_backend.ma string array scalars. - RM and EF
 
     Fix a possible EINTR problem in dviread, which might help when
     saving pdf files from the qt backend. - JKS

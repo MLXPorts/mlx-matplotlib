@@ -15,8 +15,8 @@ the Quiver code.
 """
 
 import math
-from matplotlib import _mlx_numpy as np
-from matplotlib._mlx_numpy import ma
+from matplotlib import _mlx_array as mlxarr
+from matplotlib._mlx_array import ma
 
 from matplotlib import _api, cbook, _docstring
 import matplotlib.artist as martist
@@ -64,7 +64,7 @@ X, Y : 1D or 2D array-like, optional
     on the dimensions of *U* and *V*.
 
     If *X* and *Y* are 1D but *U*, *V* are 2D, *X*, *Y* are expanded to 2D
-    using ``X, Y = np.meshgrid(X, Y)``. In this case ``len(X)`` and ``len(Y)``
+    using ``X, Y = mlxarr.meshgrid(X, Y)``. In this case ``len(X)`` and ``len(Y)``
     must match the column and row dimensions of *U* and *V*.
 
 U, V : 1D or 2D array-like
@@ -369,10 +369,10 @@ class QuiverKey(martist.Artist):
             with cbook._setattr_cm(self.Q, pivot=self.pivot[self.labelpos],
                                    # Hack: save and restore the Umask
                                    Umask=ma.nomask):
-                u = self.U * np.cos(np.radians(self.angle))
-                v = self.U * np.sin(np.radians(self.angle))
+                u = self.U * mlxarr.cos(mlxarr.radians(self.angle))
+                v = self.U * mlxarr.sin(mlxarr.radians(self.angle))
                 self.verts = self.Q._make_verts([[0., 0.]],
-                                                np.array([u]), np.array([v]), 'uv')
+                                                mlxarr.array([u]), mlxarr.array([v]), 'uv')
             kwargs = self.Q.polykw
             kwargs.update(self.kw)
             self.vector = mcollections.PolyCollection(
@@ -452,13 +452,13 @@ def _parse_args(*args, caller_name='function'):
     if nargs == 2:
         # The use of atleast_1d allows for handling scalar arguments while also
         # keeping masked arrays
-        U, V = np.atleast_1d(*args)
+        U, V = mlxarr.atleast_1d(*args)
     elif nargs == 3:
-        U, V, C = np.atleast_1d(*args)
+        U, V, C = mlxarr.atleast_1d(*args)
     elif nargs == 4:
-        X, Y, U, V = np.atleast_1d(*args)
+        X, Y, U, V = mlxarr.atleast_1d(*args)
     elif nargs == 5:
-        X, Y, U, V, C = np.atleast_1d(*args)
+        X, Y, U, V, C = mlxarr.atleast_1d(*args)
     else:
         raise _api.nargs_error(caller_name, takes="from 2 to 5", given=nargs)
 
@@ -468,13 +468,13 @@ def _parse_args(*args, caller_name='function'):
         X = X.ravel()
         Y = Y.ravel()
         if len(X) == nc and len(Y) == nr:
-            X, Y = (a.ravel() for a in np.meshgrid(X, Y))
+            X, Y = (a.ravel() for a in mlxarr.meshgrid(X, Y))
         elif len(X) != len(Y):
             raise ValueError('X and Y must be the same size, but '
                              f'X.size is {X.size} and Y.size is {Y.size}.')
     else:
-        indexgrid = np.meshgrid(np.arange(nc), np.arange(nr))
-        X, Y = (np.ravel(a) for a in indexgrid)
+        indexgrid = mlxarr.meshgrid(mlxarr.arange(nc), mlxarr.arange(nr))
+        X, Y = (mlxarr.ravel(a) for a in indexgrid)
     # Size validation for U, V, C is left to the set_UVC method.
     return X, Y, U, V, C
 
@@ -520,7 +520,7 @@ class Quiver(mcollections.PolyCollection):
         X, Y, U, V, C = _parse_args(*args, caller_name='quiver')
         self.X = X
         self.Y = Y
-        self.XY = np.column_stack((X, Y))
+        self.XY = mlxarr.column_stack((X, Y))
         self.N = len(X)
         self.scale = scale
         self.headwidth = headwidth
@@ -558,7 +558,7 @@ class Quiver(mcollections.PolyCollection):
             trans = self._set_transform()
             self.span = trans.inverted().transform_bbox(self.axes.bbox).width
             if self.width is None:
-                sn = np.clip(math.sqrt(self.N), 8, 25)
+                sn = mlxarr.clip(math.sqrt(self.N), 8, 25)
                 self.width = 0.06 * self.span / sn
 
             # _make_verts sets self.scale if not already specified
@@ -619,7 +619,7 @@ class Quiver(mcollections.PolyCollection):
         return _api.check_getitem({
             'x': bb.width / vl.width,
             'y': bb.height / vl.height,
-            'xy': np.hypot(*bb.size) / np.hypot(*vl.size),
+            'xy': mlxarr.hypot(*bb.size) / mlxarr.hypot(*vl.size),
             'width': bb.width,
             'height': bb.height,
             'dots': 1.,
@@ -640,11 +640,11 @@ class Quiver(mcollections.PolyCollection):
     # Calculate angles and lengths for segment between (x, y), (x+u, y+v)
     def _angles_lengths(self, XY, U, V, eps=1):
         xy = self.axes.transData.transform(XY)
-        uv = np.column_stack((U, V))
+        uv = mlxarr.column_stack((U, V))
         xyp = self.axes.transData.transform(XY + eps * uv)
         dxy = xyp - xy
-        angles = np.arctan2(dxy[:, 1], dxy[:, 0])
-        lengths = np.hypot(*dxy.T) / eps
+        angles = mlxarr.arctan2(dxy[:, 1], dxy[:, 0])
+        lengths = mlxarr.hypot(*dxy.T) / eps
         return angles, lengths
 
     # XY is stacked [X, Y].
@@ -661,13 +661,13 @@ class Quiver(mcollections.PolyCollection):
             # Calculate eps based on the extents of the plot
             # so that we don't end up with roundoff error from
             # adding a small number to a large.
-            eps = np.abs(self.axes.dataLim.extents).max() * 0.001
+            eps = mlxarr.abs(self.axes.dataLim.extents).max() * 0.001
             angles, lengths = self._angles_lengths(XY, U, V, eps=eps)
 
         if str_angles and self.scale_units == 'xy':
             a = lengths
         else:
-            a = np.abs(uv)
+            a = mlxarr.abs(uv)
 
         if self.scale is None:
             sn = max(10, math.sqrt(self.N))
@@ -696,12 +696,12 @@ class Quiver(mcollections.PolyCollection):
         if str_angles == 'xy':
             theta = angles
         elif str_angles == 'uv':
-            theta = np.angle(uv)
+            theta = mlxarr.angle(uv)
         else:
-            theta = ma.masked_invalid(np.deg2rad(angles)).filled(0)
+            theta = ma.masked_invalid(mlxarr.deg2rad(angles)).filled(0)
         theta = theta.reshape((-1, 1))  # for broadcasting
-        xy = (X + Y * 1j) * np.exp(1j * theta) * self.width
-        XY = np.stack((xy.real, xy.imag), axis=2)
+        xy = (X + Y * 1j) * mlxarr.exp(1j * theta) * self.width
+        XY = mlxarr.stack((xy.real, xy.imag), axis=2)
         if self.Umask is not ma.nomask:
             XY = ma.array(XY)
             XY[self.Umask] = ma.masked
@@ -720,19 +720,19 @@ class Quiver(mcollections.PolyCollection):
         length = length.reshape(N, 1)
         # This number is chosen based on when pixel values overflow in Agg
         # causing rendering errors
-        # length = np.minimum(length, 2 ** 16)
-        np.clip(length, 0, 2 ** 16, out=length)
+        # length = mlxarr.minimum(length, 2 ** 16)
+        mlxarr.clip(length, 0, 2 ** 16, out=length)
         # x, y: normal horizontal arrow
-        x = np.array([0, -self.headaxislength,
+        x = mlxarr.array([0, -self.headaxislength,
                       -self.headlength, 0],
-                     np.float64)
-        x = x + np.array([0, 1, 1, 1]) * length
-        y = 0.5 * np.array([1, 1, self.headwidth, 0], np.float64)
-        y = np.repeat(y[np.newaxis, :], N, axis=0)
+                     mlxarr.float64)
+        x = x + mlxarr.array([0, 1, 1, 1]) * length
+        y = 0.5 * mlxarr.array([1, 1, self.headwidth, 0], mlxarr.float64)
+        y = mlxarr.repeat(y[mlxarr.newaxis, :], N, axis=0)
         # x0, y0: arrow without shaft, for short vectors
-        x0 = np.array([0, minsh - self.headaxislength,
-                       minsh - self.headlength, minsh], np.float64)
-        y0 = 0.5 * np.array([1, 1, self.headwidth, 0], np.float64)
+        x0 = mlxarr.array([0, minsh - self.headaxislength,
+                       minsh - self.headlength, minsh], mlxarr.float64)
+        y0 = 0.5 * mlxarr.array([1, 1, self.headwidth, 0], mlxarr.float64)
         ii = [0, 1, 2, 3, 2, 1, 0, 0]
         X = x[:, ii]
         Y = y[:, ii]
@@ -741,32 +741,32 @@ class Quiver(mcollections.PolyCollection):
         Y0 = y0[ii]
         Y0[3:-1] *= -1
         shrink = length / minsh if minsh != 0. else 0.
-        X0 = shrink * X0[np.newaxis, :]
-        Y0 = shrink * Y0[np.newaxis, :]
-        short = np.repeat(length < minsh, 8, axis=1)
+        X0 = shrink * X0[mlxarr.newaxis, :]
+        Y0 = shrink * Y0[mlxarr.newaxis, :]
+        short = mlxarr.repeat(length < minsh, 8, axis=1)
         # Now select X0, Y0 if short, otherwise X, Y
-        np.copyto(X, X0, where=short)
-        np.copyto(Y, Y0, where=short)
+        mlxarr.copyto(X, X0, where=short)
+        mlxarr.copyto(Y, Y0, where=short)
         if self.pivot == 'middle':
-            X -= 0.5 * X[:, 3, np.newaxis]
+            X -= 0.5 * X[:, 3, mlxarr.newaxis]
         elif self.pivot == 'tip':
-            # numpy bug? using -= does not work here unless we multiply by a
+            # array_backend bug? using -= does not work here unless we multiply by a
             # float first, as with 'mid'.
-            X = X - X[:, 3, np.newaxis]
+            X = X - X[:, 3, mlxarr.newaxis]
         elif self.pivot != 'tail':
             _api.check_in_list(["middle", "tip", "tail"], pivot=self.pivot)
 
         tooshort = length < self.minlength
         if tooshort.any():
             # Use a heptagonal dot:
-            th = np.arange(0, 8, 1, np.float64) * (np.pi / 3.0)
-            x1 = np.cos(th) * self.minlength * 0.5
-            y1 = np.sin(th) * self.minlength * 0.5
-            X1 = np.repeat(x1[np.newaxis, :], N, axis=0)
-            Y1 = np.repeat(y1[np.newaxis, :], N, axis=0)
-            tooshort = np.repeat(tooshort, 8, 1)
-            np.copyto(X, X1, where=tooshort)
-            np.copyto(Y, Y1, where=tooshort)
+            th = mlxarr.arange(0, 8, 1, mlxarr.float64) * (mlxarr.pi / 3.0)
+            x1 = mlxarr.cos(th) * self.minlength * 0.5
+            y1 = mlxarr.sin(th) * self.minlength * 0.5
+            X1 = mlxarr.repeat(x1[mlxarr.newaxis, :], N, axis=0)
+            Y1 = mlxarr.repeat(y1[mlxarr.newaxis, :], N, axis=0)
+            tooshort = mlxarr.repeat(tooshort, 8, 1)
+            mlxarr.copyto(X, X1, where=tooshort)
+            mlxarr.copyto(Y, Y1, where=tooshort)
         # Mask handling is deferred to the caller, _make_verts.
         return X, Y
 
@@ -820,7 +820,7 @@ X, Y : 1D or 2D array-like, optional
     on the dimensions of *U* and *V*.
 
     If *X* and *Y* are 1D but *U*, *V* are 2D, *X*, *Y* are expanded to 2D
-    using ``X, Y = np.meshgrid(X, Y)``. In this case ``len(X)`` and ``len(Y)``
+    using ``X, Y = mlxarr.meshgrid(X, Y)``. In this case ``len(X)`` and ``len(Y)``
     must match the column and row dimensions of *U* and *V*.
 
 U, V : 1D or 2D array-like
@@ -945,7 +945,7 @@ class Barbs(mcollections.PolyCollection):
         self.fill_empty = fill_empty
         self.barb_increments = barb_increments or dict()
         self.rounding = rounding
-        self.flip = np.atleast_1d(flip_barb)
+        self.flip = mlxarr.atleast_1d(flip_barb)
         transform = kwargs.pop('transform', ax.transData)
         self._pivot = pivot
         self._length = length
@@ -977,7 +977,7 @@ class Barbs(mcollections.PolyCollection):
         x, y, u, v, c = _parse_args(*args, caller_name='barbs')
         self.x = x
         self.y = y
-        xy = np.column_stack((x, y))
+        xy = mlxarr.column_stack((x, y))
 
         # Make a collection
         barb_size = self._length ** 2 / 4  # Empirically determined
@@ -993,7 +993,7 @@ class Barbs(mcollections.PolyCollection):
 
         Parameters
         ----------
-        mag : `~numpy.ndarray`
+        mag : `~array_backend.ndarray`
             Vector magnitudes; must be non-negative (and an actual ndarray).
         rounding : bool, default: True
             Whether to round or to truncate to the nearest half-barb.
@@ -1012,7 +1012,7 @@ class Barbs(mcollections.PolyCollection):
         # If rounding, round to the nearest multiple of half, the smallest
         # increment
         if rounding:
-            mag = half * np.around(mag / half)
+            mag = half * mlxarr.around(mag / half)
         n_flags, mag = divmod(mag, flag)
         n_barb, mag = divmod(mag, full)
         half_flag = mag >= half
@@ -1086,7 +1086,7 @@ class Barbs(mcollections.PolyCollection):
         # due to the way the barb is initially drawn, going down the y-axis.
         # This makes sense in a meteorological mode of thinking since there 0
         # degrees corresponds to north (the y-axis traditionally)
-        angles = -(ma.arctan2(v, u) + np.pi / 2)
+        angles = -(ma.arctan2(v, u) + mlxarr.pi / 2)
 
         # Used for low magnitude.  We just get the vertices, so if we make it
         # out here, it can be reused.  The center set here should put the
@@ -1098,10 +1098,10 @@ class Barbs(mcollections.PolyCollection):
         else:
             # If we don't want the empty one filled, we make a degenerate
             # polygon that wraps back over itself
-            empty_barb = np.concatenate((circ, circ[::-1]))
+            empty_barb = mlxarr.concatenate((circ, circ[::-1]))
 
         barb_list = []
-        for index, angle in np.ndenumerate(angles):
+        for index, angle in mlxarr.ndenumerate(angles):
             # If the vector magnitude is too weak to draw anything, plot an
             # empty circle instead
             if empty_flag[index]:
@@ -1173,7 +1173,7 @@ class Barbs(mcollections.PolyCollection):
         # Use broadcast_to to avoid a bloated array of identical values.
         # (can't rely on actual broadcasting)
         if len(self.flip) == 1:
-            flip = np.broadcast_to(self.flip, self.u.shape)
+            flip = mlxarr.broadcast_to(self.flip, self.u.shape)
         else:
             flip = self.flip
 
@@ -1188,7 +1188,7 @@ class Barbs(mcollections.PolyCollection):
                 self.x.ravel(), self.y.ravel(), self.u, self.v, flip.ravel())
             _check_consistent_shapes(x, y, u, v, flip)
 
-        magnitude = np.hypot(u, v)
+        magnitude = mlxarr.hypot(u, v)
         flags, barbs, halves, empty = self._find_tails(
             magnitude, self.rounding, **self.barb_increments)
 
@@ -1204,7 +1204,7 @@ class Barbs(mcollections.PolyCollection):
             self.set_array(c)
 
         # Update the offsets in case the masked data changed
-        xy = np.column_stack((x, y))
+        xy = mlxarr.column_stack((x, y))
         self._offsets = xy
         self.stale = True
 
@@ -1222,6 +1222,6 @@ class Barbs(mcollections.PolyCollection):
         x, y, u, v = cbook.delete_masked_points(
             self.x.ravel(), self.y.ravel(), self.u, self.v)
         _check_consistent_shapes(x, y, u, v)
-        xy = np.column_stack((x, y))
+        xy = mlxarr.column_stack((x, y))
         super().set_offsets(xy)
         self.stale = True

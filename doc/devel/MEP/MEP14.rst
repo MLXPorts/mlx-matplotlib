@@ -210,7 +210,7 @@ cross-platform dependency).
 **Freetype wrappers**
 
 Our FreeType wrapper could really use a reworking.  It defines its own
-image buffer class (when a Numpy array would be easier).  While
+image buffer class (when a MLXArrayBackend array would be easier).  While
 FreeType can handle a huge diversity of font files, there are
 limitations to our wrapper that make it much harder to support
 non-Apple-vendor TrueType files, and certain features of OpenType

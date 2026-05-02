@@ -19,7 +19,7 @@ its column(s) and row(s) specified when it is created.
 import itertools
 import kiwisolver as kiwi
 import logging
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 import matplotlib.patches as mpatches
 from matplotlib.transforms import Bbox
@@ -44,12 +44,12 @@ class LayoutGrid:
             self.name = f'{parent.name}.{self.name}'
         self.nrows = nrows
         self.ncols = ncols
-        self.height_ratios = np.atleast_1d(height_ratios)
+        self.height_ratios = mlxarr.atleast_1d(height_ratios)
         if height_ratios is None:
-            self.height_ratios = np.ones(nrows)
-        self.width_ratios = np.atleast_1d(width_ratios)
+            self.height_ratios = mlxarr.ones(nrows)
+        self.width_ratios = mlxarr.atleast_1d(width_ratios)
         if width_ratios is None:
-            self.width_ratios = np.ones(ncols)
+            self.width_ratios = mlxarr.ones(ncols)
 
         sn = self.name + '_'
         if not isinstance(parent, LayoutGrid):
@@ -60,8 +60,8 @@ class LayoutGrid:
             parent.add_child(self, *parent_pos)
             self.solver = parent.solver
         # keep track of artist associated w/ this layout.  Can be none
-        self.artists = np.empty((nrows, ncols), dtype=object)
-        self.children = np.empty((nrows, ncols), dtype=object)
+        self.artists = mlxarr.empty((nrows, ncols), dtype=object)
+        self.children = mlxarr.empty((nrows, ncols), dtype=object)
 
         self.margins = {}
         self.margin_vals = {}
@@ -69,7 +69,7 @@ class LayoutGrid:
         for todo in ['left', 'right', 'leftcb', 'rightcb']:
             # track the value so we can change only if a margin is larger
             # than the current value
-            self.margin_vals[todo] = np.zeros(ncols)
+            self.margin_vals[todo] = mlxarr.zeros(ncols)
 
         sol = self.solver
 
@@ -82,8 +82,8 @@ class LayoutGrid:
                 sol.addEditVariable(self.margins[todo][i], 'strong')
 
         for todo in ['bottom', 'top', 'bottomcb', 'topcb']:
-            self.margins[todo] = np.empty((nrows), dtype=object)
-            self.margin_vals[todo] = np.zeros(nrows)
+            self.margins[todo] = mlxarr.empty((nrows), dtype=object)
+            self.margin_vals[todo] = mlxarr.zeros(nrows)
 
         self.bottoms = [Variable(f'{sn}bottoms[{i}]') for i in range(nrows)]
         self.tops = [Variable(f'{sn}tops[{i}]') for i in range(nrows)]
@@ -161,8 +161,8 @@ class LayoutGrid:
                 self.solver.addConstraint(c | 'required')
 
     def add_child(self, child, i=0, j=0):
-        # np.ix_ returns the cross product of i and j indices
-        self.children[np.ix_(np.atleast_1d(i), np.atleast_1d(j))] = child
+        # mlxarr.ix_ returns the cross product of i and j indices
+        self.children[mlxarr.ix_(mlxarr.atleast_1d(i), mlxarr.atleast_1d(j))] = child
 
     def parent_constraints(self, parent):
         # constraints that are due to the parent...
@@ -178,8 +178,8 @@ class LayoutGrid:
                   self.bottoms[-1] == parent[1]]
         else:
             rows, cols = self.parent_pos
-            rows = np.atleast_1d(rows)
-            cols = np.atleast_1d(cols)
+            rows = mlxarr.atleast_1d(rows)
+            cols = mlxarr.atleast_1d(cols)
 
             left = parent.lefts[cols[0]]
             right = parent.rights[cols[-1]]
@@ -355,8 +355,8 @@ class LayoutGrid:
         Return the outer bounding box of the subplot specs
         given by rows and cols.  rows and cols can be spans.
         """
-        rows = np.atleast_1d(rows)
-        cols = np.atleast_1d(cols)
+        rows = mlxarr.atleast_1d(rows)
+        cols = mlxarr.atleast_1d(cols)
 
         bbox = Bbox.from_extents(
             self.lefts[cols[0]].value(),
@@ -370,8 +370,8 @@ class LayoutGrid:
         Return the inner bounding box of the subplot specs
         given by rows and cols.  rows and cols can be spans.
         """
-        rows = np.atleast_1d(rows)
-        cols = np.atleast_1d(cols)
+        rows = mlxarr.atleast_1d(rows)
+        cols = mlxarr.atleast_1d(cols)
 
         bbox = Bbox.from_extents(
             (self.lefts[cols[0]].value() +
@@ -394,8 +394,8 @@ class LayoutGrid:
         Return the bounding box that includes the
         decorations but, *not* the colorbar...
         """
-        rows = np.atleast_1d(rows)
-        cols = np.atleast_1d(cols)
+        rows = mlxarr.atleast_1d(rows)
+        cols = mlxarr.atleast_1d(cols)
 
         bbox = Bbox.from_extents(
             (self.lefts[cols[0]].value() +
@@ -414,8 +414,8 @@ class LayoutGrid:
         Return the left margin bounding box of the subplot specs
         given by rows and cols.  rows and cols can be spans.
         """
-        rows = np.atleast_1d(rows)
-        cols = np.atleast_1d(cols)
+        rows = mlxarr.atleast_1d(rows)
+        cols = mlxarr.atleast_1d(cols)
 
         bbox = Bbox.from_extents(
             (self.lefts[cols[0]].value() +
@@ -432,8 +432,8 @@ class LayoutGrid:
         Return the left margin bounding box of the subplot specs
         given by rows and cols.  rows and cols can be spans.
         """
-        rows = np.atleast_1d(rows)
-        cols = np.atleast_1d(cols)
+        rows = mlxarr.atleast_1d(rows)
+        cols = mlxarr.atleast_1d(cols)
 
         bbox = Bbox.from_extents(
             (self.lefts[cols[0]].value()),
@@ -451,8 +451,8 @@ class LayoutGrid:
         Return the left margin bounding box of the subplot specs
         given by rows and cols.  rows and cols can be spans.
         """
-        rows = np.atleast_1d(rows)
-        cols = np.atleast_1d(cols)
+        rows = mlxarr.atleast_1d(rows)
+        cols = mlxarr.atleast_1d(cols)
 
         bbox = Bbox.from_extents(
             (self.rights[cols[-1]].value() -
@@ -469,8 +469,8 @@ class LayoutGrid:
         Return the left margin bounding box of the subplot specs
         given by rows and cols.  rows and cols can be spans.
         """
-        rows = np.atleast_1d(rows)
-        cols = np.atleast_1d(cols)
+        rows = mlxarr.atleast_1d(rows)
+        cols = mlxarr.atleast_1d(cols)
 
         bbox = Bbox.from_extents(
             (self.lefts[cols[0]].value()),

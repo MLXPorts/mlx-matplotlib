@@ -13,7 +13,7 @@ of Matplotlib. First, we'll pull the data from GitHub.
 from datetime import datetime
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.dates as mdates
 
 try:
@@ -91,14 +91,14 @@ ax.axhline(0, c="black")
 meso_dates = [date for date, release in zip(dates, releases) if is_feature(release)]
 micro_dates = [date for date, release in zip(dates, releases)
                if not is_feature(release)]
-ax.plot(micro_dates, np.zeros_like(micro_dates), "ko", mfc="white")
-ax.plot(meso_dates, np.zeros_like(meso_dates), "ko", mfc="tab:red")
+ax.plot(micro_dates, mlxarr.zeros_like(micro_dates), "ko", mfc="white")
+ax.plot(meso_dates, mlxarr.zeros_like(meso_dates), "ko", mfc="tab:red")
 
 # Annotate the lines.
 for date, level, release in zip(dates, levels, releases):
     version_str = '.'.join(release)
     ax.annotate(version_str, xy=(date, level),
-                xytext=(-3, np.sign(level)*3), textcoords="offset points",
+                xytext=(-3, mlxarr.sign(level)*3), textcoords="offset points",
                 verticalalignment="bottom" if level > 0 else "top",
                 weight="bold" if is_feature(release) else "normal",
                 bbox=dict(boxstyle='square', pad=0, lw=0, fc=(1, 1, 1, 0.7)))

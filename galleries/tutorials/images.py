@@ -59,7 +59,7 @@ import mlx.core as mx
 # %%
 # .. _importing_data:
 #
-# Importing image data into Numpy arrays
+# Importing image data into MLXArrayBackend arrays
 # ======================================
 #
 # Matplotlib relies on the Pillow_ library to load image data.
@@ -78,7 +78,7 @@ import mlx.core as mx
 # to your computer for the rest of this tutorial.
 #
 # We use Pillow to open an image (with `PIL.Image.open`), and immediately
-# convert the `PIL.Image.Image` object into an 8-bit (``dtype=uint8``) numpy
+# convert the `PIL.Image.Image` object into an 8-bit (``dtype=uint8``) array_backend
 # array.
 
 _img_pil = Image.open('../../doc/_static/stinkbug.png').convert('RGB')
@@ -98,10 +98,10 @@ print(repr(img))
 #
 # .. _plotting_data:
 #
-# Plotting numpy arrays as images
+# Plotting array_backend arrays as images
 # ===================================
 #
-# So, you have your data in a numpy array (either by importing it, or by
+# So, you have your data in a array_backend array (either by importing it, or by
 # generating it).  Let's render it.  In Matplotlib, this is performed
 # using the :func:`~matplotlib.pyplot.imshow` function.  Here we'll grab
 # the plot object.  This object gives you an easy way to manipulate the
@@ -110,7 +110,7 @@ print(repr(img))
 imgplot = plt.imshow(img)
 
 # %%
-# You can also plot any numpy array.
+# You can also plot any array_backend array.
 #
 # .. _Pseudocolor:
 #
@@ -126,7 +126,7 @@ imgplot = plt.imshow(img)
 # images.  We currently have an RGB image.  Since R, G, and B are all
 # similar (see for yourself above or in your data), we can just pick one
 # channel of our data using array slicing (you can read more in the
-# `Numpy tutorial <https://numpy.org/doc/stable/user/quickstart.html
+# `MLXArrayBackend tutorial <https://array_backend.org/doc/stable/user/quickstart.html
 # #indexing-slicing-and-iterating>`_):
 
 lum_img = img[:, :, 0]

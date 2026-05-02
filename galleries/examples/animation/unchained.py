@@ -12,11 +12,11 @@ Output generated via `matplotlib.animation.Animation.to_jshtml`.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.animation as animation
 
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 
 # Create new Figure with black background
@@ -26,9 +26,9 @@ fig = plt.figure(figsize=(8, 8), facecolor='black')
 ax = plt.subplot(frameon=False)
 
 # Generate random data
-data = np.random.uniform(0, 1, (64, 75))
-X = np.linspace(-1, 1, data.shape[-1])
-G = 1.5 * np.exp(-4 * X ** 2)
+data = mlxarr.random.uniform(0, 1, (64, 75))
+X = mlxarr.linspace(-1, 1, data.shape[-1])
+G = 1.5 * mlxarr.exp(-4 * X ** 2)
 
 # Generate line plots
 lines = []
@@ -61,7 +61,7 @@ def update(*args):
     data[:, 1:] = data[:, :-1]
 
     # Fill-in new values
-    data[:, 0] = np.random.uniform(0, 1, len(data))
+    data[:, 0] = mlxarr.random.uniform(0, 1, len(data))
 
     # Update data
     for i in range(len(data)):

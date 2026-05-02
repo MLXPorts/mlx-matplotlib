@@ -16,7 +16,7 @@ The following hatching patterns are available, shown here at level 2 density:
         'O' makes large unfilled circles, '.' makes small filled circles, and '*' makes
         a star with 5 points
 """
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib import _api
 from matplotlib.path import Path
 
@@ -32,7 +32,7 @@ class HorizontalHatch(HatchPatternBase):
         self.num_vertices = self.num_lines * 2
 
     def set_vertices_and_codes(self, vertices, codes):
-        steps, stepsize = np.linspace(0.0, 1.0, self.num_lines, False,
+        steps, stepsize = mlxarr.linspace(0.0, 1.0, self.num_lines, False,
                                       retstep=True)
         steps += stepsize / 2.
         vertices[0::2, 0] = 0.0
@@ -49,7 +49,7 @@ class VerticalHatch(HatchPatternBase):
         self.num_vertices = self.num_lines * 2
 
     def set_vertices_and_codes(self, vertices, codes):
-        steps, stepsize = np.linspace(0.0, 1.0, self.num_lines, False,
+        steps, stepsize = mlxarr.linspace(0.0, 1.0, self.num_lines, False,
                                       retstep=True)
         steps += stepsize / 2.
         vertices[0::2, 0] = steps
@@ -70,7 +70,7 @@ class NorthEastHatch(HatchPatternBase):
             self.num_vertices = 0
 
     def set_vertices_and_codes(self, vertices, codes):
-        steps = np.linspace(-0.5, 0.5, self.num_lines + 1)
+        steps = mlxarr.linspace(-0.5, 0.5, self.num_lines + 1)
         vertices[0::2, 0] = 0.0 + steps
         vertices[0::2, 1] = 0.0 - steps
         vertices[1::2, 0] = 1.0 + steps
@@ -90,7 +90,7 @@ class SouthEastHatch(HatchPatternBase):
             self.num_vertices = 0
 
     def set_vertices_and_codes(self, vertices, codes):
-        steps = np.linspace(-0.5, 0.5, self.num_lines + 1)
+        steps = mlxarr.linspace(-0.5, 0.5, self.num_lines + 1)
         vertices[0::2, 0] = 0.0 + steps
         vertices[0::2, 1] = 1.0 + steps
         vertices[1::2, 0] = 1.0 + steps
@@ -118,22 +118,22 @@ class Shapes(HatchPatternBase):
         shape_vertices = self.shape_vertices * offset * self.size
         shape_codes = self.shape_codes
         if not self.filled:
-            shape_vertices = np.concatenate(  # Forward, then backward.
+            shape_vertices = mlxarr.concatenate(  # Forward, then backward.
                 [shape_vertices, shape_vertices[::-1] * 0.9])
-            shape_codes = np.concatenate([shape_codes, shape_codes])
+            shape_codes = mlxarr.concatenate([shape_codes, shape_codes])
         vertices_parts = []
         codes_parts = []
         for row in range(self.num_rows + 1):
             if row % 2 == 0:
-                cols = np.linspace(0, 1, self.num_rows + 1)
+                cols = mlxarr.linspace(0, 1, self.num_rows + 1)
             else:
-                cols = np.linspace(offset / 2, 1 - offset / 2, self.num_rows)
+                cols = mlxarr.linspace(offset / 2, 1 - offset / 2, self.num_rows)
             row_pos = row * offset
             for col_pos in cols:
                 vertices_parts.append(shape_vertices + [col_pos, row_pos])
                 codes_parts.append(shape_codes)
-        np.concatenate(vertices_parts, out=vertices)
-        np.concatenate(codes_parts, out=codes)
+        mlxarr.concatenate(vertices_parts, out=vertices)
+        mlxarr.concatenate(codes_parts, out=codes)
 
 
 class Circles(Shapes):
@@ -177,7 +177,7 @@ class Stars(Shapes):
         self.num_rows = (hatch.count('*')) * density
         path = Path.unit_regular_star(5)
         self.shape_vertices = path.vertices
-        self.shape_codes = np.full(len(self.shape_vertices), Path.LINETO,
+        self.shape_codes = mlxarr.full(len(self.shape_vertices), Path.LINETO,
                                    dtype=Path.code_type)
         self.shape_codes[0] = Path.MOVETO
         self.shape_codes[-1] = Path.CLOSEPOLY
@@ -225,16 +225,16 @@ def get_path(hatchpattern, density=6):
     num_vertices = sum([pattern.num_vertices for pattern in patterns])
 
     if num_vertices == 0:
-        return Path(np.empty((0, 2)))
+        return Path(mlxarr.empty((0, 2)))
 
-    vertices = np.empty((num_vertices, 2))
-    codes = np.empty(num_vertices, Path.code_type)
+    vertices = mlxarr.empty((num_vertices, 2))
+    codes = mlxarr.empty(num_vertices, Path.code_type)
 
     cursor = 0
     for pattern in patterns:
         if pattern.num_vertices != 0:
-            vertices_chunk = np.empty((pattern.num_vertices, 2))
-            codes_chunk = np.empty(pattern.num_vertices, Path.code_type)
+            vertices_chunk = mlxarr.empty((pattern.num_vertices, 2))
+            codes_chunk = mlxarr.empty(pattern.num_vertices, Path.code_type)
             pattern.set_vertices_and_codes(vertices_chunk, codes_chunk)
             vertices[cursor:cursor + pattern.num_vertices] = vertices_chunk
             codes[cursor:cursor + pattern.num_vertices] = codes_chunk

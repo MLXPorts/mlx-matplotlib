@@ -9,7 +9,7 @@ Note that it is faster than the similar `~.axes.Axes.pcolor`.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.colors import BoundaryNorm
 from matplotlib.ticker import MaxNLocator
 
@@ -21,10 +21,10 @@ from matplotlib.ticker import MaxNLocator
 # the value of the quadrilateral.  Note that here *x* and *y* each have one
 # extra element than Z in the respective dimension.
 
-np.random.seed(19680801)
-Z = np.random.rand(6, 10)
-x = np.arange(-0.5, 10, 1)  # len = 11
-y = np.arange(4.5, 11, 1)  # len = 7
+mlxarr.random.seed(19680801)
+Z = mlxarr.random.rand(6, 10)
+x = mlxarr.arange(-0.5, 10, 1)  # len = 11
+y = mlxarr.arange(4.5, 11, 1)  # len = 7
 
 fig, ax = plt.subplots()
 ax.pcolormesh(x, y, Z)
@@ -36,9 +36,9 @@ ax.pcolormesh(x, y, Z)
 # Note that we can also specify matrices for *X* and *Y* and have
 # non-rectilinear quadrilaterals.
 
-x = np.arange(-0.5, 10, 1)  # len = 11
-y = np.arange(4.5, 11, 1)  # len = 7
-X, Y = np.meshgrid(x, y)
+x = mlxarr.arange(-0.5, 10, 1)  # len = 11
+y = mlxarr.arange(4.5, 11, 1)  # len = 7
+X, Y = mlxarr.meshgrid(x, y)
 X = X + 0.2 * Y  # tilt the coordinates.
 Y = Y + 0.3 * X
 
@@ -56,14 +56,14 @@ ax.pcolormesh(X, Y, Z)
 # an error. If this is really what you want, then simply drop the last row and
 # column of Z manually:
 
-x = np.arange(10)  # len = 10
-y = np.arange(6)  # len = 6
-X, Y = np.meshgrid(x, y)
+x = mlxarr.arange(10)  # len = 10
+y = mlxarr.arange(6)  # len = 6
+X, Y = mlxarr.meshgrid(x, y)
 
 fig, axs = plt.subplots(2, 1, sharex=True, sharey=True)
-axs[0].pcolormesh(X, Y, Z, vmin=np.min(Z), vmax=np.max(Z), shading='auto')
+axs[0].pcolormesh(X, Y, Z, vmin=mlxarr.min(Z), vmax=mlxarr.max(Z), shading='auto')
 axs[0].set_title("shading='auto' = 'nearest'")
-axs[1].pcolormesh(X, Y, Z[:-1, :-1], vmin=np.min(Z), vmax=np.max(Z),
+axs[1].pcolormesh(X, Y, Z[:-1, :-1], vmin=mlxarr.min(Z), vmax=mlxarr.max(Z),
                   shading='flat')
 axs[1].set_title("shading='flat'")
 
@@ -80,10 +80,10 @@ axs[1].set_title("shading='flat'")
 dx, dy = 0.05, 0.05
 
 # generate 2 2d grids for the x & y bounds
-y, x = np.mgrid[slice(1, 5 + dy, dy),
+y, x = mlxarr.mgrid[slice(1, 5 + dy, dy),
                 slice(1, 5 + dx, dx)]
 
-z = np.sin(x)**10 + np.cos(10 + y*x) * np.cos(x)
+z = mlxarr.sin(x)**10 + mlxarr.cos(10 + y*x) * mlxarr.cos(x)
 
 # x and y are bounds, so z should be the value *inside* those bounds.
 # Therefore, remove the last value from the z array.

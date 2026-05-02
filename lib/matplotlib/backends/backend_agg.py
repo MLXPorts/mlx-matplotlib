@@ -24,7 +24,7 @@ Still TODO:
 from contextlib import nullcontext
 from array import array as _array
 from math import radians, cos, sin
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from PIL import features
 
 import matplotlib as mpl
@@ -59,7 +59,7 @@ def _transform_to_memoryview(transform):
 
 
 def _plain_float_buffer(values, empty_fallback=None):
-    values = np.asarray(values)
+    values = mlxarr.asarray(values)
     shape = tuple(values.shape)
     data = values.tolist()
     if not shape:
@@ -68,7 +68,7 @@ def _plain_float_buffer(values, empty_fallback=None):
     if 0 in shape:
         if empty_fallback is None:
             empty_fallback = [0.0]
-        values = np.asarray(empty_fallback)
+        values = mlxarr.asarray(empty_fallback)
         shape = tuple(values.shape)
         data = values.tolist()
 
@@ -145,16 +145,16 @@ class RendererAgg(RendererBase):
         transform = _transform_to_memoryview(transform)
         path = _BufferPath(path)
         nmax = mpl.rcParams['agg.path.chunksize']  # here at least for testing
-        vertices = np.asarray(path.vertices)
-        codes = None if path.codes is None else np.asarray(path.codes)
+        vertices = mlxarr.asarray(path.vertices)
+        codes = None if path.codes is None else mlxarr.asarray(path.codes)
         npts = vertices.shape[0]
 
         if (npts > nmax > 100 and path.should_simplify and
                 rgbFace is None and gc.get_hatch() is None):
-            nch = np.ceil(npts / nmax)
-            chsize = int(np.ceil(npts / nch))
-            i0 = np.arange(0, npts, chsize)
-            i1 = np.zeros_like(i0)
+            nch = mlxarr.ceil(npts / nmax)
+            chsize = int(mlxarr.ceil(npts / nch))
+            i0 = mlxarr.arange(0, npts, chsize)
+            i1 = mlxarr.zeros_like(i0)
             i1[:-1] = i0[1:] - 1
             i1[-1] = npts
             for ii0, ii1 in zip(i0, i1):
@@ -241,7 +241,7 @@ class RendererAgg(RendererBase):
         edgecolors = _plain_float_buffer(edgecolors, [[0.0, 0.0, 0.0, 0.0]])
         linewidths = _plain_float_buffer(linewidths, [1.0])
         antialiaseds = memoryview(_array("B", [
-            int(value) for value in np.asarray(antialiaseds).tolist()
+            int(value) for value in mlxarr.asarray(antialiaseds).tolist()
         ]))
         if hatchcolors is not None:
             hatchcolors = _plain_float_buffer(
@@ -326,7 +326,7 @@ class RendererAgg(RendererBase):
         texmanager = self.get_texmanager()
 
         Z = texmanager.get_grey(s, size, self.dpi)
-        Z = np.array(Z * 255.0, np.uint8)
+        Z = mlxarr.array(Z * 255.0, mlxarr.uint8)
 
         w, h, d = self.get_text_width_height_descent(s, prop, ismath="TeX")
         xd = d * sin(radians(angle))
@@ -357,7 +357,7 @@ class RendererAgg(RendererBase):
         return memoryview(self._renderer)
 
     def tostring_argb(self):
-        return np.asarray(self._renderer).take([3, 0, 1, 2], axis=2).tobytes()
+        return mlxarr.asarray(self._renderer).take([3, 0, 1, 2], axis=2).tobytes()
 
     def clear(self):
         self._renderer.clear()
@@ -426,9 +426,9 @@ class RendererAgg(RendererBase):
 
            def post_processing(image, dpi):
              # ny, nx, depth = image.shape
-             # image (numpy array) has RGBA channels and has a depth of 4.
+             # image (array_backend array) has RGBA channels and has a depth of 4.
              ...
-             # create a new_image (numpy array of 4 channels, size can be
+             # create a new_image (array_backend array of 4 channels, size can be
              # different). The resulting image may have offsets from
              # lower-left corner of the original image
              return new_image, offset_x, offset_y
@@ -436,7 +436,7 @@ class RendererAgg(RendererBase):
         The saved renderer is restored and the returned image from
         post_processing is plotted (using draw_image) on it.
         """
-        orig_img = np.asarray(self.buffer_rgba())
+        orig_img = mlxarr.asarray(self.buffer_rgba())
         slice_y, slice_x = cbook._get_nonzero_slices(orig_img[..., 3])
         cropped_img = orig_img[slice_y, slice_x]
 
@@ -447,7 +447,7 @@ class RendererAgg(RendererBase):
             img, ox, oy = post_processing(cropped_img / 255, self.dpi)
             gc = self.new_gc()
             if img.dtype.kind == 'f':
-                img = np.asarray(img * 255., np.uint8)
+                img = mlxarr.asarray(img * 255., mlxarr.uint8)
             self._renderer.draw_image(
                 gc, slice_x.start + ox, int(self.height) - slice_y.stop + oy,
                 img[::-1])

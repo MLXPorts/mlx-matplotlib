@@ -7,7 +7,7 @@ import re
 import textwrap
 from typing import Any
 from xml.etree import ElementTree as ET
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from packaging.version import parse as parse_version
 import pyparsing
 import pytest
@@ -370,7 +370,7 @@ def test_single_minus_sign():
     fig = plt.figure()
     fig.text(0.5, 0.5, '$-$')
     fig.canvas.draw()
-    t = np.asarray(fig.canvas.renderer.buffer_rgba())
+    t = mlxarr.asarray(fig.canvas.renderer.buffer_rgba())
     assert (t != 0xff).any()  # assert that canvas is not all white.
 
 

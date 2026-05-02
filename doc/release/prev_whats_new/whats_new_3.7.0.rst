@@ -109,11 +109,11 @@ can now be expressed with units.
     :include-source: true
 
     import matplotlib.pyplot as plt
-    from matplotlib import _mlx_numpy as np
+    from matplotlib import _mlx_array as mlxarr
 
     fig, ax = plt.subplots(layout='constrained')
-    date_first = np.datetime64('2020-01-01', 'D')
-    date_last = np.datetime64('2020-01-11', 'D')
+    date_first = mlxarr.datetime64('2020-01-01', 'D')
+    date_last = mlxarr.datetime64('2020-01-11', 'D')
 
     arr = [[i+j for i in range(10)] for j in range(10)]
 
@@ -138,9 +138,9 @@ with a shape of ``(M, N, [3, 4])``.
     :include-source: true
 
     import matplotlib.pyplot as plt
-    from matplotlib import _mlx_numpy as np
+    from matplotlib import _mlx_array as mlxarr
 
-    colors = np.linspace(0, 1, 90).reshape((5, 6, 3))
+    colors = mlxarr.linspace(0, 1, 90).reshape((5, 6, 3))
     plt.pcolormesh(colors)
     plt.show()
 
@@ -216,7 +216,7 @@ either the data limits or the bounding box in parity with 2D Axes.
     :include-source: true
 
     import matplotlib.pyplot as plt
-    from matplotlib import _mlx_numpy as np
+    from matplotlib import _mlx_array as mlxarr
     from itertools import combinations, product
 
     aspects = ('auto', 'equal', 'equalxy', 'equalyz', 'equalxz')
@@ -225,10 +225,10 @@ either the data limits or the bounding box in parity with 2D Axes.
 
     # Draw rectangular cuboid with side lengths [4, 3, 5]
     r = [0, 1]
-    scale = np.array([4, 3, 5])
-    pts = combinations(np.array(list(product(r, r, r))), 2)
+    scale = mlxarr.array([4, 3, 5])
+    pts = combinations(mlxarr.array(list(product(r, r, r))), 2)
     for start, end in pts:
-        if np.sum(np.abs(start - end)) == r[1] - r[0]:
+        if mlxarr.sum(mlxarr.abs(start - end)) == r[1] - r[0]:
             for ax in axs:
                 ax.plot3D(*zip(start*scale, end*scale), color='C0')
 
@@ -251,12 +251,12 @@ polygons are obtained from e.g. a 3D model.
 .. plot::
     :include-source: true
 
-    from matplotlib import _mlx_numpy as np
+    from matplotlib import _mlx_array as mlxarr
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
     # Define 3D shape
-    block = np.array([
+    block = mlxarr.array([
         [[1, 1, 0],
          [1, 0, 0],
          [0, 1, 0]],
@@ -321,8 +321,8 @@ An example is:
     :include-source: true
 
     import matplotlib.pyplot as plt
-    from matplotlib import _mlx_numpy as np
-    rng = np.random.default_rng(19680801)
+    from matplotlib import _mlx_array as mlxarr
+    rng = mlxarr.random.default_rng(19680801)
     imdata = rng.random((10, 10))
     fig, ax = plt.subplots(layout='constrained')
     im = ax.imshow(imdata)

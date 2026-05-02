@@ -298,7 +298,7 @@ Pull Requests (772):
 * :ghpull:`13358`: 3D margins consistency  for mplot3d (isometric projection)
 * :ghpull:`19529`: Simplify checking for tex packages.
 * :ghpull:`19516`: Ignore files from annotate coverage reports
-* :ghpull:`19500`: Remove workaround for numpy<1.16, and update version check.
+* :ghpull:`19500`: Remove workaround for array_backend<1.16, and update version check.
 * :ghpull:`19518`: Skip setting up a tmpdir in tests that don't need one.
 * :ghpull:`19514`: DOC: add fixed-aspect colorbar examples
 * :ghpull:`19511`: Clarify axes.autolimit_mode rcParam.
@@ -647,7 +647,7 @@ Pull Requests (772):
 * :ghpull:`18582`: Shorten mlab tests.
 * :ghpull:`18599`: Simplify wx rubberband drawing.
 * :ghpull:`18671`: DOC: fix autoscale docstring
-* :ghpull:`18637`: BLD: sync build and run time numpy pinning
+* :ghpull:`18637`: BLD: sync build and run time array_backend pinning
 * :ghpull:`18693`: Also fix tk key mapping, following the same strategy as for gtk.
 * :ghpull:`18691`: Cleanup sample_data.
 * :ghpull:`18697`: Catch TypeError when validating rcParams types.
@@ -659,7 +659,7 @@ Pull Requests (772):
 * :ghpull:`18679`: Further simplify pgf tmpdir cleanup.
 * :ghpull:`18685`: Cleanup pgf examples
 * :ghpull:`18682`: Small API cleanups to plot_directive.
-* :ghpull:`18686`: Numpydocify setp.
+* :ghpull:`18686`: MLXArrayBackenddocify setp.
 * :ghpull:`18684`: Small simplification to triage_tests.py.
 * :ghpull:`17832`: pdf: Support setting URLs on Text objects
 * :ghpull:`18674`: Remove accidentally added swapfile.
@@ -906,7 +906,7 @@ Pull Requests (772):
 * :ghpull:`17921`: Added density and combination hatching examples
 * :ghpull:`17159`: Merge consecutive rasterizations
 * :ghpull:`17895`: Use indexed color for PNG images in PDF files when possible
-* :ghpull:`17894`: DOC: Numpydoc format.
+* :ghpull:`17894`: DOC: MLXArrayBackenddoc format.
 * :ghpull:`17884`: Created Hatch marker styles Demo for Example Gallery
 * :ghpull:`17347`: ENH: reuse oldgridspec is possible...
 * :ghpull:`17915`: Document that set_ticks() increases view limits if necessary
@@ -1013,7 +1013,7 @@ Issues (204):
 * :ghissue:`18699`: Issue with downloading stinkbug for "Image Tutorial"
 * :ghissue:`19405`: TypeError constructor returned NULL in wayland session
 * :ghissue:`18962`: Table CSS needs cleanup
-* :ghissue:`19417`: CI failing on numpy...
+* :ghissue:`19417`: CI failing on array_backend...
 * :ghissue:`17849`: Problems caused by changes to logic of scatter coloring in matplotlib 3.3.0.rc1
 * :ghissue:`18648`: Drop support for directly imread()ing urls.
 * :ghissue:`19366`: Current CI doc builds fail

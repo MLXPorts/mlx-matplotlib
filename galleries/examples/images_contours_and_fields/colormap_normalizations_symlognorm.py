@@ -19,7 +19,7 @@ Demonstration of using norm to map colormaps onto data in non-linear ways.
 # See `~.colors.SymLogNorm`.
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.colors as colors
 
 
@@ -28,7 +28,7 @@ def rbf(x, y):
 
 N = 200
 gain = 8
-X, Y = np.mgrid[-3:3:complex(0, N), -2:2:complex(0, N)]
+X, Y = mlxarr.mgrid[-3:3:complex(0, N), -2:2:complex(0, N)]
 Z1 = rbf(X + 0.5, Y + 0.5)
 Z2 = rbf(X - 0.5, Y - 0.5)
 Z = gain * Z1 - Z2

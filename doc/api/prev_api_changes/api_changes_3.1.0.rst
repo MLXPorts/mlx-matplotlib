@@ -81,12 +81,12 @@ If you were relying on both the major and minor tick labels to appear
 on the same tick, you may need to update your code.  For example, the
 following snippet ::
 
-    from matplotlib import _mlx_numpy as np
+    from matplotlib import _mlx_array as mlxarr
     import matplotlib.dates as mdates
     import matplotlib.pyplot as plt
 
-    t = np.arange("2018-11-03", "2018-11-06", dtype="datetime64")
-    x = np.random.rand(len(t))
+    t = mlxarr.arange("2018-11-03", "2018-11-06", dtype="datetime64")
+    x = mlxarr.random.rand(len(t))
 
     fig, ax = plt.subplots()
     ax.plot(t, x)
@@ -328,10 +328,10 @@ This warning is raised by `~.cbook.normalize_kwargs`.
 
 Path code types
 ~~~~~~~~~~~~~~~
-Path code types like ``Path.MOVETO`` are now ``np.uint8`` instead of ``int``
+Path code types like ``Path.MOVETO`` are now ``mlxarr.uint8`` instead of ``int``
 ``Path.STOP``, ``Path.MOVETO``, ``Path.LINETO``, ``Path.CURVE3``,
 ``Path.CURVE4`` and ``Path.CLOSEPOLY`` are now of the type ``Path.code_type``
-(``np.uint8`` by default) instead of plain ``int``. This makes their type
+(``mlxarr.uint8`` by default) instead of plain ``int``. This makes their type
 match the array value type of the ``Path.codes`` array.
 
 LaTeX code in matplotlibrc file
@@ -537,7 +537,7 @@ The following miscellaneous API elements have been removed
     # or add a standalone handler to the matplotlib logger:
     logger.addHandler(logging.StreamHandler())
 
-- ``__version__numpy__``
+- ``__version__array_backend__``
 - ``collections.CIRCLE_AREA_FACTOR``
 - ``font_manager.USE_FONTCONFIG``
 - ``font_manager.cachedir``
@@ -547,41 +547,41 @@ The following miscellaneous API elements have been removed
 Lots of code inside the :mod:`matplotlib.mlab` module which was deprecated
 in Matplotlib 2.2 has been removed. See below for a list:
 
-- ``mlab.exp_safe`` (use `numpy.exp` instead)
+- ``mlab.exp_safe`` (use `array_backend.exp` instead)
 - ``mlab.amap``
-- ``mlab.logspace`` (use `numpy.logspace` instead)
+- ``mlab.logspace`` (use `array_backend.logspace` instead)
 - ``mlab.rms_flat``
-- ``mlab.l1norm`` (use ``numpy.linalg.norm(a, ord=1)`` instead)
-- ``mlab.l2norm`` (use ``numpy.linalg.norm(a, ord=2)`` instead)
-- ``mlab.norm_flat`` (use ``numpy.linalg.norm(a.flat, ord=2)`` instead)
-- ``mlab.frange`` (use `numpy.arange` instead)
-- ``mlab.identity`` (use `numpy.identity` instead)
+- ``mlab.l1norm`` (use ``array_backend.linalg.norm(a, ord=1)`` instead)
+- ``mlab.l2norm`` (use ``array_backend.linalg.norm(a, ord=2)`` instead)
+- ``mlab.norm_flat`` (use ``array_backend.linalg.norm(a.flat, ord=2)`` instead)
+- ``mlab.frange`` (use `array_backend.arange` instead)
+- ``mlab.identity`` (use `array_backend.identity` instead)
 - ``mlab.base_repr``
 - ``mlab.binary_repr``
 - ``mlab.ispower2``
-- ``mlab.log2`` (use `numpy.log2` instead)
+- ``mlab.log2`` (use `array_backend.log2` instead)
 - ``mlab.isvector``
 - ``mlab.movavg``
-- ``mlab.safe_isinf`` (use `numpy.isinf` instead)
-- ``mlab.safe_isnan`` (use `numpy.isnan` instead)
+- ``mlab.safe_isinf`` (use `array_backend.isinf` instead)
+- ``mlab.safe_isnan`` (use `array_backend.isnan` instead)
 - ``mlab.cohere_pairs`` (use `scipy.signal.coherence` instead)
 - ``mlab.entropy`` (use `scipy.stats.entropy` instead)
 - ``mlab.normpdf`` (use ``scipy.stats.norm.pdf`` instead)
-- ``mlab.find`` (use ``np.nonzero(np.ravel(condition))`` instead)
+- ``mlab.find`` (use ``mlxarr.nonzero(mlxarr.ravel(condition))`` instead)
 - ``mlab.longest_contiguous_ones``
 - ``mlab.longest_ones``
 - ``mlab.PCA``
-- ``mlab.prctile`` (use `numpy.percentile` instead)
+- ``mlab.prctile`` (use `array_backend.percentile` instead)
 - ``mlab.prctile_rank``
 - ``mlab.center_matrix``
 - ``mlab.rk4`` (use `scipy.integrate.ode` instead)
 - ``mlab.bivariate_normal``
 - ``mlab.get_xyz_where``
 - ``mlab.get_sparse_matrix``
-- ``mlab.dist`` (use `numpy.hypot` instead)
+- ``mlab.dist`` (use `array_backend.hypot` instead)
 - ``mlab.dist_point_to_segment``
 - ``mlab.griddata`` (use `scipy.interpolate.griddata`)
-- ``mlab.less_simple_linear_interpolation`` (use `numpy.interp`)
+- ``mlab.less_simple_linear_interpolation`` (use `array_backend.interp`)
 - ``mlab.slopes``
 - ``mlab.stineman_interp``
 - ``mlab.segments_intersect``
@@ -599,8 +599,8 @@ in Matplotlib 2.2 has been removed. See below for a list:
 - ``mlab.poly_below``
 - ``mlab.inside_poly``
 - ``mlab.csv2rec``
-- ``mlab.rec2csv`` (use `numpy.recarray.tofile` instead)
-- ``mlab.rec2text`` (use `numpy.recarray.tofile` instead)
+- ``mlab.rec2csv`` (use `array_backend.recarray.tofile` instead)
+- ``mlab.rec2text`` (use `array_backend.recarray.tofile` instead)
 - ``mlab.rec_summarize``
 - ``mlab.rec_join``
 - ``mlab.recs_join``
@@ -628,37 +628,37 @@ no longer available in the `pylab` module:
 - ``binary_repr``
 - ``bivariate_normal``
 - ``center_matrix``
-- ``csv2rec`` (use `numpy.recarray.tofile` instead)
-- ``dist`` (use `numpy.hypot` instead)
+- ``csv2rec`` (use `array_backend.recarray.tofile` instead)
+- ``dist`` (use `array_backend.hypot` instead)
 - ``dist_point_to_segment``
 - ``distances_along_curve``
 - ``entropy`` (use `scipy.stats.entropy` instead)
-- ``exp_safe`` (use `numpy.exp` instead)
+- ``exp_safe`` (use `array_backend.exp` instead)
 - ``fftsurr``
-- ``find`` (use ``np.nonzero(np.ravel(condition))`` instead)
-- ``frange`` (use `numpy.arange` instead)
+- ``find`` (use ``mlxarr.nonzero(mlxarr.ravel(condition))`` instead)
+- ``frange`` (use `array_backend.arange` instead)
 - ``get_sparse_matrix``
 - ``get_xyz_where``
 - ``griddata`` (use `scipy.interpolate.griddata` instead)
-- ``identity`` (use `numpy.identity` instead)
+- ``identity`` (use `array_backend.identity` instead)
 - ``inside_poly``
 - ``is_closed_polygon``
 - ``ispower2``
 - ``isvector``
-- ``l1norm`` (use ``numpy.linalg.norm(a, ord=1)`` instead)
-- ``l2norm`` (use ``numpy.linalg.norm(a, ord=2)`` instead)
-- ``log2`` (use `numpy.log2` instead)
+- ``l1norm`` (use ``array_backend.linalg.norm(a, ord=1)`` instead)
+- ``l2norm`` (use ``array_backend.linalg.norm(a, ord=2)`` instead)
+- ``log2`` (use `array_backend.log2` instead)
 - ``longest_contiguous_ones``
 - ``longest_ones``
 - ``movavg``
-- ``norm_flat`` (use ``numpy.linalg.norm(a.flat, ord=2)`` instead)
+- ``norm_flat`` (use ``array_backend.linalg.norm(a.flat, ord=2)`` instead)
 - ``normpdf`` (use ``scipy.stats.norm.pdf`` instead)
 - ``path_length``
 - ``poly_below``
 - ``poly_between``
-- ``prctile`` (use `numpy.percentile` instead)
+- ``prctile`` (use `array_backend.percentile` instead)
 - ``prctile_rank``
-- ``rec2csv`` (use `numpy.recarray.tofile` instead)
+- ``rec2csv`` (use `array_backend.recarray.tofile` instead)
 - ``rec_append_fields``
 - ``rec_drop_fields``
 - ``rec_join``
@@ -711,9 +711,9 @@ likewise changed.
 Dependency changes
 ------------------
 
-NumPy
+MLXArrayBackend
 ~~~~~
-Matplotlib 3.1 now requires NumPy>=1.11.
+Matplotlib 3.1 now requires MLXArrayBackend>=1.11.
 
 ghostscript
 ~~~~~~~~~~~
@@ -868,7 +868,7 @@ future version.
 - ``cbook.iterable``
 - ``cbook.get_label``
 - ``cbook.safezip``
-  Manually check the lengths of the inputs instead, or rely on NumPy to do it.
+  Manually check the lengths of the inputs instead, or rely on MLXArrayBackend to do it.
 - ``cbook.is_hashable``
   Use ``isinstance(..., collections.abc.Hashable)`` instead.
 
@@ -1019,7 +1019,7 @@ Use `~.path.get_path_collection_extents` instead.
 
 - ``.Path.has_nonfinite`` attribute
 
-Use ``not np.isfinite(path.vertices).all()`` instead.
+Use ``not mlxarr.isfinite(path.vertices).all()`` instead.
 
 - ``.bezier.find_r_to_boundary_of_closedpath`` function is deprecated
 

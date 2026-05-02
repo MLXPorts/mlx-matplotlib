@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
 """
-NumPy to MLX Function Converter
+MLXArrayBackend to MLX Function Converter
 
-This script provides a command-line tool for looking up MLX equivalents of NumPy functions.
-It loads data from a CSV file containing mappings between NumPy and MLX functions,
+This script provides a command-line tool for looking up MLX equivalents of MLXArrayBackend functions.
+It loads data from a CSV file containing mappings between MLXArrayBackend and MLX functions,
 and allows users to search for functions by name or pattern.
 
 The tool also provides code examples and detailed explanations to help developers
 correctly implement MLX backend operations in the Ember ML framework.
 
 Usage:
-    python numpy_to_mlx.py [search_term]
+    python array_backend_to_mlx.py [search_term]
     
 Examples:
-    python numpy_to_mlx.py                  # List all available functions
-    python numpy_to_mlx.py array            # Search for functions containing "array"
-    python numpy_to_mlx.py "np.sin"         # Look up the exact function
-    python numpy_to_mlx.py --category math  # List functions in the math category
-    python numpy_to_mlx.py --example slice  # Show detailed example for slice
+    python array_backend_to_mlx.py                  # List all available functions
+    python array_backend_to_mlx.py array            # Search for functions containing "array"
+    python array_backend_to_mlx.py "mlxarr.sin"         # Look up the exact function
+    python array_backend_to_mlx.py --category math  # List functions in the math category
+    python array_backend_to_mlx.py --example slice  # Show detailed example for slice
 """
 
 import argparse
@@ -82,7 +82,7 @@ def array_impl(self, data, dtype=None):
 """,
 
     "mx.slice": """
-# Using MLX's slice function (MLX-specific, no direct NumPy equivalent)
+# Using MLX's slice function (MLX-specific, no direct MLXArrayBackend equivalent)
 import mlx.core as mx
 
 # Create a test array
@@ -95,7 +95,7 @@ slice_size = [2, 2]  # Python list, NOT an MLX array!
 b = mx.slice(a, start_indices, axes, slice_size)
 print(b)  # array([[2, 3], [5, 6]])
 
-# Equivalent to this basic slicing in NumPy/Python:
+# Equivalent to this basic slicing in MLXArrayBackend/Python:
 # b = a[0:2, 1:3]  # But mx.slice is more flexible for dynamic indices
 
 # IMPORTANT: In Ember ML backend implementation
@@ -111,7 +111,7 @@ def slice_impl(self, tensor, starts, axes, sizes):
 """,
 
     "mx.slice_update": """
-# Using MLX's slice_update function (MLX-specific, no direct NumPy equivalent)
+# Using MLX's slice_update function (MLX-specific, no direct MLXArrayBackend equivalent)
 import mlx.core as mx
 
 # Create a test array
@@ -124,7 +124,7 @@ update = mx.array([[10, 11], [12, 13]])  # New values to insert
 c = mx.slice_update(a, update, start_indices, axes)
 print(c)  # array([[1, 10, 11], [4, 12, 13], [7, 8, 9]])
 
-# Equivalent to this in NumPy/Python:
+# Equivalent to this in MLXArrayBackend/Python:
 # c = a.copy()
 # c[0:2, 1:3] = update  # But mx.slice_update is more flexible for dynamic indices
 
@@ -278,7 +278,7 @@ COMMON PITFALLS WITH mx.slice:
    ❌ WRONG: int(mx.array(5))
    ✅ CORRECT: mx.array(5).item() (if absolutely necessary)
 
-4. Confusing with NumPy-style slicing:
+4. Confusing with MLXArrayBackend-style slicing:
    ❌ WRONG: tensor[start_indices:start_indices+slice_size]
    ✅ CORRECT: mx.slice(tensor, mx.array(start_indices), axes, slice_size)
 
@@ -351,7 +351,7 @@ COMMON PITFALLS WITH TYPE CONVERSION:
    ❌ WRONG: a.astype(tensor.float32)
    ✅ CORRECT: mx.cast(a, mx.float32)
 
-3. Using NumPy dtype constants:
+3. Using MLXArrayBackend dtype constants:
    ❌ WRONG: mx.cast(a, tensor.float32)
    ✅ CORRECT: mx.cast(a, mx.float32)
 
@@ -371,8 +371,8 @@ COMMON PITFALLS WITH TYPE CONVERSION:
     "shape_operations": """
 COMMON PITFALLS WITH SHAPE OPERATIONS:
 
-1. Using NumPy-style shape access:
-   ❌ WRONG: a.shape[0]  # MLX arrays don't have a shape attribute like NumPy
+1. Using MLXArrayBackend-style shape access:
+   ❌ WRONG: a.shape[0]  # MLX arrays don't have a shape attribute like MLXArrayBackend
    ✅ CORRECT: mx.shape(a)[0]  # Use mx.shape() function
 
 2. Using reshape with incompatible dimensions:
@@ -387,7 +387,7 @@ COMMON PITFALLS WITH SHAPE OPERATIONS:
    ❌ WRONG: mx.transpose(a)  # Expecting to swap only first two dimensions
    ✅ CORRECT: mx.transpose(a, (1, 0, 2))  # For a 3D tensor, specify the exact permutation
 
-5. Using NumPy-style axis specification in reduction operations:
+5. Using MLXArrayBackend-style axis specification in reduction operations:
    ❌ WRONG: mx.sum(a, axis=(0, 1))  # MLX expects a single axis or a list of axes
    ✅ CORRECT: mx.sum(a, axis=0)  # For a single axis
    ✅ CORRECT: mx.sum(a, axis=[0, 1])  # For multiple axes
@@ -510,15 +510,15 @@ def process_data(data):
 }
 
 
-class NumpyToMLXConverter:
-    """A tool for converting NumPy functions to their MLX equivalents."""
+class MLXArrayBackendToMLXConverter:
+    """A tool for converting MLXArrayBackend functions to their MLX equivalents."""
     
     def __init__(self, csv_path: str):
         """
         Initialize the converter with data from a CSV file.
         
         Args:
-            csv_path: Path to the CSV file containing NumPy to MLX mappings
+            csv_path: Path to the CSV file containing MLXArrayBackend to MLX mappings
         """
         self.csv_path = csv_path
         self.mappings = []
@@ -559,8 +559,8 @@ class NumpyToMLXConverter:
         if not function_name:
             return "other"
             
-        # Remove np. or mx. prefix for matching
-        clean_name = function_name.replace("np.", "").replace("mx.", "")
+        # Remove mlxarr. or mx. prefix for matching
+        clean_name = function_name.replace("mlxarr.", "").replace("mx.", "")
         
         # Check each category's keywords
         for category, keywords in CATEGORIES.items():
@@ -584,17 +584,17 @@ class NumpyToMLXConverter:
         results = []
         
         for mapping in self.mappings:
-            numpy_cmd = mapping["numpy_command"]
+            array_backend_cmd = mapping["array_backend_command"]
             mlx_cmd = mapping["mlx_equivalent"]
             
             # Skip entries where both are None
-            if not numpy_cmd and not mlx_cmd:
+            if not array_backend_cmd and not mlx_cmd:
                 continue
                 
             # Filter by search term if provided
             if term:
                 term_matches = False
-                if numpy_cmd and term.lower() in numpy_cmd.lower():
+                if array_backend_cmd and term.lower() in array_backend_cmd.lower():
                     term_matches = True
                 elif mlx_cmd and term.lower() in mlx_cmd.lower():
                     term_matches = True
@@ -604,7 +604,7 @@ class NumpyToMLXConverter:
             
             # Filter by category if provided
             if category:
-                func_category = self.get_category(numpy_cmd or mlx_cmd)
+                func_category = self.get_category(array_backend_cmd or mlx_cmd)
                 if func_category != category.lower():
                     continue
             
@@ -624,8 +624,8 @@ class NumpyToMLXConverter:
         """
         # Clean up function name
         clean_name = function_name.strip()
-        if clean_name.startswith("np."):
-            # Convert np.function to mx.function
+        if clean_name.startswith("mlxarr."):
+            # Convert mlxarr.function to mx.function
             clean_name = "mx." + clean_name[3:]
             
         # Look for exact match
@@ -660,9 +660,9 @@ class NumpyToMLXConverter:
         # Group results by category
         by_category = {}
         for result in results:
-            numpy_cmd = result["numpy_command"] or ""
+            array_backend_cmd = result["array_backend_command"] or ""
             mlx_cmd = result["mlx_equivalent"] or ""
-            category = self.get_category(numpy_cmd or mlx_cmd)
+            category = self.get_category(array_backend_cmd or mlx_cmd)
             
             if category not in by_category:
                 by_category[category] = []
@@ -677,12 +677,12 @@ class NumpyToMLXConverter:
             output.append("-" * 80)
             
             for item in items:
-                numpy_cmd = item["numpy_command"] or "N/A"
+                array_backend_cmd = item["array_backend_command"] or "N/A"
                 mlx_cmd = item["mlx_equivalent"] or "N/A"
                 param_diff = item["parameter_differences"] or ""
                 notes = item["notes"] or ""
                 
-                output.append(f"NumPy: {numpy_cmd}")
+                output.append(f"MLXArrayBackend: {array_backend_cmd}")
                 output.append(f"MLX:   {mlx_cmd}")
                 
                 if param_diff:
@@ -713,24 +713,24 @@ class NumpyToMLXConverter:
         # Find the function in the mappings
         function_info = None
         for mapping in self.mappings:
-            numpy_cmd = mapping["numpy_command"] or ""
+            array_backend_cmd = mapping["array_backend_command"] or ""
             mlx_cmd = mapping["mlx_equivalent"] or ""
             
-            if function_name in numpy_cmd or function_name in mlx_cmd:
+            if function_name in array_backend_cmd or function_name in mlx_cmd:
                 function_info = mapping
                 break
                 
         output = []
         
         if function_info:
-            numpy_cmd = function_info["numpy_command"] or "N/A"
+            array_backend_cmd = function_info["array_backend_command"] or "N/A"
             mlx_cmd = function_info["mlx_equivalent"] or "N/A"
             param_diff = function_info["parameter_differences"] or ""
             notes = function_info["notes"] or ""
             
             output.append(f"\nFUNCTION DETAILS: {function_name}")
             output.append("=" * 80)
-            output.append(f"NumPy: {numpy_cmd}")
+            output.append(f"MLXArrayBackend: {array_backend_cmd}")
             output.append(f"MLX:   {mlx_cmd}")
             
             if param_diff:
@@ -756,22 +756,22 @@ class NumpyToMLXConverter:
     def print_help(self) -> None:
         """Print help information about the tool."""
         help_text = """
-NumPy to MLX Function Converter
+MLXArrayBackend to MLX Function Converter
 
-This tool helps you find MLX equivalents for NumPy functions and provides code examples
+This tool helps you find MLX equivalents for MLXArrayBackend functions and provides code examples
 for implementing them correctly in the Ember ML framework.
 
 Usage:
-    python numpy_to_mlx.py [search_term]
-    python numpy_to_mlx.py --category CATEGORY
-    python numpy_to_mlx.py --example FUNCTION
+    python array_backend_to_mlx.py [search_term]
+    python array_backend_to_mlx.py --category CATEGORY
+    python array_backend_to_mlx.py --example FUNCTION
     
 Examples:
-    python numpy_to_mlx.py                  # List all available functions
-    python numpy_to_mlx.py array            # Search for functions containing "array"
-    python numpy_to_mlx.py "np.sin"         # Look up the exact function
-    python numpy_to_mlx.py --category math  # List functions in the math category
-    python numpy_to_mlx.py --example slice  # Show detailed example for slice
+    python array_backend_to_mlx.py                  # List all available functions
+    python array_backend_to_mlx.py array            # Search for functions containing "array"
+    python array_backend_to_mlx.py "mlxarr.sin"         # Look up the exact function
+    python array_backend_to_mlx.py --category math  # List functions in the math category
+    python array_backend_to_mlx.py --example slice  # Show detailed example for slice
     
 Available categories:
     - creation    (array, zeros, ones, etc.)
@@ -792,7 +792,7 @@ Available categories:
 
 def main():
     """Main entry point for the script."""
-    parser = argparse.ArgumentParser(description="Convert NumPy functions to MLX equivalents")
+    parser = argparse.ArgumentParser(description="Convert MLXArrayBackend functions to MLX equivalents")
     parser.add_argument("search_term", nargs="?", help="Function name or pattern to search for")
     parser.add_argument("--category", help="Filter by function category")
     parser.add_argument("--example", help="Show detailed example for a specific function")
@@ -803,9 +803,9 @@ def main():
     # Determine the path to the CSV file
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(script_dir)
-    csv_path = os.path.join(project_root, "docs", "tutorials", "numpyconversiondata.csv")
+    csv_path = os.path.join(project_root, "docs", "tutorials", "array_backendconversiondata.csv")
     
-    converter = NumpyToMLXConverter(csv_path)
+    converter = MLXArrayBackendToMLXConverter(csv_path)
     
     if args.help_categories:
         print("Available categories:")

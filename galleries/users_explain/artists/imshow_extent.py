@@ -27,7 +27,7 @@ by the axes limits.
    directly continue with the discussion of the results.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.gridspec import GridSpec
 
 
@@ -35,9 +35,9 @@ def index_to_coordinate(index, extent, origin):
     """Return the pixel center of an index."""
     left, right, bottom, top = extent
 
-    hshift = 0.5 * np.sign(right - left)
+    hshift = 0.5 * mlxarr.sign(right - left)
     left, right = left + hshift, right - hshift
-    vshift = 0.5 * np.sign(top - bottom)
+    vshift = 0.5 * mlxarr.sign(top - bottom)
     bottom, top = bottom + vshift, top - vshift
 
     if origin == 'upper':
@@ -62,7 +62,7 @@ def get_index_label_pos(index, extent, origin, inverted_xindex):
 
     is_x0 = index[-2:] == "0]"
     halign = 'left' if is_x0 ^ inverted_xindex else 'right'
-    hshift = 0.5 * np.sign(left - right)
+    hshift = 0.5 * mlxarr.sign(left - right)
     x += hshift * (1 if is_x0 else -1)
     return x, y, halign
 
@@ -145,7 +145,7 @@ def generate_imshow_demo_grid(extents, xlim=None, ylim=None):
     columns = {'label': [fig.add_subplot(gs[j, 0]) for j in range(N)],
                'upper': [fig.add_subplot(gs[j, 1:3]) for j in range(N)],
                'lower': [fig.add_subplot(gs[j, 3:5]) for j in range(N)]}
-    x, y = np.ogrid[0:6, 0:7]
+    x, y = mlxarr.ogrid[0:6, 0:7]
     data = x + y
 
     for origin in ['upper', 'lower']:

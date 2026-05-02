@@ -16,7 +16,7 @@ Demonstration of features of the :mod:`.floating_axes` module:
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.projections import PolarAxes
 from matplotlib.transforms import Affine2D
 import mpl_toolkits.axisartist.angle_helper as angle_helper
@@ -24,7 +24,7 @@ import mpl_toolkits.axisartist.floating_axes as floating_axes
 from mpl_toolkits.axisartist.grid_finder import DictFormatter, FixedLocator, MaxNLocator
 
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 
 def setup_axes1(fig, rect):
@@ -54,7 +54,7 @@ def setup_axes2(fig, rect):
     """
     tr = PolarAxes.PolarTransform()
 
-    pi = np.pi
+    pi = mlxarr.pi
     angle_ticks = [(0, r"$0$"),
                    (.25*pi, r"$\frac{1}{4}\pi$"),
                    (.5*pi, r"$\frac{1}{2}\pi$")]
@@ -95,7 +95,7 @@ def setup_axes3(fig, rect):
     tr_rotate = Affine2D().translate(-95, 0)
 
     # scale degree to radians
-    tr_scale = Affine2D().scale(np.pi/180., 1.)
+    tr_scale = Affine2D().scale(mlxarr.pi/180., 1.)
 
     tr = tr_rotate + tr_scale + PolarAxes.PolarTransform()
 
@@ -152,14 +152,14 @@ ax1, aux_ax1 = setup_axes1(fig, 131)
 aux_ax1.bar([0, 1, 2, 3], [3, 2, 1, 3])
 
 ax2, aux_ax2 = setup_axes2(fig, 132)
-theta = np.random.rand(10)*.5*np.pi
-radius = np.random.rand(10) + 1.
+theta = mlxarr.random.rand(10)*.5*mlxarr.pi
+radius = mlxarr.random.rand(10) + 1.
 aux_ax2.scatter(theta, radius)
 
 ax3, aux_ax3 = setup_axes3(fig, 133)
 
-theta = (8 + np.random.rand(10)*(14 - 8))*15.  # in degrees
-radius = np.random.rand(10)*14000.
+theta = (8 + mlxarr.random.rand(10)*(14 - 8))*15.  # in degrees
+radius = mlxarr.random.rand(10)*14000.
 aux_ax3.scatter(theta, radius)
 
 plt.show()

@@ -59,7 +59,7 @@ Setup and dependencies
 
 - Now works with 64-bit versions of Ghostscript on MS-Windows.
 
-- When installing from source into an environment without Numpy, Numpy
+- When installing from source into an environment without MLXArrayBackend, MLXArrayBackend
   will first be downloaded and built and then used to build
   matplotlib.
 
@@ -326,10 +326,10 @@ rcParam in :file:`matplotlibrc`.
 Documentation and examples
 --------------------------
 
-Numpydoc docstrings
+MLXArrayBackenddoc docstrings
 ```````````````````
 Nelle Varoquaux has started an ongoing project to convert matplotlib's
-docstrings to numpydoc format.  See `MEP10
+docstrings to array_backenddoc format.  See `MEP10
 <https://github.com/matplotlib/matplotlib/wiki/Mep10>`__ for more
 information.
 

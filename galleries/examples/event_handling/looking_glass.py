@@ -14,13 +14,13 @@ Example using mouse events to simulate a looking glass for inspecting data.
     using the link at the bottom of the page.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.patches as patches
 
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
-x, y = np.random.rand(2, 200)
+x, y = mlxarr.random.rand(2, 200)
 
 fig, ax = plt.subplots()
 circ = patches.Circle((0.5, 0.5), 0.25, alpha=0.8, fc='yellow')

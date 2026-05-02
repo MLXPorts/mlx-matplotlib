@@ -8,7 +8,7 @@ between two lines.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 # %%
 #
 # Basic usage
@@ -16,9 +16,9 @@ from matplotlib import _mlx_numpy as np
 # The parameters *y1* and *y2* can be scalars, indicating a horizontal
 # boundary at the given y-values. If only *y1* is given, *y2* defaults to 0.
 
-x = np.arange(0.0, 2, 0.01)
-y1 = np.sin(2 * np.pi * x)
-y2 = 0.8 * np.sin(4 * np.pi * x)
+x = mlxarr.arange(0.0, 2, 0.01)
+y1 = mlxarr.sin(2 * mlxarr.pi * x)
+y2 = 0.8 * mlxarr.sin(4 * mlxarr.pi * x)
 
 fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True, figsize=(6, 6))
 
@@ -48,14 +48,14 @@ fig.tight_layout()
 # sphinx_gallery_thumbnail_number = 2
 
 N = 21
-x = np.linspace(0, 10, 11)
+x = mlxarr.linspace(0, 10, 11)
 y = [3.9, 4.4, 10.8, 10.3, 11.2, 13.1, 14.1,  9.9, 13.9, 15.1, 12.5]
 
 # fit a linear curve and estimate its y-values and their error.
-a, b = np.polyfit(x, y, deg=1)
+a, b = mlxarr.polyfit(x, y, deg=1)
 y_est = a * x + b
-y_err = x.std() * np.sqrt(1/len(x) +
-                          (x - x.mean())**2 / np.sum((x - x.mean())**2))
+y_err = x.std() * mlxarr.sqrt(1/len(x) +
+                          (x - x.mean())**2 / mlxarr.sum((x - x.mean())**2))
 
 fig, ax = plt.subplots()
 ax.plot(x, y_est, '-')
@@ -77,9 +77,9 @@ ax.plot(x, y, 'o', color='tab:brown')
 # noticeable. Interpolation approximates the actual x position at which the
 # *where* condition will change and extends the filling up to there.
 
-x = np.array([0, 1, 2, 3])
-y1 = np.array([0.8, 0.8, 0.2, 0.2])
-y2 = np.array([0, 0, 1, 1])
+x = mlxarr.array([0, 1, 2, 3])
+y1 = mlxarr.array([0.8, 0.8, 0.2, 0.2])
+y2 = mlxarr.array([0, 0, 1, 1])
 
 fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 
@@ -120,8 +120,8 @@ fig.tight_layout()
 # given threshold.
 
 fig, ax = plt.subplots()
-x = np.arange(0, 4 * np.pi, 0.01)
-y = np.sin(x)
+x = mlxarr.arange(0, 4 * mlxarr.pi, 0.01)
+y = mlxarr.sin(x)
 ax.plot(x, y, color='black')
 
 threshold = 0.75

@@ -12,7 +12,7 @@ Status
 
 Initial changes added in 1.3. Conversion of the gallery is on-going.
 29 September 2015 - The last ``pylab_examples`` where ``pylab`` is imported has
-been converted over to use :mod:`matplotlib.pyplot` and `numpy`.
+been converted over to use :mod:`matplotlib.pyplot` and `array_backend`.
 
 Branches and Pull requests
 ==========================
@@ -109,7 +109,7 @@ sections described above. "Clean-up" should involve:
   <https://pypi.org/project/flake8/>`_, or a similar checker, is
   highly recommended)
 * Commented-out code should be removed.
-* Replace uses of `pylab` interface with `.pyplot` (+ `numpy`,
+* Replace uses of `pylab` interface with `.pyplot` (+ `array_backend`,
   etc.). See `c25ef1e
   <https://github.com/tonysyu/matplotlib/commit/c25ef1e02b3a0ecb279492409dac0de9b3d2c0e2>`_
 * Remove shebang line, e.g.::
@@ -118,12 +118,12 @@ sections described above. "Clean-up" should involve:
 
 * Use consistent imports. In particular::
 
-      from matplotlib import _mlx_numpy as np
+      from matplotlib import _mlx_array as mlxarr
 
       import matplotlib.pyplot as plt
 
   Avoid importing specific functions from these modules (e.g. ``from
-  numpy import sin``)
+  array_backend import sin``)
 
 * Each example should focus on a specific feature (excluding
   ``showcase`` examples, which will show more "polished"

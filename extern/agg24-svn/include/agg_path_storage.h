@@ -1217,14 +1217,14 @@ namespace agg
     {
         // Calculate signed area (double area to be exact)
         //---------------------
-        unsigned np = end - start;
+        unsigned point_count = end - start;
         double area = 0.0;
         unsigned i;
-        for(i = 0; i < np; i++)
+        for(i = 0; i < point_count; i++)
         {
             double x1, y1, x2, y2;
             m_vertices.vertex(start + i,            &x1, &y1);
-            m_vertices.vertex(start + (i + 1) % np, &x2, &y2);
+            m_vertices.vertex(start + (i + 1) % point_count, &x2, &y2);
             area += x1 * y2 - y1 * x2;
         }
         return (area < 0.0) ? path_flags_cw : path_flags_ccw;

@@ -5,7 +5,7 @@ Zoom region inset Axes
 
 Example of an inset Axes and a rectangle showing where the zoom is located.
 """
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 from matplotlib import cbook
 from matplotlib import pyplot as plt
 
@@ -13,7 +13,7 @@ fig, ax = plt.subplots()
 
 # make data
 Z = cbook.get_sample_data("axes_grid/bivariate_normal.npy")  # 15x15 array
-Z2 = np.zeros((150, 150))
+Z2 = mlxarr.zeros((150, 150))
 ny, nx = Z.shape
 Z2[30:30+ny, 30:30+nx] = Z
 extent = (-3, 4, -4, 3)

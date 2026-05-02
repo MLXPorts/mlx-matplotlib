@@ -6,29 +6,29 @@ Contourf demo
 How to use the `.axes.Axes.contourf` method to create filled contour plots.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 delta = 0.025
 
-x = y = np.arange(-3.0, 3.01, delta)
-X, Y = np.meshgrid(x, y)
-Z1 = np.exp(-X**2 - Y**2)
-Z2 = np.exp(-(X - 1)**2 - (Y - 1)**2)
+x = y = mlxarr.arange(-3.0, 3.01, delta)
+X, Y = mlxarr.meshgrid(x, y)
+Z1 = mlxarr.exp(-X**2 - Y**2)
+Z2 = mlxarr.exp(-(X - 1)**2 - (Y - 1)**2)
 Z = (Z1 - Z2) * 2
 
 nr, nc = Z.shape
 
 # put NaNs in one corner:
-Z[-nr // 6:, -nc // 6:] = np.nan
+Z[-nr // 6:, -nc // 6:] = mlxarr.nan
 # contourf will convert these to masked
 
 
-Z = np.ma.array(Z)
+Z = mlxarr.ma.array(Z)
 # mask another corner:
-Z[:nr // 6, :nc // 6] = np.ma.masked
+Z[:nr // 6, :nc // 6] = mlxarr.ma.masked
 
 # mask a circle in the middle:
-interior = np.sqrt(X**2 + Y**2) < 0.5
-Z[interior] = np.ma.masked
+interior = mlxarr.sqrt(X**2 + Y**2) < 0.5
+Z[interior] = mlxarr.ma.masked
 
 # %%
 # Automatic contour levels
@@ -107,7 +107,7 @@ plt.show()
 # ---------------------------------------------
 # This code demonstrates orienting contour plot data using the "origin" keyword
 
-x = np.arange(1, 10)
+x = mlxarr.arange(1, 10)
 y = x.reshape(-1, 1)
 h = x * y
 
@@ -115,8 +115,8 @@ fig, (ax1, ax2) = plt.subplots(ncols=2)
 
 ax1.set_title("origin='upper'")
 ax2.set_title("origin='lower'")
-ax1.contourf(h, levels=np.arange(5, 70, 5), extend='both', origin="upper")
-ax2.contourf(h, levels=np.arange(5, 70, 5), extend='both', origin="lower")
+ax1.contourf(h, levels=mlxarr.arange(5, 70, 5), extend='both', origin="upper")
+ax2.contourf(h, levels=mlxarr.arange(5, 70, 5), extend='both', origin="lower")
 
 plt.show()
 

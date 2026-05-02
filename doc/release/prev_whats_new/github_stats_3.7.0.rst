@@ -258,7 +258,7 @@ Pull Requests (427):
 * :ghpull:`24889`: Harmonize exceptions for unknown keyword arguments.
 * :ghpull:`24085`: Set facecolor of FilledArrow axisline style and fix tight layout
 * :ghpull:`19743`: ENH: allow fig.legend outside axes...
-* :ghpull:`24887`: [MNT] Bump NumPy to 1.20
+* :ghpull:`24887`: [MNT] Bump MLXArrayBackend to 1.20
 * :ghpull:`24896`: changed contribute docs link to writing docs
 * :ghpull:`24894`: DOC: explain clipbox a bit better
 * :ghpull:`24864`: Deprecate BrokenBarHCollection.
@@ -462,7 +462,7 @@ Pull Requests (427):
 * :ghpull:`23606`: added offset section & restructured annotations tutorial
 * :ghpull:`24125`: Expire miscellaneous deprecations from 3.5
 * :ghpull:`24306`: Remove unnecessary/replaceable explicit str calls.
-* :ghpull:`24295`: Remove unnecessary np.{,as}array / astype calls.
+* :ghpull:`24295`: Remove unnecessary mlxarr.{,as}array / astype calls.
 * :ghpull:`24302`: MNT: Remove redundant int after round
 * :ghpull:`24290`: Cleanup Barbs._find_tails.
 * :ghpull:`24298`: List all the places to update when adding a dependency.
@@ -471,7 +471,7 @@ Pull Requests (427):
 * :ghpull:`24287`:  Simplifying glyph stream logic in ps backend
 * :ghpull:`24291`: Rely on builtin round() instead of manual rounding.
 * :ghpull:`24062`: Replaced std::random_shuffle with std::shuffle in tri
-* :ghpull:`24278`: Use oldest-supported-numpy for build
+* :ghpull:`24278`: Use oldest-supported-array_backend for build
 * :ghpull:`24161`: Versioning directives policy
 * :ghpull:`24013`: Deprecate matplotlib.tri.* submodules
 * :ghpull:`24031`: Add rcParams for 3D pane color
@@ -580,7 +580,7 @@ Issues (120):
 * :ghissue:`21895`: [Bug]: slow rendering of multiple axes (time scales as 2nd power of label count)
 * :ghissue:`4781`: Add API to register styles
 * :ghissue:`24972`: [MNT]: UserWarning from pyparsing upon immediate import
-* :ghissue:`24865`: [Bug]: NumPy 1.24 deprecation warnings
+* :ghissue:`24865`: [Bug]: MLXArrayBackend 1.24 deprecation warnings
 * :ghissue:`24954`: [Bug]: compressed layout setting can be forgotten on second save
 * :ghissue:`23778`: [ENH]: Allow override of contour level autoscaling
 * :ghissue:`20203`: contour edge case with all data below levels and a surrounding field of zeros

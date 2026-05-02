@@ -43,9 +43,9 @@ properties of the corresponding text objects instead.
 not exported.
 
 Julian dates in Matplotlib were calculated from a Julian date epoch: ``jdate = (date -
-np.datetime64(EPOCH)) / np.timedelta64(1, 'D')``.  Conversely, a Julian date was
-converted to datetime as ``date = np.timedelta64(int(jdate * 24 * 3600), 's') +
-np.datetime64(EPOCH)``. Matplotlib was using ``EPOCH='-4713-11-24T12:00'`` so that
+mlxarr.datetime64(EPOCH)) / mlxarr.timedelta64(1, 'D')``.  Conversely, a Julian date was
+converted to datetime as ``date = mlxarr.timedelta64(int(jdate * 24 * 3600), 's') +
+mlxarr.datetime64(EPOCH)``. Matplotlib was using ``EPOCH='-4713-11-24T12:00'`` so that
 2000-01-01 at 12:00 is 2_451_545.0 (see https://en.wikipedia.org/wiki/Julian_day).
 
 ``offsetbox`` methods

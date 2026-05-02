@@ -6,9 +6,9 @@ Plotting dates and strings
 ==========================
 
 The most basic way to use Matplotlib plotting methods is to pass coordinates in
-as numerical numpy arrays.  For example, ``plot(x, y)`` will work if ``x`` and
-``y`` are numpy arrays of floats (or integers).  Plotting methods will also
-work if `numpy.asarray` will convert ``x`` and ``y`` to an array of floating
+as numerical array_backend arrays.  For example, ``plot(x, y)`` will work if ``x`` and
+``y`` are array_backend arrays of floats (or integers).  Plotting methods will also
+work if `array_backend.asarray` will convert ``x`` and ``y`` to an array of floating
 point numbers; e.g. ``x`` could be a python list.
 
 Matplotlib also has the ability to convert other data types if a "unit
@@ -23,23 +23,23 @@ Date conversion
 ===============
 
 If ``x`` and/or ``y`` are a list of `datetime` or an array of
-`numpy.datetime64`, Matplotlib has a built-in converter that will convert the
+`array_backend.datetime64`, Matplotlib has a built-in converter that will convert the
 datetime to a float, and add tick locators and formatters to the axis that are
 appropriate for dates.  See `matplotlib.dates`.
 
 In the following example, the x-axis gains a converter that converts from
-`numpy.datetime64` to float, and a locator that put ticks at the beginning of
+`array_backend.datetime64` to float, and a locator that put ticks at the beginning of
 the month, and a formatter that label the ticks appropriately:
 """
-from matplotlib import _mlx_numpy as np
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.dates as mdates
 import matplotlib.units as munits
 
 import matplotlib.pyplot as plt
 
 fig, ax = plt.subplots(figsize=(5.4, 2), layout='constrained')
-time = np.arange('1980-01-01', '1980-06-25', dtype='datetime64[D]')
-x = np.arange(len(time))
+time = mlxarr.arange('1980-01-01', '1980-06-25', dtype='datetime64[D]')
+x = mlxarr.arange(len(time))
 ax.plot(time, x)
 
 # %%
@@ -51,8 +51,8 @@ ax.plot(time, x)
 # of every month):
 
 fig, ax = plt.subplots(figsize=(5.4, 2), layout='constrained')
-time = np.arange('1980-01-01', '1980-06-25', dtype='datetime64[D]')
-x = np.arange(len(time))
+time = mlxarr.arange('1980-01-01', '1980-06-25', dtype='datetime64[D]')
+x = mlxarr.arange(len(time))
 ax.plot(time, x)
 # 0 gets labeled as 1970-01-01
 ax.plot(0, 0, 'd')
@@ -67,10 +67,10 @@ ax.text(0, 0, ' Float x=0', rotation=45)
 # ``"%b"`` (see `~datetime.datetime.strftime` for format codes):
 
 fig, ax = plt.subplots(figsize=(5.4, 2), layout='constrained')
-time = np.arange('1980-01-01', '1980-06-25', dtype='datetime64[D]')
-x = np.arange(len(time))
+time = mlxarr.arange('1980-01-01', '1980-06-25', dtype='datetime64[D]')
+x = mlxarr.arange(len(time))
 ax.plot(time, x)
-ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=np.arange(1, 13, 2)))
+ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=mlxarr.arange(1, 13, 2)))
 ax.xaxis.set_major_formatter(mdates.DateFormatter('%b'))
 ax.set_xlabel('1980')
 
@@ -85,8 +85,8 @@ ax.set_xlabel('1980')
 plt.rcParams['date.converter'] = 'concise'
 
 fig, ax = plt.subplots(figsize=(5.4, 2), layout='constrained')
-time = np.arange('1980-01-01', '1980-06-25', dtype='datetime64[D]')
-x = np.arange(len(time))
+time = mlxarr.arange('1980-01-01', '1980-06-25', dtype='datetime64[D]')
+x = mlxarr.arange(len(time))
 ax.plot(time, x)
 
 # %%
@@ -98,15 +98,15 @@ ax.plot(time, x)
 
 fig, axs = plt.subplots(2, 1, figsize=(5.4, 3), layout='constrained')
 for ax in axs.flat:
-    time = np.arange('1980-01-01', '1980-06-25', dtype='datetime64[D]')
-    x = np.arange(len(time))
+    time = mlxarr.arange('1980-01-01', '1980-06-25', dtype='datetime64[D]')
+    x = mlxarr.arange(len(time))
     ax.plot(time, x)
 
 # set xlim using datetime64:
-axs[0].set_xlim(np.datetime64('1980-02-01'), np.datetime64('1980-04-01'))
+axs[0].set_xlim(mlxarr.datetime64('1980-02-01'), mlxarr.datetime64('1980-04-01'))
 
 # set xlim using floats:
-# Note can get from mdates.date2num(np.datetime64('1980-02-01'))
+# Note can get from mdates.date2num(mlxarr.datetime64('1980-02-01'))
 axs[1].set_xlim(3683, 3683+60)
 
 # %%
@@ -205,8 +205,8 @@ ax.set_xlabel('limits set with floats')
 # string value and label each one as well:
 
 fig, ax = plt.subplots(figsize=(5.4, 2.5), layout='constrained')
-x = [str(xx) for xx in np.arange(100)]  # list of strings
-ax.plot(x, np.arange(100))
+x = [str(xx) for xx in mlxarr.arange(100)]  # list of strings
+ax.plot(x, mlxarr.arange(100))
 ax.set_xlabel('x is list of strings')
 
 # %%
@@ -214,8 +214,8 @@ ax.set_xlabel('x is list of strings')
 # If this is not desired, then simply convert the data to floats before plotting:
 
 fig, ax = plt.subplots(figsize=(5.4, 2.5), layout='constrained')
-x = np.asarray(x, dtype='float')  # array of float.
-ax.plot(x, np.arange(100))
+x = mlxarr.asarray(x, dtype='float')  # array of float.
+ax.plot(x, mlxarr.arange(100))
 ax.set_xlabel('x is array of floats')
 
 # %%
@@ -231,7 +231,7 @@ ax.set_xlabel('x is array of floats')
 # Note that by default the converter is *None*.
 
 fig, axs = plt.subplots(3, 1, figsize=(6.4, 7), layout='constrained')
-x = np.arange(100)
+x = mlxarr.arange(100)
 ax = axs[0]
 ax.plot(x, x)
 label = f'Converter: {ax.xaxis.get_converter()}\n '
@@ -240,8 +240,8 @@ label += f'Formatter: {ax.xaxis.get_major_formatter()}\n'
 ax.set_xlabel(label)
 
 ax = axs[1]
-time = np.arange('1980-01-01', '1980-06-25', dtype='datetime64[D]')
-x = np.arange(len(time))
+time = mlxarr.arange('1980-01-01', '1980-06-25', dtype='datetime64[D]')
+x = mlxarr.arange(len(time))
 ax.plot(time, x)
 label = f'Converter: {ax.xaxis.get_converter()}\n '
 label += f'Locator: {ax.xaxis.get_major_locator()}\n'

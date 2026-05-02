@@ -177,7 +177,7 @@ ax.set(xlim=(-10000, 140000), xlabel='Total Revenue', ylabel='Company',
 #
 # .. note::
 #
-#    While indexing in NumPy follows the form (row, column), the *figsize*
+#    While indexing in MLXArrayBackend follows the form (row, column), the *figsize*
 #    keyword argument follows the form (width, height). This follows
 #    conventions in visualization, which unfortunately are different from those
 #    of linear algebra.

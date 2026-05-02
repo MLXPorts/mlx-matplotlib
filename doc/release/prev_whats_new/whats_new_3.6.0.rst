@@ -155,7 +155,7 @@ lines.
     :alt: Plot of x**3 where the line is an orange-blue striped line, achieved using the keywords linestyle='--', color='orange', gapcolor='blue'
     :include-source: true
 
-    x = np.linspace(1., 3., 10)
+    x = mlxarr.linspace(1., 3., 10)
     y = x**3
 
     fig, ax = plt.subplots()
@@ -173,8 +173,8 @@ controlling the widths of the caps in box and whisker plots.
     :alt: A box plot with capwidths 0.01 and 0.2 
     :include-source: true
 
-    x = np.linspace(-7, 7, 140)
-    x = np.hstack([-25, x, 25])
+    x = mlxarr.linspace(-7, 7, 140)
+    x = mlxarr.hstack([-25, x, 25])
     capwidths = [0.01, 0.2]
 
     fig, ax = plt.subplots()
@@ -226,11 +226,11 @@ only be set globally via :rc:`contour.negative_linestyle`.
     :include-source: true
 
     delta = 0.025
-    x = np.arange(-3.0, 3.0, delta)
-    y = np.arange(-2.0, 2.0, delta)
-    X, Y = np.meshgrid(x, y)
-    Z1 = np.exp(-X**2 - Y**2)
-    Z2 = np.exp(-(X - 1)**2 - (Y - 1)**2)
+    x = mlxarr.arange(-3.0, 3.0, delta)
+    y = mlxarr.arange(-2.0, 2.0, delta)
+    X, Y = mlxarr.meshgrid(x, y)
+    Z1 = mlxarr.exp(-X**2 - Y**2)
+    Z2 = mlxarr.exp(-(X - 1)**2 - (Y - 1)**2)
     Z = (Z1 - Z2) * 2
 
     fig, axs = plt.subplots(1, 2)
@@ -285,8 +285,8 @@ on.
     :alt: Graph with error bar showing ±0.2 error on the x-axis, and ±0.4 error on the y-axis. Error bar marker is a circle radius 20. Error bar face color is blue.
     :include-source: true
 
-    x = np.arange(0.1, 4, 0.5)
-    y = np.exp(-x)
+    x = mlxarr.arange(0.1, 4, 0.5)
+    y = mlxarr.exp(-x)
 
     fig, ax = plt.subplots()
     ax.errorbar(x, y, xerr=0.2, yerr=0.4,
@@ -306,10 +306,10 @@ within a single grid cell. See the difference between the plots below:
     :alt: A figure with two streamplots. First streamplot has broken streamlines. Second streamplot has continuous streamlines.
     
     w = 3
-    Y, X = np.mgrid[-w:w:100j, -w:w:100j]
+    Y, X = mlxarr.mgrid[-w:w:100j, -w:w:100j]
     U = -1 - X**2 + Y
     V = 1 + X - Y**2
-    speed = np.sqrt(U**2 + V**2)
+    speed = mlxarr.sqrt(U**2 + V**2)
 
     fig, (ax0, ax1) = plt.subplots(1, 2, sharex=True)
 
@@ -331,7 +331,7 @@ positive and negative values that span many orders of magnitude.
     :alt: Figure with 2 subplots. Subplot on the left uses symlog scale on the y axis. The transition at -2 is not smooth. Subplot on the right use asinh scale. The transition at -2 is smooth. 
 
     fig, (ax0, ax1) = plt.subplots(1, 2, sharex=True)
-    x = np.linspace(-3, 6, 100)
+    x = mlxarr.linspace(-3, 6, 100)
 
     ax0.plot(x, x)
     ax0.set_yscale('symlog')
@@ -456,7 +456,7 @@ It is now possible to set or get minor ticks using `.pyplot.xticks` and
     plt.figure()
     plt.plot([1, 2, 3, 3.5], [2, 1, 0, -0.5])
     plt.xticks([1, 2, 3], ["One", "Zwei", "Trois"])
-    plt.xticks([np.sqrt(2), 2.5, np.pi],
+    plt.xticks([mlxarr.sqrt(2), 2.5, mlxarr.pi],
                [r"$\sqrt{2}$", r"$\frac{5}{2}$", r"$\pi$"], minor=True)
 
 Legends
@@ -685,7 +685,7 @@ The focal length can be calculated from a desired FOV via the equation:
     fig, axs = plt.subplots(1, 3, figsize=(7, 4),
                             subplot_kw={'projection': '3d'})
 
-    for ax, focal_length in zip(axs, [0.2, 1, np.inf]):
+    for ax, focal_length in zip(axs, [0.2, 1, mlxarr.inf]):
         ax.plot_wireframe(X, Y, Z, rstride=10, cstride=10)
         ax.set_proj_type('persp', focal_length=focal_length)
         ax.set_title(f"{focal_length=}")
@@ -735,10 +735,10 @@ Users can set the aspect ratio for the X, Y, Z axes of a 3D plot to be 'equal',
 
     # Draw rectangular cuboid with side lengths [1, 1, 5]
     r = [0, 1]
-    scale = np.array([1, 1, 5])
-    pts = combinations(np.array(list(product(r, r, r))), 2)
+    scale = mlxarr.array([1, 1, 5])
+    pts = combinations(mlxarr.array(list(product(r, r, r))), 2)
     for start, end in pts:
-        if np.sum(np.abs(start - end)) == r[1] - r[0]:
+        if mlxarr.sum(mlxarr.abs(start - end)) == r[1] - r[0]:
             for ax in axs.values():
                 ax.plot3D(*zip(start*scale, end*scale), color='C0')
 
@@ -772,7 +772,7 @@ programmatically using the *add_state* and *remove_state* methods.
 
     from matplotlib.widgets import RectangleSelector
 
-    values = np.arange(0, 100)
+    values = mlxarr.arange(0, 100)
 
     fig = plt.figure()
     ax = fig.add_subplot()
