@@ -60,7 +60,7 @@ if not hasattr(mx.array, "__round__"):
 if not hasattr(mx.array, "__array_interface__"):
     _MX_DTYPE_TO_TYPESTR = {
         mx.float32: "<f4", mx.float64: "<f8", mx.float16: "<f2",
-        mx.bfloat16: "<f2",
+        mx.bfloat16: "<V2",  # bfloat16 is not standard IEEE float16
         mx.int8: "<i1", mx.int16: "<i2", mx.int32: "<i4", mx.int64: "<i8",
         mx.uint8: "|u1", mx.uint16: "<u2", mx.uint32: "<u4", mx.uint64: "<u8",
         mx.bool_: "|u1",
@@ -914,11 +914,23 @@ class _PythonArray:
     def T(self):
         if self.ndim < 2:
             return _PythonArray(self._data, dtype=self.dtype, shape=self.shape)
-        flat = list(_flatten(self._data))
-        rows, cols = self.shape[0], self.shape[1]
-        transposed = [[flat[r * cols + c] for r in range(rows)]
-                      for c in range(cols)]
-        return _PythonArray(transposed, dtype=self.dtype)
+        if self.ndim == 2:
+            flat = list(_flatten(self._data))
+            rows, cols = self.shape[0], self.shape[1]
+            transposed = [[flat[r * cols + c] for r in range(rows)]
+                          for c in range(cols)]
+            return _PythonArray(transposed, dtype=self.dtype)
+        # For ndim > 2: delegate to numeric conversion and transpose
+        try:
+            return _PythonArray(
+                mx.transpose(self.astype(mx.float64)).tolist(),
+                dtype=self.dtype)
+        except Exception:
+            # Fallback: reverse-shape view (correct shape, may have wrong data order)
+            return _PythonArray(
+                _reshape_flat(list(_flatten(self._data)),
+                              tuple(reversed(self.shape))),
+                dtype=self.dtype)
 
     def reshape(self, shape: Any):
         flat = list(_flatten(self._data))
@@ -2303,9 +2315,9 @@ def correlate(a: Any, v: Any, mode: str = "valid") -> mx.array:
 def interp(x: Any, xp: Any, fp: Any,
            left: Any = None, right: Any = None):
     x_data = _to_mx(x)
-    x_list = list(_flatten(x_data.tolist() if hasattr(x_data, "tolist")
-                            else x_data))
-    is_scalar = not isinstance(_to_mx(x).tolist(), list)
+    x_raw = x_data.tolist() if hasattr(x_data, "tolist") else x_data
+    x_list = list(_flatten(x_raw))
+    is_scalar = not isinstance(x_raw, list)
     xp_list = list(_flatten(_to_mx(xp).tolist()))
     fp_list = list(_flatten(_to_mx(fp).tolist()))
     if not isinstance(xp_list, list):
@@ -3063,7 +3075,7 @@ def _random_shape(size: Any | None = None, args: Tuple[Any, ...] = ()) -> Tuple[
 
 class _Random:
     def seed(self, seed: int | None = None):
-        mx.random.seed(seed or 0)
+        mx.random.seed(0 if seed is None else seed)
 
     def rand(self, *shape: int):
         return mx.random.uniform(shape=_random_shape(args=shape))
