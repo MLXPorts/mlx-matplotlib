@@ -49,9 +49,7 @@ git mv github-workflows-quarantine/<file>.yml .github/workflows/<file>.yml
 The following workflows remain active because they are useful for development:
 
 - `tests.yml` — test suite on push/PR
-- `linting.yml` — linting on PRs
-- `codeql-analysis.yml` — security scanning
-- `mypy-stubtest.yml` — type checking on PRs
-- `clean_pr.yml` — PR cleanliness checks
-- `do_not_merge.yml` — prevents merging WIP PRs
-- `conflictcheck.yml` — merge conflict detection
+
+External upstream CI entrypoints such as CircleCI and Azure Pipelines are
+quarantined separately under `ci-quarantine/` so those services cannot discover
+and run them from their conventional root paths.
