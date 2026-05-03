@@ -58,11 +58,16 @@ def _is_natively_supported(x):
     array of objects of such types.
     """
     # Matplotlib natively supports all number types except Decimal.
+    if isinstance(x, mlxarr.ndarray):
+        return getattr(getattr(x, "dtype", None), "kind", None) in {"b", "i", "u", "f"}
     if mlxarr.iterable(x):
         # Assume lists are homogeneous as other functions in unit system.
         for thisx in x:
             if thisx is ma.masked:
                 continue
+            if isinstance(thisx, mlxarr.ndarray):
+                return (getattr(getattr(thisx, "dtype", None), "kind", None)
+                        in {"b", "i", "u", "f"})
             return isinstance(thisx, Number) and not isinstance(thisx, Decimal)
     else:
         return isinstance(x, Number) and not isinstance(x, Decimal)

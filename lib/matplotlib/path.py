@@ -27,6 +27,8 @@ def _path_values_to_memoryview(values):
         values = values.tolist()
 
     def shape_of(value):
+        if isinstance(value, mlxarr.ndarray):
+            return tuple(value.shape)
         if not isinstance(value, (list, tuple)):
             return ()
         if len(value) == 0:
@@ -34,6 +36,8 @@ def _path_values_to_memoryview(values):
         return (len(value),) + shape_of(value[0])
 
     def flatten(value):
+        if isinstance(value, mlxarr.ndarray):
+            value = value.tolist()
         if isinstance(value, (list, tuple)):
             for item in value:
                 yield from flatten(item)
@@ -42,6 +46,8 @@ def _path_values_to_memoryview(values):
 
     shape = shape_of(values)
     flat = list(flatten(values))
+    if not flat:
+        return None
     buf = _array("d", flat)
     return memoryview(buf).cast("B").cast("d", shape=shape)
 
@@ -1167,9 +1173,16 @@ def get_path_collection_extents(
         raise ValueError("No paths provided")
     if len(offsets) == 0:
         raise ValueError("No offsets provided")
+    transforms = mlxarr.atleast_3d(transforms)
+    if getattr(transforms, "size", 0) == 0:
+        transforms = [master_transform.get_matrix()]
     extents, minpos = _path.get_path_collection_extents(
         _path_transform_to_memoryview(master_transform), paths,
-        _path_values_to_memoryview(mlxarr.atleast_3d(transforms)),
+        _path_values_to_memoryview(transforms),
         _path_values_to_memoryview(offsets),
         _path_transform_to_memoryview(offset_transform))
+    if isinstance(extents, memoryview):
+        extents = [item for row in extents.tolist() for item in row]
+    if isinstance(minpos, memoryview):
+        minpos = minpos.tolist()
     return Bbox.from_extents(*extents, minpos=minpos)

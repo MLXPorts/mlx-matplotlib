@@ -479,7 +479,7 @@ def date2num(d):
             return d
         d = mlxarr.asarray(_python_dt_to_ordinalf(d.tolist()), dtype=mlxarr.float64)
         d = mlxarr.ma.masked_array(d, mask=mask) if masked else d
-        return d if iterable else d[0]
+        return d if iterable else float(d[0])
 
     # convert to datetime64 arrays, if not already:
     if not mlxarr.issubdtype(d.dtype, mlxarr.datetime64):
@@ -500,7 +500,7 @@ def date2num(d):
     d = mlxarr.ma.masked_array(d, mask=mask) if masked else d
     d = _dt64_to_ordinalf(d)
 
-    return d if iterable else d[0]
+    return d if iterable else float(d[0])
 
 
 def num2date(x, tz=None):

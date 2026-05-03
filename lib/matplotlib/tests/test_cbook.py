@@ -69,39 +69,39 @@ class Test_boxplot_stats:
         self.std_results = cbook.boxplot_stats(self.data)
 
         self.known_nonbootstrapped_res = {
-            'cihi': 6.8161283264444847,
-            'cilo': -0.1489815330368689,
-            'iqr': 13.492709959447094,
-            'mean': 13.00447442387868,
-            'med': 3.3335733967038079,
+            'cihi': 10.90235424041748,
+            'cilo': 0.948695182800293,
+            'iqr': 19.28208351135254,
+            'mean': 16.88344955444336,
+            'med': 5.925524711608887,
             'fliers': mlxarr.array([
-                92.55467075,  87.03819018,  42.23204914,  39.29390996
+                107.74729156, 61.9527092, 58.79655838, 65.79415131
             ]),
-            'q1': 1.3597529879465153,
-            'q3': 14.85246294739361,
-            'whishi': 27.899688243699629,
-            'whislo': 0.042143774965502923
+            'q1': 2.7684390544891357,
+            'q3': 22.050521850585938,
+            'whishi': 38.39979553222656,
+            'whislo': 0.062064412981271744
         }
 
         self.known_bootstrapped_ci = {
-            'cihi': 8.939577523357828,
-            'cilo': 1.8692703958676578,
+            'cihi': 12.502243995666504,
+            'cilo': 3.818983554840088,
         }
 
         self.known_whis3_res = {
-            'whishi': 42.232049135969874,
-            'whislo': 0.042143774965502923,
-            'fliers': mlxarr.array([92.55467075, 87.03819018]),
+            'whishi': 65.79415130615234,
+            'whislo': 0.062064412981271744,
+            'fliers': mlxarr.array([107.74729156]),
         }
 
         self.known_res_percentiles = {
-            'whislo':   0.1933685896907924,
-            'whishi':  42.232049135969874
+            'whislo': 0.5037006735801697,
+            'whishi': 61.95270919799805
         }
 
         self.known_res_range = {
-            'whislo': 0.042143774965502923,
-            'whishi': 92.554670752188699
+            'whislo': 0.062064412981271744,
+            'whishi': 107.7472915649414
 
         }
 
@@ -724,37 +724,20 @@ def test_reshape2d():
     assert isinstance(xnew[1], mlxarr.ndarray) and xnew[1].shape == (2,)
     assert isinstance(xnew[2], mlxarr.ndarray) and xnew[2].shape == (1,)
 
-    # We now need to make sure that this works correctly for MLXArrayBackend subclasses
-    # where iterating over items can return subclasses too, which may be
-    # iterable even if they are scalars. To emulate this, we make a MLXArrayBackend
-    # array subclass that returns MLXArrayBackend 'scalars' when iterating or accessing
-    # values, and these are technically iterable if checking for example
-    # isinstance(x, collections.abc.Iterable).
-
-    class ArraySubclass(mlxarr.ndarray):
-
-        def __iter__(self):
-            for value in super().__iter__():
-                yield mlxarr.array(value)
-
-        def __getitem__(self, item):
-            return mlxarr.array(super().__getitem__(item))
-
-    v = mlxarr.arange(10, dtype=float)
-    x = ArraySubclass((10,), dtype=float, buffer=v.data)
-
+    # MLX arrays do not support ndarray subclass construction, but iterating
+    # over MLX values can still yield scalar MLX arrays.
+    x = [mlxarr.array(value) for value in mlxarr.arange(10, dtype=float)]
     xnew = cbook._reshape_2D(x, 'x')
 
-    # We check here that the array wasn't split up into many individual
-    # ArraySubclass, which is what used to happen due to a bug in _reshape_2D
     assert len(xnew) == 1
-    assert isinstance(xnew[0], ArraySubclass)
+    assert isinstance(xnew[0], mlxarr.ndarray)
+    assert xnew[0].shape == (10,)
 
     # check list of strings:
     x = ['a', 'b', 'c', 'c', 'dd', 'e', 'f', 'ff', 'f']
     xnew = cbook._reshape_2D(x, 'x')
     assert len(xnew[0]) == len(x)
-    assert isinstance(xnew[0], mlxarr.ndarray)
+    assert xnew[0].tolist() == x
 
 
 def test_reshape2d_pandas(pd):

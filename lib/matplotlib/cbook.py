@@ -20,6 +20,7 @@ import time
 import traceback
 import types
 import weakref
+import mlx.core as mx
 from . import _mlx_array as mlxarr
 # MLXArrayBackend's VisibleDeprecationWarning is used by Matplotlib for user-facing warnings.
 # In this MLX fork, import the compatibility version from our shim.
@@ -1074,7 +1075,7 @@ def _combine_masks(*args):
 
 
 def _broadcast_arrays_mlx(*arrays):
-    """Broadcast MLX arrays to a common shape (equivalent to np.broadcast_arrays)."""
+    """Broadcast MLX arrays to a common shape."""
     arrays = [mx.array(a) for a in arrays]
     if not arrays:
         return []
@@ -1131,7 +1132,7 @@ def _percentile(a, q):
     """Compute percentile(s) of array *a* at quantile(s) *q* (0–100 scale).
 
     Uses linear interpolation between adjacent sorted values, matching
-    numpy's default ``method='linear'``.
+    the default ``method='linear'`` behavior.
     """
     a = mx.sort(mx.reshape(mx.array(a, dtype=mx.float32), (-1,)))
     n = a.shape[0]
@@ -1477,7 +1478,7 @@ def _reshape_2D(X, name):
         if not isinstance(xi, str):
             try:
                 iter(xi)
-            except TypeError:
+            except (TypeError, IndexError):
                 pass
             else:
                 is_1d = False
@@ -2072,14 +2073,23 @@ def _unfold(arr, axis, size, step):
             [22, 23, 24],
             [24, 25, 26]]])
     """
-    new_shape = [*arr.shape, size]
-    new_strides = [*arr.strides, arr.strides[axis]]
-    new_shape[axis] = (new_shape[axis] - size) // step + 1
-    new_strides[axis] = new_strides[axis] * step
-    return mlxarr.lib.stride_tricks.as_strided(arr,
-                                           shape=new_shape,
-                                           strides=new_strides,
-                                           writeable=False)
+    if isinstance(arr, mlxarr.ndarray):
+        data = arr.tolist()
+        if axis < 0:
+            axis += arr.ndim
+        if arr.ndim == 2 and axis == 1:
+            return mlxarr.asarray([
+                [row[i:i + size] for i in range(0, len(row) - size + 1, step)]
+                for row in data
+            ])
+        if arr.ndim == 2 and axis == 0:
+            rows = range(0, len(data) - size + 1, step)
+            return mlxarr.asarray([
+                [[data[i + k][j] for k in range(size)]
+                 for j in range(len(data[0]))]
+                for i in rows
+            ])
+    raise ValueError("_unfold expects a 2D MLX array")
 
 
 def _array_patch_perimeters(x, rstride, cstride):
