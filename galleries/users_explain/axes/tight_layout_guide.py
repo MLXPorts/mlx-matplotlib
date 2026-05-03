@@ -30,8 +30,7 @@ can sometimes go outside the figure area, and thus get clipped.
 # sphinx_gallery_thumbnail_number = 7
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 plt.rcParams['savefig.facecolor'] = "0.8"
 
 
@@ -141,7 +140,7 @@ plt.tight_layout()
 # Although not thoroughly tested, it seems to work for subplots with
 # aspect != "auto" (e.g., Axes with images).
 
-arr = np.arange(100).reshape((10, 10))
+arr = mlxarr.arange(100).reshape((10, 10))
 
 plt.close('all')
 fig = plt.figure(figsize=(5, 4))
@@ -273,7 +272,7 @@ plt.tight_layout()
 # `.Figure.tight_layout` will work.
 
 plt.close('all')
-arr = np.arange(100).reshape((10, 10))
+arr = mlxarr.arange(100).reshape((10, 10))
 fig = plt.figure(figsize=(4, 4))
 im = plt.imshow(arr, interpolation="none")
 
@@ -288,7 +287,7 @@ plt.tight_layout()
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 plt.close('all')
-arr = np.arange(100).reshape((10, 10))
+arr = mlxarr.arange(100).reshape((10, 10))
 fig = plt.figure(figsize=(4, 4))
 im = plt.imshow(arr, interpolation="none")
 

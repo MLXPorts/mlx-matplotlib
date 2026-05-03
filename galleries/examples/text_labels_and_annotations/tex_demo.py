@@ -14,13 +14,12 @@ Unicode input is supported, e.g. for the y-axis label in this example.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 plt.rcParams['text.usetex'] = True
 
 
-t = np.linspace(0.0, 1.0, 100)
-s = np.cos(4 * np.pi * t) + 2
+t = mlxarr.linspace(0.0, 1.0, 100)
+s = mlxarr.cos(4 * mlxarr.pi * t) + 2
 
 fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)
 ax.plot(t, s)
@@ -37,9 +36,9 @@ fig, ax = plt.subplots()
 # interface tracking profiles
 N = 500
 delta = 0.6
-X = np.linspace(-1, 1, N)
-ax.plot(X, (1 - np.tanh(4 * X / delta)) / 2,    # phase field tanh profiles
-        X, (1.4 + np.tanh(4 * X / delta)) / 4, "C2",  # composition profile
+X = mlxarr.linspace(-1, 1, N)
+ax.plot(X, (1 - mlxarr.tanh(4 * X / delta)) / 2,    # phase field tanh profiles
+        X, (1.4 + mlxarr.tanh(4 * X / delta)) / 4, "C2",  # composition profile
         X, X < 0, "k--")                        # sharp interface
 
 # legend

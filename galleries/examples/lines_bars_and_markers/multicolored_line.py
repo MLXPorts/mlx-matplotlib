@@ -16,8 +16,7 @@ Color values at points
 import warnings
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.collections import LineCollection
 
 
@@ -55,11 +54,11 @@ def colored_line(x, y, c, ax=None, **lc_kwargs):
             stacklevel=2,
         )
 
-    xy = np.stack((x, y), axis=-1)
-    xy_mid = np.concat(
+    xy = mlxarr.stack((x, y), axis=-1)
+    xy_mid = mlxarr.concat(
         (xy[0, :][None, :], (xy[:-1, :] + xy[1:, :]) / 2, xy[-1, :][None, :]), axis=0
     )
-    segments = np.stack((xy_mid[:-1, :], xy, xy_mid[1:, :]), axis=-2)
+    segments = mlxarr.stack((xy_mid[:-1, :], xy, xy_mid[1:, :]), axis=-2)
     # Note that
     # segments[0, :, :] is [xy[0, :], xy[0, :], (xy[0, :] + xy[1, :]) / 2]
     # segments[i, :, :] is [(xy[i - 1, :] + xy[i, :]) / 2, xy[i, :],
@@ -78,10 +77,10 @@ def colored_line(x, y, c, ax=None, **lc_kwargs):
 
 # -------------- Create and show plot --------------
 # Some arbitrary function that gives x, y, and color values
-t = np.linspace(-7.4, -0.5, 200)
-x = 0.9 * np.sin(t)
-y = 0.9 * np.cos(1.6 * t)
-color = np.linspace(0, 2, t.size)
+t = mlxarr.linspace(-7.4, -0.5, 200)
+x = 0.9 * mlxarr.sin(t)
+y = 0.9 * mlxarr.cos(1.6 * t)
+color = mlxarr.linspace(0, 2, t.size)
 
 # Create a figure and plot the line on it
 fig1, ax1 = plt.subplots()
@@ -154,8 +153,8 @@ def colored_line_between_pts(x, y, c, ax, **lc_kwargs):
     # This creates the points as an N x 1 x 2 array so that we can stack points
     # together easily to get the segments. The segments array for line collection
     # needs to be (numlines) x (points per line) x 2 (for x and y)
-    points = np.array([x, y]).T.reshape(-1, 1, 2)
-    segments = np.concatenate([points[:-1], points[1:]], axis=1)
+    points = mlxarr.array([x, y]).T.reshape(-1, 1, 2)
+    segments = mlxarr.concatenate([points[:-1], points[1:]], axis=1)
     lc = LineCollection(segments, **lc_kwargs)
 
     # Set the values used for colormapping
@@ -165,9 +164,9 @@ def colored_line_between_pts(x, y, c, ax, **lc_kwargs):
 
 
 # -------------- Create and show plot --------------
-x = np.linspace(0, 3 * np.pi, 500)
-y = np.sin(x)
-dydx = np.cos(0.5 * (x[:-1] + x[1:]))  # first derivative
+x = mlxarr.linspace(0, 3 * mlxarr.pi, 500)
+y = mlxarr.sin(x)
+dydx = mlxarr.cos(0.5 * (x[:-1] + x[1:]))  # first derivative
 
 fig2, ax2 = plt.subplots()
 line = colored_line_between_pts(x, y, dydx, ax2, linewidth=2, cmap="viridis")

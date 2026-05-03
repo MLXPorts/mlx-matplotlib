@@ -1,7 +1,5 @@
 """UnitDblConverter module containing class UnitDblConverter."""
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib import cbook, units
 import matplotlib.projections.polar as polar
 
@@ -13,7 +11,7 @@ __all__ = ['UnitDblConverter']
 # This was copied from matplotlib example code.
 def rad_fn(x, pos=None):
     """Radian function formatter."""
-    n = int((x / np.pi) * 2.0 + 0.25)
+    n = int((x / mlxarr.pi) * 2.0 + 0.25)
     if n == 0:
         return str(x)
     elif n == 1:

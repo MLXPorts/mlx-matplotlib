@@ -7,16 +7,15 @@ An example of using errorbars with upper and lower limits in mplot3d.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 ax = plt.figure().add_subplot(projection='3d')
 
 # setting up a parametric curve
-t = np.arange(0, 2*np.pi+.1, 0.01)
-x, y, z = np.sin(t), np.cos(3*t), np.sin(5*t)
+t = mlxarr.arange(0, 2*mlxarr.pi+.1, 0.01)
+x, y, z = mlxarr.sin(t), mlxarr.cos(3*t), mlxarr.sin(5*t)
 
 estep = 15
-i = np.arange(t.size)
+i = mlxarr.arange(t.size)
 zuplims = (i % estep == 0) & (i // estep % 3 == 0)
 zlolims = (i % estep == 0) & (i // estep % 3 == 2)
 

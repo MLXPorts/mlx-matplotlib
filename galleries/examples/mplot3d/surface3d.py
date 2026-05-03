@@ -11,18 +11,17 @@ z axis tick labels.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.ticker import LinearLocator
 
 fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
 
 # Make data.
-X = np.arange(-5, 5, 0.25)
-Y = np.arange(-5, 5, 0.25)
-X, Y = np.meshgrid(X, Y)
-R = np.sqrt(X**2 + Y**2)
-Z = np.sin(R)
+X = mlxarr.arange(-5, 5, 0.25)
+Y = mlxarr.arange(-5, 5, 0.25)
+X, Y = mlxarr.meshgrid(X, Y)
+R = mlxarr.sqrt(X**2 + Y**2)
+Z = mlxarr.sin(R)
 
 # Plot the surface.
 surf = ax.plot_surface(X, Y, Z, cmap="coolwarm",

@@ -18,10 +18,9 @@ Home/Back/Forward buttons can also be used to get back to a previous state.
 .. redirect-from:: /gallery/userdemo/colormap_interactive_adjustment
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
-t = np.linspace(0, 2 * np.pi, 1024)
-data2d = np.sin(t)[:, np.newaxis] * np.cos(t)[np.newaxis, :]
+from matplotlib import _mlx_array as mlxarr
+t = mlxarr.linspace(0, 2 * mlxarr.pi, 1024)
+data2d = mlxarr.sin(t)[:, mlxarr.newaxis] * mlxarr.cos(t)[mlxarr.newaxis, :]
 
 fig, ax = plt.subplots()
 im = ax.imshow(data2d)

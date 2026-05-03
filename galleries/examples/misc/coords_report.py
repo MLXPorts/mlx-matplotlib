@@ -8,18 +8,16 @@ in an interactive backend.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-
+from matplotlib import _mlx_array as mlxarr
 def millions(x):
     return '$%1.1fM' % (x * 1e-6)
 
 
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
-x = np.random.rand(20)
-y = 1e7 * np.random.rand(20)
+x = mlxarr.random.rand(20)
+y = 1e7 * mlxarr.random.rand(20)
 
 fig, ax = plt.subplots()
 ax.fmt_ydata = millions

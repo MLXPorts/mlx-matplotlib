@@ -14,7 +14,7 @@ code without using the pyplot interface to manage figures, figure closing etc.
     the backend to "Agg" would be sufficient.
 
 In this example, we show how to save the contents of the agg canvas to a file,
-and how to extract them to a numpy array, which can in turn be passed off
+and how to extract them to a array_backend array, which can in turn be passed off
 to Pillow_.  The latter functionality allows e.g. to use Matplotlib inside a
 cgi-script *without* needing to write a figure to disk, and to write images in
 any format supported by Pillow.
@@ -25,9 +25,7 @@ any format supported by Pillow.
 """
 
 from PIL import Image
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.figure import Figure
 
@@ -46,9 +44,9 @@ ax.plot([1, 2, 3])
 fig.savefig("test.png")
 
 # Option 2: Retrieve a memoryview on the renderer buffer, and convert it to a
-# numpy array.
+# array_backend array.
 canvas.draw()
-rgba = np.asarray(canvas.buffer_rgba())
+rgba = mlxarr.asarray(canvas.buffer_rgba())
 # ... and pass it to PIL.
 im = Image.fromarray(rgba)
 # This image can then be saved to any format supported by Pillow, e.g.:

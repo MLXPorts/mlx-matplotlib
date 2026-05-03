@@ -5,26 +5,25 @@ Power spectral density (PSD)
 
 Plotting power spectral density (PSD) using `~.Axes.psd`.
 
-The PSD is a common plot in the field of signal processing. NumPy has
+The PSD is a common plot in the field of signal processing. MLXArrayBackend has
 many useful libraries for computing a PSD. Below we demo a few examples
 of how this can be accomplished and visualized with Matplotlib.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.mlab as mlab
 
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 dt = 0.01
-t = np.arange(0, 10, dt)
-nse = np.random.randn(len(t))
-r = np.exp(-t / 0.05)
+t = mlxarr.arange(0, 10, dt)
+nse = mlxarr.random.randn(len(t))
+r = mlxarr.exp(-t / 0.05)
 
-cnse = np.convolve(nse, r) * dt
+cnse = mlxarr.convolve(nse, r) * dt
 cnse = cnse[:len(t)]
-s = 0.1 * np.sin(2 * np.pi * t) + cnse
+s = 0.1 * mlxarr.sin(2 * mlxarr.pi * t) + cnse
 
 fig, (ax0, ax1) = plt.subplots(2, 1, layout='constrained')
 ax0.plot(t, s)
@@ -53,11 +52,11 @@ plt.show()
 # Below we'll show a slightly more complex example that demonstrates
 # how padding affects the resulting PSD.
 
-dt = np.pi / 100.
+dt = mlxarr.pi / 100.
 fs = 1. / dt
-t = np.arange(0, 8, dt)
-y = 10. * np.sin(2 * np.pi * 4 * t) + 5. * np.sin(2 * np.pi * 4.25 * t)
-y = y + np.random.randn(*t.shape)
+t = mlxarr.arange(0, 8, dt)
+y = 10. * mlxarr.sin(2 * mlxarr.pi * 4 * t) + 5. * mlxarr.sin(2 * mlxarr.pi * 4.25 * t)
+y = y + mlxarr.random.randn(*t.shape)
 
 # Plot the raw time series
 fig, axs = plt.subplot_mosaic([
@@ -108,17 +107,17 @@ plt.show()
 # Matplotlib's and MATLAB's scaling of the PSD.
 
 fs = 1000
-t = np.linspace(0, 0.3, 301)
-A = np.array([2, 8]).reshape(-1, 1)
-f = np.array([150, 140]).reshape(-1, 1)
-xn = (A * np.sin(2 * np.pi * f * t)).sum(axis=0)
-xn += 5 * np.random.randn(*t.shape)
+t = mlxarr.linspace(0, 0.3, 301)
+A = mlxarr.array([2, 8]).reshape(-1, 1)
+f = mlxarr.array([150, 140]).reshape(-1, 1)
+xn = (A * mlxarr.sin(2 * mlxarr.pi * f * t)).sum(axis=0)
+xn += 5 * mlxarr.random.randn(*t.shape)
 
 fig, (ax0, ax1) = plt.subplots(ncols=2, layout='constrained')
 
-yticks = np.arange(-50, 30, 10)
+yticks = mlxarr.arange(-50, 30, 10)
 yrange = (yticks[0], yticks[-1])
-xticks = np.arange(0, 550, 100)
+xticks = mlxarr.arange(0, 550, 100)
 
 ax0.psd(xn, NFFT=301, Fs=fs, window=mlab.window_none, pad_to=1024,
         scale_by_freq=True)
@@ -146,19 +145,19 @@ plt.show()
 #
 # It uses a complex signal so we can see that complex PSD's work properly.
 
-prng = np.random.RandomState(19680801)  # to ensure reproducibility
+prng = mlxarr.random.RandomState(19680801)  # to ensure reproducibility
 
 fs = 1000
-t = np.linspace(0, 0.3, 301)
-A = np.array([2, 8]).reshape(-1, 1)
-f = np.array([150, 140]).reshape(-1, 1)
-xn = (A * np.exp(2j * np.pi * f * t)).sum(axis=0) + 5 * prng.randn(*t.shape)
+t = mlxarr.linspace(0, 0.3, 301)
+A = mlxarr.array([2, 8]).reshape(-1, 1)
+f = mlxarr.array([150, 140]).reshape(-1, 1)
+xn = (A * mlxarr.exp(2j * mlxarr.pi * f * t)).sum(axis=0) + 5 * prng.randn(*t.shape)
 
 fig, (ax0, ax1) = plt.subplots(ncols=2, layout='constrained')
 
-yticks = np.arange(-50, 30, 10)
+yticks = mlxarr.arange(-50, 30, 10)
 yrange = (yticks[0], yticks[-1])
-xticks = np.arange(-500, 550, 200)
+xticks = mlxarr.arange(-500, 550, 200)
 
 ax0.psd(xn, NFFT=301, Fs=fs, window=mlab.window_none, pad_to=1024,
         scale_by_freq=True)

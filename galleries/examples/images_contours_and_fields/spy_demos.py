@@ -7,10 +7,9 @@ Plot the sparsity pattern of arrays.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 fig, axs = plt.subplots(2, 2)
 ax1 = axs[0, 0]
@@ -18,7 +17,7 @@ ax2 = axs[0, 1]
 ax3 = axs[1, 0]
 ax4 = axs[1, 1]
 
-x = np.random.randn(20, 20)
+x = mlxarr.random.randn(20, 20)
 x[5, :] = 0.
 x[:, 12] = 0.
 

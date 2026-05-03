@@ -5,7 +5,7 @@ from matplotlib.patches import Rectangle
 
 from collections.abc import Callable
 from typing import Any, Literal
-from numpy.typing import ArrayLike
+from matplotlib._mlx_typing import ArrayLike
 
 class Container(tuple):
     def __new__(cls, *args, **kwargs): ...

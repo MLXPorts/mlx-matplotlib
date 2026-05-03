@@ -1,7 +1,7 @@
 Development changes
 -------------------
 
-Matplotlib now requires numpy>=1.15
+Matplotlib now requires array_backend>=1.15
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Matplotlib now uses Pillow to save and read pngs

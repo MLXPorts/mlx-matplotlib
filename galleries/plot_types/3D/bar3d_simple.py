@@ -6,16 +6,15 @@ bar3d(x, y, z, dx, dy, dz)
 See `~mpl_toolkits.mplot3d.axes3d.Axes3D.bar3d`.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 plt.style.use('_mpl-gallery')
 
 # Make data
 x = [1, 1, 2, 2]
 y = [1, 2, 1, 2]
 z = [0, 0, 0, 0]
-dx = np.ones_like(x)*0.5
-dy = np.ones_like(x)*0.5
+dx = mlxarr.ones_like(x)*0.5
+dy = mlxarr.ones_like(x)*0.5
 dz = [2, 3, 1, 4]
 
 # Plot

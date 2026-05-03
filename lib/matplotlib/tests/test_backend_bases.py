@@ -8,8 +8,7 @@ from matplotlib.backend_tools import RubberbandBase
 from matplotlib.figure import Figure
 from matplotlib.testing._markers import needs_pgf_xelatex
 import matplotlib.pyplot as plt
-
-import numpy as np
+from matplotlib import _mlx_array as mlxarr
 import pytest
 
 
@@ -23,7 +22,7 @@ def test_uses_per_path():
     id = transforms.Affine2D()
     paths = [path.Path.unit_regular_polygon(i) for i in range(3, 7)]
     tforms_matrices = [id.rotate(i).get_matrix().copy() for i in range(1, 5)]
-    offsets = np.arange(20).reshape((10, 2))
+    offsets = mlxarr.arange(20).reshape((10, 2))
     facecolors = ['red', 'green']
     edgecolors = ['red', 'green']
 
@@ -42,7 +41,7 @@ def test_uses_per_path():
         uses = rb._iter_collection_uses_per_path(
             paths, all_transforms, offsets, facecolors, edgecolors)
         if raw_paths:
-            seen = np.bincount(ids, minlength=len(raw_paths))
+            seen = mlxarr.bincount(ids, minlength=len(raw_paths))
             assert set(seen).issubset([uses - 1, uses])
 
     check(id, paths, tforms_matrices, offsets, facecolors, edgecolors)
@@ -230,7 +229,7 @@ def test_widgetlock_zoompan():
                           ("pan", MouseButton.RIGHT, (1.47, 7.78))])  # zoom
 def test_interactive_colorbar(plot_func, orientation, tool, button, expected):
     fig, ax = plt.subplots()
-    data = np.arange(12).reshape((4, 3))
+    data = mlxarr.arange(12).reshape((4, 3))
     vmin0, vmax0 = 0, 10
     coll = getattr(ax, plot_func)(data, vmin=vmin0, vmax=vmax0)
 
@@ -354,10 +353,10 @@ def test_draw(backend):
     layed_out_pos_agg = [ax.get_position() for ax in axes_agg.ravel()]
 
     for init, placed in zip(init_pos, layed_out_pos_test):
-        assert not np.allclose(init, placed, atol=0.005)
+        assert not mlxarr.allclose(init, placed, atol=0.005)
 
     for ref, test in zip(layed_out_pos_agg, layed_out_pos_test):
-        np.testing.assert_allclose(ref, test, atol=0.005)
+        mlxarr.testing.assert_allclose(ref, test, atol=0.005)
 
 
 @pytest.mark.parametrize(
@@ -383,7 +382,7 @@ def test_draw(backend):
      ])
 def test_interactive_pan(key, mouseend, expectedxlim, expectedylim):
     fig, ax = plt.subplots()
-    ax.plot(np.arange(10))
+    ax.plot(mlxarr.arange(10))
     assert ax.get_navigate()
     # Set equal aspect ratio to easier see diagonal snap
     ax.set_aspect('equal')

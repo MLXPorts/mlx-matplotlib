@@ -15,8 +15,7 @@ centimeters.
 from basic_units import cm, inch
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 N = 5
 tea_means = [15*cm, 10*cm, 8*cm, 12*cm, 5*cm]
 tea_std = [2*cm, 1*cm, 1*cm, 4*cm, 2*cm]
@@ -24,7 +23,7 @@ tea_std = [2*cm, 1*cm, 1*cm, 4*cm, 2*cm]
 fig, ax = plt.subplots()
 ax.yaxis.set_units(inch)
 
-ind = np.arange(N)    # the x locations for the groups
+ind = mlxarr.arange(N)    # the x locations for the groups
 width = 0.35         # the width of the bars
 ax.bar(ind, tea_means, width, bottom=0*cm, yerr=tea_std, label='Tea')
 

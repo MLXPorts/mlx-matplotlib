@@ -1,7 +1,5 @@
 import sys
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from . import _backend_tk
 from .backend_cairo import cairo, FigureCanvasCairo
 from ._backend_tk import _BackendTk, FigureCanvasTk
@@ -15,7 +13,7 @@ class FigureCanvasTkCairo(FigureCanvasCairo, FigureCanvasTk):
         self._renderer.set_context(cairo.Context(surface))
         self._renderer.dpi = self.figure.dpi
         self.figure.draw(self._renderer)
-        buf = np.reshape(surface.get_data(), (height, width, 4))
+        buf = mlxarr.reshape(surface.get_data(), (height, width, 4))
         _backend_tk.blit(
             self._tkphoto, buf,
             (2, 1, 0, 3) if sys.byteorder == "little" else (1, 2, 3, 0))

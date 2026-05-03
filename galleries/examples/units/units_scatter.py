@@ -13,12 +13,11 @@ arrays.
 from basic_units import hertz, minutes, secs
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 # create masked array
 data = (1, 2, 3, 4, 5, 6, 7, 8)
 mask = (1, 0, 1, 0, 0, 0, 1, 0)
-xsecs = secs * np.ma.MaskedArray(data, mask, float)
+xsecs = secs * mlxarr.ma.MaskedArray(data, mask, float)
 
 fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, sharex=True)
 

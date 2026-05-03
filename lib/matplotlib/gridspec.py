@@ -13,9 +13,7 @@ methods like `~.pyplot.subplots`, `~.pyplot.subplot_mosaic` and
 import copy
 import logging
 from numbers import Integral
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from matplotlib import _api, _pylab_helpers, _tight_layout
 from matplotlib._api import UNSET as _UNSET
@@ -175,7 +173,7 @@ class GridSpecBase:
         norm = cell_h * nrows / sum(self._row_height_ratios)
         cell_heights = [r * norm for r in self._row_height_ratios]
         sep_heights = [0] + ([sep_h] * (nrows-1))
-        cell_hs = np.cumsum(np.column_stack([sep_heights, cell_heights]).flat)
+        cell_hs = mlxarr.cumsum(mlxarr.column_stack([sep_heights, cell_heights]).flat)
 
         # calculate accumulated widths of rows
         cell_w = tot_width / (ncols + wspace*(ncols-1))
@@ -183,7 +181,7 @@ class GridSpecBase:
         norm = cell_w * ncols / sum(self._col_width_ratios)
         cell_widths = [r * norm for r in self._col_width_ratios]
         sep_widths = [0] + ([sep_w] * (ncols-1))
-        cell_ws = np.cumsum(np.column_stack([sep_widths, cell_widths]).flat)
+        cell_ws = mlxarr.cumsum(mlxarr.column_stack([sep_widths, cell_widths]).flat)
 
         fig_tops, fig_bottoms = (top - cell_hs).reshape((-1, 2)).T
         fig_lefts, fig_rights = (left + cell_ws).reshape((-1, 2)).T
@@ -239,7 +237,7 @@ class GridSpecBase:
                 k1, k2 = key
             except ValueError as err:
                 raise ValueError("Unrecognized subplot spec") from err
-            num1, num2 = np.ravel_multi_index(
+            num1, num2 = mlxarr.ravel_multi_index(
                 [_normalize(k1, nrows, 0), _normalize(k2, ncols, 1)],
                 (nrows, ncols))
         else:  # Single key
@@ -274,7 +272,7 @@ class GridSpecBase:
         subplot_kw = subplot_kw.copy()
 
         # Create array to hold all Axes.
-        axarr = np.empty((self._nrows, self._ncols), dtype=object)
+        axarr = mlxarr.empty((self._nrows, self._ncols), dtype=object)
         for row in range(self._nrows):
             for col in range(self._ncols):
                 shared_with = {"none": None, "all": axarr[0, 0],
@@ -661,7 +659,7 @@ class SubplotSpec:
         """
         gridspec = self.get_gridspec()
         nrows, ncols = gridspec.get_geometry()
-        rows, cols = np.unravel_index([self.num1, self.num2], (nrows, ncols))
+        rows, cols = mlxarr.unravel_index([self.num1, self.num2], (nrows, ncols))
         fig_bottoms, fig_tops, fig_lefts, fig_rights = \
             gridspec.get_grid_positions(figure)
 

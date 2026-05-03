@@ -1,316 +1,618 @@
 #include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
+#include <pybind11/stl.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/variant.h>
 
 #include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <cstring>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <variant>
+#include <utility>
+#include <vector>
 
 #include "_image_resample.h"
+#include "mlx/array.h"
+#include "mlx/ops.h"
+#include "mlx/stream.h"
+#include "mlx/utils.h"
+#include "py_buffer.h"
 #include "py_converters.h"
 
 namespace py = pybind11;
+namespace nb = nanobind;
+namespace mx = mlx::core;
 using namespace pybind11::literals;
+
+namespace {
+
+struct ArrayInfo {
+    py::object owner;
+    py::buffer buffer;
+    std::optional<mx::array> mlx_array;
+    void *ptr = nullptr;
+    py::ssize_t ndim = 0;
+    py::ssize_t itemsize = 0;
+    std::string format;
+    std::vector<py::ssize_t> shape;
+    std::vector<py::ssize_t> strides;
+};
+
+bool has_explicit_stream(const mx::StreamOrDevice& stream)
+{
+    return !std::holds_alternative<std::monostate>(stream);
+}
+
+mx::Device parse_mlx_device_repr(const std::string& repr)
+{
+    auto start = repr.find("Device(");
+    if (start == std::string::npos) {
+        throw py::type_error("stream must be an mlx.core.Stream or mlx.core.Device");
+    }
+
+    auto type_start = start + std::string("Device(").size();
+    auto comma = repr.find(',', type_start);
+    auto close = repr.find(')', comma);
+    if (comma == std::string::npos || close == std::string::npos) {
+        throw py::type_error("stream must be an mlx.core.Stream or mlx.core.Device");
+    }
+
+    auto type = repr.substr(type_start, comma - type_start);
+    auto index = std::stoi(repr.substr(comma + 1, close - comma - 1));
+    if (type == "cpu") {
+        return mx::Device(mx::Device::cpu, index);
+    }
+    if (type == "gpu") {
+        return mx::Device(mx::Device::gpu, index);
+    }
+    throw py::type_error("stream must be an mlx.core.Stream or mlx.core.Device");
+}
+
+mx::Stream parse_mlx_stream_repr(const std::string& repr)
+{
+    auto device = parse_mlx_device_repr(repr);
+    auto comma = repr.rfind(',');
+    auto close = repr.rfind(')');
+    if (comma == std::string::npos || close == std::string::npos || comma > close) {
+        throw py::type_error("stream must be an mlx.core.Stream or mlx.core.Device");
+    }
+    auto index = std::stoi(repr.substr(comma + 1, close - comma - 1));
+    return mx::Stream(index, device);
+}
+
+mx::StreamOrDevice as_stream_or_device(const py::object& stream)
+{
+    if (stream.is_none()) {
+        return std::monostate{};
+    }
+
+    nb::object nb_stream = nb::borrow<nb::object>(nb::handle(stream.ptr()));
+    try {
+        return nb::cast<mx::Stream>(nb_stream);
+    } catch (const nb::cast_error&) {
+    }
+    try {
+        return nb::cast<mx::Device>(nb_stream);
+    } catch (const nb::cast_error&) {
+    }
+    try {
+        return mx::Device(nb::cast<mx::Device::DeviceType>(nb_stream));
+    } catch (const nb::cast_error&) {
+    }
+
+    auto repr = py::repr(stream).cast<std::string>();
+    if (repr.rfind("Stream(", 0) == 0) {
+        return parse_mlx_stream_repr(repr);
+    }
+    if (repr.rfind("Device(", 0) == 0) {
+        return parse_mlx_device_repr(repr);
+    }
+    if (repr == "DeviceType.cpu") {
+        return mx::Device(mx::Device::cpu);
+    }
+    if (repr == "DeviceType.gpu") {
+        return mx::Device(mx::Device::gpu);
+    }
+    throw py::type_error("stream must be an mlx.core.Stream or mlx.core.Device");
+}
+
+std::string mlx_dtype_format(const mx::Dtype &dtype)
+{
+    switch (dtype) {
+    case mx::bool_:
+        return "?";
+    case mx::uint8:
+        return "B";
+    case mx::uint16:
+        return "H";
+    case mx::uint32:
+        return "I";
+    case mx::uint64:
+        return "Q";
+    case mx::int8:
+        return "b";
+    case mx::int16:
+        return "h";
+    case mx::int32:
+        return "i";
+    case mx::int64:
+        return "q";
+    case mx::float16:
+        return "e";
+    case mx::float32:
+        return "f";
+    case mx::bfloat16:
+        return "B";
+    case mx::float64:
+        return "d";
+    case mx::complex64:
+        return "Zf";
+    default:
+        throw std::invalid_argument("unsupported MLX dtype");
+    }
+}
+
+bool is_mlx_array_like(py::handle obj)
+{
+    nb::object nb_obj = nb::borrow<nb::object>(nb::handle(obj.ptr()));
+    return nb::isinstance<mx::array>(nb_obj) || nb::hasattr(nb_obj, "__mlx_array__");
+}
+
+mx::array as_mlx_array(py::handle obj)
+{
+    nb::object nb_obj = nb::borrow<nb::object>(nb::handle(obj.ptr()));
+    if (nb::isinstance<mx::array>(nb_obj)) {
+        return nb::cast<mx::array>(nb_obj);
+    }
+    if (nb::hasattr(nb_obj, "__mlx_array__")) {
+        return nb::cast<mx::array>(nb_obj.attr("__mlx_array__")());
+    }
+    throw std::invalid_argument("object is not an MLX array");
+}
+
+ArrayInfo get_array_info(py::handle obj,
+                         bool writable,
+                         const mx::StreamOrDevice& stream)
+{
+    if (obj.is_none()) {
+        throw py::type_error("resample(): incompatible function arguments");
+    }
+
+    ArrayInfo info;
+    info.owner = py::reinterpret_borrow<py::object>(obj);
+
+    if (writable && py::hasattr(info.owner, "flags")) {
+        py::object flags = info.owner.attr("flags");
+        if (py::hasattr(flags, "writeable") && !py::cast<bool>(flags.attr("writeable"))) {
+            throw py::value_error("Output array must be writeable");
+        }
+    }
+
+    if (is_mlx_array_like(obj)) {
+        info.mlx_array = as_mlx_array(obj);
+        if (!writable && has_explicit_stream(stream)) {
+            info.mlx_array = mx::contiguous(*info.mlx_array, false, stream);
+        }
+        {
+            py::gil_scoped_release release;
+            info.mlx_array->eval();
+            if (has_explicit_stream(stream)) {
+                mx::synchronize(mx::to_stream(stream));
+            }
+        }
+
+        info.ptr = info.mlx_array->data<void>();
+        info.ndim = static_cast<py::ssize_t>(info.mlx_array->ndim());
+        info.itemsize = static_cast<py::ssize_t>(info.mlx_array->itemsize());
+        info.format = mlx_dtype_format(info.mlx_array->dtype());
+        info.shape.assign(info.mlx_array->shape().begin(), info.mlx_array->shape().end());
+        info.strides.assign(info.mlx_array->strides().begin(), info.mlx_array->strides().end());
+        for (auto &stride : info.strides) {
+            stride *= info.itemsize;
+        }
+        return info;
+    }
+
+    info.buffer = py::reinterpret_borrow<py::buffer>(obj);
+    py::buffer_info buffer_info = info.buffer.request(writable);
+    info.ptr = buffer_info.ptr;
+    info.ndim = buffer_info.ndim;
+    info.itemsize = buffer_info.itemsize;
+    info.format = buffer_info.format;
+    info.shape = std::move(buffer_info.shape);
+    info.strides = std::move(buffer_info.strides);
+    return info;
+}
+
+template <typename T>
+bool buffer_is(const ArrayInfo &info)
+{
+    return info.itemsize == static_cast<py::ssize_t>(sizeof(T))
+        && info.format == py::format_descriptor<T>::format();
+}
+
+bool is_c_contiguous(const ArrayInfo &info)
+{
+    if (info.ndim <= 0) {
+        return true;
+    }
+    py::ssize_t expected = info.itemsize;
+    for (py::ssize_t axis = info.ndim - 1; axis >= 0; --axis) {
+        if (info.shape[axis] == 0) {
+            return true;
+        }
+        if (info.strides[axis] != expected) {
+            return false;
+        }
+        expected *= info.shape[axis];
+    }
+    return true;
+}
+
+std::vector<double> get_transform_mesh(const py::object &transform,
+                                      py::ssize_t height,
+                                      py::ssize_t width,
+                                      const mx::StreamOrDevice& stream)
+{
+    auto inverse = transform.attr("inverted")();
+
+    auto n = height * width;
+    std::vector<double> input_mesh;
+    input_mesh.resize(static_cast<size_t>(n) * 2);
+    double *p = input_mesh.data();
+
+    for (py::ssize_t y = 0; y < height; ++y) {
+        for (py::ssize_t x = 0; x < width; ++x) {
+            *p++ = static_cast<double>(x) + 0.5;
+            *p++ = static_cast<double>(y) + 0.5;
+        }
+    }
+
+    // Wrap as a shaped memoryview (N, 2) of doubles so Python code can consume it.
+    py::bytearray ba = py::reinterpret_steal<py::bytearray>(
+        PyByteArray_FromStringAndSize(nullptr,
+                                      static_cast<py::ssize_t>(input_mesh.size() * sizeof(double))));
+    if (!ba) {
+        throw py::error_already_set();
+    }
+    std::memcpy(PyByteArray_AsString(ba.ptr()), input_mesh.data(), input_mesh.size() * sizeof(double));
+    py::object mv = py::module_::import("builtins").attr("memoryview")(ba);
+    mv = mv.attr("cast")("d", py::make_tuple(n, 2));
+
+    py::object output = inverse.attr("transform")(mv);
+    auto out_info = get_array_info(output, false, stream);
+    if (out_info.ndim != 2 || out_info.shape[0] != n || out_info.shape[1] != 2) {
+        throw std::runtime_error("Inverse transformed mesh must have shape (N, 2)");
+    }
+    if (!buffer_is<double>(out_info)) {
+        throw std::runtime_error("Inverse transformed mesh must be float64");
+    }
+    if (!is_c_contiguous(out_info)) {
+        throw std::runtime_error("Inverse transformed mesh must be C-contiguous");
+    }
+
+    std::vector<double> mesh;
+    mesh.resize(static_cast<size_t>(n) * 2);
+    std::memcpy(mesh.data(), out_info.ptr, mesh.size() * sizeof(double));
+    return mesh;
+}
+
+}  // namespace
 
 /**********************************************************************
  * Free functions
  * */
 
-const char* image_resample__doc__ =
-R"""(Resample input_array, blending it in-place into output_array, using an affine transform.
+const char *image_resample__doc__ = R"""(Resample input_array, blending it in-place into output_array, using an affine transform.
 
 Parameters
 ----------
-input_array : 2-d or 3-d NumPy array of float, double or `numpy.uint8`
-    If 2-d, the image is grayscale.  If 3-d, the image must be of size 4 in the last
+input_array : 2-d or 3-d buffer
+    If 2-d, the image is grayscale. If 3-d, the image must be of size 4 in the last
     dimension and represents RGBA data.
 
-output_array : 2-d or 3-d NumPy array of float, double or `numpy.uint8`
+output_array : 2-d or 3-d buffer
     The dtype and number of dimensions must match `input_array`.
 
 transform : matplotlib.transforms.Transform instance
     The transformation from the input array to the output array.
 
 interpolation : int, default: NEAREST
-    The interpolation method.  Must be one of the following constants defined in this
-    module:
-
-      NEAREST, BILINEAR, BICUBIC, SPLINE16, SPLINE36, HANNING, HAMMING, HERMITE, KAISER,
-      QUADRIC, CATROM, GAUSSIAN, BESSEL, MITCHELL, SINC, LANCZOS, BLACKMAN
+    The interpolation method.
 
 resample : bool, optional
-    When `True`, use a full resampling method.  When `False`, only resample when the
-    output image is larger than the input image.
+    When `True`, use a full resampling method.
 
 alpha : float, default: 1
-    The transparency level, from 0 (transparent) to 1 (opaque).
+    The transparency level.
 
 norm : bool, default: False
     Whether to norm the interpolation function.
 
 radius: float, default: 1
     The radius of the kernel, if method is SINC, LANCZOS or BLACKMAN.
+
+stream : mlx.core.Stream or mlx.core.Device, optional
+    Stream or device used when staging MLX array inputs for C++ access.
 )""";
 
-
-static py::array_t<double>
-_get_transform_mesh(const py::object& transform, const py::ssize_t *dims)
+static void image_resample(py::object input_array,
+                           py::object output_array,
+                           py::object transform,
+                           int interpolation,
+                           bool resample_,
+                           float alpha,
+                           bool norm,
+                           float radius,
+                           py::object stream)
 {
-    /* TODO: Could we get away with float, rather than double, arrays here? */
+    auto stream_or_device = as_stream_or_device(stream);
+    auto in_info = get_array_info(input_array, false, stream_or_device);
+    auto out_info = get_array_info(output_array, true, stream_or_device);
 
-    /* Given a non-affine transform object, create a mesh that maps
-    every pixel center in the output image to the input image.  This is used
-    as a lookup table during the actual resampling. */
+    if (in_info.ndim != 2 && in_info.ndim != 3) {
+        throw std::invalid_argument("Input buffer must be 2D or 3D");
+    }
+    if (out_info.ndim != in_info.ndim) {
+        throw std::invalid_argument("Input and output buffers have different dimensionalities");
+    }
 
-    // If attribute doesn't exist, raises Python AttributeError
-    auto inverse = transform.attr("inverted")();
+    if (!buffer_is<std::uint8_t>(in_info) && !buffer_is<std::int8_t>(in_info)
+        && !buffer_is<std::uint16_t>(in_info) && !buffer_is<std::int16_t>(in_info)
+        && !buffer_is<float>(in_info) && !buffer_is<double>(in_info)) {
+        throw std::invalid_argument("arrays must be of dtype byte, short, float32 or float64");
+    }
+    if (in_info.itemsize != out_info.itemsize || in_info.format != out_info.format) {
+        throw std::invalid_argument("Input and output buffers have mismatched types");
+    }
 
-    py::ssize_t mesh_dims[2] = {dims[0]*dims[1], 2};
-    py::array_t<double> input_mesh(mesh_dims);
-    auto p = input_mesh.mutable_data();
+    if (!is_c_contiguous(in_info)) {
+        throw std::invalid_argument("Input buffer must be C-contiguous");
+    }
+    if (!is_c_contiguous(out_info)) {
+        throw std::invalid_argument("Output buffer must be C-contiguous");
+    }
 
-    for (auto y = 0; y < dims[0]; ++y) {
-        for (auto x = 0; x < dims[1]; ++x) {
-            // The convention for the supplied transform is that pixel centers
-	    // are at 0.5, 1.5, 2.5, etc.
-            *p++ = (double)x + 0.5;
-            *p++ = (double)y + 0.5;
+    if (in_info.ndim == 3) {
+        if (in_info.shape[2] != 4) {
+            throw std::invalid_argument("3D input array must be RGBA");
+        }
+        if (out_info.shape[2] != 4) {
+            throw std::invalid_argument("3D output array must be RGBA");
         }
     }
 
-    auto output_mesh = inverse.attr("transform")(input_mesh);
-
-    auto output_mesh_array =
-        py::array_t<double, py::array::c_style | py::array::forcecast>(output_mesh);
-
-    if (output_mesh_array.ndim() != 2) {
-        throw std::runtime_error(
-            "Inverse transformed mesh array should be 2D not {}D"_s.format(
-                output_mesh_array.ndim()));
-    }
-
-    return output_mesh_array;
-}
-
-
-// Using generic py::array for input and output arrays rather than the more usual
-// py::array_t<type> as this function supports multiple array dtypes.
-static void
-image_resample(py::array input_array,
-               py::array& output_array,
-               const py::object& transform,
-               interpolation_e interpolation,
-               bool resample_,  // Avoid name clash with resample() function
-               float alpha,
-               bool norm,
-               float radius)
-{
-    // Validate input_array
-    auto dtype = input_array.dtype();  // Validated when determine resampler below
-    auto ndim = input_array.ndim();
-
-    if (ndim != 2 && ndim != 3) {
-        throw std::invalid_argument("Input array must be a 2D or 3D array");
-    }
-
-    if (ndim == 3 && input_array.shape(2) != 4) {
-        throw std::invalid_argument(
-            "3D input array must be RGBA with shape (M, N, 4), has trailing dimension of {}"_s.format(
-                input_array.shape(2)));
-    }
-
-    // Ensure input array is contiguous, regardless of dtype
-    input_array = py::array::ensure(input_array, py::array::c_style);
-
-    // Validate output array
-    auto out_ndim = output_array.ndim();
-
-    if (out_ndim != ndim) {
-        throw std::invalid_argument(
-            "Input ({}D) and output ({}D) arrays have different dimensionalities"_s.format(
-                ndim, out_ndim));
-    }
-
-    if (out_ndim == 3 && output_array.shape(2) != 4) {
-        throw std::invalid_argument(
-            "3D output array must be RGBA with shape (M, N, 4), has trailing dimension of {}"_s.format(
-                output_array.shape(2)));
-    }
-
-    if (!output_array.dtype().is(dtype)) {
-        throw std::invalid_argument("Input and output arrays have mismatched types");
-    }
-
-    if ((output_array.flags() & py::array::c_style) == 0) {
-        throw std::invalid_argument("Output array must be C-contiguous");
-    }
-
-    if (!output_array.writeable()) {
-        throw std::invalid_argument("Output array must be writeable");
-    }
-
     resample_params_t params;
-    params.interpolation = interpolation;
+    params.interpolation = static_cast<interpolation_e>(interpolation);
     params.transform_mesh = nullptr;
     params.resample = resample_;
     params.norm = norm;
     params.radius = radius;
     params.alpha = alpha;
 
-    // Only used if transform is not affine.
-    // Need to keep it in scope for the duration of this function.
-    py::array_t<double> transform_mesh;
+    std::vector<double> transform_mesh;
 
-    // Validate transform
-    if (transform.is_none()) {
-        params.is_affine = true;
-    } else {
-        // Raises Python AttributeError if no such attribute or TypeError if cast fails
-        bool is_affine = py::cast<bool>(transform.attr("is_affine"));
-
-        if (is_affine) {
-            convert_trans_affine(transform, params.affine);
+    const char *transform_stage = "checking transform";
+    try {
+        if (transform.is_none()) {
+            params.is_affine = true;
+        } else if (!py::hasattr(transform, "is_affine")) {
+            transform_stage = "converting affine transform";
+            convert_trans_affine_with_stream(transform, params.affine, stream);
             params.is_affine = true;
         } else {
-            transform_mesh = _get_transform_mesh(transform, output_array.shape());
-            params.transform_mesh = transform_mesh.data();
-            params.is_affine = false;
+            transform_stage = "reading transform.is_affine";
+            bool is_affine = py::cast<bool>(transform.attr("is_affine"));
+            if (is_affine) {
+                transform_stage = "converting affine transform";
+                convert_trans_affine_with_stream(transform, params.affine, stream);
+                params.is_affine = true;
+            } else {
+                transform_stage = "building transform mesh";
+                transform_mesh = get_transform_mesh(transform,
+                                                    out_info.shape[0],
+                                                    out_info.shape[1],
+                                                    stream_or_device);
+                params.transform_mesh = transform_mesh.data();
+                params.is_affine = false;
+            }
         }
+    } catch (const std::exception &e) {
+        throw std::runtime_error(std::string("image resample failed while ")
+                                 + transform_stage + ": " + e.what());
     }
 
-    if (auto resampler =
-            (ndim == 2) ? (
-                (dtype.equal(py::dtype::of<std::uint8_t>())) ? resample<agg::gray8> :
-                (dtype.equal(py::dtype::of<std::int8_t>())) ? resample<agg::gray8> :
-                (dtype.equal(py::dtype::of<std::uint16_t>())) ? resample<agg::gray16> :
-                (dtype.equal(py::dtype::of<std::int16_t>())) ? resample<agg::gray16> :
-                (dtype.equal(py::dtype::of<float>())) ? resample<agg::gray32> :
-                (dtype.equal(py::dtype::of<double>())) ? resample<agg::gray64> :
-                nullptr) : (
-            // ndim == 3
-                (dtype.equal(py::dtype::of<std::uint8_t>())) ? resample<agg::rgba8> :
-                (dtype.equal(py::dtype::of<std::int8_t>())) ? resample<agg::rgba8> :
-                (dtype.equal(py::dtype::of<std::uint16_t>())) ? resample<agg::rgba16> :
-                (dtype.equal(py::dtype::of<std::int16_t>())) ? resample<agg::rgba16> :
-                (dtype.equal(py::dtype::of<float>())) ? resample<agg::rgba32> :
-                (dtype.equal(py::dtype::of<double>())) ? resample<agg::rgba64> :
-                nullptr)) {
+    auto width = static_cast<unsigned long>(in_info.shape[1]);
+    auto height = static_cast<unsigned long>(in_info.shape[0]);
+    auto out_width = static_cast<unsigned long>(out_info.shape[1]);
+    auto out_height = static_cast<unsigned long>(out_info.shape[0]);
+
+    void *in_ptr = in_info.ptr;
+    void *out_ptr = out_info.ptr;
+
+    // Match the historical mapping (signed treated as unsigned for the resampler).
+    auto call = [&](auto tag) {
+        using Pixel = decltype(tag);
         Py_BEGIN_ALLOW_THREADS
-        resampler(
-            input_array.data(), input_array.shape(1), input_array.shape(0),
-            output_array.mutable_data(), output_array.shape(1), output_array.shape(0),
-            params);
+        resample<Pixel>(in_ptr, width, height, out_ptr, out_width, out_height, params);
         Py_END_ALLOW_THREADS
+    };
+
+    if (in_info.ndim == 2) {
+        if (in_info.itemsize == 1) {
+            call(agg::gray8{});
+        } else if (in_info.itemsize == 2) {
+            call(agg::gray16{});
+        } else if (buffer_is<float>(in_info)) {
+            call(agg::gray32{});
+        } else {
+            call(agg::gray64{});
+        }
     } else {
-        throw std::invalid_argument("arrays must be of dtype byte, short, float32 or float64");
+        if (in_info.itemsize == 1) {
+            call(agg::rgba8{});
+        } else if (in_info.itemsize == 2) {
+            call(agg::rgba16{});
+        } else if (buffer_is<float>(in_info)) {
+            call(agg::rgba32{});
+        } else {
+            call(agg::rgba64{});
+        }
     }
 }
 
-
-// This is used by matplotlib.testing.compare to calculate RMS and a difference image.
-static py::tuple
-calculate_rms_and_diff(py::array_t<unsigned char> expected_image,
-                       py::array_t<unsigned char> actual_image)
+[[noreturn]] void throw_image_comparison_failure(const std::string &message)
 {
-    for (const auto & [image, name] : {std::pair{expected_image, "Expected"},
-                                       std::pair{actual_image, "Actual"}})
-    {
-        if (image.ndim() != 3) {
-            auto exceptions = py::module_::import("matplotlib.testing.exceptions");
-            auto ImageComparisonFailure = exceptions.attr("ImageComparisonFailure");
-            py::set_error(
-                ImageComparisonFailure,
-                "{name} image must be 3-dimensional, but is {ndim}-dimensional"_s.format(
-                    "name"_a=name, "ndim"_a=image.ndim()));
-            throw py::error_already_set();
+    py::object exc = py::module_::import("matplotlib.testing.exceptions")
+                         .attr("ImageComparisonFailure");
+    PyErr_SetString(exc.ptr(), message.c_str());
+    throw py::error_already_set();
+}
+
+std::string dimensionality(py::ssize_t ndim)
+{
+    return std::to_string(ndim) + "-dimensional";
+}
+
+std::string shape_to_string(const ArrayInfo &info)
+{
+    std::string result = "(";
+    for (size_t i = 0; i < info.shape.size(); ++i) {
+        if (i != 0) {
+            result += ", ";
         }
+        result += std::to_string(info.shape[i]);
+    }
+    if (info.shape.size() == 1) {
+        result += ",";
+    }
+    result += ")";
+    return result;
+}
+
+static py::tuple calculate_rms_and_diff(py::object expected_image,
+                                       py::object actual_image,
+                                       py::object stream)
+{
+    auto stream_or_device = as_stream_or_device(stream);
+    auto expected = get_array_info(expected_image, false, stream_or_device);
+    auto actual = get_array_info(actual_image, false, stream_or_device);
+
+    if (expected.ndim != 3) {
+        throw_image_comparison_failure("Expected image must be 3-dimensional, but is "
+                                       + dimensionality(expected.ndim));
+    }
+    if (actual.ndim != 3) {
+        throw_image_comparison_failure("Actual image must be 3-dimensional, but is "
+                                       + dimensionality(actual.ndim));
+    }
+    if (!buffer_is<std::uint8_t>(expected)) {
+        throw_image_comparison_failure("Expected image must be uint8");
+    }
+    if (!buffer_is<std::uint8_t>(actual)) {
+        throw_image_comparison_failure("Actual image must be uint8");
     }
 
-    auto height = expected_image.shape(0);
-    auto width = expected_image.shape(1);
-    auto depth = expected_image.shape(2);
-
-    if (depth != 3 && depth != 4) {
-        auto exceptions = py::module_::import("matplotlib.testing.exceptions");
-        auto ImageComparisonFailure = exceptions.attr("ImageComparisonFailure");
-        py::set_error(
-            ImageComparisonFailure,
-            "Image must be RGB or RGBA but has depth {depth}"_s.format(
-                "depth"_a=depth));
-        throw py::error_already_set();
+    if (expected.shape[2] != 3 && expected.shape[2] != 4) {
+        throw_image_comparison_failure("Expected image must be RGB or RGBA but has depth "
+                                       + std::to_string(expected.shape[2]));
+    }
+    if (actual.shape[2] != expected.shape[2]
+        || actual.shape[0] != expected.shape[0]
+        || actual.shape[1] != expected.shape[1]) {
+        throw_image_comparison_failure("Image sizes do not match expected size: "
+                                       + shape_to_string(expected)
+                                       + " actual size "
+                                       + shape_to_string(actual));
     }
 
-    if (height != actual_image.shape(0) || width != actual_image.shape(1) ||
-            depth != actual_image.shape(2)) {
-        auto exceptions = py::module_::import("matplotlib.testing.exceptions");
-        auto ImageComparisonFailure = exceptions.attr("ImageComparisonFailure");
-        py::set_error(
-            ImageComparisonFailure,
-            "Image sizes do not match expected size: {expected_image.shape} "_s
-            "actual size {actual_image.shape}"_s.format(
-                "expected_image"_a=expected_image, "actual_image"_a=actual_image));
-        throw py::error_already_set();
-    }
-    auto expected = expected_image.unchecked<3>();
-    auto actual = actual_image.unchecked<3>();
+    auto height = expected.shape[0];
+    auto width = expected.shape[1];
+    auto depth = expected.shape[2];
 
-    py::ssize_t diff_dims[3] = {height, width, 3};
-    py::array_t<unsigned char> diff_image(diff_dims);
-    auto diff = diff_image.mutable_unchecked<3>();
+    std::vector<unsigned char> diff;
+    diff.resize(static_cast<size_t>(height * width * depth));
 
-    double total = 0.0;
-    for (auto i = 0; i < height; i++) {
-        for (auto j = 0; j < width; j++) {
-            for (auto k = 0; k < depth; k++) {
-                auto pixel_diff = static_cast<double>(expected(i, j, k)) -
-                                  static_cast<double>(actual(i, j, k));
+    auto at = [](const ArrayInfo &info, py::ssize_t y, py::ssize_t x, py::ssize_t c) {
+        auto base = static_cast<const unsigned char *>(info.ptr);
+        auto offset = y * info.strides[0] + x * info.strides[1] + c * info.strides[2];
+        return *(base + offset);
+    };
 
-                total += pixel_diff*pixel_diff;
-
-                if (k != 3) { // Hard-code a fully solid alpha channel by omitting it.
-                    diff(i, j, k) = static_cast<unsigned char>(std::clamp(
-                        abs(pixel_diff) * 10, // Expand differences in luminance domain.
-                        0.0, 255.0));
-                }
+    double sum_sq = 0.0;
+    for (py::ssize_t y = 0; y < height; ++y) {
+        for (py::ssize_t x = 0; x < width; ++x) {
+            for (py::ssize_t c = 0; c < depth; ++c) {
+                auto e = at(expected, y, x, c);
+                auto a = at(actual, y, x, c);
+                auto d = static_cast<int>(e) - static_cast<int>(a);
+                sum_sq += static_cast<double>(d * d);
+                diff[static_cast<size_t>((y * width + x) * depth + c)] = static_cast<unsigned char>(std::abs(d));
             }
         }
     }
-    total = total / (width * height * depth);
 
-    return py::make_tuple(sqrt(total), diff_image);
+    double rms = std::sqrt(sum_sq / static_cast<double>(height * width * depth));
+
+    // Return diff as a shaped memoryview so callers can wrap it into an MLX array.
+    py::bytearray ba = py::reinterpret_steal<py::bytearray>(
+        PyByteArray_FromStringAndSize(nullptr, static_cast<py::ssize_t>(diff.size())));
+    if (!ba) {
+        throw py::error_already_set();
+    }
+    std::memcpy(PyByteArray_AsString(ba.ptr()), diff.data(), diff.size());
+    py::object mv = py::module_::import("builtins").attr("memoryview")(ba);
+    mv = mv.attr("cast")("B", py::make_tuple(height, width, depth));
+
+    return py::make_tuple(rms, mv);
 }
 
-
-PYBIND11_MODULE(_image, m, py::mod_gil_not_used())
+PYBIND11_MODULE(_image, m)
 {
-    py::enum_<interpolation_e>(m, "_InterpolationType")
-        .value("NEAREST", NEAREST)
-        .value("BILINEAR", BILINEAR)
-        .value("BICUBIC", BICUBIC)
-        .value("SPLINE16", SPLINE16)
-        .value("SPLINE36", SPLINE36)
-        .value("HANNING", HANNING)
-        .value("HAMMING", HAMMING)
-        .value("HERMITE", HERMITE)
-        .value("KAISER", KAISER)
-        .value("QUADRIC", QUADRIC)
-        .value("CATROM", CATROM)
-        .value("GAUSSIAN", GAUSSIAN)
-        .value("BESSEL", BESSEL)
-        .value("MITCHELL", MITCHELL)
-        .value("SINC", SINC)
-        .value("LANCZOS", LANCZOS)
-        .value("BLACKMAN", BLACKMAN)
-        .export_values();
+#if NB_VERSION_MAJOR > 2 || (NB_VERSION_MAJOR == 2 && NB_VERSION_MINOR >= 12)
+    nb::detail::nb_module_exec(NB_DOMAIN_STR, m.ptr());
+#else
+    nb::detail::init(NB_DOMAIN_STR);
+#endif
 
     m.def("resample", &image_resample,
-        "input_array"_a,
-        "output_array"_a,
-        "transform"_a,
-        "interpolation"_a = interpolation_e::NEAREST,
-        "resample"_a = false,
-        "alpha"_a = 1,
-        "norm"_a = false,
-        "radius"_a = 1,
-        image_resample__doc__);
+          "input_array"_a,
+          "output_array"_a,
+          "transform"_a = py::none(),
+          "interpolation"_a = static_cast<int>(NEAREST),
+          "resample"_a = false,
+          "alpha"_a = 1.0f,
+          "norm"_a = false,
+          "radius"_a = 1.0f,
+          py::kw_only(),
+          "stream"_a = py::none(),
+          image_resample__doc__);
 
     m.def("calculate_rms_and_diff", &calculate_rms_and_diff,
-          "expected_image"_a, "actual_image"_a);
+          "expected"_a,
+          "actual"_a,
+          py::kw_only(),
+          "stream"_a = py::none());
+
+    // Export interpolation enum values.
+    m.attr("NEAREST") = py::int_(static_cast<int>(NEAREST));
+    m.attr("BILINEAR") = py::int_(static_cast<int>(BILINEAR));
+    m.attr("BICUBIC") = py::int_(static_cast<int>(BICUBIC));
+    m.attr("SPLINE16") = py::int_(static_cast<int>(SPLINE16));
+    m.attr("SPLINE36") = py::int_(static_cast<int>(SPLINE36));
+    m.attr("HANNING") = py::int_(static_cast<int>(HANNING));
+    m.attr("HAMMING") = py::int_(static_cast<int>(HAMMING));
+    m.attr("HERMITE") = py::int_(static_cast<int>(HERMITE));
+    m.attr("KAISER") = py::int_(static_cast<int>(KAISER));
+    m.attr("QUADRIC") = py::int_(static_cast<int>(QUADRIC));
+    m.attr("CATROM") = py::int_(static_cast<int>(CATROM));
+    m.attr("GAUSSIAN") = py::int_(static_cast<int>(GAUSSIAN));
+    m.attr("BESSEL") = py::int_(static_cast<int>(BESSEL));
+    m.attr("MITCHELL") = py::int_(static_cast<int>(MITCHELL));
+    m.attr("SINC") = py::int_(static_cast<int>(SINC));
+    m.attr("LANCZOS") = py::int_(static_cast<int>(LANCZOS));
+    m.attr("BLACKMAN") = py::int_(static_cast<int>(BLACKMAN));
 }

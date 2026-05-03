@@ -10,9 +10,7 @@ controls on wxPython.
 from io import BytesIO
 
 import wx
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.backends.backend_wx import NavigationToolbar2Wx
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -26,7 +24,7 @@ def mathtext_to_wxbitmap(s):
     # transparent mask that is then loaded into a wx.Bitmap.
     fig = Figure(facecolor="none")
     text_color = (
-        np.array(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT)) / 255)
+        mlxarr.array(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT)) / 255)
     fig.text(0, 0, s, fontsize=10, color=text_color)
     buf = BytesIO()
     fig.savefig(buf, format="png", dpi=150, bbox_inches="tight", pad_inches=0)
@@ -35,10 +33,10 @@ def mathtext_to_wxbitmap(s):
 
 
 functions = [
-    (r'$\sin(2 \pi x)$', lambda x: np.sin(2*np.pi*x)),
-    (r'$\frac{4}{3}\pi x^3$', lambda x: (4/3)*np.pi*x**3),
-    (r'$\cos(2 \pi x)$', lambda x: np.cos(2*np.pi*x)),
-    (r'$\log(x)$', lambda x: np.log(x))
+    (r'$\sin(2 \pi x)$', lambda x: mlxarr.sin(2*mlxarr.pi*x)),
+    (r'$\frac{4}{3}\pi x^3$', lambda x: (4/3)*mlxarr.pi*x**3),
+    (r'$\cos(2 \pi x)$', lambda x: mlxarr.cos(2*mlxarr.pi*x)),
+    (r'$\log(x)$', lambda x: mlxarr.log(x))
 ]
 
 
@@ -110,7 +108,7 @@ class CanvasFrame(wx.Frame):
         self.change_plot(event.GetId() - 1000)
 
     def change_plot(self, plot_number):
-        t = np.arange(1.0, 3.0, 0.01)
+        t = mlxarr.arange(1.0, 3.0, 0.01)
         s = functions[plot_number][1](t)
         self.axes.clear()
         self.axes.plot(t, s)

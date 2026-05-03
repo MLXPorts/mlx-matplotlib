@@ -130,9 +130,7 @@ Examples showing the use of markers:
 import copy
 
 from collections.abc import Sized
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from . import _api, cbook
 from .path import Path
@@ -144,7 +142,7 @@ from ._enums import JoinStyle, CapStyle
  CARETLEFT, CARETRIGHT, CARETUP, CARETDOWN,
  CARETLEFTBASE, CARETRIGHTBASE, CARETUPBASE, CARETDOWNBASE) = range(12)
 
-_empty_path = Path(np.empty((0, 2)))
+_empty_path = Path(mlxarr.empty((0, 2)))
 
 
 class MarkerStyle:
@@ -310,7 +308,7 @@ class MarkerStyle:
             self._marker_function = self._set_mathtext_path
         elif isinstance(marker, (int, str)) and marker in self.markers:
             self._marker_function = getattr(self, '_set_' + self.markers[marker])
-        elif (isinstance(marker, np.ndarray) and marker.ndim == 2 and
+        elif (isinstance(marker, mlxarr.ndarray) and marker.ndim == 2 and
                 marker.shape[1] == 2):
             self._marker_function = self._set_vertices
         elif isinstance(marker, Path):
@@ -449,7 +447,7 @@ class MarkerStyle:
         self._filled = False
 
     def _set_custom_marker(self, path):
-        rescale = np.max(np.abs(path.vertices))  # max of x's and y's.
+        rescale = mlxarr.max(mlxarr.abs(path.vertices))  # max of x's and y's.
         self._transform = Affine2D().scale(0.5 / rescale)
         self._path = path
 
@@ -509,7 +507,7 @@ class MarkerStyle:
 
     def _set_circle(self, size=1.0):
         self._transform = Affine2D().scale(0.5 * size)
-        self._snap_threshold = np.inf
+        self._snap_threshold = mlxarr.inf
         if not self._half_fill():
             self._path = Path.unit_circle()
         else:
@@ -632,7 +630,7 @@ class MarkerStyle:
             self._path = polypath
         else:
             verts = polypath.vertices
-            y = (1 + np.sqrt(5)) / 4.
+            y = (1 + mlxarr.sqrt(5)) / 4.
             top = Path(verts[[0, 1, 4, 0]])
             bottom = Path(verts[[1, 2, 3, 4, 1]])
             left = Path([verts[0], verts[1], verts[2], [0, -y], verts[0]])
@@ -655,10 +653,10 @@ class MarkerStyle:
             self._path = polypath
         else:
             verts = polypath.vertices
-            top = Path(np.concatenate([verts[0:4], verts[7:10], verts[0:1]]))
-            bottom = Path(np.concatenate([verts[3:8], verts[3:4]]))
-            left = Path(np.concatenate([verts[0:6], verts[0:1]]))
-            right = Path(np.concatenate([verts[0:1], verts[5:10], verts[0:1]]))
+            top = Path(mlxarr.concatenate([verts[0:4], verts[7:10], verts[0:1]]))
+            bottom = Path(mlxarr.concatenate([verts[3:8], verts[3:4]]))
+            left = Path(mlxarr.concatenate([verts[0:6], verts[0:1]]))
+            right = Path(mlxarr.concatenate([verts[0:1], verts[5:10], verts[0:1]]))
             self._path, self._alt_path = {
                 'top': (top, bottom), 'bottom': (bottom, top),
                 'left': (left, right), 'right': (right, left),
@@ -678,9 +676,9 @@ class MarkerStyle:
         else:
             verts = polypath.vertices
             # not drawing inside lines
-            x = np.abs(np.cos(5 * np.pi / 6.))
-            top = Path(np.concatenate([[(-x, 0)], verts[[1, 0, 5]], [(x, 0)]]))
-            bottom = Path(np.concatenate([[(-x, 0)], verts[2:5], [(x, 0)]]))
+            x = mlxarr.abs(mlxarr.cos(5 * mlxarr.pi / 6.))
+            top = Path(mlxarr.concatenate([[(-x, 0)], verts[[1, 0, 5]], [(x, 0)]]))
+            bottom = Path(mlxarr.concatenate([[(-x, 0)], verts[2:5], [(x, 0)]]))
             left = Path(verts[0:4])
             right = Path(verts[[0, 5, 4, 3]])
             self._path, self._alt_path = {
@@ -702,12 +700,12 @@ class MarkerStyle:
         else:
             verts = polypath.vertices
             # not drawing inside lines
-            x, y = np.sqrt(3) / 4, 3 / 4.
+            x, y = mlxarr.sqrt(3) / 4, 3 / 4.
             top = Path(verts[[1, 0, 5, 4, 1]])
             bottom = Path(verts[1:5])
-            left = Path(np.concatenate([
+            left = Path(mlxarr.concatenate([
                 [(x, y)], verts[:3], [(-x, -y), (x, y)]]))
-            right = Path(np.concatenate([
+            right = Path(mlxarr.concatenate([
                 [(x, y)], verts[5:2:-1], [(-x, -y)]]))
             self._path, self._alt_path = {
                 'top': (top, bottom), 'bottom': (bottom, top),
@@ -727,7 +725,7 @@ class MarkerStyle:
             self._transform.rotate_deg(22.5)
             self._path = polypath
         else:
-            x = np.sqrt(2.) / 4.
+            x = mlxarr.sqrt(2.) / 4.
             self._path = self._alt_path = Path(
                 [[0, -1], [0, 1], [-x, 1], [-1, x],
                  [-1, -x], [-x, -1], [0, -1]])
@@ -864,10 +862,10 @@ class MarkerStyle:
         self._filled = False
         self._path = self._x_path
 
-    _plus_filled_path = Path._create_closed(np.array([
+    _plus_filled_path = Path._create_closed(mlxarr.array([
         (-1, -3), (+1, -3), (+1, -1), (+3, -1), (+3, +1), (+1, +1),
         (+1, +3), (-1, +3), (-1, +1), (-3, +1), (-3, -1), (-1, -1)]) / 6)
-    _plus_filled_path_t = Path._create_closed(np.array([
+    _plus_filled_path_t = Path._create_closed(mlxarr.array([
         (+3, 0), (+3, +1), (+1, +1), (+1, +3),
         (-1, +3), (-1, +1), (-3, +1), (-3, 0)]) / 6)
 
@@ -885,10 +883,10 @@ class MarkerStyle:
                 {'top': 0, 'left': 90, 'bottom': 180, 'right': 270}[fs])
             self._alt_transform = self._transform.frozen().rotate_deg(180)
 
-    _x_filled_path = Path._create_closed(np.array([
+    _x_filled_path = Path._create_closed(mlxarr.array([
         (-1, -2), (0, -1), (+1, -2), (+2, -1), (+1, 0), (+2, +1),
         (+1, +2), (0, +1), (-1, +2), (-2, +1), (-1, 0), (-2, -1)]) / 4)
-    _x_filled_path_t = Path._create_closed(np.array([
+    _x_filled_path_t = Path._create_closed(mlxarr.array([
         (+1, 0), (+2, +1), (+1, +2), (0, +1),
         (-1, +2), (-2, +1), (-1, 0)]) / 4)
 

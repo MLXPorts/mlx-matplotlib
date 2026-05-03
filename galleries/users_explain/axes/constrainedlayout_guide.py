@@ -53,8 +53,7 @@ can sometimes go outside the figure area, and thus get clipped.
 
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.colors as mcolors
 import matplotlib.gridspec as gridspec
 
@@ -119,7 +118,7 @@ for ax in axs.flat:
 #   For the `~.axes.Axes.pcolormesh` keyword arguments (``pc_kwargs``) we use a
 #   dictionary to keep the calls consistent across this document.
 
-arr = np.arange(100).reshape((10, 10))
+arr = mlxarr.arange(100).reshape((10, 10))
 norm = mcolors.Normalize(vmin=0., vmax=100.)
 # see note above: this makes all pcolormesh calls consistent:
 pc_kwargs = {'rasterized': True, 'cmap': 'viridis', 'norm': norm}
@@ -170,15 +169,15 @@ fig.suptitle('Big Suptitle')
 # :meth:`.Figure.legend` (yet).
 
 fig, ax = plt.subplots(layout="constrained")
-ax.plot(np.arange(10), label='This is a plot')
+ax.plot(mlxarr.arange(10), label='This is a plot')
 ax.legend(loc='center left', bbox_to_anchor=(0.8, 0.5))
 
 # %%
 # However, this will steal space from a subplot layout:
 
 fig, axs = plt.subplots(1, 2, figsize=(4, 2), layout="constrained")
-axs[0].plot(np.arange(10))
-axs[1].plot(np.arange(10), label='This is a plot')
+axs[0].plot(mlxarr.arange(10))
+axs[1].plot(mlxarr.arange(10), label='This is a plot')
 axs[1].legend(loc='center left', bbox_to_anchor=(0.8, 0.5))
 
 # %%
@@ -194,8 +193,8 @@ axs[1].legend(loc='center left', bbox_to_anchor=(0.8, 0.5))
 
 fig, axs = plt.subplots(1, 2, figsize=(4, 2), layout="constrained")
 
-axs[0].plot(np.arange(10))
-axs[1].plot(np.arange(10), label='This is a plot')
+axs[0].plot(mlxarr.arange(10))
+axs[1].plot(mlxarr.arange(10), label='This is a plot')
 leg = axs[1].legend(loc='center left', bbox_to_anchor=(0.8, 0.5))
 leg.set_in_layout(False)
 # trigger a draw so that constrained layout is executed once
@@ -222,8 +221,8 @@ except FileNotFoundError:
 # A better way to get around this awkwardness is to simply
 # use the legend method provided by `.Figure.legend`:
 fig, axs = plt.subplots(1, 2, figsize=(4, 2), layout="constrained")
-axs[0].plot(np.arange(10))
-lines = axs[1].plot(np.arange(10), label='This is a plot')
+axs[0].plot(mlxarr.arange(10))
+lines = axs[1].plot(mlxarr.arange(10), label='This is a plot')
 labels = [l.get_label() for l in lines]
 leg = fig.legend(lines, labels, loc='center left',
                  bbox_to_anchor=(0.8, 0.5), bbox_transform=axs[1].transAxes)
@@ -499,7 +498,7 @@ fig.suptitle("fixed-aspect plots, layout='compressed'")
 # In the following figure, the colorbar is taller than its parent Axes:
 
 fig, ax = plt.subplots(layout='constrained', figsize=(3, 3))
-pcm = ax.imshow(np.random.randn(10, 10), cmap='viridis')
+pcm = ax.imshow(mlxarr.random.randn(10, 10), cmap='viridis')
 ax.set_title("Colorbar with layout='constrained'", fontsize='medium')
 fig.colorbar(pcm, ax=ax)
 
@@ -508,7 +507,7 @@ fig.colorbar(pcm, ax=ax)
 # of its parent Axes, maintaining a consistent appearance:
 
 fig, ax = plt.subplots(layout='compressed', figsize=(3, 3))
-pcm = ax.imshow(np.random.randn(10, 10), cmap='viridis')
+pcm = ax.imshow(mlxarr.random.randn(10, 10), cmap='viridis')
 ax.set_title("Colorbar with layout='compressed'", fontsize='medium')
 fig.colorbar(pcm, ax=ax)
 
@@ -518,7 +517,7 @@ fig.colorbar(pcm, ax=ax)
 # depends on the specific application:
 
 fig, ax = plt.subplots(layout='compressed', figsize=(3, 3))
-pcm = ax.imshow(np.random.randn(10, 10), cmap='viridis')
+pcm = ax.imshow(mlxarr.random.randn(10, 10), cmap='viridis')
 ax.set_ylim([4, 8])
 ax.set_title("Layout='compressed' with zoom", fontsize='medium')
 fig.colorbar(pcm, ax=ax)
@@ -631,7 +630,7 @@ fig.suptitle('subplot2grid')
 #    https://github.com/matplotlib/matplotlib/issues.
 #
 # If there is a bug, please report with a self-contained example that does
-# not require outside data or dependencies (other than numpy).
+# not require outside data or dependencies (other than array_backend).
 
 # %%
 # .. _cl_notes_on_algorithm:

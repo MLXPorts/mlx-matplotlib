@@ -15,8 +15,7 @@ colormaps.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 cmaps = [('Perceptually Uniform Sequential', [
             'viridis', 'plasma', 'inferno', 'magma', 'cividis']),
          ('Sequential', [
@@ -42,8 +41,8 @@ cmaps = [('Perceptually Uniform Sequential', [
             'gist_rainbow', 'rainbow', 'jet', 'turbo', 'nipy_spectral',
             'gist_ncar'])]
 
-gradient = np.linspace(0, 1, 256)
-gradient = np.vstack((gradient, gradient))
+gradient = mlxarr.linspace(0, 1, 256)
+gradient = mlxarr.vstack((gradient, gradient))
 
 
 def plot_color_gradients(cmap_category, cmap_list):

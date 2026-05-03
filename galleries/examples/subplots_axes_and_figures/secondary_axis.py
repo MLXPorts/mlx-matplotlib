@@ -17,13 +17,12 @@ where two scales are not related to one another, but independent.
 import datetime
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.dates as mdates
 
 fig, ax = plt.subplots(layout='constrained')
-x = np.arange(0, 360, 1)
-y = np.sin(2 * x * np.pi / 180)
+x = mlxarr.arange(0, 360, 1)
+y = mlxarr.sin(2 * x * mlxarr.pi / 180)
 ax.plot(x, y)
 ax.set_xlabel('angle [degrees]')
 ax.set_ylabel('signal')
@@ -31,11 +30,11 @@ ax.set_title('Sine wave')
 
 
 def deg2rad(x):
-    return x * np.pi / 180
+    return x * mlxarr.pi / 180
 
 
 def rad2deg(x):
-    return x * 180 / np.pi
+    return x * 180 / mlxarr.pi
 
 
 secax = ax.secondary_xaxis('top', functions=(deg2rad, rad2deg))
@@ -48,9 +47,9 @@ plt.show()
 # coordinate space. Here we put the axis at Y = 0 in data coordinates.
 
 fig, ax = plt.subplots(layout='constrained')
-x = np.arange(0, 10)
-np.random.seed(19680801)
-y = np.random.randn(len(x))
+x = mlxarr.arange(0, 10)
+mlxarr.random.seed(19680801)
+y = mlxarr.random.randn(len(x))
 ax.plot(x, y)
 ax.set_xlabel('X')
 ax.set_ylabel('Y')
@@ -71,9 +70,9 @@ plt.show()
 #   made logarithmic as well.
 
 fig, ax = plt.subplots(layout='constrained')
-x = np.arange(0.02, 1, 0.02)
-np.random.seed(19680801)
-y = np.random.randn(len(x)) ** 2
+x = mlxarr.arange(0.02, 1, 0.02)
+mlxarr.random.seed(19680801)
+y = mlxarr.random.randn(len(x)) ** 2
 ax.loglog(x, y)
 ax.set_xlabel('f [Hz]')
 ax.set_ylabel('PSD')
@@ -82,9 +81,9 @@ ax.set_title('Random spectrum')
 
 def one_over(x):
     """Vectorized 1/x, treating x==0 manually"""
-    x = np.array(x, float)
-    near_zero = np.isclose(x, 0)
-    x[near_zero] = np.inf
+    x = mlxarr.array(x, float)
+    near_zero = mlxarr.isclose(x, 0)
+    x[near_zero] = mlxarr.inf
     x[~near_zero] = 1 / x[~near_zero]
     return x
 
@@ -112,29 +111,29 @@ plt.show()
 #   see ``x1n`` and ``x2n`` below.
 
 fig, ax = plt.subplots(layout='constrained')
-x1_vals = np.arange(2, 11, 0.4)
+x1_vals = mlxarr.arange(2, 11, 0.4)
 # second independent variable is a nonlinear function of the other.
 x2_vals = x1_vals ** 2
-ydata = 50.0 + 20 * np.random.randn(len(x1_vals))
+ydata = 50.0 + 20 * mlxarr.random.randn(len(x1_vals))
 ax.plot(x1_vals, ydata, label='Plotted data')
 ax.plot(x1_vals, x2_vals, label=r'$x_2 = x_1^2$')
 ax.set_xlabel(r'$x_1$')
 ax.legend()
 
 # the forward and inverse functions must be defined on the complete visible axis range
-x1n = np.linspace(0, 20, 201)
+x1n = mlxarr.linspace(0, 20, 201)
 x2n = x1n**2
 
 
 def forward(x):
-    return np.interp(x, x1n, x2n)
+    return mlxarr.interp(x, x1n, x2n)
 
 
 def inverse(x):
-    return np.interp(x, x2n, x1n)
+    return mlxarr.interp(x, x2n, x1n)
 
 # use axvline to prove that the derived secondary axis is correctly plotted
-ax.axvline(np.sqrt(40), color="grey", ls="--")
+ax.axvline(mlxarr.sqrt(40), color="grey", ls="--")
 ax.axvline(10, color="grey", ls="--")
 secax = ax.secondary_xaxis('top', functions=(forward, inverse))
 secax.set_xticks([10, 20, 40, 60, 80, 100])
@@ -143,14 +142,14 @@ secax.set_xlabel(r'$x_2$')
 plt.show()
 
 # %%
-# A final example translates np.datetime64 to yearday on the x axis and
+# A final example translates mlxarr.datetime64 to yearday on the x axis and
 # from Celsius to Fahrenheit on the y axis.  Note the addition of a
 # third y axis, and that it can be placed using a float for the
 # location argument
 
 dates = [datetime.datetime(2018, 1, 1) + datetime.timedelta(hours=k * 6)
          for k in range(240)]
-temperature = np.random.randn(len(dates)) * 4 + 6.7
+temperature = mlxarr.random.randn(len(dates)) * 4 + 6.7
 fig, ax = plt.subplots(layout='constrained')
 
 ax.plot(dates, temperature)
@@ -188,11 +187,11 @@ secax_y.set_ylabel(r'$T\ [^oF]$')
 
 
 def celsius_to_anomaly(x):
-    return (x - np.mean(temperature))
+    return (x - mlxarr.mean(temperature))
 
 
 def anomaly_to_celsius(x):
-    return (x + np.mean(temperature))
+    return (x + mlxarr.mean(temperature))
 
 
 # use of a float for the position:

@@ -52,7 +52,7 @@ enum {
 // Check that array has shape (N, d1) or (N, d1, d2).  We cast d1, d2 to longs
 // so that we don't need to access the NPY_INTP_FMT macro here.
 #include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
+#include "py_buffer.h"
 
 namespace py = pybind11;
 using namespace pybind11::literals;
@@ -97,12 +97,11 @@ inline void check_trailing_shape(T array, char const* name, long d1, long d2)
 
 /* In most cases, code should use safe_first_shape(obj) instead of obj.shape(0), since
    safe_first_shape(obj) == 0 when any dimension is 0. */
-template <typename T, py::ssize_t ND>
-py::ssize_t
-safe_first_shape(const py::detail::unchecked_reference<T, ND> &a)
+template <typename View>
+py::ssize_t safe_first_shape(const View &a)
 {
-    bool empty = (ND == 0);
-    for (py::ssize_t i = 0; i < ND; i++) {
+    bool empty = (a.ndim() == 0);
+    for (py::ssize_t i = 0; i < a.ndim(); i++) {
         if (a.shape(i) == 0) {
             empty = true;
         }

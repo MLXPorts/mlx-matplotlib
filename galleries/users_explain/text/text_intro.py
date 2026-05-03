@@ -114,10 +114,9 @@ plt.show()
 # methods.
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-x1 = np.linspace(0.0, 5.0, 100)
-y1 = np.cos(2 * np.pi * x1) * np.exp(-x1)
+from matplotlib import _mlx_array as mlxarr
+x1 = mlxarr.linspace(0.0, 5.0, 100)
+y1 = mlxarr.cos(2 * mlxarr.pi * x1) * mlxarr.exp(-x1)
 
 fig, ax = plt.subplots(figsize=(5, 3))
 fig.subplots_adjust(bottom=0.15, left=0.2)
@@ -191,7 +190,7 @@ plt.show()
 
 fig, ax = plt.subplots(figsize=(5, 3))
 fig.subplots_adjust(bottom=0.2, left=0.2)
-ax.plot(x1, np.cumsum(y1**2))
+ax.plot(x1, mlxarr.cumsum(y1**2))
 ax.set_xlabel('Time (s) \n This was a long experiment')
 ax.set_ylabel(r'$\int\ Y^2\ dt\ \ (V^2 s)$')
 plt.show()
@@ -261,7 +260,7 @@ plt.show()
 fig, axs = plt.subplots(2, 1, figsize=(5, 3), tight_layout=True)
 axs[0].plot(x1, y1)
 axs[1].plot(x1, y1)
-axs[1].xaxis.set_ticks(np.arange(0., 8.1, 2.))
+axs[1].xaxis.set_ticks(mlxarr.arange(0., 8.1, 2.))
 plt.show()
 
 # %%
@@ -272,7 +271,7 @@ plt.show()
 fig, axs = plt.subplots(2, 1, figsize=(5, 3), tight_layout=True)
 axs[0].plot(x1, y1)
 axs[1].plot(x1, y1)
-ticks = np.arange(0., 8.1, 2.)
+ticks = mlxarr.arange(0., 8.1, 2.)
 # list comprehension to get all tick labels...
 tickla = [f'{tick:1.2f}' for tick in ticks]
 axs[1].xaxis.set_ticks(ticks)
@@ -294,7 +293,7 @@ plt.show()
 fig, axs = plt.subplots(2, 1, figsize=(5, 3), tight_layout=True)
 axs[0].plot(x1, y1)
 axs[1].plot(x1, y1)
-ticks = np.arange(0., 8.1, 2.)
+ticks = mlxarr.arange(0., 8.1, 2.)
 axs[1].xaxis.set_ticks(ticks)
 axs[1].xaxis.set_major_formatter('{x:1.1f}')
 axs[1].set_xlim(axs[0].get_xlim())
@@ -377,7 +376,7 @@ plt.show()
 # Dateticks
 # ^^^^^^^^^
 #
-# Matplotlib can accept `datetime.datetime` and `numpy.datetime64`
+# Matplotlib can accept `datetime.datetime` and `array_backend.datetime64`
 # objects as plotting arguments.  Dates and times require special
 # formatting, which can often benefit from manual intervention. In
 # order to help, dates have special locators and formatters,

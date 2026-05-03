@@ -10,16 +10,15 @@ new frequencies.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.widgets import Button
 
-freqs = np.arange(2, 20, 3)
+freqs = mlxarr.arange(2, 20, 3)
 
 fig, ax = plt.subplots()
 fig.subplots_adjust(bottom=0.2)
-t = np.arange(0.0, 1.0, 0.001)
-s = np.sin(2*np.pi*freqs[0]*t)
+t = mlxarr.arange(0.0, 1.0, 0.001)
+s = mlxarr.sin(2*mlxarr.pi*freqs[0]*t)
 l, = ax.plot(t, s, lw=2)
 
 
@@ -29,14 +28,14 @@ class Index:
     def next(self, event):
         self.ind += 1
         i = self.ind % len(freqs)
-        ydata = np.sin(2*np.pi*freqs[i]*t)
+        ydata = mlxarr.sin(2*mlxarr.pi*freqs[i]*t)
         l.set_ydata(ydata)
         plt.draw()
 
     def prev(self, event):
         self.ind -= 1
         i = self.ind % len(freqs)
-        ydata = np.sin(2*np.pi*freqs[i]*t)
+        ydata = mlxarr.sin(2*mlxarr.pi*freqs[i]*t)
         l.set_ydata(ydata)
         plt.draw()
 

@@ -4,10 +4,8 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure, SubFigure
 from matplotlib.text import Text
 from matplotlib.transforms import Transform, Bbox
-
-
-import numpy as np
-from numpy.typing import ArrayLike
+import matplotlib._mlx_array as mlxarr
+from matplotlib._mlx_typing import ArrayLike
 from collections.abc import Sequence
 from typing import Any, Literal, overload
 from matplotlib.typing import ColorType
@@ -132,7 +130,7 @@ class Barbs(mcollections.PolyCollection):
     fill_empty: bool
     barb_increments: dict[str, float]
     rounding: bool
-    flip: np.ndarray
+    flip: mlxarr.ndarray
     x: ArrayLike
     y: ArrayLike
     u: ArrayLike

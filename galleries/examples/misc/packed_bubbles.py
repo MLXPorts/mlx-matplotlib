@@ -12,8 +12,7 @@ browsers.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 browser_market_share = {
     'browsers': ['firefox', 'chrome', 'safari', 'edge', 'ie', 'opera'],
     'market_share': [8.61, 69.55, 8.36, 4.12, 2.76, 2.43],
@@ -37,32 +36,32 @@ class BubbleChart:
         -----
         If "area" is sorted, the results might look weird.
         """
-        area = np.asarray(area)
-        r = np.sqrt(area / np.pi)
+        area = mlxarr.asarray(area)
+        r = mlxarr.sqrt(area / mlxarr.pi)
 
         self.bubble_spacing = bubble_spacing
-        self.bubbles = np.ones((len(area), 4))
+        self.bubbles = mlxarr.ones((len(area), 4))
         self.bubbles[:, 2] = r
         self.bubbles[:, 3] = area
         self.maxstep = 2 * self.bubbles[:, 2].max() + self.bubble_spacing
         self.step_dist = self.maxstep / 2
 
         # calculate initial grid layout for bubbles
-        length = np.ceil(np.sqrt(len(self.bubbles)))
-        grid = np.arange(length) * self.maxstep
-        gx, gy = np.meshgrid(grid, grid)
+        length = mlxarr.ceil(mlxarr.sqrt(len(self.bubbles)))
+        grid = mlxarr.arange(length) * self.maxstep
+        gx, gy = mlxarr.meshgrid(grid, grid)
         self.bubbles[:, 0] = gx.flatten()[:len(self.bubbles)]
         self.bubbles[:, 1] = gy.flatten()[:len(self.bubbles)]
 
         self.com = self.center_of_mass()
 
     def center_of_mass(self):
-        return np.average(
+        return mlxarr.average(
             self.bubbles[:, :2], axis=0, weights=self.bubbles[:, 3]
         )
 
     def center_distance(self, bubble, bubbles):
-        return np.hypot(bubble[0] - bubbles[:, 0],
+        return mlxarr.hypot(bubble[0] - bubbles[:, 0],
                         bubble[1] - bubbles[:, 1])
 
     def outline_distance(self, bubble, bubbles):
@@ -76,7 +75,7 @@ class BubbleChart:
 
     def collides_with(self, bubble, bubbles):
         distance = self.outline_distance(bubble, bubbles)
-        return np.argmin(distance, keepdims=True)
+        return mlxarr.argmin(distance, keepdims=True)
 
     def collapse(self, n_iterations=50):
         """
@@ -90,17 +89,17 @@ class BubbleChart:
         for _i in range(n_iterations):
             moves = 0
             for i in range(len(self.bubbles)):
-                rest_bub = np.delete(self.bubbles, i, 0)
+                rest_bub = mlxarr.delete(self.bubbles, i, 0)
                 # try to move directly towards the center of mass
                 # direction vector from bubble to the center of mass
                 dir_vec = self.com - self.bubbles[i, :2]
 
                 # shorten direction vector to have length of 1
-                dir_vec = dir_vec / np.sqrt(dir_vec.dot(dir_vec))
+                dir_vec = dir_vec / mlxarr.sqrt(dir_vec.dot(dir_vec))
 
                 # calculate new bubble position
                 new_point = self.bubbles[i, :2] + dir_vec * self.step_dist
-                new_bubble = np.append(new_point, self.bubbles[i, 2:4])
+                new_bubble = mlxarr.append(new_point, self.bubbles[i, 2:4])
 
                 # check whether new bubble collides with other bubbles
                 if not self.check_collisions(new_bubble, rest_bub):
@@ -113,20 +112,20 @@ class BubbleChart:
                     for colliding in self.collides_with(new_bubble, rest_bub):
                         # calculate direction vector
                         dir_vec = rest_bub[colliding, :2] - self.bubbles[i, :2]
-                        dir_vec = dir_vec / np.sqrt(dir_vec.dot(dir_vec))
+                        dir_vec = dir_vec / mlxarr.sqrt(dir_vec.dot(dir_vec))
                         # calculate orthogonal vector
-                        orth = np.array([dir_vec[1], -dir_vec[0]])
+                        orth = mlxarr.array([dir_vec[1], -dir_vec[0]])
                         # test which direction to go
                         new_point1 = (self.bubbles[i, :2] + orth *
                                       self.step_dist)
                         new_point2 = (self.bubbles[i, :2] - orth *
                                       self.step_dist)
                         dist1 = self.center_distance(
-                            self.com, np.array([new_point1]))
+                            self.com, mlxarr.array([new_point1]))
                         dist2 = self.center_distance(
-                            self.com, np.array([new_point2]))
+                            self.com, mlxarr.array([new_point2]))
                         new_point = new_point1 if dist1 < dist2 else new_point2
-                        new_bubble = np.append(new_point, self.bubbles[i, 2:4])
+                        new_bubble = mlxarr.append(new_point, self.bubbles[i, 2:4])
                         if not self.check_collisions(new_bubble, rest_bub):
                             self.bubbles[i, :] = new_bubble
                             self.com = self.center_of_mass()

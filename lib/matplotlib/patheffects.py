@@ -11,9 +11,7 @@ from matplotlib import colors as mcolors
 from matplotlib import patches as mpatches
 from matplotlib import transforms as mtransforms
 from matplotlib.path import Path
-import numpy as np
-
-
+from matplotlib import _mlx_array as mlxarr
 class AbstractPathEffect:
     """
     A base class for path effects.
@@ -388,7 +386,7 @@ class TickedStroke(AbstractPathEffect):
     """
 
     def __init__(self, offset=(0, 0),
-                 spacing=10.0, angle=45.0, length=np.sqrt(2),
+                 spacing=10.0, angle=45.0, length=mlxarr.sqrt(2),
                  **kwargs):
         """
         Parameters
@@ -431,9 +429,9 @@ class TickedStroke(AbstractPathEffect):
         gc0 = self._update_gc(gc0, self._gc)
         trans = affine + self._offset_transform(renderer)
 
-        theta = -np.radians(self._angle)
-        trans_matrix = np.array([[np.cos(theta), -np.sin(theta)],
-                                 [np.sin(theta), np.cos(theta)]])
+        theta = -mlxarr.radians(self._angle)
+        trans_matrix = mlxarr.array([[mlxarr.cos(theta), -mlxarr.sin(theta)],
+                                 [mlxarr.sin(theta), mlxarr.cos(theta)]])
 
         # Convert spacing parameter to pixels.
         spacing_px = renderer.points_to_pixels(self._spacing)
@@ -456,49 +454,49 @@ class TickedStroke(AbstractPathEffect):
                 continue
 
             # Find distance between points on the line
-            ds = np.hypot(x[1:] - x[:-1], y[1:] - y[:-1])
+            ds = mlxarr.hypot(x[1:] - x[:-1], y[1:] - y[:-1])
 
             # Build parametric coordinate along curve
-            s = np.concatenate(([0.0], np.cumsum(ds)))
+            s = mlxarr.concatenate(([0.0], mlxarr.cumsum(ds)))
             s_total = s[-1]
 
-            num = int(np.ceil(s_total / spacing_px)) - 1
+            num = int(mlxarr.ceil(s_total / spacing_px)) - 1
             # Pick parameter values for ticks.
-            s_tick = np.linspace(spacing_px/2, s_total - spacing_px/2, num)
+            s_tick = mlxarr.linspace(spacing_px/2, s_total - spacing_px/2, num)
 
             # Find points along the parameterized curve
-            x_tick = np.interp(s_tick, s, x)
-            y_tick = np.interp(s_tick, s, y)
+            x_tick = mlxarr.interp(s_tick, s, x)
+            y_tick = mlxarr.interp(s_tick, s, y)
 
             # Find unit vectors in local direction of curve
             delta_s = self._spacing * .001
-            u = (np.interp(s_tick + delta_s, s, x) - x_tick) / delta_s
-            v = (np.interp(s_tick + delta_s, s, y) - y_tick) / delta_s
+            u = (mlxarr.interp(s_tick + delta_s, s, x) - x_tick) / delta_s
+            v = (mlxarr.interp(s_tick + delta_s, s, y) - y_tick) / delta_s
 
             # Normalize slope into unit slope vector.
-            n = np.hypot(u, v)
+            n = mlxarr.hypot(u, v)
             mask = n == 0
             n[mask] = 1.0
 
-            uv = np.array([u / n, v / n]).T
-            uv[mask] = np.array([0, 0]).T
+            uv = mlxarr.array([u / n, v / n]).T
+            uv[mask] = mlxarr.array([0, 0]).T
 
             # Rotate and scale unit vector into tick vector
-            dxy = np.dot(uv, trans_matrix) * self._length * spacing_px
+            dxy = mlxarr.dot(uv, trans_matrix) * self._length * spacing_px
 
             # Build tick endpoints
             x_end = x_tick + dxy[:, 0]
             y_end = y_tick + dxy[:, 1]
 
             # Interleave ticks to form Path vertices
-            xyt = np.empty((2 * num, 2), dtype=x_tick.dtype)
+            xyt = mlxarr.empty((2 * num, 2), dtype=x_tick.dtype)
             xyt[0::2, 0] = x_tick
             xyt[1::2, 0] = x_end
             xyt[0::2, 1] = y_tick
             xyt[1::2, 1] = y_end
 
             # Build up vector of Path codes
-            codes = np.tile([Path.MOVETO, Path.LINETO], num)
+            codes = mlxarr.tile([Path.MOVETO, Path.LINETO], num)
 
             # Construct and draw resulting path
             h = Path(xyt, codes)

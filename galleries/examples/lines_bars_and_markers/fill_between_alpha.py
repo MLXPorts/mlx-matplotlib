@@ -14,8 +14,7 @@ line plot on the left and a filled line on the right.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.cbook as cbook
 
 # load up some sample financial data
@@ -53,14 +52,14 @@ fig.autofmt_xdate()
 # alpha channel is useful, not just aesthetic.
 
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 Nsteps, Nwalkers = 100, 250
-t = np.arange(Nsteps)
+t = mlxarr.arange(Nsteps)
 
 # an (Nsteps x Nwalkers) array of random walk steps
-S1 = 0.004 + 0.02*np.random.randn(Nsteps, Nwalkers)
-S2 = 0.002 + 0.01*np.random.randn(Nsteps, Nwalkers)
+S1 = 0.004 + 0.02*mlxarr.random.randn(Nsteps, Nwalkers)
+S2 = 0.002 + 0.01*mlxarr.random.randn(Nsteps, Nwalkers)
 
 # an (Nsteps x Nwalkers) array of random walker positions
 X1 = S1.cumsum(axis=0)
@@ -99,21 +98,21 @@ ax.grid()
 # and shade that region red.
 
 # Fixing random state for reproducibility
-np.random.seed(1)
+mlxarr.random.seed(1)
 
 Nsteps = 500
-t = np.arange(Nsteps)
+t = mlxarr.arange(Nsteps)
 
 mu = 0.002
 sigma = 0.01
 
 # the steps and position
-S = mu + sigma*np.random.randn(Nsteps)
+S = mu + sigma*mlxarr.random.randn(Nsteps)
 X = S.cumsum()
 
 # the 1 sigma upper and lower analytic population bounds
-lower_bound = mu*t - sigma*np.sqrt(t)
-upper_bound = mu*t + sigma*np.sqrt(t)
+lower_bound = mu*t - sigma*mlxarr.sqrt(t)
+upper_bound = mu*t + sigma*mlxarr.sqrt(t)
 
 fig, ax = plt.subplots(1)
 ax.plot(t, X, lw=2, label='walker position')

@@ -16,11 +16,9 @@ There are a number of options to this autoscaling behaviour, discussed below.
 # extends the axis limits 5% beyond the data limits (-2π, 2π).
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-
-x = np.linspace(-2 * np.pi, 2 * np.pi, 100)
-y = np.sinc(x)
+from matplotlib import _mlx_array as mlxarr
+x = mlxarr.linspace(-2 * mlxarr.pi, 2 * mlxarr.pi, 100)
+y = mlxarr.sinc(x)
 
 fig, ax = plt.subplots()
 ax.plot(x, y)
@@ -61,8 +59,8 @@ ax.margins(y=-0.2)
 # considered in the margins calculation.
 #
 
-xx, yy = np.meshgrid(x, x)
-zz = np.sinc(np.sqrt((xx - 1)**2 + (yy - 1)**2))
+xx, yy = mlxarr.meshgrid(x, x)
+zz = mlxarr.sinc(mlxarr.sqrt((xx - 1)**2 + (yy - 1)**2))
 
 fig, ax = plt.subplots(ncols=2, figsize=(12, 8))
 ax[0].imshow(zz)
@@ -128,11 +126,11 @@ ax[1].set_title("Two curves")
 fig, ax = plt.subplots(ncols=2, figsize=(12, 8))
 ax[0].plot(x, y)
 ax[0].set_xlim(left=-1, right=1)
-ax[0].plot(x + np.pi * 0.5, y)
+ax[0].plot(x + mlxarr.pi * 0.5, y)
 ax[0].set_title("set_xlim(left=-1, right=1)\n")
 ax[1].plot(x, y)
 ax[1].set_xlim(left=-1, right=1)
-ax[1].plot(x + np.pi * 0.5, y)
+ax[1].plot(x + mlxarr.pi * 0.5, y)
 ax[1].autoscale()
 ax[1].set_title("set_xlim(left=-1, right=1)\nautoscale()")
 

@@ -9,10 +9,10 @@ allows more than one arrow to be added to each streamline:
     :alt: One chart showing a streamplot. Each streamline has three arrows.
 
     import matplotlib.pyplot as plt
-    import numpy as np
+    from matplotlib import _mlx_array as mlxarr
 
     w = 3
-    Y, X = np.mgrid[-w:w:100j, -w:w:100j]
+    Y, X = mlxarr.mgrid[-w:w:100j, -w:w:100j]
     U = -1 - X**2 + Y
     V = 1 + X - Y**2
 

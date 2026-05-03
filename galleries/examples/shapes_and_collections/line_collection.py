@@ -7,16 +7,15 @@ Matplotlib can efficiently draw multiple lines at once using a `~.LineCollection
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.collections import LineCollection
 
 colors = ["indigo", "blue", "green", "yellow", "orange", "red"]
 
 # create a list of half-circles with varying radii
-theta = np.linspace(0, np.pi, 36)
-radii = np.linspace(4, 5, num=len(colors))
-arcs = [np.column_stack([r * np.cos(theta), r * np.sin(theta)]) for r in radii]
+theta = mlxarr.linspace(0, mlxarr.pi, 36)
+radii = mlxarr.linspace(4, 5, num=len(colors))
+arcs = [mlxarr.column_stack([r * mlxarr.cos(theta), r * mlxarr.sin(theta)]) for r in radii]
 
 fig, ax = plt.subplots(figsize=(6.4, 3.2))
 # set axes limits manually because Collections do not take part in autoscaling
@@ -39,9 +38,9 @@ plt.show()
 # their radius by passing ``array=radii``.
 
 num_arcs = 15
-theta = np.linspace(0, np.pi, 36)
-radii = np.linspace(4, 5.5, num=num_arcs)
-arcs = [np.column_stack([r * np.cos(theta), r * np.sin(theta)]) for r in radii]
+theta = mlxarr.linspace(0, mlxarr.pi, 36)
+radii = mlxarr.linspace(4, 5.5, num=num_arcs)
+arcs = [mlxarr.column_stack([r * mlxarr.cos(theta), r * mlxarr.sin(theta)]) for r in radii]
 
 fig, ax = plt.subplots(figsize=(6.4, 3))
 # set axes limits manually because Collections do not take part in autoscaling

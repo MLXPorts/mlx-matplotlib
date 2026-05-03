@@ -1,5 +1,4 @@
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib import ticker as mticker, _api
 from matplotlib.transforms import Bbox, Transform
 
@@ -38,7 +37,7 @@ def _find_line_box_crossings(xys, bbox):
             idxs, = (inside[:-1] ^ inside[1:]).nonzero()
             vv = vs[idxs] + (u0 - us[idxs]) * dvs[idxs] / dus[idxs]
             crossings.append([
-                ((u0, v)[sl], np.degrees(np.arctan2(*dxy[::-1])))  # ((x, y), theta)
+                ((u0, v)[sl], mlxarr.degrees(mlxarr.arctan2(*dxy[::-1])))  # ((x, y), theta)
                 for v, dxy in zip(vv, dxys[idxs]) if vmin <= v <= vmax])
     return crossings
 
@@ -90,8 +89,8 @@ class ExtremeFinderSimple:
         calculations, but using a different representation of the arguments and
         return value.
         """
-        grid = np.reshape(np.meshgrid(np.linspace(bbox.x0, bbox.x1, self.nx),
-                                      np.linspace(bbox.y0, bbox.y1, self.ny)),
+        grid = mlxarr.reshape(mlxarr.meshgrid(mlxarr.linspace(bbox.x0, bbox.x1, self.nx),
+                                      mlxarr.linspace(bbox.y0, bbox.y1, self.ny)),
                           (2, -1)).T
         tbbox = Bbox.null()
         tbbox.update_from_data_xy(trans.transform(grid))
@@ -119,7 +118,7 @@ class _User2DTransform(Transform):
 
     def transform_non_affine(self, values):
         # docstring inherited
-        return np.transpose(self._forward(*np.transpose(values)))
+        return mlxarr.transpose(self._forward(*mlxarr.transpose(values)))
 
     def inverted(self):
         # docstring inherited
@@ -192,8 +191,8 @@ class GridFinder:
         lon_levs, lon_n, lon_factor = self.grid_locator1(*tbbox.intervalx)
         lat_levs, lat_n, lat_factor = self.grid_locator2(*tbbox.intervaly)
 
-        lon_values = np.asarray(lon_levs[:lon_n]) / lon_factor
-        lat_values = np.asarray(lat_levs[:lat_n]) / lat_factor
+        lon_values = mlxarr.asarray(lon_levs[:lon_n]) / lon_factor
+        lat_values = mlxarr.asarray(lat_levs[:lat_n]) / lat_factor
 
         lon_lines, lat_lines = self._get_raw_grid_lines(lon_values, lat_values, tbbox)
 
@@ -224,11 +223,11 @@ class GridFinder:
 
     def _get_raw_grid_lines(self, lon_values, lat_values, bbox):
         trans = self.get_transform()
-        lons = np.linspace(bbox.x0, bbox.x1, 100)  # for interpolation
-        lats = np.linspace(bbox.y0, bbox.y1, 100)
-        lon_lines = [trans.transform(np.column_stack([np.full_like(lats, lon), lats]))
+        lons = mlxarr.linspace(bbox.x0, bbox.x1, 100)  # for interpolation
+        lats = mlxarr.linspace(bbox.y0, bbox.y1, 100)
+        lon_lines = [trans.transform(mlxarr.column_stack([mlxarr.full_like(lats, lon), lats]))
                      for lon in lon_values]
-        lat_lines = [trans.transform(np.column_stack([lons, np.full_like(lons, lat)]))
+        lat_lines = [trans.transform(mlxarr.column_stack([lons, mlxarr.full_like(lons, lat)]))
                      for lat in lat_values]
         return lon_lines, lat_lines
 
@@ -248,12 +247,12 @@ class GridFinder:
 
     @_api.deprecated("3.11", alternative="grid_finder.get_transform()")
     def transform_xy(self, x, y):
-        return self._aux_transform.transform(np.column_stack([x, y])).T
+        return self._aux_transform.transform(mlxarr.column_stack([x, y])).T
 
     @_api.deprecated("3.11", alternative="grid_finder.get_transform().inverted()")
     def inv_transform_xy(self, x, y):
         return self._aux_transform.inverted().transform(
-            np.column_stack([x, y])).T
+            mlxarr.column_stack([x, y])).T
 
     def update(self, **kwargs):
         for k, v in kwargs.items():
@@ -280,7 +279,7 @@ class MaxNLocator(mticker.MaxNLocator):
 
     def __call__(self, v1, v2):
         locs = super().tick_values(v1, v2)
-        return np.array(locs), len(locs), 1  # 1: factor (see angle_helper)
+        return mlxarr.array(locs), len(locs), 1  # 1: factor (see angle_helper)
 
 
 class FixedLocator:
@@ -289,7 +288,7 @@ class FixedLocator:
 
     def __call__(self, v1, v2):
         v1, v2 = sorted([v1, v2])
-        locs = np.array([l for l in self._locs if v1 <= l <= v2])
+        locs = mlxarr.array([l for l in self._locs if v1 <= l <= v2])
         return locs, len(locs), 1  # 1: factor (see angle_helper)
 
 

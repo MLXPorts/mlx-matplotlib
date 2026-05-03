@@ -11,9 +11,7 @@ import gi
 
 gi.require_version('Gtk', '4.0')
 from gi.repository import Gtk
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.backends.backend_gtk4agg import FigureCanvasGTK4Agg as FigureCanvas
 from matplotlib.figure import Figure
 
@@ -25,8 +23,8 @@ def on_activate(app):
 
     fig = Figure(figsize=(5, 4), dpi=100)
     ax = fig.add_subplot()
-    t = np.arange(0.0, 3.0, 0.01)
-    s = np.sin(2*np.pi*t)
+    t = mlxarr.arange(0.0, 3.0, 0.01)
+    s = mlxarr.sin(2*mlxarr.pi*t)
     ax.plot(t, s)
 
     # A scrolled margin goes outside the scrollbars and viewport.

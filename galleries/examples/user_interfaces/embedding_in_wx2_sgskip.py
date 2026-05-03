@@ -9,9 +9,7 @@ toolbar - comment out the add_toolbar line for no toolbar.
 
 import wx
 import wx.lib.mixins.inspection as WIT
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wxagg import \
     NavigationToolbar2WxAgg as NavigationToolbar
@@ -24,8 +22,8 @@ class CanvasFrame(wx.Frame):
 
         self.figure = Figure()
         self.axes = self.figure.add_subplot()
-        t = np.arange(0.0, 3.0, 0.01)
-        s = np.sin(2 * np.pi * t)
+        t = mlxarr.arange(0.0, 3.0, 0.01)
+        s = mlxarr.sin(2 * mlxarr.pi * t)
 
         self.axes.plot(t, s)
         self.canvas = FigureCanvas(self, -1, self.figure)

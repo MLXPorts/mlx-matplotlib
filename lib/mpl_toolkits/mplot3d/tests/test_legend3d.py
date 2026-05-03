@@ -1,7 +1,5 @@
 import platform
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from matplotlib.colors import same_color
 from matplotlib.testing.decorators import image_comparison
@@ -12,7 +10,7 @@ from mpl_toolkits.mplot3d import art3d
 @image_comparison(['legend_plot.png'], remove_text=True, style='mpl20')
 def test_legend_plot():
     fig, ax = plt.subplots(subplot_kw=dict(projection='3d'))
-    x = np.arange(10)
+    x = mlxarr.arange(10)
     ax.plot(x, 5 - x, 'o', zdir='y', label='z=1')
     ax.plot(x, x - 5, 'o', zdir='y', label='z=-1')
     ax.legend()
@@ -21,7 +19,7 @@ def test_legend_plot():
 @image_comparison(['legend_bar.png'], remove_text=True, style='mpl20')
 def test_legend_bar():
     fig, ax = plt.subplots(subplot_kw=dict(projection='3d'))
-    x = np.arange(10)
+    x = mlxarr.arange(10)
     b1 = ax.bar(x, x, zdir='y', align='edge', color='m')
     b2 = ax.bar(x, x[::-1], zdir='x', align='edge', color='g')
     ax.legend([b1[0], b2[0]], ['up', 'down'])
@@ -31,9 +29,9 @@ def test_legend_bar():
                   tol=0 if platform.machine() == 'x86_64' else 0.011)
 def test_fancy():
     fig, ax = plt.subplots(subplot_kw=dict(projection='3d'))
-    ax.plot(np.arange(10), np.full(10, 5), np.full(10, 5), 'o--', label='line')
-    ax.scatter(np.arange(10), np.arange(10, 0, -1), label='scatter')
-    ax.errorbar(np.full(10, 5), np.arange(10), np.full(10, 10),
+    ax.plot(mlxarr.arange(10), mlxarr.full(10, 5), mlxarr.full(10, 5), 'o--', label='line')
+    ax.scatter(mlxarr.arange(10), mlxarr.arange(10, 0, -1), label='scatter')
+    ax.errorbar(mlxarr.full(10, 5), mlxarr.arange(10), mlxarr.full(10, 10),
                 xerr=0.5, zerr=0.5, label='errorbar')
     ax.legend(loc='lower left', ncols=2, title='My legend', numpoints=1)
 
@@ -68,7 +66,7 @@ def test_handlerline3d():
 
 
 def test_contour_legend_elements():
-    x, y = np.mgrid[1:10, 1:10]
+    x, y = mlxarr.mgrid[1:10, 1:10]
     h = x * y
     colors = ['blue', '#00FF00', 'red']
 
@@ -83,7 +81,7 @@ def test_contour_legend_elements():
 
 
 def test_contourf_legend_elements():
-    x, y = np.mgrid[1:10, 1:10]
+    x, y = mlxarr.mgrid[1:10, 1:10]
     h = x * y
 
     fig, ax = plt.subplots(subplot_kw=dict(projection='3d'))
@@ -105,7 +103,7 @@ def test_contourf_legend_elements():
 
 def test_legend_Poly3dCollection():
 
-    verts = np.asarray([[0, 0, 0], [0, 1, 1], [1, 0, 1]])
+    verts = mlxarr.asarray([[0, 0, 0], [0, 1, 1], [1, 0, 1]])
     mesh = art3d.Poly3DCollection([verts], label="surface")
 
     fig, ax = plt.subplots(subplot_kw={"projection": "3d"})

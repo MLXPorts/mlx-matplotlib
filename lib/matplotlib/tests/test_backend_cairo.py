@@ -1,5 +1,4 @@
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import pytest
 
 from matplotlib.testing.decorators import check_figures_equal
@@ -17,8 +16,8 @@ def test_patch_alpha_coloring(fig_test, fig_ref):
     star = mpath.Path.unit_regular_star(6)
     circle = mpath.Path.unit_circle()
     # concatenate the star with an internal cutout of the circle
-    verts = np.concatenate([circle.vertices, star.vertices[::-1]])
-    codes = np.concatenate([circle.codes, star.codes])
+    verts = mlxarr.concatenate([circle.vertices, star.vertices[::-1]])
+    codes = mlxarr.concatenate([circle.codes, star.codes])
     cut_star1 = mpath.Path(verts, codes)
     cut_star2 = mpath.Path(verts + 1, codes)
 

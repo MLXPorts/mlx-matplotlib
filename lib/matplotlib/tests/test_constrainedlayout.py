@@ -1,7 +1,6 @@
 import gc
 import platform
-
-import numpy as np
+from matplotlib import _mlx_array as mlxarr
 import pytest
 
 import matplotlib as mpl
@@ -30,9 +29,9 @@ def example_plot(ax, fontsize=12, nodec=False):
 
 def example_pcolor(ax, fontsize=12):
     dx, dy = 0.6, 0.6
-    y, x = np.mgrid[slice(-3, 3 + dy, dy),
+    y, x = mlxarr.mgrid[slice(-3, 3 + dy, dy),
                     slice(-3, 3 + dx, dx)]
-    z = (1 - x / 2. + x ** 5 + y ** 3) * np.exp(-x ** 2 - y ** 2)
+    z = (1 - x / 2. + x ** 5 + y ** 3) * mlxarr.exp(-x ** 2 - y ** 2)
     pcm = ax.pcolormesh(x, y, z[:-1, :-1], cmap='RdBu_r', vmin=-1., vmax=1.,
                         rasterized=True)
     ax.set_xlabel('x-label', fontsize=fontsize)
@@ -205,7 +204,7 @@ def test_constrained_layout10():
     """Test for handling legend outside axis"""
     fig, axs = plt.subplots(2, 2, layout="constrained")
     for ax in axs.flat:
-        ax.plot(np.arange(12), label='This is a label')
+        ax.plot(mlxarr.arange(12), label='This is a label')
     ax.legend(loc='center left', bbox_to_anchor=(0.8, 0.5))
 
 
@@ -353,8 +352,8 @@ def test_constrained_layout19():
 
 def test_constrained_layout20():
     """Smoke test cl does not mess up added Axes"""
-    gx = np.linspace(-5, 5, 4)
-    img = np.hypot(gx, gx[:, None])
+    gx = mlxarr.linspace(-5, 5, 4)
+    img = mlxarr.hypot(gx, gx[:, None])
 
     fig = plt.figure()
     ax = fig.add_axes((0, 0, 1, 1))
@@ -368,13 +367,13 @@ def test_constrained_layout21():
 
     fig.suptitle("Suptitle0")
     fig.draw_without_rendering()
-    extents0 = np.copy(ax.get_position().extents)
+    extents0 = mlxarr.copy(ax.get_position().extents)
 
     fig.suptitle("Suptitle1")
     fig.draw_without_rendering()
-    extents1 = np.copy(ax.get_position().extents)
+    extents1 = mlxarr.copy(ax.get_position().extents)
 
-    np.testing.assert_allclose(extents0, extents1)
+    mlxarr.testing.assert_allclose(extents0, extents1)
 
 
 def test_constrained_layout22():
@@ -382,13 +381,13 @@ def test_constrained_layout22():
     fig, ax = plt.subplots(layout="constrained")
 
     fig.draw_without_rendering()
-    extents0 = np.copy(ax.get_position().extents)
+    extents0 = mlxarr.copy(ax.get_position().extents)
 
     fig.suptitle("Suptitle", y=0.5)
     fig.draw_without_rendering()
-    extents1 = np.copy(ax.get_position().extents)
+    extents1 = mlxarr.copy(ax.get_position().extents)
 
-    np.testing.assert_allclose(extents0, extents1)
+    mlxarr.testing.assert_allclose(extents0, extents1)
 
 
 def test_constrained_layout23():
@@ -434,9 +433,9 @@ def test_hidden_axes():
     fig, axs = plt.subplots(2, 2, layout="constrained")
     axs[0, 1].set_visible(False)
     fig.draw_without_rendering()
-    extents1 = np.copy(axs[0, 0].get_position().extents)
+    extents1 = mlxarr.copy(axs[0, 0].get_position().extents)
 
-    np.testing.assert_allclose(
+    mlxarr.testing.assert_allclose(
         extents1, [0.046918, 0.541204, 0.477409, 0.980555], rtol=1e-5)
 
 
@@ -461,14 +460,14 @@ def test_colorbar_align():
 
         fig.draw_without_rendering()
         if location in ['left', 'right']:
-            np.testing.assert_allclose(cbs[0].ax.get_position().x0,
+            mlxarr.testing.assert_allclose(cbs[0].ax.get_position().x0,
                                        cbs[2].ax.get_position().x0)
-            np.testing.assert_allclose(cbs[1].ax.get_position().x0,
+            mlxarr.testing.assert_allclose(cbs[1].ax.get_position().x0,
                                        cbs[3].ax.get_position().x0)
         else:
-            np.testing.assert_allclose(cbs[0].ax.get_position().y0,
+            mlxarr.testing.assert_allclose(cbs[0].ax.get_position().y0,
                                        cbs[1].ax.get_position().y0)
-            np.testing.assert_allclose(cbs[2].ax.get_position().y0,
+            mlxarr.testing.assert_allclose(cbs[2].ax.get_position().y0,
                                        cbs[3].ax.get_position().y0)
 
 
@@ -501,15 +500,15 @@ def test_manually_set_position():
     axs[0].set_position([0.2, 0.2, 0.3, 0.3])
     fig.draw_without_rendering()
     pp = axs[0].get_position()
-    np.testing.assert_allclose(pp, [[0.2, 0.2], [0.5, 0.5]])
+    mlxarr.testing.assert_allclose(pp, [[0.2, 0.2], [0.5, 0.5]])
 
     fig, axs = plt.subplots(1, 2, layout="constrained")
     axs[0].set_position([0.2, 0.2, 0.3, 0.3])
-    pc = axs[0].pcolormesh(np.random.rand(20, 20))
+    pc = axs[0].pcolormesh(mlxarr.random.rand(20, 20))
     fig.colorbar(pc, ax=axs[0])
     fig.draw_without_rendering()
     pp = axs[0].get_position()
-    np.testing.assert_allclose(pp, [[0.2, 0.2], [0.44, 0.5]])
+    mlxarr.testing.assert_allclose(pp, [[0.2, 0.2], [0.44, 0.5]])
 
 
 @image_comparison(['test_bboxtight.png'],
@@ -557,7 +556,7 @@ def test_align_labels():
                    ax2.yaxis.label.get_window_extent(),
                    ax3.yaxis.label.get_window_extent()]
     # ensure labels are approximately aligned
-    np.testing.assert_allclose([after_align[0].x0, after_align[2].x0],
+    mlxarr.testing.assert_allclose([after_align[0].x0, after_align[2].x0],
                                after_align[1].x0, rtol=0, atol=1e-05)
     # ensure labels do not go off the edge
     assert after_align[0].x0 >= 1
@@ -637,31 +636,31 @@ def test_compressed1():
     fig, axs = plt.subplots(3, 2, layout='compressed',
                             sharex=True, sharey=True)
     for ax in axs.flat:
-        pc = ax.imshow(np.random.randn(20, 20))
+        pc = ax.imshow(mlxarr.random.randn(20, 20))
 
     fig.colorbar(pc, ax=axs)
     fig.draw_without_rendering()
 
     pos = axs[0, 0].get_position()
-    np.testing.assert_allclose(pos.x0, 0.2381, atol=1e-2)
+    mlxarr.testing.assert_allclose(pos.x0, 0.2381, atol=1e-2)
     pos = axs[0, 1].get_position()
-    np.testing.assert_allclose(pos.x1, 0.7024, atol=1e-3)
+    mlxarr.testing.assert_allclose(pos.x1, 0.7024, atol=1e-3)
 
     # wider than tall
     fig, axs = plt.subplots(2, 3, layout='compressed',
                             sharex=True, sharey=True, figsize=(5, 4))
     for ax in axs.flat:
-        pc = ax.imshow(np.random.randn(20, 20))
+        pc = ax.imshow(mlxarr.random.randn(20, 20))
 
     fig.colorbar(pc, ax=axs)
     fig.draw_without_rendering()
 
     pos = axs[0, 0].get_position()
-    np.testing.assert_allclose(pos.x0, 0.05653, atol=1e-3)
-    np.testing.assert_allclose(pos.y1, 0.8603, atol=1e-2)
+    mlxarr.testing.assert_allclose(pos.x0, 0.05653, atol=1e-3)
+    mlxarr.testing.assert_allclose(pos.y1, 0.8603, atol=1e-2)
     pos = axs[1, 2].get_position()
-    np.testing.assert_allclose(pos.x1, 0.8728, atol=1e-3)
-    np.testing.assert_allclose(pos.y0, 0.1808, atol=1e-2)
+    mlxarr.testing.assert_allclose(pos.x1, 0.8728, atol=1e-3)
+    mlxarr.testing.assert_allclose(pos.y0, 0.1808, atol=1e-2)
 
 
 def test_compressed_suptitle():
@@ -739,5 +738,5 @@ def test_submerged_subfig():
         f.add_subplot(gs[:, 1]).plot()
     fig.draw_without_rendering()
     for ax in axs[1:]:
-        assert np.allclose(ax.get_position().bounds[-1],
+        assert mlxarr.allclose(ax.get_position().bounds[-1],
                            axs[0].get_position().bounds[-1], atol=1e-6)

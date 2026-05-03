@@ -15,11 +15,10 @@ Enable picking on the legend to toggle the original line on and off
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-t = np.linspace(0, 1)
-y1 = 2 * np.sin(2 * np.pi * t)
-y2 = 4 * np.sin(2 * np.pi * 2 * t)
+from matplotlib import _mlx_array as mlxarr
+t = mlxarr.linspace(0, 1)
+y1 = 2 * mlxarr.sin(2 * mlxarr.pi * t)
+y2 = 4 * mlxarr.sin(2 * mlxarr.pi * 2 * t)
 
 fig, ax = plt.subplots()
 ax.set_title('Click on legend line to toggle line on/off')

@@ -1,16 +1,15 @@
 from matplotlib import _tri
 from matplotlib.tri._trifinder import TriFinder
-
-import numpy as np
-from numpy.typing import ArrayLike
+import matplotlib._mlx_array as mlxarr
+from matplotlib._mlx_typing import ArrayLike
 from typing import Any
 
 class Triangulation:
-    x: np.ndarray
-    y: np.ndarray
-    mask: np.ndarray | None
+    x: mlxarr.ndarray
+    y: mlxarr.ndarray
+    mask: mlxarr.ndarray | None
     is_delaunay: bool
-    triangles: np.ndarray
+    triangles: mlxarr.ndarray
     def __init__(
         self,
         x: ArrayLike,
@@ -18,16 +17,16 @@ class Triangulation:
         triangles: ArrayLike | None = ...,
         mask: ArrayLike | None = ...,
     ) -> None: ...
-    def calculate_plane_coefficients(self, z: ArrayLike) -> np.ndarray: ...
+    def calculate_plane_coefficients(self, z: ArrayLike) -> mlxarr.ndarray: ...
     @property
-    def edges(self) -> np.ndarray: ...
+    def edges(self) -> mlxarr.ndarray: ...
     def get_cpp_triangulation(self) -> _tri.Triangulation: ...
-    def get_masked_triangles(self) -> np.ndarray: ...
+    def get_masked_triangles(self) -> mlxarr.ndarray: ...
     @staticmethod
     def get_from_args_and_kwargs(
         *args, **kwargs
     ) -> tuple[Triangulation, tuple[Any, ...], dict[str, Any]]: ...
     def get_trifinder(self) -> TriFinder: ...
     @property
-    def neighbors(self) -> np.ndarray: ...
+    def neighbors(self) -> mlxarr.ndarray: ...
     def set_mask(self, mask: None | ArrayLike) -> None: ...

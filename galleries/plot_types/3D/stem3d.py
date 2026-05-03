@@ -6,15 +6,14 @@ stem(x, y, z)
 See `~mpl_toolkits.mplot3d.axes3d.Axes3D.stem`.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 plt.style.use('_mpl-gallery')
 
 # Make data
 n = 20
-x = np.sin(np.linspace(0, 2*np.pi, n))
-y = np.cos(np.linspace(0, 2*np.pi, n))
-z = np.linspace(0, 1, n)
+x = mlxarr.sin(mlxarr.linspace(0, 2*mlxarr.pi, n))
+y = mlxarr.cos(mlxarr.linspace(0, 2*mlxarr.pi, n))
+z = mlxarr.linspace(0, 1, n)
 
 # Plot
 fig, ax = plt.subplots(subplot_kw={"projection": "3d"})

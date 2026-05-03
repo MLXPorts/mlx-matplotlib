@@ -22,11 +22,10 @@ scale with error bars.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 # example data
-x = np.arange(0.1, 4, 0.5)
-y = np.exp(-x)
+x = mlxarr.arange(0.1, 4, 0.5)
+y = mlxarr.exp(-x)
 
 # example error bar values that vary with x-position
 error = 0.1 + 0.2 * x

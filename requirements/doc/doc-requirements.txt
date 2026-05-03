@@ -12,7 +12,6 @@ colorspacious
 ipython
 ipywidgets
 ipykernel
-numpydoc>=1.0
 packaging>=20
 mpl-sphinx-theme~=3.10.0
 pyyaml

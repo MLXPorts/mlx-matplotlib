@@ -196,7 +196,7 @@ in the perspective view.
     :include-source:
     :align: center
 
-    import numpy as np
+    from matplotlib import _mlx_array as mlxarr
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d import Axes3D
 
@@ -219,8 +219,8 @@ in the perspective view.
 data. Uses could include plotting a sparse 3D heat map, or visualizing a
 volumetric model.
 
-.. figure:: /gallery/mplot3d/images/sphx_glr_voxels_numpy_logo_001.png
-   :target: ../../gallery/mplot3d/voxels_numpy_logo.html
+.. figure:: /gallery/mplot3d/images/sphx_glr_voxels_array_backend_logo_001.png
+   :target: ../../gallery/mplot3d/voxels_array_backend_logo.html
    :align: center
    :scale: 70
 
@@ -434,15 +434,15 @@ to ``False``.
     :include-source:
     :align: center
 
-    import numpy as np
+    from matplotlib import _mlx_array as mlxarr
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d import Axes3D
 
-    x = np.arange(2)
-    y = np.arange(3)
-    x2d, y2d = np.meshgrid(x, y)
+    x = mlxarr.arange(2)
+    y = mlxarr.arange(3)
+    x2d, y2d = mlxarr.meshgrid(x, y)
     x, y = x2d.ravel(), y2d.ravel()
-    z = np.zeros_like(x)
+    z = mlxarr.zeros_like(x)
     dz = x + y
 
     fig = plt.figure(figsize=(4, 6))
@@ -519,7 +519,7 @@ path to a directory containing a :file:`matplotlibrc` file.
 
 The :meth:`~matplotlib.axes.Axes.hist` method now prefers ``density``
 to ``normed`` to control if the histogram should be normalized,
-following a change upstream to NumPy.  This will reduce confusion as
+following a change upstream to MLXArrayBackend.  This will reduce confusion as
 the behavior has always been that the integral of the histogram is 1
 (rather than sum or maximum value).
 

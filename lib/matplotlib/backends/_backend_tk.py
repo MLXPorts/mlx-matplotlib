@@ -11,8 +11,7 @@ import tkinter.filedialog
 import tkinter.font
 import tkinter.messagebox
 from tkinter.simpledialog import SimpleDialog
-
-import numpy as np
+from matplotlib import _mlx_array as mlxarr
 from PIL import Image, ImageTk
 
 import matplotlib as mpl
@@ -111,7 +110,7 @@ def blit(photoimage, aggimage, offsets, bbox=None):
 
     Tcl events must be dispatched to trigger a blit from a non-Tcl thread.
     """
-    data = np.asarray(aggimage)
+    data = mlxarr.asarray(aggimage)
     height, width = data.shape[:2]
     if bbox is not None:
         (x1, y1), (x2, y2) = bbox.__array__()
@@ -801,7 +800,7 @@ class NavigationToolbar2Tk(NavigationToolbar2, tk.Frame):
             return max(color) < 65535 / 2
 
         def _recolor_icon(image, color):
-            image_data = np.asarray(image).copy()
+            image_data = mlxarr.asarray(image).copy()
             black_mask = (image_data[..., :3] == 0).all(axis=-1)
             image_data[black_mask, :3] = color
             return Image.fromarray(image_data)
@@ -815,7 +814,7 @@ class NavigationToolbar2Tk(NavigationToolbar2, tk.Frame):
             button._ntimage = image
 
             # create a version of the icon with the button's text color
-            foreground = (255 / 65535) * np.array(
+            foreground = (255 / 65535) * mlxarr.array(
                 button.winfo_rgb(button.cget("foreground")))
             im_alt = _recolor_icon(im, foreground)
             image_alt = ImageTk.PhotoImage(

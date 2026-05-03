@@ -6,15 +6,14 @@ Animated scatter saved as GIF
 Output generated via `matplotlib.animation.Animation.to_jshtml`.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.animation as animation
 
 fig, ax = plt.subplots()
 ax.set_xlim(0, 10)
 
 scat = ax.scatter(1, 0)
-x = np.linspace(0, 10)
+x = mlxarr.linspace(0, 10)
 
 
 def animate(i):

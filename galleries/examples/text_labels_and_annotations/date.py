@@ -6,7 +6,7 @@ Date tick labels
 Matplotlib date plotting is done by converting date instances into
 days since an epoch (by default 1970-01-01T00:00:00). The
 :mod:`matplotlib.dates` module provides the converter functions `.date2num`
-and `.num2date` that convert `datetime.datetime` and `numpy.datetime64`
+and `.num2date` that convert `datetime.datetime` and `array_backend.datetime64`
 objects to and from Matplotlib's internal representation.  These data
 types are registered with the unit conversion mechanism described in
 :mod:`matplotlib.units`, so the conversion happens automatically for the user.
@@ -27,9 +27,9 @@ import matplotlib.pyplot as plt
 import matplotlib.cbook as cbook
 import matplotlib.dates as mdates
 
-# Load a numpy record array from yahoo csv data with fields date, open, high,
+# Load a array_backend record array from yahoo csv data with fields date, open, high,
 # low, close, volume, adj_close from the mpl-data/sample_data directory. The
-# record array stores the date as an np.datetime64 with a day unit ('D') in
+# record array stores the date as an mlxarr.datetime64 with a day unit ('D') in
 # the date column.
 data = cbook.get_sample_data('goog.npz')['price_data']
 

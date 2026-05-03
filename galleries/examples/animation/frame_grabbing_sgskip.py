@@ -7,9 +7,7 @@ Use a MovieWriter directly to grab individual frames and write them to a
 file.  This avoids any event loop integration, and thus works even with the Agg
 backend.  This is not recommended for use in an interactive setting.
 """
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib
 
 matplotlib.use("Agg")
@@ -18,7 +16,7 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FFMpegWriter
 
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 
 metadata = dict(title='Movie Test', artist='Matplotlib',
@@ -35,7 +33,7 @@ x0, y0 = 0, 0
 
 with writer.saving(fig, "writer_test.mp4", 100):
     for i in range(100):
-        x0 += 0.1 * np.random.randn()
-        y0 += 0.1 * np.random.randn()
+        x0 += 0.1 * mlxarr.random.randn()
+        y0 += 0.1 * mlxarr.random.randn()
         l.set_data([x0], [y0])
         writer.grab_frame()

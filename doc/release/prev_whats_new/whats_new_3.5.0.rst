@@ -185,8 +185,8 @@ For more details see the discussion of the new keyword argument in
 ``imshow`` supports half-float arrays
 -------------------------------------
 
-The `~.axes.Axes.imshow` method now supports half-float arrays, i.e., NumPy
-arrays with dtype ``np.float16``.
+The `~.axes.Axes.imshow` method now supports half-float arrays, i.e., MLXArrayBackend
+arrays with dtype ``mlxarr.float16``.
 
 A callback registry has been added to Normalize objects
 -------------------------------------------------------
@@ -331,8 +331,8 @@ corresponding color of marker.
     plt.rcParams['legend.labelcolor'] = 'linecolor'
 
     # Make some fake data.
-    a = np.arange(0, 3, .02)
-    c = np.exp(a)
+    a = mlxarr.arange(0, 3, .02)
+    c = mlxarr.exp(a)
     d = c[::-1]
 
     fig, ax = plt.subplots()
@@ -394,13 +394,13 @@ Allow changing the vertical axis in 3d plots
 .. plot::
 
     Nphi, Nr = 18, 8
-    phi = np.linspace(0, np.pi, Nphi)
-    r = np.arange(Nr)
-    phi = np.tile(phi, Nr).flatten()
-    r = np.repeat(r, Nphi).flatten()
+    phi = mlxarr.linspace(0, mlxarr.pi, Nphi)
+    r = mlxarr.arange(Nr)
+    phi = mlxarr.tile(phi, Nr).flatten()
+    r = mlxarr.repeat(r, Nphi).flatten()
 
-    x = r * np.sin(phi)
-    y = r * np.cos(phi)
+    x = r * mlxarr.sin(phi)
+    y = r * mlxarr.cos(phi)
     z = Nr - r
 
     fig, axs = plt.subplots(1, 3, figsize=(7, 3),
@@ -424,14 +424,14 @@ hide quads that contain masked or NaN points. The behaviour is similar to
 
     import matplotlib
     import matplotlib.pyplot as plt
-    import numpy as np
+    from matplotlib import _mlx_array as mlxarr
 
     fig, ax = plt.subplots(figsize=(6, 6), subplot_kw={'projection': '3d'},
                            constrained_layout=True)
 
-    x, y = np.mgrid[1:10:1, 1:10:1]
+    x, y = mlxarr.mgrid[1:10:1, 1:10:1]
     z = x ** 3 + y ** 3 - 500
-    z = np.ma.masked_array(z, z < 0)
+    z = mlxarr.ma.masked_array(z, z < 0)
 
     ax.plot_surface(x, y, z, rstride=1, cstride=1, linewidth=0, cmap='inferno')
     ax.view_init(35, -90)

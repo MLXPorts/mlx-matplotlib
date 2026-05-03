@@ -18,9 +18,7 @@ waitforbuttonpress and manual clabel placement.
 import time
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-
+from matplotlib import _mlx_array as mlxarr
 def tellme(s):
     print(s)
     plt.title(s, fontsize=16)
@@ -42,7 +40,7 @@ while True:
     pts = []
     while len(pts) < 3:
         tellme('Select 3 corners with mouse')
-        pts = np.asarray(plt.ginput(3, timeout=-1))
+        pts = mlxarr.asarray(plt.ginput(3, timeout=-1))
         if len(pts) < 3:
             tellme('Too few points, starting over')
             time.sleep(1)  # Wait a second
@@ -65,13 +63,13 @@ while True:
 
 # Define a nice function of distance from individual pts
 def f(x, y, pts):
-    z = np.zeros_like(x)
+    z = mlxarr.zeros_like(x)
     for p in pts:
-        z = z + 1/(np.sqrt((x - p[0])**2 + (y - p[1])**2))
+        z = z + 1/(mlxarr.sqrt((x - p[0])**2 + (y - p[1])**2))
     return 1/z
 
 
-X, Y = np.meshgrid(np.linspace(-1, 1, 51), np.linspace(-1, 1, 51))
+X, Y = mlxarr.meshgrid(mlxarr.linspace(-1, 1, 51), mlxarr.linspace(-1, 1, 51))
 Z = f(X, Y, pts)
 
 CS = plt.contour(X, Y, Z, 20)

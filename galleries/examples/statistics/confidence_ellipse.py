@@ -18,8 +18,7 @@ pearson correlation coefficients and ones) is particularly easy to handle.
 
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.patches import Ellipse
 import matplotlib.transforms as transforms
 
@@ -64,24 +63,24 @@ def confidence_ellipse(x, y, ax, n_std=3.0, facecolor='none', **kwargs):
     if x.size != y.size:
         raise ValueError("x and y must be the same size")
 
-    cov = np.cov(x, y)
-    pearson = cov[0, 1]/np.sqrt(cov[0, 0] * cov[1, 1])
+    cov = mlxarr.cov(x, y)
+    pearson = cov[0, 1]/mlxarr.sqrt(cov[0, 0] * cov[1, 1])
     # Using a special case to obtain the eigenvalues of this
     # two-dimensional dataset.
-    ell_radius_x = np.sqrt(1 + pearson)
-    ell_radius_y = np.sqrt(1 - pearson)
+    ell_radius_x = mlxarr.sqrt(1 + pearson)
+    ell_radius_y = mlxarr.sqrt(1 - pearson)
     ellipse = Ellipse((0, 0), width=ell_radius_x * 2, height=ell_radius_y * 2,
                       facecolor=facecolor, **kwargs)
 
     # Calculating the standard deviation of x from
     # the squareroot of the variance and multiplying
     # with the given number of standard deviations.
-    scale_x = np.sqrt(cov[0, 0]) * n_std
-    mean_x = np.mean(x)
+    scale_x = mlxarr.sqrt(cov[0, 0]) * n_std
+    mean_x = mlxarr.mean(x)
 
     # calculating the standard deviation of y ...
-    scale_y = np.sqrt(cov[1, 1]) * n_std
-    mean_y = np.mean(y)
+    scale_y = mlxarr.sqrt(cov[1, 1]) * n_std
+    mean_y = mlxarr.mean(y)
 
     transf = transforms.Affine2D() \
         .rotate_deg(45) \
@@ -103,7 +102,7 @@ def confidence_ellipse(x, y, ax, n_std=3.0, facecolor='none', **kwargs):
 # a 2x2 matrix.
 
 def get_correlated_dataset(n, dependency, mu, scale):
-    latent = np.random.randn(n, 2)
+    latent = mlxarr.random.randn(n, 2)
     dependent = latent.dot(dependency)
     scaled = dependent * scale
     scaled_with_offset = scaled + mu
@@ -122,7 +121,7 @@ def get_correlated_dataset(n, dependency, mu, scale):
 # the axes of the ellipse being aligned with the x- and y-axis
 # of the coordinate system.
 
-np.random.seed(0)
+mlxarr.random.seed(0)
 
 PARAMETERS = {
     'Positive correlation': [[0.85, 0.35],

@@ -7,17 +7,16 @@ Demonstrates a very basic plot of a 3D surface using a solid color.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 fig = plt.figure()
 ax = fig.add_subplot(projection='3d')
 
 # Make data
-u = np.linspace(0, 2 * np.pi, 100)
-v = np.linspace(0, np.pi, 100)
-x = 10 * np.outer(np.cos(u), np.sin(v))
-y = 10 * np.outer(np.sin(u), np.sin(v))
-z = 10 * np.outer(np.ones(np.size(u)), np.cos(v))
+u = mlxarr.linspace(0, 2 * mlxarr.pi, 100)
+v = mlxarr.linspace(0, mlxarr.pi, 100)
+x = 10 * mlxarr.outer(mlxarr.cos(u), mlxarr.sin(v))
+y = 10 * mlxarr.outer(mlxarr.sin(u), mlxarr.sin(v))
+z = 10 * mlxarr.outer(mlxarr.ones(mlxarr.size(u)), mlxarr.cos(v))
 
 # Plot the surface
 ax.plot_surface(x, y, z)

@@ -19,12 +19,11 @@ in two different units).
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 # Create some mock data
-t = np.arange(0.01, 10.0, 0.01)
-data1 = np.exp(t)
-data2 = np.sin(2 * np.pi * t)
+t = mlxarr.arange(0.01, 10.0, 0.01)
+data1 = mlxarr.exp(t)
+data2 = mlxarr.sin(2 * mlxarr.pi * t)
 
 fig, ax1 = plt.subplots()
 

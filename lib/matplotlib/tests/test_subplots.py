@@ -1,7 +1,6 @@
 import itertools
 import platform
-
-import numpy as np
+from matplotlib import _mlx_array as mlxarr
 import pytest
 
 import matplotlib as mpl
@@ -60,14 +59,14 @@ def check_tick1_visible(axs, x_visible, y_visible):
 def test_shared():
     rdim = (4, 4, 2)
     share = {
-            'all': np.ones(rdim[:2], dtype=bool),
-            'none': np.zeros(rdim[:2], dtype=bool),
-            'row': np.array([
+            'all': mlxarr.ones(rdim[:2], dtype=bool),
+            'none': mlxarr.zeros(rdim[:2], dtype=bool),
+            'row': mlxarr.array([
                 [False, True, False, False],
                 [True, False, False, False],
                 [False, False, False, True],
                 [False, False, True, False]]),
-            'col': np.array([
+            'col': mlxarr.array([
                 [False, False, True, False],
                 [False, False, False, True],
                 [True, False, False, False],
@@ -183,8 +182,8 @@ def test_exceptions():
 @image_comparison(['subplots_offset_text.png'],
                   tol=0 if platform.machine() == 'x86_64' else 0.028)
 def test_subplots_offsettext():
-    x = np.arange(0, 1e10, 1e9)
-    y = np.arange(0, 100, 10)+1e4
+    x = mlxarr.arange(0, 1e10, 1e9)
+    y = mlxarr.arange(0, 100, 10)+1e4
     fig, axs = plt.subplots(2, 2, sharex='col', sharey='all')
     axs[0, 0].plot(x, x)
     axs[1, 0].plot(x, x)
@@ -203,7 +202,7 @@ def test_subplots_hide_ticklabels(top, bottom, left, right):
     with plt.rc_context({"xtick.labeltop": top, "xtick.labelbottom": bottom,
                          "ytick.labelleft": left, "ytick.labelright": right}):
         axs = plt.figure().subplots(3, 3, sharex=True, sharey=True)
-    for (i, j), ax in np.ndenumerate(axs):
+    for (i, j), ax in mlxarr.ndenumerate(axs):
         xtop = ax.xaxis._major_tick_kw["label2On"]
         xbottom = ax.xaxis._major_tick_kw["label1On"]
         yleft = ax.yaxis._major_tick_kw["label1On"]
@@ -218,7 +217,7 @@ def test_subplots_hide_ticklabels(top, bottom, left, right):
 @pytest.mark.parametrize("ylabel_position", ["left", "right"])
 def test_subplots_hide_axislabels(xlabel_position, ylabel_position):
     axs = plt.figure().subplots(3, 3, sharex=True, sharey=True)
-    for (i, j), ax in np.ndenumerate(axs):
+    for (i, j), ax in mlxarr.ndenumerate(axs):
         ax.set(xlabel="foo", ylabel="bar")
         ax.xaxis.set_label_position(xlabel_position)
         ax.yaxis.set_label_position(ylabel_position)

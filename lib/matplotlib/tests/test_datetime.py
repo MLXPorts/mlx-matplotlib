@@ -1,6 +1,5 @@
 import datetime
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import pytest
 
 import matplotlib.pyplot as plt
@@ -40,12 +39,12 @@ class TestDatetimePlotting:
         fig, (ax1, ax2, ax3) = plt.subplots(3, 1, layout='constrained')
         ax1.set_ylim(bottom=datetime.datetime(2020, 4, 1),
                      top=datetime.datetime(2020, 8, 1))
-        ax2.set_ylim(bottom=np.datetime64('2005-01-01'),
-                     top=np.datetime64('2005-04-01'))
+        ax2.set_ylim(bottom=mlxarr.datetime64('2005-01-01'),
+                     top=mlxarr.datetime64('2005-04-01'))
         ax3.set_ylim(bottom=datetime.datetime(2023, 9, 1),
                      top=datetime.datetime(2023, 11, 1))
         ax1.axhline(y=datetime.datetime(2020, 6, 3), xmin=0.5, xmax=0.7)
-        ax2.axhline(np.datetime64('2005-02-25T03:30'), xmin=0.1, xmax=0.9)
+        ax2.axhline(mlxarr.datetime64('2005-02-25T03:30'), xmin=0.1, xmax=0.9)
         ax3.axhline(y=datetime.datetime(2023, 10, 24), xmin=0.4, xmax=0.7)
 
     @mpl.style.context("default")
@@ -97,12 +96,12 @@ class TestDatetimePlotting:
         fig, (ax1, ax2, ax3) = plt.subplots(3, 1, layout='constrained')
         ax1.set_xlim(left=datetime.datetime(2020, 4, 1),
                      right=datetime.datetime(2020, 8, 1))
-        ax2.set_xlim(left=np.datetime64('2005-01-01'),
-                     right=np.datetime64('2005-04-01'))
+        ax2.set_xlim(left=mlxarr.datetime64('2005-01-01'),
+                     right=mlxarr.datetime64('2005-04-01'))
         ax3.set_xlim(left=datetime.datetime(2023, 9, 1),
                      right=datetime.datetime(2023, 11, 1))
         ax1.axvline(x=datetime.datetime(2020, 6, 3), ymin=0.5, ymax=0.7)
-        ax2.axvline(np.datetime64('2005-02-25T03:30'), ymin=0.1, ymax=0.9)
+        ax2.axvline(mlxarr.datetime64('2005-02-25T03:30'), ymin=0.1, ymax=0.9)
         ax3.axvline(x=datetime.datetime(2023, 10, 24), ymin=0.4, ymax=0.7)
 
     @mpl.style.context("default")
@@ -148,20 +147,20 @@ class TestDatetimePlotting:
 
         fig, (ax1, ax2) = plt.subplots(2, 1, layout="constrained")
 
-        x_dates = np.array(
+        x_dates = mlxarr.array(
             [
                 datetime.datetime(2020, 6, 30),
                 datetime.datetime(2020, 7, 22),
                 datetime.datetime(2020, 8, 3),
                 datetime.datetime(2020, 9, 14),
             ],
-            dtype=np.datetime64,
+            dtype=mlxarr.datetime64,
         )
         x_ranges = [8800, 2600, 8500, 7400]
 
-        x = np.datetime64(datetime.datetime(2020, 6, 1))
-        ax1.bar(x_dates, x_ranges, width=np.timedelta64(4, "D"))
-        ax2.bar(np.arange(4), x_dates - x, bottom=x)
+        x = mlxarr.datetime64(datetime.datetime(2020, 6, 1))
+        ax1.bar(x_dates, x_ranges, width=mlxarr.timedelta64(4, "D"))
+        ax2.bar(mlxarr.arange(4), x_dates - x, bottom=x)
 
     @mpl.style.context("default")
     def test_bar_label(self):
@@ -185,10 +184,10 @@ class TestDatetimePlotting:
         start_date = datetime.datetime(2022, 2, 8, 22)
         dates = [start_date + datetime.timedelta(hours=i) for i in range(12)]
 
-        numbers = np.sin(np.linspace(0, 2 * np.pi, 12))
+        numbers = mlxarr.sin(mlxarr.linspace(0, 2 * mlxarr.pi, 12))
 
-        u = np.ones(12) * 10
-        v = np.arange(0, 120, 10)
+        u = mlxarr.ones(12) * 10
+        v = mlxarr.arange(0, 120, 10)
 
         fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(12, 6))
 
@@ -206,7 +205,7 @@ class TestDatetimePlotting:
     def test_barh(self):
         mpl.rcParams["date.converter"] = 'concise'
         fig, (ax1, ax2) = plt.subplots(2, 1, layout='constrained')
-        birth_date = np.array([datetime.datetime(2020, 4, 10),
+        birth_date = mlxarr.array([datetime.datetime(2020, 4, 10),
                                datetime.datetime(2020, 5, 30),
                                datetime.datetime(2020, 10, 12),
                                datetime.datetime(2020, 11, 15)])
@@ -219,7 +218,7 @@ class TestDatetimePlotting:
         ax2.set_xlim(left=year_start, right=year_end)
         ax2.set_xlabel('Birth Date')
         ax2.set_ylabel('Order of Birth Dates')
-        ax2.barh(np.arange(4), birth_date-year_start, left=year_start)
+        ax2.barh(mlxarr.arange(4), birth_date-year_start, left=year_start)
 
     @pytest.mark.xfail(reason="Test for boxplot not written yet")
     @mpl.style.context("default")
@@ -271,19 +270,19 @@ class TestDatetimePlotting:
         range_threshold = 10
         fig, (ax1, ax2, ax3) = plt.subplots(3, 1, layout="constrained")
 
-        x_dates = np.array(
+        x_dates = mlxarr.array(
             [datetime.datetime(2023, 10, delta) for delta in range(1, range_threshold)]
         )
-        y_dates = np.array(
+        y_dates = mlxarr.array(
             [datetime.datetime(2023, 10, delta) for delta in range(1, range_threshold)]
         )
-        x_ranges = np.array(range(1, range_threshold))
-        y_ranges = np.array(range(1, range_threshold))
+        x_ranges = mlxarr.array(range(1, range_threshold))
+        y_ranges = mlxarr.array(range(1, range_threshold))
 
-        X_dates, Y_dates = np.meshgrid(x_dates, y_dates)
-        X_ranges, Y_ranges = np.meshgrid(x_ranges, y_ranges)
+        X_dates, Y_dates = mlxarr.meshgrid(x_dates, y_dates)
+        X_ranges, Y_ranges = mlxarr.meshgrid(x_ranges, y_ranges)
 
-        Z_ranges = np.cos(X_ranges / 4) + np.sin(Y_ranges / 4)
+        Z_ranges = mlxarr.cos(X_ranges / 4) + mlxarr.sin(Y_ranges / 4)
 
         ax1.contour(X_dates, Y_dates, Z_ranges)
         ax2.contour(X_dates, Y_ranges, Z_ranges)
@@ -295,19 +294,19 @@ class TestDatetimePlotting:
         range_threshold = 10
         fig, (ax1, ax2, ax3) = plt.subplots(3, 1, layout="constrained")
 
-        x_dates = np.array(
+        x_dates = mlxarr.array(
             [datetime.datetime(2023, 10, delta) for delta in range(1, range_threshold)]
         )
-        y_dates = np.array(
+        y_dates = mlxarr.array(
             [datetime.datetime(2023, 10, delta) for delta in range(1, range_threshold)]
         )
-        x_ranges = np.array(range(1, range_threshold))
-        y_ranges = np.array(range(1, range_threshold))
+        x_ranges = mlxarr.array(range(1, range_threshold))
+        y_ranges = mlxarr.array(range(1, range_threshold))
 
-        X_dates, Y_dates = np.meshgrid(x_dates, y_dates)
-        X_ranges, Y_ranges = np.meshgrid(x_ranges, y_ranges)
+        X_dates, Y_dates = mlxarr.meshgrid(x_dates, y_dates)
+        X_ranges, Y_ranges = mlxarr.meshgrid(x_ranges, y_ranges)
 
-        Z_ranges = np.cos(X_ranges / 4) + np.sin(Y_ranges / 4)
+        Z_ranges = mlxarr.cos(X_ranges / 4) + mlxarr.sin(Y_ranges / 4)
 
         ax1.contourf(X_dates, Y_dates, Z_ranges)
         ax2.contourf(X_dates, Y_ranges, Z_ranges)
@@ -320,8 +319,8 @@ class TestDatetimePlotting:
         limit = 7
         start_date = datetime.datetime(2023, 1, 1)
 
-        x_dates = np.array([datetime.datetime(2023, 10, d) for d in range(1, limit)])
-        y_dates = np.array([datetime.datetime(2023, 10, d) for d in range(1, limit)])
+        x_dates = mlxarr.array([datetime.datetime(2023, 10, d) for d in range(1, limit)])
+        y_dates = mlxarr.array([datetime.datetime(2023, 10, d) for d in range(1, limit)])
         x_date_error = datetime.timedelta(days=1)
         y_date_error = datetime.timedelta(days=1)
 
@@ -354,27 +353,27 @@ class TestDatetimePlotting:
 
         fig, (ax1, ax2, ax3) = plt.subplots(3, 1, layout="constrained")
 
-        x_dates1 = np.array([datetime.datetime(2020, 6, 30),
+        x_dates1 = mlxarr.array([datetime.datetime(2020, 6, 30),
                              datetime.datetime(2020, 7, 22),
                              datetime.datetime(2020, 8, 3),
                              datetime.datetime(2020, 9, 14),],
-                            dtype=np.datetime64,
+                            dtype=mlxarr.datetime64,
                             )
 
         ax1.eventplot(x_dates1)
 
-        np.random.seed(19680801)
+        mlxarr.random.seed(19680801)
 
         start_date = datetime.datetime(2020, 7, 1)
         end_date = datetime.datetime(2020, 10, 15)
         date_range = end_date - start_date
 
-        dates1 = start_date + np.random.rand(30) * date_range
-        dates2 = start_date + np.random.rand(10) * date_range
-        dates3 = start_date + np.random.rand(50) * date_range
+        dates1 = start_date + mlxarr.random.rand(30) * date_range
+        dates2 = start_date + mlxarr.random.rand(10) * date_range
+        dates3 = start_date + mlxarr.random.rand(50) * date_range
 
         colors1 = ['C1', 'C2', 'C3']
-        lineoffsets1 = np.array([1, 6, 8])
+        lineoffsets1 = mlxarr.array([1, 6, 8])
         linelengths1 = [5, 2, 3]
 
         ax2.eventplot([dates1, dates2, dates3],
@@ -382,11 +381,11 @@ class TestDatetimePlotting:
                       lineoffsets=lineoffsets1,
                       linelengths=linelengths1)
 
-        lineoffsets2 = np.array([
+        lineoffsets2 = mlxarr.array([
             datetime.datetime(2020, 7, 1),
             datetime.datetime(2020, 7, 15),
             datetime.datetime(2020, 8, 1)
-        ], dtype=np.datetime64)
+        ], dtype=mlxarr.datetime64)
 
         ax3.eventplot([dates1, dates2, dates3],
                       colors=colors1,
@@ -398,22 +397,22 @@ class TestDatetimePlotting:
         mpl.rcParams["date.converter"] = "concise"
         fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, layout="constrained")
 
-        np.random.seed(19680801)
+        mlxarr.random.seed(19680801)
 
         x_base_date = datetime.datetime(2023, 1, 1)
         x_dates = [x_base_date]
         for _ in range(1, 5):
-            x_base_date += datetime.timedelta(days=np.random.randint(1, 5))
+            x_base_date += datetime.timedelta(days=mlxarr.random.randint(1, 5))
             x_dates.append(x_base_date)
 
         y_base_date = datetime.datetime(2023, 1, 1)
         y_dates = [y_base_date]
         for _ in range(1, 5):
-            y_base_date += datetime.timedelta(days=np.random.randint(1, 5))
+            y_base_date += datetime.timedelta(days=mlxarr.random.randint(1, 5))
             y_dates.append(y_base_date)
 
-        x_values = np.random.rand(5) * 5
-        y_values = np.random.rand(5) * 5 - 2
+        x_values = mlxarr.random.rand(5) * 5
+        y_values = mlxarr.random.rand(5) * 5 - 2
 
         ax1.fill(x_dates, y_values)
         ax2.fill(x_values, y_dates)
@@ -423,30 +422,30 @@ class TestDatetimePlotting:
     @mpl.style.context("default")
     def test_fill_between(self):
         mpl.rcParams["date.converter"] = "concise"
-        np.random.seed(19680801)
+        mlxarr.random.seed(19680801)
 
         y_base_date = datetime.datetime(2023, 1, 1)
         y_dates1 = [y_base_date]
         for i in range(1, 10):
-            y_base_date += datetime.timedelta(days=np.random.randint(1, 5))
+            y_base_date += datetime.timedelta(days=mlxarr.random.randint(1, 5))
             y_dates1.append(y_base_date)
 
         y_dates2 = [y_base_date]
         for i in range(1, 10):
-            y_base_date += datetime.timedelta(days=np.random.randint(1, 5))
+            y_base_date += datetime.timedelta(days=mlxarr.random.randint(1, 5))
             y_dates2.append(y_base_date)
-        x_values = np.random.rand(10) * 10
+        x_values = mlxarr.random.rand(10) * 10
         x_values.sort()
 
-        y_values1 = np.random.rand(10) * 10
-        y_values2 = y_values1 + np.random.rand(10) * 10
+        y_values1 = mlxarr.random.rand(10) * 10
+        y_values2 = y_values1 + mlxarr.random.rand(10) * 10
         y_values1.sort()
         y_values2.sort()
 
         x_base_date = datetime.datetime(2023, 1, 1)
         x_dates = [x_base_date]
         for i in range(1, 10):
-            x_base_date += datetime.timedelta(days=np.random.randint(1, 10))
+            x_base_date += datetime.timedelta(days=mlxarr.random.randint(1, 10))
             x_dates.append(x_base_date)
 
         fig, (ax1, ax2, ax3) = plt.subplots(3, 1, layout="constrained")
@@ -458,30 +457,30 @@ class TestDatetimePlotting:
     @mpl.style.context("default")
     def test_fill_betweenx(self):
         mpl.rcParams["date.converter"] = "concise"
-        np.random.seed(19680801)
+        mlxarr.random.seed(19680801)
 
         x_base_date = datetime.datetime(2023, 1, 1)
         x_dates1 = [x_base_date]
         for i in range(1, 10):
-            x_base_date += datetime.timedelta(days=np.random.randint(1, 5))
+            x_base_date += datetime.timedelta(days=mlxarr.random.randint(1, 5))
             x_dates1.append(x_base_date)
 
         x_dates2 = [x_base_date]
         for i in range(1, 10):
-            x_base_date += datetime.timedelta(days=np.random.randint(1, 5))
+            x_base_date += datetime.timedelta(days=mlxarr.random.randint(1, 5))
             x_dates2.append(x_base_date)
-        y_values = np.random.rand(10) * 10
+        y_values = mlxarr.random.rand(10) * 10
         y_values.sort()
 
-        x_values1 = np.random.rand(10) * 10
-        x_values2 = x_values1 + np.random.rand(10) * 10
+        x_values1 = mlxarr.random.rand(10) * 10
+        x_values2 = x_values1 + mlxarr.random.rand(10) * 10
         x_values1.sort()
         x_values2.sort()
 
         y_base_date = datetime.datetime(2023, 1, 1)
         y_dates = [y_base_date]
         for i in range(1, 10):
-            y_base_date += datetime.timedelta(days=np.random.randint(1, 10))
+            y_base_date += datetime.timedelta(days=mlxarr.random.randint(1, 10))
             y_dates.append(y_base_date)
 
         fig, (ax1, ax2, ax3) = plt.subplots(1, 3, layout="constrained")
@@ -503,9 +502,9 @@ class TestDatetimePlotting:
         start_date = datetime.datetime(2023, 10, 1)
         time_delta = datetime.timedelta(days=1)
 
-        values1 = np.random.randint(1, 10, 30)
-        values2 = np.random.randint(1, 10, 30)
-        values3 = np.random.randint(1, 10, 30)
+        values1 = mlxarr.random.randint(1, 10, 30)
+        values2 = mlxarr.random.randint(1, 10, 30)
+        values3 = mlxarr.random.randint(1, 10, 30)
 
         bin_edges = [start_date + i * time_delta for i in range(31)]
 
@@ -561,7 +560,7 @@ class TestDatetimePlotting:
         dates = [datetime.datetime(2023, m*2, 10) for m in range(1, 6)]
         date_start = [datetime.datetime(2023, 6, d) for d in range(5, 30, 5)]
         date_end = [datetime.datetime(2023, 7, d) for d in range(5, 30, 5)]
-        npDates = [np.datetime64(s) for s in dateStrs]
+        npDates = [mlxarr.datetime64(s) for s in dateStrs]
         axs[0, 0].hlines(y=dates,
                          xmin=[0.1, 0.2, 0.3, 0.4, 0.5],
                          xmax=[0.5, 0.6, 0.7, 0.8, 0.9])
@@ -590,7 +589,7 @@ class TestDatetimePlotting:
     @mpl.style.context("default")
     def test_imshow(self):
         fig, ax = plt.subplots()
-        a = np.diag(range(5))
+        a = mlxarr.diag(range(5))
         dt_start = datetime.datetime(2010, 11, 1)
         dt_end = datetime.datetime(2010, 11, 11)
         extent = (dt_start, dt_end, dt_start, dt_end)
@@ -605,7 +604,7 @@ class TestDatetimePlotting:
 
     @mpl.style.context("default")
     def test_matshow(self):
-        a = np.diag(range(5))
+        a = mlxarr.diag(range(5))
         dt_start = datetime.datetime(1980, 4, 15)
         dt_end = datetime.datetime(2020, 11, 11)
         extent = (dt_start, dt_end, dt_start, dt_end)
@@ -637,7 +636,7 @@ class TestDatetimePlotting:
         mpl.rcParams["date.converter"] = 'concise'
         N = 6
         fig, (ax1, ax2, ax3) = plt.subplots(3, 1, layout='constrained')
-        x = np.array([datetime.datetime(2023, 9, n) for n in range(1, N)])
+        x = mlxarr.array([datetime.datetime(2023, 9, n) for n in range(1, N)])
         ax1.plot(x, range(1, N))
         ax2.plot(range(1, N), x)
         ax3.plot(x, x)
@@ -654,8 +653,8 @@ class TestDatetimePlotting:
         base = datetime.datetime(2005, 2, 1)
         dates = [base + datetime.timedelta(hours=(2 * i)) for i in range(10)]
         N = len(dates)
-        np.random.seed(19680801)
-        y = np.cumsum(np.random.randn(N))
+        mlxarr.random.seed(19680801)
+        y = mlxarr.cumsum(mlxarr.random.randn(N))
         fig, axs = plt.subplots(3, 1, layout='constrained', figsize=(6, 6))
         # datetime array on x axis
         axs[0].scatter(dates, y)
@@ -686,8 +685,8 @@ class TestDatetimePlotting:
     def test_stackplot(self):
         mpl.rcParams["date.converter"] = 'concise'
         N = 10
-        stacked_nums = np.tile(np.arange(1, N), (4, 1))
-        dates = np.array([datetime.datetime(2020 + i, 1, 1) for i in range(N - 1)])
+        stacked_nums = mlxarr.tile(mlxarr.arange(1, N), (4, 1))
+        dates = mlxarr.array([datetime.datetime(2020 + i, 1, 1) for i in range(N - 1)])
 
         fig, ax = plt.subplots(layout='constrained')
         ax.stackplot(dates, stacked_nums)
@@ -701,13 +700,13 @@ class TestDatetimePlotting:
         baseline_date = datetime.datetime(1980, 1, 1)
 
         bin_edges = [start_date + i * time_delta for i in range(31)]
-        edge_int = np.arange(31)
-        np.random.seed(123456)
-        values1 = np.random.randint(1, 100, 30)
+        edge_int = mlxarr.arange(31)
+        mlxarr.random.seed(123456)
+        values1 = mlxarr.random.randint(1, 100, 30)
         values2 = [start_date + datetime.timedelta(days=int(i))
-                   for i in np.random.randint(1, 10000, 30)]
+                   for i in mlxarr.random.randint(1, 10000, 30)]
         values3 = [start_date + datetime.timedelta(days=int(i))
-                   for i in np.random.randint(-10000, 10000, 30)]
+                   for i in mlxarr.random.randint(-10000, 10000, 30)]
 
         fig, (ax1, ax2, ax3) = plt.subplots(3, 1, constrained_layout=True)
         ax1.stairs(values1, edges=bin_edges)
@@ -724,13 +723,13 @@ class TestDatetimePlotting:
         above = datetime.datetime(2023, 9, 18)
         below = datetime.datetime(2023, 11, 18)
 
-        x_ranges = np.arange(1, limit_value)
-        y_ranges = np.arange(1, limit_value)
+        x_ranges = mlxarr.arange(1, limit_value)
+        y_ranges = mlxarr.arange(1, limit_value)
 
-        x_dates = np.array(
+        x_dates = mlxarr.array(
             [datetime.datetime(2023, 10, n) for n in range(1, limit_value)]
         )
-        y_dates = np.array(
+        y_dates = mlxarr.array(
             [datetime.datetime(2023, 10, n) for n in range(1, limit_value)]
         )
 
@@ -747,7 +746,7 @@ class TestDatetimePlotting:
         mpl.rcParams["date.converter"] = "concise"
         N = 6
         fig, (ax1, ax2, ax3) = plt.subplots(3, 1, layout='constrained')
-        x = np.array([datetime.datetime(2023, 9, n) for n in range(1, N)])
+        x = mlxarr.array([datetime.datetime(2023, 9, n) for n in range(1, N)])
         ax1.step(x, range(1, N))
         ax2.step(range(1, N), x)
         ax3.step(x, x)
@@ -767,13 +766,13 @@ class TestDatetimePlotting:
         font_properties = {'family': 'serif', 'size': 12, 'weight': 'bold'}
         test_date = datetime.datetime(2023, 10, 1)
 
-        x_data = np.array(range(1, limit_value))
-        y_data = np.array(range(1, limit_value))
+        x_data = mlxarr.array(range(1, limit_value))
+        y_data = mlxarr.array(range(1, limit_value))
 
-        x_dates = np.array(
+        x_dates = mlxarr.array(
             [datetime.datetime(2023, 10, n) for n in range(1, limit_value)]
         )
-        y_dates = np.array(
+        y_dates = mlxarr.array(
             [datetime.datetime(2023, 10, n) for n in range(1, limit_value)]
         )
 
@@ -857,8 +856,8 @@ class TestDatetimePlotting:
         ax2.set_xlim(left=0,
                      right=0.5)
         ax2.vlines(x=[0.3, 0.35],
-                   ymin=[np.datetime64('2023-03-20'), np.datetime64('2023-03-31')],
-                   ymax=[np.datetime64('2023-05-01'), np.datetime64('2023-05-16')])
+                   ymin=[mlxarr.datetime64('2023-03-20'), mlxarr.datetime64('2023-03-31')],
+                   ymax=[mlxarr.datetime64('2023-05-01'), mlxarr.datetime64('2023-05-16')])
         ax3.set_xlim(left=datetime.datetime(2023, 7, 1),
                      right=datetime.datetime(2023, 12, 31))
         ax3.vlines(x=[datetime.datetime(2023, 9, 1), datetime.datetime(2023, 12, 10)],

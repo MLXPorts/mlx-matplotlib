@@ -9,8 +9,7 @@ their ends.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 fig, ax = plt.subplots()
 # Move the left and bottom spines to x = 0 and y = 0, respectively.
 ax.spines[["left", "bottom"]].set_position(("data", 0))
@@ -26,7 +25,7 @@ ax.plot(1, 0, ">k", transform=ax.get_yaxis_transform(), clip_on=False)
 ax.plot(0, 1, "^k", transform=ax.get_xaxis_transform(), clip_on=False)
 
 # Some sample data.
-x = np.linspace(-0.5, 1., 100)
-ax.plot(x, np.sin(x*np.pi))
+x = mlxarr.linspace(-0.5, 1., 100)
+ax.plot(x, mlxarr.sin(x*mlxarr.pi))
 
 plt.show()

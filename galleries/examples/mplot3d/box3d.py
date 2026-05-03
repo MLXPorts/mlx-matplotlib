@@ -12,11 +12,10 @@ parameters *zdir* and *offset*.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 # Define dimensions
 Nx, Ny, Nz = 100, 300, 500
-X, Y, Z = np.meshgrid(np.arange(Nx), np.arange(Ny), -np.arange(Nz))
+X, Y, Z = mlxarr.meshgrid(mlxarr.arange(Nx), mlxarr.arange(Ny), -mlxarr.arange(Nz))
 
 # Create fake data
 data = (((X+100)**2 + (Y-20)**2 + 2*Z)/1000+1)
@@ -24,7 +23,7 @@ data = (((X+100)**2 + (Y-20)**2 + 2*Z)/1000+1)
 kw = {
     'vmin': data.min(),
     'vmax': data.max(),
-    'levels': np.linspace(data.min(), data.max(), 10),
+    'levels': mlxarr.linspace(data.min(), data.max(), 10),
 }
 
 # Create a figure with 3D ax

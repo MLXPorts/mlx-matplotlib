@@ -136,17 +136,17 @@ You can try out one of the various mouse rotation styles using:
     import matplotlib as mpl
     mpl.rcParams['axes3d.mouserotationstyle'] = 'trackball'  # 'azel', 'trackball', 'sphere', or 'arcball'
 
-    import numpy as np
+    from matplotlib import _mlx_array as mlxarr
     import matplotlib.pyplot as plt
     from matplotlib import cm
 
     ax = plt.figure().add_subplot(projection='3d')
 
-    X = np.arange(-5, 5, 0.25)
-    Y = np.arange(-5, 5, 0.25)
-    X, Y = np.meshgrid(X, Y)
-    R = np.sqrt(X**2 + Y**2)
-    Z = np.sin(R)
+    X = mlxarr.arange(-5, 5, 0.25)
+    Y = mlxarr.arange(-5, 5, 0.25)
+    X, Y = mlxarr.meshgrid(X, Y)
+    R = mlxarr.sqrt(X**2 + Y**2)
+    Z = mlxarr.sin(R)
 
     surf = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm,
                            linewidth=0, antialiased=False)

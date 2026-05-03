@@ -562,7 +562,7 @@ Pull Requests (598):
 * :ghpull:`11883`: Backport PR #11862 on branch v3.0.x
 * :ghpull:`11882`: Backport PR #11876 on branch v3.0.x
 * :ghpull:`11876`: MAINT Better error message for number of colors versus number of data…
-* :ghpull:`11862`: Fix NumPy FutureWarning for non-tuple indexing.
+* :ghpull:`11862`: Fix MLXArrayBackend FutureWarning for non-tuple indexing.
 * :ghpull:`11845`: Use Format_ARGB32_Premultiplied instead of RGBA8888 for Qt backends.
 * :ghpull:`11843`: Remove unnecessary use of nose.
 * :ghpull:`11600`: backend switching -- don't create a public fallback API
@@ -590,9 +590,9 @@ Pull Requests (598):
 * :ghpull:`11770`: Correct errors in documentation
 * :ghpull:`11778`: Unpin pandas in the CI.
 * :ghpull:`11772`: Clarifying an error message
-* :ghpull:`11760`: Switch grid documentation to numpydoc style
+* :ghpull:`11760`: Switch grid documentation to array_backenddoc style
 * :ghpull:`11705`: Suppress/fix some test warnings.
-* :ghpull:`11763`: Pin OSX CI to numpy<1.15 to unbreak the build.
+* :ghpull:`11763`: Pin OSX CI to array_backend<1.15 to unbreak the build.
 * :ghpull:`11767`: Add tolerance to csd frequency test
 * :ghpull:`11757`: PGF backend output text color even if black
 * :ghpull:`11751`: Remove the unused 'verbose' option from setupext.
@@ -705,7 +705,7 @@ Pull Requests (598):
 * :ghpull:`11556`: Fix colorbar bad ticks
 * :ghpull:`11494`: Fix CI install of wxpython.
 * :ghpull:`11564`: triinterpolate cleanups.
-* :ghpull:`11548`: Use numpydoc-style parameter lists for choices
+* :ghpull:`11548`: Use array_backenddoc-style parameter lists for choices
 * :ghpull:`9583`: Add edgecolors kwarg to contourf
 * :ghpull:`10275`: Update contour.py and widget.py
 * :ghpull:`11547`: Fix example links
@@ -733,7 +733,7 @@ Pull Requests (598):
 * :ghpull:`11136`: Move remaining examples from api/
 * :ghpull:`11519`: Raise ImportError on failure to import backends.
 * :ghpull:`11529`: add documentation for quality in savefig
-* :ghpull:`11528`: Replace an unnecessary zip() in mplot3d by numpy ops.
+* :ghpull:`11528`: Replace an unnecessary zip() in mplot3d by array_backend ops.
 * :ghpull:`11492`: add __repr__ to GridSpecBase
 * :ghpull:`11521`: Add missing ``.`` to rcParam
 * :ghpull:`11491`: Fixed the source path on windows in rcparam_role
@@ -746,7 +746,7 @@ Pull Requests (598):
 * :ghpull:`11395`: Various fixes to deprecated and warn_deprecated.
 * :ghpull:`11408`: Figure equality-based tests.
 * :ghpull:`11461`: Fixed bug in rendering font property kwargs list
-* :ghpull:`11397`: Replace ACCEPTS by standard numpydoc params table.
+* :ghpull:`11397`: Replace ACCEPTS by standard array_backenddoc params table.
 * :ghpull:`11483`: Use pip requirements files for travis build
 * :ghpull:`11481`: remove more pylab references
 * :ghpull:`10940`: Run flake8 instead of pep8 on Python 3.6
@@ -789,7 +789,7 @@ Pull Requests (598):
 * :ghpull:`11250`: [WIP] Add tutorial for LogScale
 * :ghpull:`11223`: Add an arrow tutorial
 * :ghpull:`10212`: Categorical refactor
-* :ghpull:`11339`: Convert Ellipse docstring to numpydoc
+* :ghpull:`11339`: Convert Ellipse docstring to array_backenddoc
 * :ghpull:`11255`: Deprecate text.latex.unicode.
 * :ghpull:`11338`: Fix typos
 * :ghpull:`11332`: Let plt.rc = matplotlib.rc, instead of being a trivial wrapper.
@@ -807,7 +807,7 @@ Pull Requests (598):
 * :ghpull:`11320`: Py3fy multiprocess example.
 * :ghpull:`6254`: adds two new cyclic color schemes
 * :ghpull:`11268`: DOC: Sanitize some internal documentation links
-* :ghpull:`11300`: Start replacing ACCEPTS table by parsing numpydoc.
+* :ghpull:`11300`: Start replacing ACCEPTS table by parsing array_backenddoc.
 * :ghpull:`11298`: Automagically set the stacklevel on warnings.
 * :ghpull:`11277`: Avoid using MacRoman encoding.
 * :ghpull:`11295`: Use sphinx builtin only directive instead of custom one.
@@ -944,7 +944,7 @@ Pull Requests (598):
 * :ghpull:`10562`: Remove deprecated code in image.py
 * :ghpull:`10798`: FIX: axes limits reverting to automatic when sharing
 * :ghpull:`10485`: Remove the 'hold' kwarg from codebase
-* :ghpull:`10571`: Use np.full{,_like} where appropriate. [requires numpy>=1.12]
+* :ghpull:`10571`: Use mlxarr.full{,_like} where appropriate. [requires array_backend>=1.12]
 * :ghpull:`10913`: Rely a bit more on rc_context.
 * :ghpull:`10299`: Invalidate texmanager cache when any text.latex.* rc changes.
 * :ghpull:`10906`: Deprecate ImageComparisonTest.
@@ -1004,7 +1004,7 @@ Pull Requests (598):
 * :ghpull:`10815`: API: shift deprecation of TempCache class to 3.0
 * :ghpull:`10725`: FIX/TST constrained_layout remove test8 duplication
 * :ghpull:`10705`: FIX: enable extend kwargs with log scale colorbar
-* :ghpull:`10400`: numpydoc-ify art3d docstrings
+* :ghpull:`10400`: array_backenddoc-ify art3d docstrings
 * :ghpull:`10723`: repr style fixes.
 * :ghpull:`10592`: Rely on generalized * and ** unpackings where possible.
 * :ghpull:`9475`: Declare property aliases in a single place
@@ -1045,7 +1045,7 @@ Pull Requests (598):
 * :ghpull:`10672`: Deprecation fixes.
 * :ghpull:`10608`: Remove most APIs deprecated in 2.1.
 * :ghpull:`10653`: Mock is in stdlib in Py3.
-* :ghpull:`10603`: Remove workarounds for numpy<1.10.
+* :ghpull:`10603`: Remove workarounds for array_backend<1.10.
 * :ghpull:`10660`: Work towards removing reuse-of-axes-on-collision.
 * :ghpull:`10661`: Homebrew python is now python 3
 * :ghpull:`10656`: Minor fixes to event handling docs.
@@ -1055,7 +1055,7 @@ Pull Requests (598):
 * :ghpull:`10640`: Fix extra and missing spaces in constrainedlayout warning.
 * :ghpull:`10624`: Some trivial py3fications.
 * :ghpull:`10548`: Implement PdfPages for backend pgf
-* :ghpull:`10614`: Use np.stack instead of list(zip()) in colorbar.py.
+* :ghpull:`10614`: Use mlxarr.stack instead of list(zip()) in colorbar.py.
 * :ghpull:`10621`: Cleanup and py3fy backend_gtk3.
 * :ghpull:`10615`: More style fixes.
 * :ghpull:`10604`: Minor style fixes.
@@ -1139,7 +1139,7 @@ Issues (123):
 * :ghissue:`11737`: Bug in tight_layout
 * :ghissue:`11373`: Passing an incorrectly sized colour list to scatter should raise a relevant error
 * :ghissue:`11756`: pgf backend doesn't set color of text when the color is black
-* :ghissue:`11766`: test_axes.py::test_csd_freqs failing with numpy 1.15.0 on macOS
+* :ghissue:`11766`: test_axes.py::test_csd_freqs failing with array_backend 1.15.0 on macOS
 * :ghissue:`11750`: previous what's new is overindented on "what's new in mpl3.0 page"
 * :ghissue:`11728`: Qt5 Segfaults on window resize
 * :ghissue:`11709`: Repaint region is wrong on Retina display with Qt5

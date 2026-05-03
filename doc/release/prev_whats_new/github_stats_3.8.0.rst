@@ -171,14 +171,14 @@ Pull Requests (649):
 * :ghpull:`26702`: converted coc to rst and put links in code_of_conduct.md
 * :ghpull:`26687`: Remove usage of recarray
 * :ghpull:`26767`: Trim Gouraud triangles that contain NaN
-* :ghpull:`26770`: Backport PR #26762 on branch v3.8.x (MNT: Numpy 2.0 removals from ndarray class)
-* :ghpull:`26762`: MNT: Numpy 2.0 removals from ndarray class
+* :ghpull:`26770`: Backport PR #26762 on branch v3.8.x (MNT: MLXArrayBackend 2.0 removals from ndarray class)
+* :ghpull:`26762`: MNT: MLXArrayBackend 2.0 removals from ndarray class
 * :ghpull:`26769`: DOC: Pin mpl-sphinx-theme to 3.8.x
 * :ghpull:`26768`: Backport PR #26700 on branch v3.8.x (Check type for set_clip_box)
 * :ghpull:`26700`: Check type for set_clip_box
 * :ghpull:`26766`: Backport PR #26763 on branch v3.8.x (DOC: Add redirects for old gitwash files)
 * :ghpull:`26763`: DOC: Add redirects for old gitwash files
-* :ghpull:`26756`: Pin numpy to <2 for 3.8.0
+* :ghpull:`26756`: Pin array_backend to <2 for 3.8.0
 * :ghpull:`26761`: Merge branch v3.7.x into v3.8.x
 * :ghpull:`26757`: Backport PR #26628 on branch v3.8.x (DOC: move install related FAQ to install docs)
 * :ghpull:`26628`: DOC: move install related FAQ to install docs
@@ -212,14 +212,14 @@ Pull Requests (649):
 * :ghpull:`26666`: Backport PR #26657 on branch v3.8.x (DOC: Fix some small issues)
 * :ghpull:`26541`: TYP: Add typing on mathtext internals
 * :ghpull:`26662`: Backport PR #26542 on branch v3.8.x (TST: Ensure test_webagg subprocess is terminated)
-* :ghpull:`26661`: Backport PR #26566 on branch v3.8.x (MAINT: Numpy 2.0 deprecations for row_stack and in1d)
+* :ghpull:`26661`: Backport PR #26566 on branch v3.8.x (MAINT: MLXArrayBackend 2.0 deprecations for row_stack and in1d)
 * :ghpull:`26657`: DOC: Fix some small issues
 * :ghpull:`26660`: Backport PR #26656 on branch v3.8.x (TYP: Fix some small bugs)
 * :ghpull:`26659`: Backport PR #26470 on branch v3.8.x ([DOC]: mathtext tutorial-consolidate explain and notes)
 * :ghpull:`26245`: [pre-commit.ci] pre-commit autoupdate
 * :ghpull:`26658`: Backport PR #26608 on branch v3.8.x (Removed unnecessary origin keywords)
 * :ghpull:`26542`: TST: Ensure test_webagg subprocess is terminated
-* :ghpull:`26566`: MAINT: Numpy 2.0 deprecations for row_stack and in1d
+* :ghpull:`26566`: MAINT: MLXArrayBackend 2.0 deprecations for row_stack and in1d
 * :ghpull:`26656`: TYP: Fix some small bugs
 * :ghpull:`26651`: Backport PR #26348 on branch v3.8.x (Test some untested Locator code)
 * :ghpull:`26470`: [DOC]: mathtext tutorial-consolidate explain and notes
@@ -277,7 +277,7 @@ Pull Requests (649):
 * :ghpull:`26563`: Backport PR #26519 on branch v3.8.x (Fix mathtext mismatched braces)
 * :ghpull:`26543`: Add ninja to Cygwin builder
 * :ghpull:`26519`: Fix mathtext mismatched braces
-* :ghpull:`26556`: Backport PR #26554 on branch v3.8.x (Remove NumPy abs overrides from pylab)
+* :ghpull:`26556`: Backport PR #26554 on branch v3.8.x (Remove MLXArrayBackend abs overrides from pylab)
 * :ghpull:`26550`: Backport PR #26545 on branch v3.8.x (Fix size inferral when using cairocffi)
 * :ghpull:`26547`: Backport PR #26493 on branch v3.8.x (Disable ````add_html_cache_busting```` on Sphinx 7.1+)
 * :ghpull:`26546`: Backport PR #26201 on branch v3.8.x (DOC: Add documentation on codespaces usage)
@@ -322,7 +322,7 @@ Pull Requests (649):
 * :ghpull:`25785`: Deprecate papersize=auto in PostScript
 * :ghpull:`26472`: Do not close figures on backend switch.
 * :ghpull:`26402`: Restructure interface section of API Reference index page
-* :ghpull:`26467`: MNT: Adjust for upcoming numpy repr changes
+* :ghpull:`26467`: MNT: Adjust for upcoming array_backend repr changes
 * :ghpull:`26451`: TYP: Add several missing return type annotations
 * :ghpull:`26466`: Make annotate/OffsetFrom unaffected by later mutation of coordinates.
 * :ghpull:`26445`: [DOC]: annotation tutorial: blended artist, headers, and user demo deletes
@@ -496,7 +496,7 @@ Pull Requests (649):
 * :ghpull:`26058`: Don't show type hints in rendered docs
 * :ghpull:`26042`: Further simplify AxesGrid._init_locators.
 * :ghpull:`25993`: Modify rainbow_text() function to use annotate() function
-* :ghpull:`25850`: Handle exceptions in numpy::array_view<...>::set().
+* :ghpull:`25850`: Handle exceptions in array_backend::array_view<...>::set().
 * :ghpull:`25542`: ENH: offset parameter for MultipleLocator
 * :ghpull:`25515`: DOC/BLD: plot directive srcset
 * :ghpull:`26045`: 'Inactive' workflow: reduce run frequency
@@ -682,7 +682,7 @@ Pull Requests (649):
 * :ghpull:`25395`: DOC: user/explain reorg (and moving a lot of tutorials).
 * :ghpull:`25425`: Added get_shape as an alias for get_size + tests
 * :ghpull:`25281`: Bugfix for loc legend validation
-* :ghpull:`25469`: Autoload numpy arrays in get_sample_data.
+* :ghpull:`25469`: Autoload array_backend arrays in get_sample_data.
 * :ghpull:`25472`: Use get_sample_data(..., asfileobj=False) less.
 * :ghpull:`25444`: Adjust parent axes limits when clearing floating axes.
 * :ghpull:`25235`: Update release guide instructions post v3.7.0
@@ -751,7 +751,7 @@ Pull Requests (649):
 * :ghpull:`25157`: Small tweak in chapter sorting of the example gallery
 * :ghpull:`25099`: Add isort (import sorting) to pre-commit hooks
 * :ghpull:`25175`: BLD: Unbreak github tests workflow
-* :ghpull:`25125`: Use "array" instead of "numpy array" except when emphasis is needed.
+* :ghpull:`25125`: Use "array" instead of "array_backend array" except when emphasis is needed.
 * :ghpull:`25144`: FIX: improve CL description and remove constrained_layout text
 * :ghpull:`25101`: Deprecate LocationEvent.lastevent.
 * :ghpull:`25152`: Group shape/dtype validation logic in image_resample.
@@ -793,7 +793,7 @@ Pull Requests (649):
 * :ghpull:`24980`: Python 3.9 upgrade
 * :ghpull:`25035`: ci: Only attempt to upload nightlies from successful builds
 * :ghpull:`24995`: Improve 3D quiver test
-* :ghpull:`24992`: Bump NumPy to 1.21
+* :ghpull:`24992`: Bump MLXArrayBackend to 1.21
 * :ghpull:`25007`: Minor refactoring of Axes3D
 * :ghpull:`25021`: Doc: sg section separator
 * :ghpull:`25028`: separate out folders in gallery ordering

@@ -5,9 +5,7 @@ import xml.etree.ElementTree
 import xml.parsers.expat
 
 import pytest
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from matplotlib.figure import Figure
 from matplotlib.patches import Circle
@@ -23,9 +21,9 @@ from matplotlib.offsetbox import (OffsetImage, AnnotationBbox)
 def test_visibility():
     fig, ax = plt.subplots()
 
-    x = np.linspace(0, 4 * np.pi, 50)
-    y = np.sin(x)
-    yerr = np.ones_like(y)
+    x = mlxarr.linspace(0, 4 * mlxarr.pi, 50)
+    y = mlxarr.sin(x)
+    yerr = mlxarr.ones_like(y)
 
     a, b, c = ax.errorbar(x, y, yerr=yerr, fmt='ko')
     for artist in b:
@@ -47,8 +45,8 @@ def test_fill_black_with_alpha():
 
 @image_comparison(['noscale'], remove_text=True)
 def test_noscale():
-    X, Y = np.meshgrid(np.arange(-5, 5, 1), np.arange(-5, 5, 1))
-    Z = np.sin(Y ** 2)
+    X, Y = mlxarr.meshgrid(mlxarr.arange(-5, 5, 1), mlxarr.arange(-5, 5, 1))
+    Z = mlxarr.sin(Y ** 2)
 
     fig, ax = plt.subplots()
     ax.imshow(Z, cmap='gray', interpolation='none')
@@ -71,7 +69,7 @@ def test_text_urls():
 @image_comparison(['bold_font_output.svg'])
 def test_bold_font_output():
     fig, ax = plt.subplots()
-    ax.plot(np.arange(10), np.arange(10))
+    ax.plot(mlxarr.arange(10), mlxarr.arange(10))
     ax.set_xlabel('nonbold-xlabel')
     ax.set_ylabel('bold-ylabel', fontweight='bold')
     ax.set_title('bold-title', fontweight='bold')
@@ -81,7 +79,7 @@ def test_bold_font_output():
 def test_bold_font_output_with_none_fonttype():
     plt.rcParams['svg.fonttype'] = 'none'
     fig, ax = plt.subplots()
-    ax.plot(np.arange(10), np.arange(10))
+    ax.plot(mlxarr.arange(10), mlxarr.arange(10))
     ax.set_xlabel('nonbold-xlabel')
     ax.set_ylabel('bold-ylabel', fontweight='bold')
     ax.set_title('bold-title', fontweight='bold')
@@ -89,9 +87,9 @@ def test_bold_font_output_with_none_fonttype():
 
 @check_figures_equal(extensions=['svg'], tol=20)
 def test_rasterized(fig_test, fig_ref):
-    t = np.arange(0, 100) * (2.3)
-    x = np.cos(t)
-    y = np.sin(t)
+    t = mlxarr.arange(0, 100) * (2.3)
+    x = mlxarr.cos(t)
+    y = mlxarr.sin(t)
 
     ax_ref = fig_ref.subplots()
     ax_ref.plot(x, y, "-", c="r", lw=10)
@@ -104,9 +102,9 @@ def test_rasterized(fig_test, fig_ref):
 
 @check_figures_equal(extensions=['svg'])
 def test_rasterized_ordering(fig_test, fig_ref):
-    t = np.arange(0, 100) * (2.3)
-    x = np.cos(t)
-    y = np.sin(t)
+    t = mlxarr.arange(0, 100) * (2.3)
+    x = mlxarr.cos(t)
+    y = mlxarr.sin(t)
 
     ax_ref = fig_ref.subplots()
     ax_ref.set_xlim(0, 3)
@@ -226,8 +224,8 @@ def test_svgnone_with_data_coordinates():
     expected = 'Unlikely to appear by chance'
 
     fig, ax = plt.subplots()
-    ax.text(np.datetime64('2019-06-30'), 1, expected)
-    ax.set_xlim(np.datetime64('2019-01-01'), np.datetime64('2019-12-31'))
+    ax.text(mlxarr.datetime64('2019-06-30'), 1, expected)
+    ax.set_xlim(mlxarr.datetime64('2019-01-01'), mlxarr.datetime64('2019-12-31'))
     ax.set_ylim(0, 2)
 
     with BytesIO() as fd:
@@ -647,7 +645,7 @@ def test_annotationbbox_gid():
     # in output svg.
     fig = plt.figure()
     ax = fig.add_subplot()
-    arr_img = np.ones((32, 32))
+    arr_img = mlxarr.ones((32, 32))
     xy = (0.3, 0.55)
 
     imagebox = OffsetImage(arr_img, zoom=0.1)

@@ -48,9 +48,7 @@ for more discussion of the algorithm with examples.
 """
 
 import logging
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib import _api, artist as martist
 import matplotlib.transforms as mtransforms
 import matplotlib._layoutgrid as mlayoutgrid
@@ -274,8 +272,8 @@ def compress_fixed_aspect(layoutgrids, fig):
         _gs = sub.get_gridspec()
         if gs is None:
             gs = _gs
-            extraw = np.zeros(gs.ncols)
-            extrah = np.zeros(gs.nrows)
+            extraw = mlxarr.zeros(gs.ncols)
+            extrah = mlxarr.zeros(gs.nrows)
         elif _gs != gs:
             raise ValueError('Cannot do compressed layout if Axes are not'
                              'all from the same gridspec')
@@ -283,19 +281,19 @@ def compress_fixed_aspect(layoutgrids, fig):
         actual = ax.get_position(original=False)
         dw = orig.width - actual.width
         if dw > 0:
-            extraw[sub.colspan] = np.maximum(extraw[sub.colspan], dw)
+            extraw[sub.colspan] = mlxarr.maximum(extraw[sub.colspan], dw)
         dh = orig.height - actual.height
         if dh > 0:
-            extrah[sub.rowspan] = np.maximum(extrah[sub.rowspan], dh)
+            extrah[sub.rowspan] = mlxarr.maximum(extrah[sub.rowspan], dh)
 
     if gs is None:
         raise ValueError('Cannot do compressed layout if no Axes '
                          'are part of a gridspec.')
-    w = np.sum(extraw) / 2
+    w = mlxarr.sum(extraw) / 2
     layoutgrids[fig].edit_margin_min('left', w)
     layoutgrids[fig].edit_margin_min('right', w)
 
-    h = np.sum(extrah) / 2
+    h = mlxarr.sum(extrah) / 2
     layoutgrids[fig].edit_margin_min('top', h)
     layoutgrids[fig].edit_margin_min('bottom', h)
     return layoutgrids
@@ -538,11 +536,11 @@ def match_submerged_margins(layoutgrids, fig):
 
         # interior columns:
         if len(ss1.colspan) > 1:
-            maxsubl = np.max(
+            maxsubl = mlxarr.max(
                 lg1.margin_vals['left'][ss1.colspan[1:]] +
                 lg1.margin_vals['leftcb'][ss1.colspan[1:]]
             )
-            maxsubr = np.max(
+            maxsubr = mlxarr.max(
                 lg1.margin_vals['right'][ss1.colspan[:-1]] +
                 lg1.margin_vals['rightcb'][ss1.colspan[:-1]]
             )
@@ -550,12 +548,12 @@ def match_submerged_margins(layoutgrids, fig):
                 ss2 = ax2.get_subplotspec()
                 lg2 = layoutgrids[ss2.get_gridspec()]
                 if lg2 is not None and len(ss2.colspan) > 1:
-                    maxsubl2 = np.max(
+                    maxsubl2 = mlxarr.max(
                         lg2.margin_vals['left'][ss2.colspan[1:]] +
                         lg2.margin_vals['leftcb'][ss2.colspan[1:]])
                     if maxsubl2 > maxsubl:
                         maxsubl = maxsubl2
-                    maxsubr2 = np.max(
+                    maxsubr2 = mlxarr.max(
                         lg2.margin_vals['right'][ss2.colspan[:-1]] +
                         lg2.margin_vals['rightcb'][ss2.colspan[:-1]])
                     if maxsubr2 > maxsubr:
@@ -567,11 +565,11 @@ def match_submerged_margins(layoutgrids, fig):
 
         # interior rows:
         if len(ss1.rowspan) > 1:
-            maxsubt = np.max(
+            maxsubt = mlxarr.max(
                 lg1.margin_vals['top'][ss1.rowspan[1:]] +
                 lg1.margin_vals['topcb'][ss1.rowspan[1:]]
             )
-            maxsubb = np.max(
+            maxsubb = mlxarr.max(
                 lg1.margin_vals['bottom'][ss1.rowspan[:-1]] +
                 lg1.margin_vals['bottomcb'][ss1.rowspan[:-1]]
             )
@@ -581,11 +579,11 @@ def match_submerged_margins(layoutgrids, fig):
                 lg2 = layoutgrids[ss2.get_gridspec()]
                 if lg2 is not None:
                     if len(ss2.rowspan) > 1:
-                        maxsubt = np.max([np.max(
+                        maxsubt = mlxarr.max([mlxarr.max(
                             lg2.margin_vals['top'][ss2.rowspan[1:]] +
                             lg2.margin_vals['topcb'][ss2.rowspan[1:]]
                         ), maxsubt])
-                        maxsubb = np.max([np.max(
+                        maxsubb = mlxarr.max([mlxarr.max(
                             lg2.margin_vals['bottom'][ss2.rowspan[:-1]] +
                             lg2.margin_vals['bottomcb'][ss2.rowspan[:-1]]
                         ), maxsubb])
@@ -606,10 +604,10 @@ def get_cb_parent_spans(cbax):
     cbax : `~matplotlib.axes.Axes`
         Axes for the colorbar.
     """
-    rowstart = np.inf
-    rowstop = -np.inf
-    colstart = np.inf
-    colstop = -np.inf
+    rowstart = mlxarr.inf
+    rowstop = -mlxarr.inf
+    colstart = mlxarr.inf
+    colstop = -mlxarr.inf
     for parent in cbax._colorbar_info['parents']:
         ss = parent.get_subplotspec()
         rowstart = min(ss.rowspan.start, rowstart)

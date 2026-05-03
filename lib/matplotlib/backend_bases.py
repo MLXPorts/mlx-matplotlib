@@ -42,9 +42,7 @@ import sys
 import time
 import weakref
 from weakref import WeakKeyDictionary
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from matplotlib import (
     _api, backend_tools as tools, cbook, colors, _docstring, text,
@@ -273,7 +271,7 @@ class RendererBase:
 
         if edgecolors is None:
             edgecolors = facecolors
-        linewidths = np.array([gc.get_linewidth()], float)
+        linewidths = mlxarr.array([gc.get_linewidth()], float)
 
         return self.draw_path_collection(
             gc, master_transform, paths, [], offsets, offsetTrans, facecolors,
@@ -404,7 +402,7 @@ class RendererBase:
 
         for pathid, (xo, yo), fc, ec, hc, lw, ls, aa, url in itertools.islice(
                 zip(pathids, toffsets, fcs, ecs, hcs, lws, lss, aas, urls), N):
-            if not (np.isfinite(xo) and np.isfinite(yo)):
+            if not (mlxarr.isfinite(xo) and mlxarr.isfinite(yo)):
                 continue
             if Nedgecolors:
                 if Nlinewidths:
@@ -450,7 +448,7 @@ class RendererBase:
             The distance in physical units (i.e., dots or pixels) from the
             bottom side of the canvas.
 
-        im : (N, M, 4) array of `numpy.uint8`
+        im : (N, M, 4) array of `array_backend.uint8`
             An array of RGBA pixels.
 
         transform : `~matplotlib.transforms.Affine2DBase`
@@ -769,12 +767,27 @@ class GraphicsContextBase:
         """
         if self._clippath is not None:
             tpath, tr = self._clippath.get_transformed_path_and_affine()
-            if np.all(np.isfinite(tpath.vertices)):
+            if mlxarr.all(mlxarr.isfinite(tpath.vertices)):
                 return tpath, tr
             else:
                 _log.warning("Ill-defined clip_path detected. Returning None.")
                 return None, None
         return None, None
+
+    def get_clip_path_agg(self):
+        path, transform = self.get_clip_path()
+        if path is None:
+            return None
+        if hasattr(transform, "get_matrix"):
+            transform = transform.get_matrix()
+        elif hasattr(transform, "get_affine"):
+            transform = transform.get_affine().get_matrix()
+        return path, transforms._as_float_memoryview(transform)
+
+    def get_clip_rectangle_agg(self):
+        if self._cliprect is None:
+            return None
+        return transforms._as_float_memoryview(self._cliprect.get_points())
 
     def get_dashes(self):
         """
@@ -887,11 +900,11 @@ class GraphicsContextBase:
         for more info.
         """
         if dash_list is not None:
-            dl = np.asarray(dash_list)
-            if np.any(dl < 0.0):
+            dl = mlxarr.asarray(dash_list)
+            if mlxarr.any(dl < 0.0):
                 raise ValueError(
                     "All values in the dash list must be non-negative")
-            if dl.size and not np.any(dl > 0.0):
+            if dl.size and not mlxarr.any(dl > 0.0):
                 raise ValueError(
                     'At least one value in the dash list must be positive')
         self._dashes = dash_offset, dash_list
@@ -1465,7 +1478,7 @@ class PickEvent(Event):
     Bind a function ``on_pick()`` to pick events, that prints the coordinates
     of the picked data point::
 
-        ax.plot(np.rand(100), 'o', picker=5)  # 5 points tolerance
+        ax.plot(mlxarr.rand(100), 'o', picker=5)  # 5 points tolerance
 
         def on_pick(event):
             line = event.artist
@@ -2395,7 +2408,7 @@ class FigureCanvasBase:
         Interactive backends should implement this in a more native way.
         """
         if timeout <= 0:
-            timeout = np.inf
+            timeout = mlxarr.inf
         timestep = 0.01
         counter = 0
         self._looping = True
@@ -3013,7 +3026,7 @@ class NavigationToolbar2:
         thread).
         """
         self._draw_time, last_draw_time = (
-            time.time(), getattr(self, "_draw_time", -np.inf))
+            time.time(), getattr(self, "_draw_time", -mlxarr.inf))
         if self._draw_time - last_draw_time > 1:
             try:
                 self.canvas.set_cursor(tools.Cursors.WAIT)
@@ -3228,7 +3241,7 @@ class NavigationToolbar2:
 
         start_xy = self._zoom_info.start_xy
         ax = self._zoom_info.axes[0]
-        (x1, y1), (x2, y2) = np.clip(
+        (x1, y1), (x2, y2) = mlxarr.clip(
             [start_xy, [event.x, event.y]], ax.bbox.min, ax.bbox.max)
         key = event.key
         # Force the key on colorbars to extend the short-axis bbox

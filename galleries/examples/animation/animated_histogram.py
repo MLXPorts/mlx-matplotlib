@@ -10,18 +10,17 @@ histogram.
 import functools
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.animation as animation
 
 # Setting up a random number generator with a fixed state for reproducibility.
-rng = np.random.default_rng(seed=19680801)
+rng = mlxarr.random.default_rng(seed=19680801)
 # Fixing bin edges.
-HIST_BINS = np.linspace(-4, 4, 100)
+HIST_BINS = mlxarr.linspace(-4, 4, 100)
 
-# Histogram our data with numpy.
+# Histogram our data with array_backend.
 data = rng.standard_normal(1000)
-n, _ = np.histogram(data, HIST_BINS)
+n, _ = mlxarr.histogram(data, HIST_BINS)
 
 # %%
 # To animate the histogram, we need an ``animate`` function, which generates
@@ -32,7 +31,7 @@ n, _ = np.histogram(data, HIST_BINS)
 def animate(frame_number, bar_container):
     # Simulate new data coming in.
     data = rng.standard_normal(1000)
-    n, _ = np.histogram(data, HIST_BINS)
+    n, _ = mlxarr.histogram(data, HIST_BINS)
     for count, rect in zip(n, bar_container.patches):
         rect.set_height(count)
 

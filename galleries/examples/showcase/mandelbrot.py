@@ -10,15 +10,13 @@ further enhanced thanks to shading.
 The ``maxiter`` gives the precision of the computation. ``maxiter=200`` should
 take a few seconds on most modern laptops.
 """
-import numpy as np
-
-
+from matplotlib import _mlx_array as mlxarr
 def mandelbrot_set(xmin, xmax, ymin, ymax, xn, yn, maxiter, horizon=2.0):
-    X = np.linspace(xmin, xmax, xn).astype(np.float32)
-    Y = np.linspace(ymin, ymax, yn).astype(np.float32)
+    X = mlxarr.linspace(xmin, xmax, xn).astype(mlxarr.float32)
+    Y = mlxarr.linspace(ymin, ymax, yn).astype(mlxarr.float32)
     C = X + Y[:, None] * 1j
-    N = np.zeros_like(C, dtype=int)
-    Z = np.zeros_like(C)
+    N = mlxarr.zeros_like(C, dtype=int)
+    Z = mlxarr.zeros_like(C)
     for n in range(maxiter):
         I = abs(Z) < horizon
         N[I] = n
@@ -39,7 +37,7 @@ if __name__ == '__main__':
     ymin, ymax, yn = -1.25, +1.25, 2500 // 2
     maxiter = 200
     horizon = 2.0 ** 40
-    log_horizon = np.log2(np.log(horizon))
+    log_horizon = mlxarr.log2(mlxarr.log(horizon))
     Z, N = mandelbrot_set(xmin, xmax, ymin, ymax, xn, yn, maxiter, horizon)
 
     # Normalized recount as explained in:
@@ -48,8 +46,8 @@ if __name__ == '__main__':
 
     # This line will generate warnings for null values, but it is faster to
     # process them afterwards using the nan_to_num
-    with np.errstate(invalid='ignore'):
-        M = np.nan_to_num(N + 1 - np.log2(np.log(abs(Z))) + log_horizon)
+    with mlxarr.errstate(invalid='ignore'):
+        M = mlxarr.nan_to_num(N + 1 - mlxarr.log2(mlxarr.log(abs(Z))) + log_horizon)
 
     dpi = 72
     width = 10

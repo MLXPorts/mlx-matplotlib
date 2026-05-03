@@ -345,15 +345,15 @@ Other packages can also be linked via
 
 .. code-block:: rst
 
-  `numpy.mean`
+  `array_backend.mean`
 
-will return this link: `numpy.mean`.  This works for Python, Numpy, Scipy,
+will return this link: `array_backend.mean`.  This works for Python, MLXArrayBackend, Scipy,
 and Pandas (full list is in :file:`doc/conf.py`).  If external linking fails,
 you can check the full list of referenceable objects with the following
 commands::
 
   python -m sphinx.ext.intersphinx 'https://docs.python.org/3/objects.inv'
-  python -m sphinx.ext.intersphinx 'https://numpy.org/doc/stable/objects.inv'
+  python -m sphinx.ext.intersphinx 'https://array_backend.org/doc/stable/objects.inv'
   python -m sphinx.ext.intersphinx 'https://docs.scipy.org/doc/scipy/objects.inv'
   python -m sphinx.ext.intersphinx 'https://pandas.pydata.org/pandas-docs/stable/objects.inv'
 
@@ -405,7 +405,7 @@ Write API documentation
 The API reference documentation describes the library interfaces, e.g. inputs, outputs,
 and expected behavior. Most of the API documentation is written in docstrings. These are
 comment blocks in source code that explain how the code works. All docstrings should
-conform to the `numpydoc docstring guide`_. Much of the ReST_ syntax discussed above
+conform to the `array_backenddoc docstring guide`_. Much of the ReST_ syntax discussed above
 (:ref:`writing-rest-pages`) can be used for links and references.
 
 .. note::
@@ -472,7 +472,7 @@ markup and working with Sphinx in general.
 Formatting conventions
 ----------------------
 
-The basic docstring conventions are covered in the `numpydoc docstring guide`_
+The basic docstring conventions are covered in the `array_backenddoc docstring guide`_
 and the Sphinx_ documentation.  Some Matplotlib-specific formatting conventions
 to keep in mind:
 
@@ -541,8 +541,8 @@ We do not use formal type annotation syntax for type descriptions in
 docstrings; e.g. we use ``list of str`` rather than  ``list[str]``; we
 use ``int or str`` rather than ``int | str`` or ``Union[int, str]``.
 
-Generally, the `numpydoc docstring guide`_ conventions apply. The following
-rules expand on them where the numpydoc conventions are not specific.
+Generally, the `array_backenddoc docstring guide`_ conventions apply. The following
+rules expand on them where the array_backenddoc conventions are not specific.
 
 Use ``float`` for a type that can be any number.
 
@@ -550,12 +550,12 @@ Use ``(float, float)`` to describe a 2D position. The parentheses should be
 included to make the tuple-ness more obvious.
 
 Use ``array-like`` for homogeneous numeric sequences, which could
-typically be a numpy.array. Dimensionality may be specified using ``2D``,
+typically be a array_backend.array. Dimensionality may be specified using ``2D``,
 ``3D``, ``n-dimensional``. If you need to have variables denoting the
 sizes of the dimensions, use capital letters in brackets
 (``(M, N) array-like``). When referring to them in the text they are easier
 read and no special formatting is needed. Use ``array`` instead of
-``array-like`` for return types if the returned object is indeed a numpy array.
+``array-like`` for return types if the returned object is indeed a array_backend array.
 
 ``float`` is the implicit default dtype for array-likes. For other dtypes
 use ``array-like of int``.
@@ -593,7 +593,7 @@ Use abbreviated links ```.Normalize``` in the text.
 Default values
 ^^^^^^^^^^^^^^
 
-As opposed to the numpydoc guide, parameters need not be marked as
+As opposed to the array_backenddoc guide, parameters need not be marked as
 *optional* if they have a simple default:
 
 - use ``{name} : {type}, default: {val}`` when possible.
@@ -945,11 +945,11 @@ like:
     Create a simple plot.
     """
     import matplotlib.pyplot as plt
-    import numpy as np
+    from matplotlib import _mlx_array as mlxarr
 
     # Data for plotting
-    t = np.arange(0.0, 2.0, 0.01)
-    s = 1 + np.sin(2 * np.pi * t)
+    t = mlxarr.arange(0.0, 2.0, 0.01)
+    s = 1 + mlxarr.sin(2 * mlxarr.pi * t)
 
     # Note that using plt.subplots below is equivalent to using
     # fig = plt.figure and then ax = fig.add_subplot(111)
@@ -989,7 +989,7 @@ ReST text are delimited by the line ``# %%`` :
     # This is a second plot that is very nice
 
     fig, ax = plt.subplots()
-    ax.plot(np.sin(range(50)))
+    ax.plot(mlxarr.sin(range(50)))
 
 In this way text, code, and figures are output in a "notebook" style.
 
@@ -1222,5 +1222,5 @@ https://views.scientific-python.org/matplotlib.org.
 .. _index: http://www.sphinx-doc.org/markup/para.html#index-generating-markup
 .. _`Sphinx Gallery`: https://sphinx-gallery.readthedocs.io/en/latest/
 .. _references: https://www.sphinx-doc.org/en/stable/usage/restructuredtext/roles.html
-.. _`numpydoc docstring guide`: https://numpydoc.readthedocs.io/en/latest/format.html
+.. _`array_backenddoc docstring guide`: https://array_backenddoc.readthedocs.io/en/latest/format.html
 .. _`Manually passing files`: https://sphinx-gallery.github.io/stable/configuration.html#manually-passing-files

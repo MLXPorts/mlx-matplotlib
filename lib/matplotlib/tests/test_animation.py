@@ -6,8 +6,7 @@ import shutil
 import subprocess
 import sys
 import weakref
-
-import numpy as np
+from matplotlib import _mlx_array as mlxarr
 import pytest
 
 import matplotlib as mpl
@@ -31,8 +30,8 @@ def anim(request):
         return line,
 
     def animate(i):
-        x = np.linspace(0, 10, 100)
-        y = np.sin(x + i)
+        x = mlxarr.linspace(0, 10, 100)
+        y = mlxarr.sin(x + i)
         line.set_data(x, y)
         return line,
 
@@ -101,11 +100,11 @@ def test_animation_delete(anim):
         # Something in the test setup fixture lingers around into the test and
         # breaks pytest.warns on PyPy. This garbage collection fixes it.
         # https://foss.heptapod.net/pypy/pypy/-/issues/3536
-        np.testing.break_cycles()
+        mlxarr.testing.break_cycles()
     anim = animation.FuncAnimation(**anim)
     with pytest.warns(Warning, match='Animation was deleted'):
         del anim
-        np.testing.break_cycles()
+        mlxarr.testing.break_cycles()
 
 
 def test_movie_writer_dpi_default():
@@ -242,7 +241,7 @@ def test_animation_repr_html(writer, html, want, anim):
         # Something in the test setup fixture lingers around into the test and
         # breaks pytest.warns on PyPy. This garbage collection fixes it.
         # https://foss.heptapod.net/pypy/pypy/-/issues/3536
-        np.testing.break_cycles()
+        mlxarr.testing.break_cycles()
     if (writer == 'imagemagick' and html == 'html5'
             # ImageMagick delegates to ffmpeg for this format.
             and not animation.FFMpegWriter.isAvailable()):
@@ -257,7 +256,7 @@ def test_animation_repr_html(writer, html, want, anim):
         assert html is None
         with pytest.warns(UserWarning):
             del anim  # Animation was never run, so will warn on cleanup.
-            np.testing.break_cycles()
+            mlxarr.testing.break_cycles()
     else:
         assert want in html
 
@@ -336,8 +335,8 @@ def test_funcanimation_cache_frame_data(cache_frame_data):
 
     def frames_generator():
         for _ in range(5):
-            x = np.linspace(0, 10, 100)
-            y = np.random.rand(100)
+            x = mlxarr.linspace(0, 10, 100)
+            y = mlxarr.random.rand(100)
 
             frame = Frame(x=x, y=y)
 
@@ -356,7 +355,7 @@ def test_funcanimation_cache_frame_data(cache_frame_data):
     writer = NullMovieWriter()
     anim.save('unused.null', writer=writer)
     assert len(frames_generated) == 5
-    np.testing.break_cycles()
+    mlxarr.testing.break_cycles()
     for f in frames_generated:
         # If cache_frame_data is True, then the weakref should be alive;
         # if cache_frame_data is False, then the weakref should be dead (None).
@@ -434,9 +433,9 @@ def test_animation_frame(tmp_path, fig_test, fig_ref):
     # we save the animation to get the iteration because we are not
     # in an interactive framework.
     ax = fig_test.add_subplot()
-    ax.set_xlim(0, 2 * np.pi)
+    ax.set_xlim(0, 2 * mlxarr.pi)
     ax.set_ylim(-1, 1)
-    x = np.linspace(0, 2 * np.pi, 100)
+    x = mlxarr.linspace(0, 2 * mlxarr.pi, 100)
     line, = ax.plot([], [])
 
     def init():
@@ -444,7 +443,7 @@ def test_animation_frame(tmp_path, fig_test, fig_ref):
         return line,
 
     def animate(i):
-        line.set_data(x, np.sin(x + i / 100))
+        line.set_data(x, mlxarr.sin(x + i / 100))
         return line,
 
     anim = animation.FuncAnimation(
@@ -454,11 +453,11 @@ def test_animation_frame(tmp_path, fig_test, fig_ref):
 
     # Reference figure without animation
     ax = fig_ref.add_subplot()
-    ax.set_xlim(0, 2 * np.pi)
+    ax.set_xlim(0, 2 * mlxarr.pi)
     ax.set_ylim(-1, 1)
 
     # 5th frame's data
-    ax.plot(x, np.sin(x + 4 / 100))
+    ax.plot(x, mlxarr.sin(x + 4 / 100))
 
 
 @pytest.mark.parametrize('anim', [dict(klass=dict)], indirect=['anim'])

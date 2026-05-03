@@ -2,8 +2,7 @@ from collections import Counter
 import io
 import re
 import tempfile
-
-import numpy as np
+from matplotlib import _mlx_array as mlxarr
 import pytest
 
 from matplotlib import cbook, path, patheffects
@@ -342,7 +341,7 @@ def test_multi_font_type42():
 
 @image_comparison(["scatter.eps"])
 def test_path_collection():
-    rng = np.random.default_rng(19680801)
+    rng = mlxarr.random.default_rng(19680801)
     xvals = rng.uniform(0, 1, 10)
     yvals = rng.uniform(0, 1, 10)
     sizes = rng.uniform(30, 100, 10)

@@ -24,14 +24,13 @@ create the scatter and histograms inside the provided Axes.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 # some random data
-x = np.random.randn(1000)
-y = np.random.randn(1000)
+x = mlxarr.random.randn(1000)
+y = mlxarr.random.randn(1000)
 
 
 def scatter_hist(x, y, ax, ax_histx, ax_histy):
@@ -44,10 +43,10 @@ def scatter_hist(x, y, ax, ax_histx, ax_histy):
 
     # now determine nice limits by hand:
     binwidth = 0.25
-    xymax = max(np.max(np.abs(x)), np.max(np.abs(y)))
+    xymax = max(mlxarr.max(mlxarr.abs(x)), mlxarr.max(mlxarr.abs(y)))
     lim = (int(xymax/binwidth) + 1) * binwidth
 
-    bins = np.arange(-lim, lim + binwidth, binwidth)
+    bins = mlxarr.arange(-lim, lim + binwidth, binwidth)
     ax_histx.hist(x, bins=bins)
     ax_histy.hist(y, bins=bins, orientation='horizontal')
 

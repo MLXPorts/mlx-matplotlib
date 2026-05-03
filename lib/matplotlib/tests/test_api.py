@@ -4,8 +4,7 @@ from collections.abc import Callable
 import re
 import typing
 from typing import Any, TypeVar
-
-import numpy as np
+from matplotlib import _mlx_array as mlxarr
 import pytest
 
 import matplotlib as mpl
@@ -31,7 +30,7 @@ def test_check_shape(target: tuple[int | None, ...],
     error_pattern = "^" + re.escape(
         f"'aardvark' must be {len(target)}D with shape {shape_repr}, but your input "
         f"has shape {test_shape}")
-    data = np.zeros(test_shape)
+    data = mlxarr.zeros(test_shape)
     with pytest.raises(ValueError, match=error_pattern):
         _api.check_shape(target, aardvark=data)
 

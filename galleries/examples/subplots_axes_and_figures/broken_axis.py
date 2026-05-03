@@ -7,11 +7,10 @@ Broken axis example, where the y-axis will have a portion cut out.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
+from matplotlib import _mlx_array as mlxarr
+mlxarr.random.seed(19680801)
 
-np.random.seed(19680801)
-
-pts = np.random.rand(30)*.2
+pts = mlxarr.random.rand(30)*.2
 # Now let's make two outlier points which are far away from everything.
 pts[[3, 14]] += .8
 

@@ -2,7 +2,7 @@ from matplotlib.axes import Axes
 from matplotlib.contour import ContourSet
 from matplotlib.tri._triangulation import Triangulation
 
-from numpy.typing import ArrayLike
+from matplotlib._mlx_typing import ArrayLike
 from typing import overload
 
 # TODO: more explicit args/kwargs (for all things in this module)?

@@ -19,9 +19,8 @@ import string
 import textwrap
 import typing as T
 from typing import NamedTuple
-
-import numpy as np
-from numpy.typing import NDArray
+from matplotlib import _mlx_array as mlxarr
+from matplotlib._mlx_typing import NDArray
 from pyparsing import (
     Empty, Forward, Literal, Group, NotAny, OneOrMore, Optional,
     ParseBaseException, ParseException, ParseExpression, ParseFatalException,
@@ -110,7 +109,7 @@ class RasterParse(NamedTuple):
     width: float
     height: float
     depth: float
-    image: NDArray[np.uint8]
+    image: NDArray[mlxarr.uint8]
 
 RasterParse.__module__ = "matplotlib.mathtext"
 
@@ -130,7 +129,7 @@ class Output:
 
     def to_vector(self) -> VectorParse:
         w, h, d = map(
-            np.ceil, [self.box.width, self.box.height, self.box.depth])
+            mlxarr.ceil, [self.box.width, self.box.height, self.box.depth])
         gs = [(info.font, info.fontsize, info.num, ox, h - oy + info.offset)
               for ox, oy, info in self.glyphs]
         rs = [(x1, h - y2, x2 - x1, y2 - y1)
@@ -151,7 +150,7 @@ class Output:
         w = xmax - xmin
         h = ymax - ymin - self.box.depth
         d = ymax - ymin - self.box.height
-        image = np.zeros((math.ceil(h + max(d, 0)), math.ceil(w)), np.uint8)
+        image = mlxarr.zeros((math.ceil(h + max(d, 0)), math.ceil(w)), mlxarr.uint8)
 
         # Ideally, we could just use self.glyphs and self.rects here, shifting
         # their coordinates by (-xmin, -ymin), but this yields slightly
@@ -1271,7 +1270,7 @@ class Hlist(List):
                 d = max(d, p.depth)
             elif isinstance(p, Box):
                 x += p.width
-                if not np.isinf(p.height) and not np.isinf(p.depth):
+                if not mlxarr.isinf(p.height) and not mlxarr.isinf(p.depth):
                     s = getattr(p, 'shift_amount', 0.)
                     h = max(h, p.height - s)
                     d = max(d, p.depth + s)
@@ -1311,7 +1310,7 @@ class Vlist(List):
 
     def vpack(self, h: float = 0.0,
               m: T.Literal['additional', 'exactly'] = 'additional',
-              l: float = np.inf) -> None:
+              l: float = mlxarr.inf) -> None:
         """
         Compute the dimensions of the resulting boxes, and to adjust the glue
         if one of those dimensions is pre-specified.
@@ -1323,7 +1322,7 @@ class Vlist(List):
         m : {'exactly', 'additional'}, default: 'additional'
             Whether to produce a box whose height is 'exactly' *h*; or a box
             with the natural height of the contents, plus *h* ('additional').
-        l : float, default: np.inf
+        l : float, default: mlxarr.inf
             The maximum height.
 
         Notes
@@ -1342,7 +1341,7 @@ class Vlist(List):
             if isinstance(p, Box):
                 x += d + p.height
                 d = p.depth
-                if not np.isinf(p.width):
+                if not mlxarr.isinf(p.width):
                     s = getattr(p, 'shift_amount', 0.)
                     w = max(w, p.width + s)
             elif isinstance(p, Glue):
@@ -1410,7 +1409,7 @@ class Hrule(Rule):
         if thickness is None:
             thickness = state.get_current_underline_thickness()
         height = depth = thickness * 0.5
-        super().__init__(np.inf, height, depth, state)
+        super().__init__(mlxarr.inf, height, depth, state)
 
 
 class Vrule(Rule):
@@ -1418,7 +1417,7 @@ class Vrule(Rule):
 
     def __init__(self, state: ParserState):
         thickness = state.get_current_underline_thickness()
-        super().__init__(thickness, np.inf, np.inf, state)
+        super().__init__(thickness, mlxarr.inf, mlxarr.inf, state)
 
 
 class _GlueSpec(NamedTuple):
@@ -1639,9 +1638,9 @@ def ship(box: Box, xy: tuple[float, float] = (0, 0)) -> Output:
                 rule_height = p.height
                 rule_depth = p.depth
                 rule_width = p.width
-                if np.isinf(rule_height):
+                if mlxarr.isinf(rule_height):
                     rule_height = box.height
-                if np.isinf(rule_depth):
+                if mlxarr.isinf(rule_depth):
                     rule_depth = box.depth
                 if rule_height > 0 and rule_width > 0:
                     cur_v = base_line + rule_depth
@@ -1699,7 +1698,7 @@ def ship(box: Box, xy: tuple[float, float] = (0, 0)) -> Output:
                 rule_height = p.height
                 rule_depth = p.depth
                 rule_width = p.width
-                if np.isinf(rule_width):
+                if mlxarr.isinf(rule_width):
                     rule_width = box.width
                 rule_height += rule_depth
                 if rule_height > 0 and rule_depth > 0:

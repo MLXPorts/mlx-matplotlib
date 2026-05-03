@@ -26,12 +26,11 @@ The following code demonstrates the equivalence between the two methods.
 # sphinx_gallery_thumbnail_number = 2
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib import cbook
 
-np.random.seed(19680801)
-data = np.random.randn(20, 3)
+mlxarr.random.seed(19680801)
+data = mlxarr.random.randn(20, 3)
 
 fig, (ax1, ax2) = plt.subplots(1, 2)
 

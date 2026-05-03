@@ -14,8 +14,7 @@ Note, however, that it is simpler to achieve this effect using standard
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from mpl_toolkits import axisartist
 
 fig = plt.figure(figsize=(6, 3), layout="constrained")
@@ -45,8 +44,8 @@ ax1.axis["bottom", "top", "right"].set_visible(False)
 
 
 # Draw some sample data.
-x = np.arange(0, 2*np.pi, 0.01)
-ax0.plot(x, np.sin(x))
-ax1.plot(x, np.sin(x))
+x = mlxarr.arange(0, 2*mlxarr.pi, 0.01)
+ax0.plot(x, mlxarr.sin(x))
+ax1.plot(x, mlxarr.sin(x))
 
 plt.show()

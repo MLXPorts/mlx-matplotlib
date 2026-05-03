@@ -3,9 +3,7 @@ Helper classes to adjust the positions of multiple axes at drawing time.
 """
 
 import functools
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from matplotlib import _api
 from matplotlib.gridspec import SubplotSpec
@@ -57,10 +55,10 @@ class Divider:
         self._locator = None
 
     def get_horizontal_sizes(self, renderer):
-        return np.array([s.get_size(renderer) for s in self.get_horizontal()])
+        return mlxarr.array([s.get_size(renderer) for s in self.get_horizontal()])
 
     def get_vertical_sizes(self, renderer):
-        return np.array([s.get_size(renderer) for s in self.get_vertical()])
+        return mlxarr.array([s.get_size(renderer) for s in self.get_vertical()])
 
     def set_position(self, pos):
         """
@@ -165,7 +163,7 @@ class Divider:
     def _calc_offsets(sizes, k):
         # Apply k factors to (n, 2) sizes array of (rel_size, abs_size); return
         # the resulting cumulative offset positions.
-        return np.cumsum([0, *(sizes @ [k, 1])])
+        return mlxarr.cumsum([0, *(sizes @ [k, 1])])
 
     def new_locator(self, nx, ny, nx1=None, ny1=None):
         """
@@ -489,7 +487,7 @@ def _locate(x, y, w, h, summed_widths, equal_heights, fig_w, fig_h, anchor):
     n = len(equal_heights)
     eq_rels, eq_abss = equal_heights.T
     sm_rels, sm_abss = summed_widths.T
-    A = np.diag([*eq_rels, 0])
+    A = mlxarr.diag([*eq_rels, 0])
     A[:n, -1] = -1
     A[-1, :-1] = sm_rels
     B = [*(-eq_abss), total_width - sm_abss.sum()]
@@ -497,12 +495,12 @@ def _locate(x, y, w, h, summed_widths, equal_heights, fig_w, fig_h, anchor):
     #   eq_rel_i * k_i + eq_abs_i = H for all i: all axes have the same height
     #   sum(sm_rel_i * k_i + sm_abs_i) = total_width: fixed total width
     # (foo_rel_i * k_i + foo_abs_i will end up being the size of foo.)
-    *karray, height = np.linalg.solve(A, B)
+    *karray, height = mlxarr.linalg.solve(A, B)
     if height > max_height:  # Additionally, upper-bound the height.
         karray = (max_height - eq_abss) / eq_rels
 
     # Compute the offsets corresponding to these factors.
-    ox = np.cumsum([0, *(sm_rels * karray + sm_abss)])
+    ox = mlxarr.cumsum([0, *(sm_rels * karray + sm_abss)])
     ww = (ox[-1] - ox[0]) / fig_w
     h0_rel, h0_abs = equal_heights[0]
     hh = (karray[0]*h0_rel + h0_abs) / fig_h

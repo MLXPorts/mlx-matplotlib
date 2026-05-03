@@ -1,8 +1,6 @@
 import datetime
 from unittest.mock import Mock
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.pyplot as plt
 from matplotlib.path import Path
 from matplotlib.table import CustomCell, Table
@@ -26,13 +24,13 @@ def test_zorder():
     rowLabels = ['%d year' % x for x in (100, 50)]
 
     cellText = []
-    yoff = np.zeros(len(colLabels))
+    yoff = mlxarr.zeros(len(colLabels))
     for row in reversed(data):
         yoff += row
         cellText.append(['%1.1f' % (x/1000.0) for x in yoff])
 
-    t = np.linspace(0, 2*np.pi, 100)
-    plt.plot(t, np.cos(t), lw=4, zorder=2)
+    t = mlxarr.linspace(0, 2*mlxarr.pi, 100)
+    plt.plot(t, mlxarr.cos(t), lw=4, zorder=2)
 
     plt.table(cellText=cellText,
               rowLabels=rowLabels,
@@ -54,7 +52,7 @@ def test_zorder():
 def test_label_colours():
     dim = 3
 
-    c = np.linspace(0, 1, dim)
+    c = mlxarr.linspace(0, 1, dim)
     colours = plt.colormaps["RdYlGn"](c)
     cellText = [['1'] * dim] * dim
 

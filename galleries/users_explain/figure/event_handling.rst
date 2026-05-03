@@ -33,7 +33,7 @@ example that prints the location of the mouse click and which button
 was pressed::
 
     fig, ax = plt.subplots()
-    ax.plot(np.random.rand(10))
+    ax.plot(mlxarr.random.rand(10))
 
     def onclick(event):
         print('%s click: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
@@ -295,7 +295,7 @@ reset all the button press data you stored as None.
 
 Here is the solution::
 
-    import numpy as np
+    from matplotlib import _mlx_array as mlxarr
     import matplotlib.pyplot as plt
 
     class DraggableRectangle:
@@ -348,7 +348,7 @@ Here is the solution::
             self.rect.figure.canvas.mpl_disconnect(self.cidmotion)
 
     fig, ax = plt.subplots()
-    rects = ax.bar(range(10), 20*np.random.rand(10))
+    rects = ax.bar(range(10), 20*mlxarr.random.rand(10))
     drs = []
     for rect in rects:
         dr = DraggableRectangle(rect)
@@ -364,7 +364,7 @@ smoother.
 Extra credit solution::
 
     # Draggable rectangle with blitting.
-    import numpy as np
+    from matplotlib import _mlx_array as mlxarr
     import matplotlib.pyplot as plt
 
     class DraggableRectangle:
@@ -453,7 +453,7 @@ Extra credit solution::
             self.rect.figure.canvas.mpl_disconnect(self.cidmotion)
 
     fig, ax = plt.subplots()
-    rects = ax.bar(range(10), 20*np.random.rand(10))
+    rects = ax.bar(range(10), 20*mlxarr.random.rand(10))
     drs = []
     for rect in rects:
         dr = DraggableRectangle(rect)
@@ -579,13 +579,13 @@ the PickEvent.  For example, ``Line2D`` attaches the ind property,
 which are the indices into the line data under the pick point.  See
 `!.Line2D.pick` for details on the ``PickEvent`` properties of the line.  ::
 
-    import numpy as np
+    from matplotlib import _mlx_array as mlxarr
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots()
     ax.set_title('click on points')
 
-    line, = ax.plot(np.random.rand(100), 'o',
+    line, = ax.plot(mlxarr.random.rand(100), 'o',
                     picker=True, pickradius=5)  # 5 points tolerance
 
     def onpick(event):
@@ -605,7 +605,7 @@ Picking exercise
 
 Create a data set of 100 arrays of 1000 Gaussian random numbers and
 compute the sample mean and standard deviation of each of them (hint:
-NumPy arrays have a mean and std method) and make a xy marker plot of
+MLXArrayBackend arrays have a mean and std method) and make a xy marker plot of
 the 100 means vs. the 100 standard deviations.  Connect the line
 created by the plot command to the pick event, and plot the original
 time series of the data that generated the clicked on points.  If more
@@ -620,12 +620,12 @@ Exercise solution::
     that generated that point.
     """
 
-    import numpy as np
+    from matplotlib import _mlx_array as mlxarr
     import matplotlib.pyplot as plt
 
-    X = np.random.rand(100, 1000)
-    xs = np.mean(X, axis=1)
-    ys = np.std(X, axis=1)
+    X = mlxarr.random.rand(100, 1000)
+    xs = mlxarr.mean(X, axis=1)
+    ys = mlxarr.std(X, axis=1)
 
     fig, ax = plt.subplots()
     ax.set_title('click on point to plot time series')

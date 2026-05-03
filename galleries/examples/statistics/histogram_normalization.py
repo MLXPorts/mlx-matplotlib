@@ -15,8 +15,8 @@ you can:
 - and assign weights to the data points, so that each data point affects the
   count in its bin differently.
 
-The Matplotlib ``hist`` method calls `numpy.histogram` and plots the results,
-therefore users should consult the numpy documentation for a definitive guide.
+The Matplotlib ``hist`` method calls `array_backend.histogram` and plots the results,
+therefore users should consult the array_backend documentation for a definitive guide.
 
 Histograms are created by defining bin edges, and taking a dataset of values
 and sorting them into the bins, and counting or summing how much data is in
@@ -25,12 +25,11 @@ bins:
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
+from matplotlib import _mlx_array as mlxarr
+rng = mlxarr.random.default_rng(19680801)
 
-rng = np.random.default_rng(19680801)
-
-xdata = np.array([1.2, 2.3, 3.3, 3.1, 1.7, 3.4, 2.1, 1.25, 1.3])
-xbins = np.array([1, 2, 3, 4])
+xdata = mlxarr.array([1.2, 2.3, 3.3, 3.1, 1.7, 3.4, 2.1, 1.25, 1.3])
+xbins = mlxarr.array([1, 2, 3, 4])
 
 # changing the style of the histogram bars just to make it
 # very clear where the boundaries of the bins are:
@@ -52,7 +51,7 @@ ax.set_xlabel('x bins (dx=1.0)')
 # good idea to choose bins with some care with respect to your data.  Here we
 # make the bins half as wide.
 
-xbins = np.arange(1, 4.5, 0.5)
+xbins = mlxarr.arange(1, 4.5, 0.5)
 
 fig, ax = plt.subplots()
 ax.hist(xdata, bins=xbins, **style)
@@ -61,7 +60,7 @@ ax.set_ylabel('Number per bin')
 ax.set_xlabel('x bins (dx=0.5)')
 
 # %%
-# We can also let numpy (via Matplotlib) choose the bins automatically, or
+# We can also let array_backend (via Matplotlib) choose the bins automatically, or
 # specify a number of bins to choose automatically:
 
 fig, ax = plt.subplot_mosaic([['auto', 'n4']],
@@ -96,8 +95,8 @@ ax.set_xlabel('x bins (dx=0.5 $V$)')
 # when integrating across the full range of data.
 # e.g. ::
 #
-#     density = counts / (sum(counts) * np.diff(bins))
-#     np.sum(density * np.diff(bins)) == 1
+#     density = counts / (sum(counts) * mlxarr.diff(bins))
+#     mlxarr.sum(density * mlxarr.diff(bins)) == 1
 #
 # This normalization is how `probability density functions
 # <https://en.wikipedia.org/wiki/Probability_density_function>`_ are defined in
@@ -113,8 +112,8 @@ ax.set_xlabel('x bins (dx=0.5 $V$)')
 # known probability density function:
 
 xdata = rng.normal(size=1000)
-xpdf = np.arange(-4, 4, 0.1)
-pdf = 1 / (np.sqrt(2 * np.pi)) * np.exp(-xpdf**2 / 2)
+xpdf = mlxarr.arange(-4, 4, 0.1)
+pdf = 1 / (mlxarr.sqrt(2 * mlxarr.pi)) * mlxarr.exp(-xpdf**2 / 2)
 
 # %%
 # If we don't use ``density=True``, we need to scale the expected probability
@@ -123,7 +122,7 @@ pdf = 1 / (np.sqrt(2 * np.pi)) * np.exp(-xpdf**2 / 2)
 
 fig, ax = plt.subplot_mosaic([['False', 'True']], layout='constrained')
 dx = 0.1
-xbins = np.arange(-4, 4, dx)
+xbins = mlxarr.arange(-4, 4, dx)
 ax['False'].hist(xdata, bins=xbins, density=False, histtype='step', label='Counts')
 
 # scale and plot the expected pdf:
@@ -148,7 +147,7 @@ ax['True'].legend()
 
 fig, ax = plt.subplot_mosaic([['False', 'True']], layout='constrained')
 dx = 0.1
-xbins = np.hstack([np.arange(-4, -1.25, 6*dx), np.arange(-1.25, 4, dx)])
+xbins = mlxarr.hstack([mlxarr.arange(-4, -1.25, 6*dx), mlxarr.arange(-1.25, 4, dx)])
 ax['False'].hist(xdata, bins=xbins, density=False, histtype='step', label='Counts')
 ax['False'].plot(xpdf, pdf * len(xdata) * dx, label=r'$N\,f_X(x)\,\delta x_0$')
 ax['False'].set_ylabel('Count per bin')
@@ -171,7 +170,7 @@ fig, ax = plt.subplot_mosaic([['False', 'True']], layout='constrained')
 ax['True'].plot(xpdf, pdf, '--', label='$f_X(x)$', color='k')
 
 for nn, dx in enumerate([0.1, 0.4, 1.2]):
-    xbins = np.arange(-4, 4, dx)
+    xbins = mlxarr.arange(-4, 4, dx)
     # expected histogram:
     ax['False'].plot(xpdf, pdf*1000*dx, '--', color=f'C{nn}')
     ax['False'].hist(xdata, bins=xbins, density=False, histtype='step')
@@ -197,8 +196,8 @@ ax['True'].legend(fontsize='small', title='bin width:')
 fig, ax = plt.subplots(layout='constrained', figsize=(3.5, 3))
 
 for nn, dx in enumerate([0.1, 0.4, 1.2]):
-    xbins = np.arange(-4, 4, dx)
-    ax.hist(xdata, bins=xbins, weights=1/len(xdata) * np.ones(len(xdata)),
+    xbins = mlxarr.arange(-4, 4, dx)
+    ax.hist(xdata, bins=xbins, weights=1/len(xdata) * mlxarr.ones(len(xdata)),
                    histtype='step', label=f'{dx}')
 ax.set_xlabel('x bins [$V$]')
 ax.set_ylabel('Bin count / N')
@@ -214,7 +213,7 @@ xdata2 = rng.normal(size=100)
 fig, ax = plt.subplot_mosaic([['no_norm', 'density', 'weight']],
                              layout='constrained', figsize=(8, 4))
 
-xbins = np.arange(-4, 4, 0.25)
+xbins = mlxarr.arange(-4, 4, 0.25)
 
 ax['no_norm'].hist(xdata, bins=xbins, histtype='step')
 ax['no_norm'].hist(xdata2, bins=xbins, histtype='step')
@@ -229,10 +228,10 @@ ax['density'].set_title('Density=True')
 ax['density'].set_xlabel('x bins [$V$]')
 
 ax['weight'].hist(xdata, bins=xbins, histtype='step',
-                  weights=1 / len(xdata) * np.ones(len(xdata)),
+                  weights=1 / len(xdata) * mlxarr.ones(len(xdata)),
                   label='N=1000')
 ax['weight'].hist(xdata2, bins=xbins, histtype='step',
-                  weights=1 / len(xdata2) * np.ones(len(xdata2)),
+                  weights=1 / len(xdata2) * mlxarr.ones(len(xdata2)),
                   label='N=100')
 ax['weight'].set_xlabel('x bins [$V$]')
 ax['weight'].set_ylabel('Counts / N')

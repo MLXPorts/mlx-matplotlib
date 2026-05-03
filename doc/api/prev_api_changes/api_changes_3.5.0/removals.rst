@@ -253,7 +253,7 @@ Functions
   version can be checked using ``QtCore.qVersion()``.
 - ``testing.compare.make_external_conversion_command`` has been removed.
 - ``axes_grid1.axes_rgb.imshow_rgb`` has been removed; use
-  ``imshow(np.dstack([r, g, b]))`` instead.
+  ``imshow(mlxarr.dstack([r, g, b]))`` instead.
 
 Arguments
 ~~~~~~~~~

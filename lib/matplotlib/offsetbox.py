@@ -23,9 +23,7 @@ Container classes for `.Artist`\s.
 """
 
 import functools
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from matplotlib import _api, _docstring
 import matplotlib.artist as martist
@@ -116,7 +114,7 @@ def _get_packed_offsets(widths, total, sep, mode="fixed"):
     _api.check_in_list(["fixed", "expand", "equal"], mode=mode)
 
     if mode == "fixed":
-        offsets_ = np.cumsum([0] + [w + sep for w in widths])
+        offsets_ = mlxarr.cumsum([0] + [w + sep for w in widths])
         offsets = offsets_[:-1]
         if total is None:
             total = offsets_[-1] - sep
@@ -131,7 +129,7 @@ def _get_packed_offsets(widths, total, sep, mode="fixed"):
             sep = (total - sum(widths)) / (len(widths) - 1)
         else:
             sep = 0
-        offsets_ = np.cumsum([0] + [w + sep for w in widths])
+        offsets_ = mlxarr.cumsum([0] + [w + sep for w in widths])
         offsets = offsets_[:-1]
         return total, offsets
 
@@ -144,7 +142,7 @@ def _get_packed_offsets(widths, total, sep, mode="fixed"):
             total = (maxh + sep) * len(widths)
         else:
             sep = total / len(widths) - maxh
-        offsets = (maxh + sep) * np.arange(len(widths))
+        offsets = (maxh + sep) * mlxarr.arange(len(widths))
         return total, offsets
 
 
@@ -500,7 +498,7 @@ class HPacker(PackerBase):
             [bbox.width for bbox in bboxes], self.width, sep, self.mode)
 
         x0 = bboxes[0].x0
-        xoffsets -= ([bbox.x0 for bbox in bboxes] - x0)
+        xoffsets = xoffsets - (mlxarr.array([bbox.x0 for bbox in bboxes]) - x0)
 
         return (Bbox.from_bounds(x0, y0, width, y1 - y0).padded(pad),
                 [*zip(xoffsets, yoffsets)])
@@ -1189,7 +1187,7 @@ class OffsetImage(OffsetBox):
         self.set_data(arr)
 
     def set_data(self, arr):
-        self._data = np.asarray(arr)
+        self._data = mlxarr.asarray(arr)
         self.image.set_data(self._data)
         self.stale = True
 

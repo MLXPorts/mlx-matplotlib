@@ -15,12 +15,11 @@ See https://dateutil.readthedocs.io/en/stable/rrule.html for help with rrules.
 import datetime
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.dates import YEARLY, DateFormatter, RRuleLocator, drange, rrulewrapper
 
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 
 # tick every 5th easter
@@ -32,7 +31,7 @@ date2 = datetime.date(2004, 4, 12)
 delta = datetime.timedelta(days=100)
 
 dates = drange(date1, date2, delta)
-s = np.random.rand(len(dates))  # make up some random y values
+s = mlxarr.random.rand(len(dates))  # make up some random y values
 
 
 fig, ax = plt.subplots()

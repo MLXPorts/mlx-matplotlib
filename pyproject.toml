@@ -34,9 +34,8 @@ dependencies = [
     "cycler >= 0.10",
     "fonttools >= 4.22.0",
     "kiwisolver >= 1.3.1",
-    # NumPy is intentionally not a dependency in this fork; MLX is the tensor backend.
-    # All NumPy usages will be ported or routed through an MLX-based shim.
-    "mlx-core>=0.0.1",
+    # This fork uses MLX as the tensor backend.
+    "mlx>=0.0.1",
     "packaging >= 20.0",
     "pillow >= 9",
     "pyparsing >= 3",
@@ -49,7 +48,9 @@ requires-python = ">=3.11"
 # Should be a copy of the build dependencies below.
 dev = [
     "meson-python>=0.13.1,!=0.17.*",
-    "pybind11>=2.13.2,!=2.13.3",
+    "nanobind>=2.4.0",
+    # pybind11 3.x removed APIs we rely on (e.g. memoryview.request()).
+    "pybind11>=2.13.2,<3,!=2.13.3",
     "setuptools_scm>=7",
     # Not required by us but setuptools_scm without a version, cso _if_
     # installed, then setuptools_scm 8 requires at least this version.
@@ -75,7 +76,9 @@ requires = [
     # meson-python 0.17.x breaks symlinks in sdists. You can remove this pin if
     # you really need it and aren't using an sdist.
     "meson-python>=0.13.1,!=0.17.*",
-    "pybind11>=2.13.2,!=2.13.3",
+    "nanobind>=2.4.0",
+    # pybind11 3.x removed APIs we rely on (e.g. memoryview.request()).
+    "pybind11>=2.13.2,<3,!=2.13.3",
     "setuptools_scm>=7",
 ]
 
@@ -83,13 +86,13 @@ requires = [
 install = ['--tags=data,python-runtime,runtime']
 
 [tool.setuptools_scm]
-version_scheme = "release-branch-semver"
+version_scheme = "semver-pep440-release-branch"
 local_scheme = "node-and-date"
 parentdir_prefix_version = "matplotlib-"
 fallback_version = "0.0+UNKNOWN"
 
 [tool.isort]
-known_pydata = "numpy, matplotlib.pyplot"
+known_pydata = "mlx, matplotlib.pyplot"
 known_firstparty = "matplotlib,mpl_toolkits"
 sections = "FUTURE,STDLIB,THIRDPARTY,PYDATA,FIRSTPARTY,LOCALFOLDER"
 force_sort_within_sections = true
@@ -166,7 +169,7 @@ external = [
 ]
 
 [tool.ruff.lint.pydocstyle]
-convention = "numpy"
+convention = "pep257"
 
 [tool.ruff.lint.per-file-ignores]
 "*.pyi" = ["E501"]
@@ -238,7 +241,7 @@ exclude = [
   # tinypages is used for testing the sphinx ext,
   # stubtest will import and run, opening a figure if not excluded
   ".*/tinypages",
-  # pylab's numpy wildcard imports cause re-def failures since numpy 2.2
+  # pylab's wildcard imports cause re-definition failures in recent array backends
   "lib/matplotlib/pylab.py",
 ]
 files = [

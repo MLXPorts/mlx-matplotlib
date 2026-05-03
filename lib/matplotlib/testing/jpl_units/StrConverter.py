@@ -1,7 +1,5 @@
 """StrConverter module containing class StrConverter."""
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.units as units
 
 __all__ = ['StrConverter']
@@ -47,7 +45,7 @@ class StrConverter(units.ConversionInterface):
             ticks = []
             labels = []
 
-        if not np.iterable(value):
+        if not mlxarr.iterable(value):
             value = [value]
 
         newValues = []

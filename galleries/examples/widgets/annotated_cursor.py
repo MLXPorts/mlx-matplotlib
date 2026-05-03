@@ -21,8 +21,7 @@ currently tracked coordinates.
 
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.backend_bases import MouseEvent
 from matplotlib.widgets import Cursor
 
@@ -34,10 +33,10 @@ class AnnotatedCursor(Cursor):
 
     For the cursor to remain responsive you must keep a reference to it.
     The data of the axis specified as *dataaxis* must be in ascending
-    order. Otherwise, the `numpy.searchsorted` call might fail and the text
+    order. Otherwise, the `array_backend.searchsorted` call might fail and the text
     disappears. You can satisfy the requirement by sorting the data you plot.
     Usually the data is already sorted (if it was created e.g. using
-    `numpy.linspace`), but e.g. scatter plots might cause this problem.
+    `array_backend.linspace`), but e.g. scatter plots might cause this problem.
     The cursor sticks to the plotted line.
 
     Parameters
@@ -86,7 +85,7 @@ class AnnotatedCursor(Cursor):
         # The format string, on which .format() is called for creating the text
         self.numberformat = numberformat
         # Text position offset
-        self.offset = np.array(offset)
+        self.offset = mlxarr.array(offset)
         # The axis in which the cursor position is looked up
         self.dataaxis = dataaxis
 
@@ -247,7 +246,7 @@ class AnnotatedCursor(Cursor):
         if pos is not None and lim[0] <= pos <= lim[-1]:
             # Find closest x value in sorted x vector.
             # This requires the plotted data to be sorted.
-            index = np.searchsorted(data, pos)
+            index = mlxarr.searchsorted(data, pos)
             # Return none, if this index is out of range.
             if index < 0 or index >= len(data):
                 return None
@@ -288,7 +287,7 @@ class AnnotatedCursor(Cursor):
 fig, ax = plt.subplots(figsize=(8, 6))
 ax.set_title("Cursor Tracking x Position")
 
-x = np.linspace(-5, 5, 1000)
+x = mlxarr.linspace(-5, 5, 1000)
 y = x**2
 
 line, = ax.plot(x, y)

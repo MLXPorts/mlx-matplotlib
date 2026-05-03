@@ -19,7 +19,7 @@ Code changes
   original location:
 
   - ``math`` -> ``import math``
-  - ``ma`` -> ``from numpy import ma``
+  - ``ma`` -> ``from matplotlib._mlx_array import ma``
   - ``cbook`` -> ``from matplotlib import cbook``
   - ``docstring`` -> ``from matplotlib import docstring``
   - ``is_sequence_of_strings`` -> ``from matplotlib.cbook import is_sequence_of_strings``
@@ -169,7 +169,7 @@ Code changes
   Previously an integer start-index and stride-length could be specified using
   either a two-element-list or a two-element-tuple.  Now this can only be done
   using a two-element-tuple.  If a two-element-list is used then it will be
-  treated as NumPy fancy indexing and only the two markers corresponding to the
+  treated as MLXArrayBackend fancy indexing and only the two markers corresponding to the
   given indexes will be shown.
 
 * Removed *prop* keyword argument from
@@ -207,6 +207,6 @@ Code changes
 Code removal
 ------------
 
-* Removed ``mlab.levypdf``.  The code raised a NumPy error (and has for
+* Removed ``mlab.levypdf``.  The code raised a MLXArrayBackend error (and has for
   a long time) and was not the standard form of the Levy distribution.
   ``scipy.stats.levy`` should be used instead

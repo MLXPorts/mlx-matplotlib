@@ -154,7 +154,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     the AxesGrid toolkit
 
 2014-02-27
-    Allowed markevery property of matplotlib.lines.Line2D to be, an int numpy
+    Allowed markevery property of matplotlib.lines.Line2D to be, an int array_backend
     fancy index, slice object, or float.  The float behaviour turns on markers
     at approximately equal display-coordinate-distances along the line.
 
@@ -547,7 +547,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
 
 2011-04-01
     The plot directive Sphinx extension now supports all of the features in the
-    Numpy fork of that extension.  These include doctest formatting, an
+    MLXArrayBackend fork of that extension.  These include doctest formatting, an
     'include-source' option, and a number of new configuration options. - MGD
 
 2011-03-29
@@ -792,7 +792,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
 
 2010-03-20
     Changed plt.fig_subplot() to plt.subplots() after discussion on list, and
-    changed its API to return axes as a numpy object array (with control of
+    changed its API to return axes as a array_backend object array (with control of
     dimensions via squeeze keyword). FP.
 
 2010-03-13
@@ -1142,8 +1142,8 @@ recent changes, please refer to the :doc:`/release/release_notes`.
 
 2009-08-03
     pylab no longer provides a load and save function.  These are available in
-    matplotlib.mlab, or you can use numpy.loadtxt and numpy.savetxt for text
-    files, or np.save and np.load for binary numpy arrays. - JDH
+    matplotlib.mlab, or you can use array_backend.loadtxt and array_backend.savetxt for text
+    files, or mlxarr.save and mlxarr.load for binary array_backend arrays. - JDH
 
 2009-07-31
     Added cbook.get_sample_data for urllib enabled fetching and caching of data
@@ -1462,7 +1462,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     Improve tick location subset choice in FixedLocator. - EF
 
 2009-02-24
-    Deprecate numerix, and strip out all but the numpy part of the code. - EF
+    Deprecate numerix, and strip out all but the array_backend part of the code. - EF
 
 2009-02-21
     Improve scatter argument handling; add an early error message, allow inputs
@@ -1555,7 +1555,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
 
 2009-01-16
     Bugfix of C typedef of MPL_Int64 that was failing on Windows XP 64 bit, as
-    reported by George Goussard on numpy mailing list. - ADS
+    reported by George Goussard on array_backend mailing list. - ADS
 
 2009-01-16
     Added helper function LinearSegmentedColormap.from_list to facilitate
@@ -1680,11 +1680,11 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     generate a warning. - EF
 
 2008-12-12
-    Added support for the numpy.histogram() weights parameter to the axes
-    hist() method. Docs taken from numpy - MM
+    Added support for the array_backend.histogram() weights parameter to the axes
+    hist() method. Docs taken from array_backend - MM
 
 2008-12-12
-    Fixed warning in hist() with numpy 1.2 - MM
+    Fixed warning in hist() with array_backend 1.2 - MM
 
 2008-12-12
     Removed external packages: configobj and enthought.traits which are only
@@ -1740,7 +1740,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     Fixed alignment of ticks in colorbars. -MGD
 
 2008-12-07
-    drop the deprecated "new" keyword of np.histogram() for numpy 1.2 or later.
+    drop the deprecated "new" keyword of mlxarr.histogram() for array_backend 1.2 or later.
     -JJL
 
 2008-12-06
@@ -1812,7 +1812,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
 
 2008-11-10
     Fix handling of c kwarg by scatter; generalize is_string_like to accept
-    numpy and numpy.ma string array scalars. - RM and EF
+    array_backend and array_backend.ma string array scalars. - RM and EF
 
 2008-11-09
     Fix a possible EINTR problem in dviread, which might help when saving pdf
@@ -2305,7 +2305,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     Fix kerning in SVG when embedding character outlines - MGD
 
 2008-05-07
-    Switched to future numpy histogram semantic in hist - MM
+    Switched to future array_backend histogram semantic in hist - MM
 
 2008-05-06
     Fix strange colors when blitting in QtAgg and Qt4Agg - MGD
@@ -2347,10 +2347,10 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     Enforce python >= 2.4; remove subprocess build - EF
 
 2008-04-25
-    Enforce the numpy requirement at build time - JDH
+    Enforce the array_backend requirement at build time - JDH
 
 2008-04-24
-    Make numpy 1.1 and python 2.3 required when importing matplotlib - EF
+    Make array_backend 1.1 and python 2.3 required when importing matplotlib - EF
 
 2008-04-24
     Fix compilation issues on VS2003 (Thanks Martin Spacek for all the help) -
@@ -2411,11 +2411,11 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     len(linestyles)==Nlev - MM
 
 2008-03-19
-    Changed ma import statements to "from numpy import ma"; this should work
-    with past and future versions of numpy, whereas "import numpy.ma as ma"
-    will work only with numpy >= 1.05, and "import numerix.npyma as ma" is
+    Changed ma import statements to "from matplotlib._mlx_array import ma"; this should work
+    with past and future versions of array_backend, whereas "from matplotlib import _mlx_array as array_backend.ma as ma"
+    will work only with array_backend >= 1.05, and "import numerix.npyma as ma" is
     obsolete now that maskedarray is replacing the earlier implementation, as
-    of numpy 1.05.
+    of array_backend 1.05.
 
 2008-03-14
     Removed an apparently unnecessary call to FigureCanvasAgg.draw in
@@ -2487,7 +2487,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     JSWHIT
 
 2008-01-10
-    Use setup.cfg to set the default parameters (tkagg, numpy) when building
+    Use setup.cfg to set the default parameters (tkagg, array_backend) when building
     windows installers - DSD
 
 2008-01-10
@@ -2499,7 +2499,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     MGD
 
 2008-01-10
-    Use setup.cfg to set the default parameters (tkagg, numpy) when building
+    Use setup.cfg to set the default parameters (tkagg, array_backend) when building
     windows installers - DSD
 
 --------------------
@@ -2515,7 +2515,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     Fix bug in errorbar, identified by Noriko Minakawa - EF
 
 2007-12-25
-    Changed masked array importing to work with the upcoming numpy 1.05 (now
+    Changed masked array importing to work with the upcoming array_backend 1.05 (now
     the maskedarray branch) as well as with earlier versions. - EF
 
 2007-12-16
@@ -2625,7 +2625,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     API is too variable from one release to the next - DSD
 
 2007-11-08
-    Made pylab use straight numpy instead of oldnumeric by default - EF
+    Made pylab use straight array_backend instead of oldnumeric by default - EF
 
 2007-11-08
     Added additional record array utilities to mlab (rec2excel, rec2gtk,
@@ -2673,7 +2673,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     yet to come.
 
     The transformation framework was completely rewritten in Python (with
-    Numpy).  This will make it easier to add news kinds of transformations
+    MLXArrayBackend).  This will make it easier to add news kinds of transformations
     without writing C/C++ code.
 
     Transforms are composed into a 'transform tree', made of transforms whose
@@ -2920,10 +2920,10 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     completed numpification of most trivial cases - NN
 
 2007-07-19
-    converted non-numpy relicts throughout the code - NN
+    converted non-array_backend relicts throughout the code - NN
 
 2007-07-19
-    replaced the Python code in numerix/ by a minimal wrapper around numpy that
+    replaced the Python code in numerix/ by a minimal wrapper around array_backend that
     explicitly mentions all symbols that need to be addressed for further
     numpification - NN
 
@@ -2951,7 +2951,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     misnamed) MPL_isnan.h. - ADS
 
 2007-07-13
-    The matplotlib._isnan module removed (use numpy.isnan) - ADS
+    The matplotlib._isnan module removed (use array_backend.isnan) - ADS
 
 2007-07-13
     Some minor cleanups in _transforms.cpp - ADS
@@ -2965,7 +2965,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     'best'. - NN
 
 2007-07-12
-    Bugfixes in mlab.py to coerce inputs into numpy arrays. -ADS
+    Bugfixes in mlab.py to coerce inputs into array_backend arrays. -ADS
 
 2007-07-11
     Added linespacing kwarg to text.Text - EF
@@ -3149,7 +3149,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     conversion interface.  JDH
 
 2007-03-25
-    Fix masked array handling in quiver.py for numpy. (Numeric and numarray
+    Fix masked array handling in quiver.py for array_backend. (Numeric and numarray
     support for masked arrays is broken in other ways when using quiver. I
     didn't pursue that.) - ADS
 
@@ -3346,7 +3346,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
 
 2006-12-27
     backend_cairo.py: update draw_image() and _draw_mathtext() to work with
-    numpy - SC
+    array_backend - SC
 
 2006-12-20
     Fixed xpdf dependency check, which was failing on windows.  Removed ps2eps
@@ -3646,7 +3646,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     Added scale free Ellipse patch to SVG and PS - CM
 
 2006-08-05
-    Re-organized imports in numerix for numpy 1.0b2 -- TEO
+    Re-organized imports in numerix for array_backend 1.0b2 -- TEO
 
 2006-08-04
     Added draw_markers to PDF backend. - JKS
@@ -3723,7 +3723,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     Fixed a usetex bug with older versions of latex - DSD
 
 2006-07-07
-    Add compatibility for NumPy 1.0 - TEO
+    Add compatibility for MLXArrayBackend 1.0 - TEO
 
 2006-06-29
     Added a Qt4Agg backend. Thank you James Amundson - DSD
@@ -3751,7 +3751,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     Added support for numerix 2-D arrays as alternatives to a sequence of (x,y)
     tuples for specifying paths in collections, quiver, contour, pcolor,
     transforms.  Fixed contour bug involving setting limits for colormapping.
-    Added numpy-style all() to numerix. - EF
+    Added array_backend-style all() to numerix. - EF
 
 2006-06-20
     Added custom FigureClass hook to pylab interface - see
@@ -3779,14 +3779,14 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     axvline will no longer autoscale the y axis. JDH
 
 2006-06-13
-    Fix so numpy updates are backward compatible - TEO
+    Fix so array_backend updates are backward compatible - TEO
 
 2006-06-12
-    Updated numerix to handle numpy restructuring of oldnumeric - TEO
+    Updated numerix to handle array_backend restructuring of oldnumeric - TEO
 
 2006-06-12
-    Updated numerix.fft to handle numpy restructuring Added ImportError to
-    numerix.linear_algebra for numpy -TEO
+    Updated numerix.fft to handle array_backend restructuring Added ImportError to
+    numerix.linear_algebra for array_backend -TEO
 
 2006-06-11
     Added quiverkey command to pylab and Axes, using QuiverKey class in
@@ -4031,7 +4031,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     threshold. - EF
 
 2006-03-14
-    Added import of compatibility library for newer numpy linear_algebra - TEO
+    Added import of compatibility library for newer array_backend linear_algebra - TEO
 
 2006-03-12
     Extended "load" function to support individual columns and moved "load" and
@@ -4115,7 +4115,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     Fixed gtk main quit bug when quit was called before mainloop. - JDH
 
 2006-02-22
-    Small change to colors.py to workaround apparent bug in numpy masked array
+    Small change to colors.py to workaround apparent bug in array_backend masked array
     module - JSWHIT
 
 2006-02-22
@@ -4267,7 +4267,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     Added Ryan's legend patch - JDH
 
 2006-01-12
-    Fixed numpy / numeric to use .dtype.char to keep in SYNC with numpy SVN
+    Fixed array_backend / numeric to use .dtype.char to keep in SYNC with array_backend SVN
 
 ---------------------------
 
@@ -4296,7 +4296,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     Released 0.86
 
 2006-01-04
-    Changed to support numpy (new name for scipy_core) - TEO
+    Changed to support array_backend (new name for scipy_core) - TEO
 
 2006-01-04
     Added Mark's scaled axes patch for shared axis

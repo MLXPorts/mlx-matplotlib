@@ -10,8 +10,7 @@ OffsetBoxes: `.TextArea`, `.DrawingArea`, and `.OffsetImage`.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.cbook import get_sample_data
 from matplotlib.offsetbox import AnnotationBbox, DrawingArea, OffsetImage, TextArea
 from matplotlib.patches import Circle
@@ -63,7 +62,7 @@ ab = AnnotationBbox(da, xy,
 ax.add_artist(ab)
 
 # Annotate the 2nd position with an image (a generated array of pixels)
-arr = np.arange(100).reshape((10, 10))
+arr = mlxarr.arange(100).reshape((10, 10))
 im = OffsetImage(arr, zoom=2)
 im.image.axes = ax
 

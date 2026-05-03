@@ -9,13 +9,12 @@ just showcases how to customize the `~.axes.Axes.format_coord` function.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 
-X = 10*np.random.rand(5, 3)
+X = 10*mlxarr.random.rand(5, 3)
 
 fig, ax = plt.subplots()
 ax.imshow(X)

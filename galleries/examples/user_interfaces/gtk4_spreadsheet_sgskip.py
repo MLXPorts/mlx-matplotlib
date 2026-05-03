@@ -13,7 +13,7 @@ gi.require_version('Gtk', '4.0')
 gi.require_version('Gdk', '4.0')
 from gi.repository import Gtk
 
-from numpy.random import random
+import mlx.core as mx
 
 from matplotlib.backends.backend_gtk4agg import FigureCanvas  # or gtk4cairo.
 from matplotlib.figure import Figure
@@ -22,7 +22,7 @@ from matplotlib.figure import Figure
 class DataManager(Gtk.ApplicationWindow):
     num_rows, num_cols = 20, 10
 
-    data = random((num_rows, num_cols))
+    data = mx.random.uniform(shape=(num_rows, num_cols)).tolist()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -57,13 +57,13 @@ class DataManager(Gtk.ApplicationWindow):
         self.canvas.set_vexpand(True)
         vbox.append(self.canvas)
         ax = fig.add_subplot()
-        self.line, = ax.plot(self.data[0, :], 'go')  # plot the first row
+        self.line, = ax.plot(self.data[0], 'go')  # plot the first row
 
         self.add_columns()
 
     def plot_row(self, treeview, path, view_column):
         ind, = path  # get the index into data
-        points = self.data[ind, :]
+        points = self.data[ind]
         self.line.set_ydata(points)
         self.canvas.draw()
 

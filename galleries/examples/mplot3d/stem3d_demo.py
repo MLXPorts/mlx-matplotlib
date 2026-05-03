@@ -8,11 +8,10 @@ to the *z*-coordinate and places a marker at the tip.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-theta = np.linspace(0, 2*np.pi)
-x = np.cos(theta - np.pi/2)
-y = np.sin(theta - np.pi/2)
+from matplotlib import _mlx_array as mlxarr
+theta = mlxarr.linspace(0, 2*mlxarr.pi)
+x = mlxarr.cos(theta - mlxarr.pi/2)
+y = mlxarr.sin(theta - mlxarr.pi/2)
 z = theta
 
 fig, ax = plt.subplots(subplot_kw=dict(projection='3d'))
@@ -30,7 +29,7 @@ plt.show()
 
 fig, ax = plt.subplots(subplot_kw=dict(projection='3d'))
 markerline, stemlines, baseline = ax.stem(
-    x, y, z, linefmt='grey', markerfmt='D', bottom=np.pi)
+    x, y, z, linefmt='grey', markerfmt='D', bottom=mlxarr.pi)
 markerline.set_markerfacecolor('none')
 
 plt.show()

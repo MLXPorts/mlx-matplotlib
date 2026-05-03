@@ -6,9 +6,7 @@ Fourier Demo WX
 """
 
 import wx
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.figure import Figure
 
@@ -208,11 +206,11 @@ class FourierDemoFrame(wx.Frame):
                            transform=self.subplot2.transAxes)
 
     def compute(self, f0, A):
-        f = np.arange(-6., 6., 0.02)
-        t = np.arange(-2., 2., 0.01)
-        x = A * np.cos(2 * np.pi * f0 * t) * np.exp(-np.pi * t ** 2)
+        f = mlxarr.arange(-6., 6., 0.02)
+        t = mlxarr.arange(-2., 2., 0.01)
+        x = A * mlxarr.cos(2 * mlxarr.pi * f0 * t) * mlxarr.exp(-mlxarr.pi * t ** 2)
         X = A / 2 * \
-            (np.exp(-np.pi * (f - f0) ** 2) + np.exp(-np.pi * (f + f0) ** 2))
+            (mlxarr.exp(-mlxarr.pi * (f - f0) ** 2) + mlxarr.exp(-mlxarr.pi * (f + f0) ** 2))
         return f, X, t, x
 
     def setKnob(self, value):

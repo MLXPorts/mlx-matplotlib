@@ -75,13 +75,13 @@ def _isolated_tk_test(success_count, func=None):
 @_isolated_tk_test(success_count=6)  # len(bad_boxes)
 def test_blit():
     import matplotlib.pyplot as plt
-    import numpy as np
+    from matplotlib import _mlx_array as mlxarr
     import matplotlib.backends.backend_tkagg  # noqa
     from matplotlib.backends import _backend_tk, _tkagg
 
     fig, ax = plt.subplots()
     photoimage = fig.canvas._tkphoto
-    data = np.ones((4, 4, 4), dtype=np.uint8)
+    data = mlxarr.ones((4, 4, 4), dtype=mlxarr.uint8)
     # Test out of bounds blitting.
     bad_boxes = ((-1, 2, 0, 2),
                  (2, 0, 0, 2),

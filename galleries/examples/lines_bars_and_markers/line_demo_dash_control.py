@@ -24,10 +24,9 @@ Other attributes of the dash may also be set either with the relevant method
 function.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
-x = np.linspace(0, 10, 500)
-y = np.sin(x)
+from matplotlib import _mlx_array as mlxarr
+x = mlxarr.linspace(0, 10, 500)
+y = mlxarr.sin(x)
 
 plt.rc('lines', linewidth=2.5)
 fig, ax = plt.subplots()

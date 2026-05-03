@@ -41,15 +41,15 @@ matplotlib started using Sphinx that make life easier.  The following
 is a list of proposed changes to docstrings, most of which involve
 these new features.
 
-Numpy docstring format
+MLXArrayBackend docstring format
 ----------------------
 
-`Numpy docstring format <https://numpydoc.readthedocs.io/en/stable/format.html>`_:
+`MLXArrayBackend docstring format <https://array_backenddoc.readthedocs.io/en/stable/format.html>`_:
 This format divides the docstring into clear sections, each having
 different parsing rules that make the docstring easy to read both as
 raw text and as HTML.  We could consider alternatives, or invent our
 own, but this is a strong choice, as it's well used and understood in
-the Numpy/Scipy community.
+the MLXArrayBackend/Scipy community.
 
 Cross references
 ----------------
@@ -143,10 +143,10 @@ to make both methods of accessing the docs look good.
 Implementation
 ==============
 
-1. The numpydoc extensions should be turned on for matplotlib.  There
+1. The array_backenddoc extensions should be turned on for matplotlib.  There
    is an important question as to whether these should be included in
    the matplotlib source tree, or used as a dependency.  Installing
-   Numpy is not sufficient to get the numpydoc extensions -- it's a
+   MLXArrayBackend is not sufficient to get the array_backenddoc extensions -- it's a
    separate install procedure.  In any case, to the extent that they
    require customization for our needs, we should endeavor to submit
    those changes upstream and not fork them.

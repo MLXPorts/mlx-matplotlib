@@ -14,8 +14,7 @@ already drawn bars via the parameter ``left``.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 category_names = ['Strongly disagree', 'Disagree',
                   'Neither agree nor disagree', 'Agree', 'Strongly agree']
 results = {
@@ -40,15 +39,15 @@ def survey(results, category_names):
         The category labels.
     """
     labels = list(results.keys())
-    data = np.array(list(results.values()))
+    data = mlxarr.array(list(results.values()))
     data_cum = data.cumsum(axis=1)
     category_colors = plt.colormaps['RdYlGn'](
-        np.linspace(0.15, 0.85, data.shape[1]))
+        mlxarr.linspace(0.15, 0.85, data.shape[1]))
 
     fig, ax = plt.subplots(figsize=(9.2, 5))
     ax.invert_yaxis()
     ax.xaxis.set_visible(False)
-    ax.set_xlim(0, np.sum(data, axis=1).max())
+    ax.set_xlim(0, mlxarr.sum(data, axis=1).max())
 
     for i, (colname, color) in enumerate(zip(category_names, category_colors)):
         widths = data[:, i]

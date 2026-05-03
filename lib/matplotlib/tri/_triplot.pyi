@@ -3,7 +3,7 @@ from matplotlib.axes import Axes
 from matplotlib.lines import Line2D
 
 from typing import overload
-from numpy.typing import ArrayLike
+from matplotlib._mlx_typing import ArrayLike
 
 @overload
 def triplot(

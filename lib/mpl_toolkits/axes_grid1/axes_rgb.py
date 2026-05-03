@@ -1,7 +1,5 @@
 from types import MethodType
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from .axes_divider import make_axes_locatable, Size
 from .mpl_axes import Axes, SimpleAxisArtist
 
@@ -143,12 +141,12 @@ class RGBAxes:
         if not (r.shape == g.shape == b.shape):
             raise ValueError(
                 f'Input shapes ({r.shape}, {g.shape}, {b.shape}) do not match')
-        RGB = np.dstack([r, g, b])
-        R = np.zeros_like(RGB)
+        RGB = mlxarr.dstack([r, g, b])
+        R = mlxarr.zeros_like(RGB)
         R[:, :, 0] = r
-        G = np.zeros_like(RGB)
+        G = mlxarr.zeros_like(RGB)
         G[:, :, 1] = g
-        B = np.zeros_like(RGB)
+        B = mlxarr.zeros_like(RGB)
         B[:, :, 2] = b
         im_rgb = self.RGB.imshow(RGB, **kwargs)
         im_r = self.R.imshow(R, **kwargs)

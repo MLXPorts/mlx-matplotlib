@@ -12,16 +12,15 @@ can be adjusted by giving ``alpha`` a value between 0 and 1.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-np.random.seed(19680801)
+from matplotlib import _mlx_array as mlxarr
+mlxarr.random.seed(19680801)
 
 
 fig, ax = plt.subplots()
 for color in ['tab:blue', 'tab:orange', 'tab:green']:
     n = 750
-    x, y = np.random.rand(2, n)
-    scale = 200.0 * np.random.rand(n)
+    x, y = mlxarr.random.rand(2, n)
+    scale = 200.0 * mlxarr.random.rand(n)
     ax.scatter(x, y, c=color, s=scale, label=color,
                alpha=0.3, edgecolors='none')
 
@@ -44,9 +43,9 @@ plt.show()
 
 
 N = 45
-x, y = np.random.rand(2, N)
-c = np.random.randint(1, 5, size=N)
-s = np.random.randint(10, 220, size=N)
+x, y = mlxarr.random.rand(2, N)
+c = mlxarr.random.randint(1, 5, size=N)
+s = mlxarr.random.randint(10, 220, size=N)
 
 fig, ax = plt.subplots()
 
@@ -69,10 +68,10 @@ plt.show()
 # can be used to steer how many legend entries are to be created and how they
 # should be labeled. The following shows how to use some of them.
 
-volume = np.random.rayleigh(27, size=40)
-amount = np.random.poisson(10, size=40)
-ranking = np.random.normal(size=40)
-price = np.random.uniform(1, 10, size=40)
+volume = mlxarr.random.rayleigh(27, size=40)
+amount = mlxarr.random.poisson(10, size=40)
+ranking = mlxarr.random.normal(size=40)
+price = mlxarr.random.uniform(1, 10, size=40)
 
 fig, ax = plt.subplots()
 
@@ -93,7 +92,7 @@ ax.add_artist(legend1)
 # in dollars. Note how we target at 5 elements here, but obtain only 4 in the
 # created legend due to the automatic round prices that are chosen for us.
 kw = dict(prop="sizes", num=5, color=scatter.cmap(0.7), fmt="$ {x:.2f}",
-          func=lambda s: np.sqrt(s/.3)/3)
+          func=lambda s: mlxarr.sqrt(s/.3)/3)
 legend2 = ax.legend(*scatter.legend_elements(**kw),
                     loc="lower right", title="Price")
 

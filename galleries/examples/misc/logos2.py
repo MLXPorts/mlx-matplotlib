@@ -7,8 +7,7 @@ This example generates the current matplotlib logo.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.cm as cm
 import matplotlib.font_manager
 from matplotlib.patches import PathPatch, Rectangle
@@ -65,10 +64,10 @@ def create_icon_axes(fig, ax_position, lw_bars, lw_grid, lw_border, rgrid):
         ax.set_axisbelow(True)
 
         N = 7
-        arc = 2. * np.pi
-        theta = np.arange(0.0, arc, arc / N)
-        radii = np.array([2, 6, 8, 7, 4, 5, 8])
-        width = np.pi / 4 * np.array([0.4, 0.4, 0.6, 0.8, 0.2, 0.5, 0.3])
+        arc = 2. * mlxarr.pi
+        theta = mlxarr.arange(0.0, arc, arc / N)
+        radii = mlxarr.array([2, 6, 8, 7, 4, 5, 8])
+        width = mlxarr.pi / 4 * mlxarr.array([0.4, 0.4, 0.6, 0.8, 0.2, 0.5, 0.3])
         bars = ax.bar(theta, radii, width=width, bottom=0.0, align='edge',
                       edgecolor='0.3', lw=lw_bars)
         for r, bar in zip(radii, bars):

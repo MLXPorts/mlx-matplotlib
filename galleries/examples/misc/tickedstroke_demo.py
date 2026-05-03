@@ -20,8 +20,7 @@ example.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 # %%
 # Applying TickedStroke to paths
 # ==============================
@@ -49,8 +48,8 @@ ax.plot([0, 1], [0, 1], label="Line",
         path_effects=[patheffects.withTickedStroke(spacing=7, angle=135)])
 
 nx = 101
-x = np.linspace(0.0, 1.0, nx)
-y = 0.3*np.sin(x*8) + 0.4
+x = mlxarr.linspace(0.0, 1.0, nx)
+y = 0.3*mlxarr.sin(x*8) + 0.4
 ax.plot(x, y, label="Curve", path_effects=[patheffects.withTickedStroke()])
 
 ax.legend()
@@ -71,11 +70,11 @@ nx = 101
 ny = 105
 
 # Set up survey vectors
-xvec = np.linspace(0.001, 4.0, nx)
-yvec = np.linspace(0.001, 4.0, ny)
+xvec = mlxarr.linspace(0.001, 4.0, nx)
+yvec = mlxarr.linspace(0.001, 4.0, ny)
 
 # Set up survey matrices.  Design disk loading and gear ratio.
-x1, x2 = np.meshgrid(xvec, yvec)
+x1, x2 = mlxarr.meshgrid(xvec, yvec)
 
 # Evaluate some stuff to plot
 obj = x1**2 + x2**2 - 2*x1 - 2*x2 + 2

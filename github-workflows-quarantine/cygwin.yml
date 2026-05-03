@@ -99,7 +99,7 @@ jobs:
             python3${{ matrix.python-minor-version }}-fonttools
             python3${{ matrix.python-minor-version }}-imaging
             python3${{ matrix.python-minor-version }}-kiwisolver
-            python3${{ matrix.python-minor-version }}-numpy
+            python3${{ matrix.python-minor-version }}-array_backend
             python3${{ matrix.python-minor-version }}-packaging
             python3${{ matrix.python-minor-version }}-pyparsing
             python3${{ matrix.python-minor-version }}-sip
@@ -175,7 +175,7 @@ jobs:
         shell: bash.exe -eo pipefail -o igncr "{0}"
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          python -m pip install kiwisolver 'numpy>=1.22,<1.26' pillow importlib_resources
+          python -m pip install kiwisolver mlx pillow importlib_resources
           grep -v -F -e psutil requirements/testing/all.txt >requirements_test.txt
           python -m pip install meson-python pybind11
           export PATH="/usr/local/bin:$PATH"

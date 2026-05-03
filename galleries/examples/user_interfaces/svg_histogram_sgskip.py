@@ -39,8 +39,7 @@ import json
 import xml.etree.ElementTree as ET
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 plt.rcParams['svg.fonttype'] = 'none'
 
 # Apparently, this `register_namespace` method is necessary to avoid garbling
@@ -48,11 +47,11 @@ plt.rcParams['svg.fonttype'] = 'none'
 ET.register_namespace("", "http://www.w3.org/2000/svg")
 
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 # --- Create histogram, legend and title ---
 plt.figure()
-r = np.random.randn(100)
+r = mlxarr.random.randn(100)
 r1 = r + 1
 labels = ['Rabbits', 'Frogs']
 H = plt.hist([r, r1], label=labels)

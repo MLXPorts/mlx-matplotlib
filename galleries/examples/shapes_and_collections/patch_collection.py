@@ -10,32 +10,31 @@ adds each artist separately to its own Axes.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Circle, Polygon, Wedge
 
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 
 fig, ax = plt.subplots()
 
 resolution = 50  # the number of vertices
 N = 3
-x = np.random.rand(N)
-y = np.random.rand(N)
-radii = 0.1*np.random.rand(N)
+x = mlxarr.random.rand(N)
+y = mlxarr.random.rand(N)
+radii = 0.1*mlxarr.random.rand(N)
 patches = []
 for x1, y1, r in zip(x, y, radii):
     circle = Circle((x1, y1), r)
     patches.append(circle)
 
-x = np.random.rand(N)
-y = np.random.rand(N)
-radii = 0.1*np.random.rand(N)
-theta1 = 360.0*np.random.rand(N)
-theta2 = 360.0*np.random.rand(N)
+x = mlxarr.random.rand(N)
+y = mlxarr.random.rand(N)
+radii = 0.1*mlxarr.random.rand(N)
+theta1 = 360.0*mlxarr.random.rand(N)
+theta2 = 360.0*mlxarr.random.rand(N)
 for x1, y1, r, t1, t2 in zip(x, y, radii, theta1, theta2):
     wedge = Wedge((x1, y1), r, t1, t2)
     patches.append(wedge)
@@ -49,10 +48,10 @@ patches += [
 ]
 
 for i in range(N):
-    polygon = Polygon(np.random.rand(N, 2), closed=True)
+    polygon = Polygon(mlxarr.random.rand(N, 2), closed=True)
     patches.append(polygon)
 
-colors = 100 * np.random.rand(len(patches))
+colors = 100 * mlxarr.random.rand(len(patches))
 p = PatchCollection(patches, alpha=0.4)
 p.set_array(colors)
 ax.add_collection(p)

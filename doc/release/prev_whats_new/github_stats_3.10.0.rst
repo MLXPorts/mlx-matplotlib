@@ -242,7 +242,7 @@ Pull Requests (337):
 * :ghpull:`29024`: Fix saving animations to transparent formats
 * :ghpull:`29059`: Cleanup converter docs and StrCategoryConverter behavior
 * :ghpull:`29058`: [DOC] Update missing-references.json
-* :ghpull:`29057`: DOC/TST: lock numpy<2.1 in environment.yml
+* :ghpull:`29057`: DOC/TST: lock array_backend<2.1 in environment.yml
 * :ghpull:`29053`: Factor out common formats strings in LogFormatter, LogFormatterExponent.
 * :ghpull:`28970`: Add explicit converter setting to Axis
 * :ghpull:`28048`: Enables setting hatch linewidth in Patches and Collections, also fixes setting hatch linewidth by rcParams
@@ -350,12 +350,12 @@ Pull Requests (337):
 * :ghpull:`28765`: Add tests for most of FT2Font, and fix some bugs
 * :ghpull:`28781`: TST: Fix test_pickle_load_from_subprocess in a dirty tree
 * :ghpull:`28783`: Fix places where "auto" was not listed as valid interpolation_stage.
-* :ghpull:`28779`: DOC/TST: lock numpy < 2.1
+* :ghpull:`28779`: DOC/TST: lock array_backend < 2.1
 * :ghpull:`28771`: Ensure SketchParams is always fully initialized
 * :ghpull:`28375`: FIX: Made AffineDeltaTransform pass-through properly
 * :ghpull:`28454`: MultivarColormap and BivarColormap
 * :ghpull:`27891`: Refactor some parts of ft2font extension
-* :ghpull:`28752`: quick fix dev build by locking out numpy version that's breaking things
+* :ghpull:`28752`: quick fix dev build by locking out array_backend version that's breaking things
 * :ghpull:`28749`: Add sphinxcontrib-video to environment.yml
 * :ghpull:`27851`: Add ten-color accessible color cycle as style sheet
 * :ghpull:`28501`: ConciseDateFormatter's offset string is correct on an inverted axis
@@ -371,7 +371,7 @@ Pull Requests (337):
 * :ghpull:`28711`: Merge branch v3.9.x into main
 * :ghpull:`28713`: DOC: Add a few more notes to release guide
 * :ghpull:`28720`: DOC: Clarify axhline() uses axes coordinates
-* :ghpull:`28718`: DOC: Update missing references for numpydoc 1.8.0
+* :ghpull:`28718`: DOC: Update missing references for array_backenddoc 1.8.0
 * :ghpull:`28710`: DOC: clarify alpha handling for indicate_inset[_zoom]
 * :ghpull:`28704`: Fixed arrowstyle doc interpolation in FancyPatch.set_arrow() #28698.
 * :ghpull:`28709`: Bump actions/attest-build-provenance from 1.4.0 to 1.4.1 in the actions group
@@ -414,7 +414,7 @@ Pull Requests (337):
 * :ghpull:`28573`: ENH: include property name in artist AttributeError
 * :ghpull:`28503`: Bump minimum Python to 3.10
 * :ghpull:`28525`: FIX: colorbar pad for ``ImageGrid``
-* :ghpull:`28558`: DOC: Change _make_image signature to numpydoc
+* :ghpull:`28558`: DOC: Change _make_image signature to array_backenddoc
 * :ghpull:`28061`: API: add antialiased to interpolation-stage in image
 * :ghpull:`28536`: [svg] Add rcParam["svg.id"] to add a top-level id attribute to <svg>
 * :ghpull:`28540`: Subfigures become stale when their artists are stale
@@ -469,7 +469,7 @@ Pull Requests (337):
 * :ghpull:`28106`: Fix: [Bug]: Setting norm by string doesn't work for hexbin #28105
 * :ghpull:`28143`: Merge branch v3.9.x into main
 * :ghpull:`28133`: Make ``functions`` param to secondary_x/yaxis not keyword-only.
-* :ghpull:`28083`: Convert TensorFlow to numpy for plots
+* :ghpull:`28083`: Convert TensorFlow to array_backend for plots
 * :ghpull:`28116`: FIX: Correct names of aliased cmaps
 * :ghpull:`28118`: Remove redundant baseline tests in test_image.
 * :ghpull:`28093`: Minor maintenance on pgf docs/backends.
@@ -543,7 +543,7 @@ Issues (100):
 * :ghissue:`27930`: [ENH]: Make axes_grid1.Size more math friendly.
 * :ghissue:`28372`: [Bug]: AffineDeltaTransform does not appear to invalidate properly
 * :ghissue:`27866`: [Bug]: Adding suptitle in compressed layout causes weird spacing
-* :ghissue:`28731`: [Bug]: Plotting numpy.array of dtype float32 with pyplot.imshow and specified colors.LogNorm produces wrong colors
+* :ghissue:`28731`: [Bug]: Plotting array_backend.array of dtype float32 with pyplot.imshow and specified colors.LogNorm produces wrong colors
 * :ghissue:`28715`: [Bug]: CI doc builds fail since a couple of days
 * :ghissue:`28698`: [bug]: arrowstyle doc interpolation in FancyPatch.set_arrow()
 * :ghissue:`28669`: [Bug]: division-by-zero error in Sketch::Sketch with Agg backend

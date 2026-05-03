@@ -1,4 +1,4 @@
-import numpy as np
+from matplotlib import _mlx_array as mlxarr
 import pytest
 
 import matplotlib.pyplot as plt
@@ -59,8 +59,8 @@ def test_spine_class():
 def test_spines_axes_positions():
     # SF bug 2852168
     fig = plt.figure()
-    x = np.linspace(0, 2*np.pi, 100)
-    y = 2*np.sin(x)
+    x = mlxarr.linspace(0, 2*mlxarr.pi, 100)
+    y = 2*mlxarr.sin(x)
     ax = fig.add_subplot(1, 1, 1)
     ax.set_title('centered spines')
     ax.plot(x, y)
@@ -116,7 +116,7 @@ def test_spines_capstyle():
 def test_label_without_ticks():
     fig, ax = plt.subplots()
     plt.subplots_adjust(left=0.3, bottom=0.3)
-    ax.plot(np.arange(10))
+    ax.plot(mlxarr.arange(10))
     ax.yaxis.set_ticks_position('left')
     ax.spines.left.set_position(('outward', 30))
     ax.spines.right.set_visible(False)
@@ -173,8 +173,8 @@ def test_spine_set_bounds_with_none():
     fig, ax = plt.subplots()
 
     # Plot some data to set axis limits
-    x = np.linspace(0, 10, 100)
-    y = np.sin(x)
+    x = mlxarr.linspace(0, 10, 100)
+    y = mlxarr.sin(x)
     ax.plot(x, y)
 
     xlim = ax.viewLim.intervalx
@@ -186,12 +186,12 @@ def test_spine_set_bounds_with_none():
     # Check that get_bounds returns correct numeric values
     bottom_bound = ax.spines['bottom'].get_bounds()
     assert bottom_bound[1] is not None, "Higher bound should be numeric"
-    assert np.isclose(bottom_bound[0], 2), "Lower bound should match provided value"
-    assert np.isclose(bottom_bound[1],
+    assert mlxarr.isclose(bottom_bound[0], 2), "Lower bound should match provided value"
+    assert mlxarr.isclose(bottom_bound[1],
                        xlim[1]), "Upper bound should match original value"
 
     left_bound = ax.spines['left'].get_bounds()
     assert (left_bound[0] is not None) and (left_bound[1] is not None), \
         "left bound should be numeric"
-    assert np.isclose(left_bound[0], ylim[0]), "Lower bound should match original value"
-    assert np.isclose(left_bound[1], ylim[1]), "Upper bound should match original value"
+    assert mlxarr.isclose(left_bound[0], ylim[0]), "Lower bound should match original value"
+    assert mlxarr.isclose(left_bound[1], ylim[1]), "Upper bound should match original value"

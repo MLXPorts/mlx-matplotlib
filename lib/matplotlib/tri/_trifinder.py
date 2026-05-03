@@ -1,5 +1,4 @@
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib import _api
 from matplotlib.tri import Triangulation
 
@@ -55,14 +54,16 @@ class TrapezoidMapTriFinder(TriFinder):
 
         Returns integer array with the same shape and *x* and *y*.
         """
-        x = np.asarray(x, dtype=np.float64)
-        y = np.asarray(y, dtype=np.float64)
+        x = mlxarr.asarray(x, dtype=mlxarr.float64)
+        y = mlxarr.asarray(y, dtype=mlxarr.float64)
         if x.shape != y.shape:
             raise ValueError("x and y must be array-like with the same shape")
 
         # C++ does the heavy lifting, and expects 1D arrays.
-        indices = (self._cpp_trifinder.find_many(x.ravel(), y.ravel())
-                   .reshape(x.shape))
+        indices = mlxarr.asarray(
+            self._cpp_trifinder.find_many(x.ravel(), y.ravel()),
+            dtype=mlxarr.int32,
+        ).reshape(x.shape)
         return indices
 
     def _get_tree_stats(self):

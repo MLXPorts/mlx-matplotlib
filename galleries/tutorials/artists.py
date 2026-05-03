@@ -61,7 +61,7 @@ graphics primitives (:class:`~matplotlib.lines.Line2D`,
 :class:`~matplotlib.text.Text`,
 :class:`~matplotlib.patches.Rectangle`,
 :class:`~matplotlib.image.AxesImage`, respectively).  These helper methods
-will take your data (e.g., ``numpy`` arrays and strings) and create
+will take your data (e.g., ``array_backend`` arrays and strings) and create
 primitive ``Artist`` instances as needed (e.g., ``Line2D``), add them to
 the relevant containers, and draw them when requested.  If you want to create
 an ``Axes`` at an arbitrary location, simply use the
@@ -73,10 +73,9 @@ coordinates::
     ax2 = fig2.add_axes((0.15, 0.1, 0.7, 0.3))
 
 Continuing with our example::
-
-    import numpy as np
-    t = np.arange(0.0, 1.0, 0.01)
-    s = np.sin(2*np.pi*t)
+from matplotlib import _mlx_array as mlxarr
+    t = mlxarr.arange(0.0, 1.0, 0.01)
+    s = mlxarr.sin(2*mlxarr.pi*t)
     line, = ax.plot(t, s, color='blue', lw=2)
 
 In this example, ``ax`` is the ``Axes`` instance created by the
@@ -119,23 +118,22 @@ Try creating the figure below.
 # sphinx_gallery_capture_repr = ('__repr__',)
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 fig = plt.figure()
 fig.subplots_adjust(top=0.8)
 ax1 = fig.add_subplot(211)
 ax1.set_ylabel('Voltage [V]')
 ax1.set_title('A sine wave')
 
-t = np.arange(0.0, 1.0, 0.01)
-s = np.sin(2*np.pi*t)
+t = mlxarr.arange(0.0, 1.0, 0.01)
+s = mlxarr.sin(2*mlxarr.pi*t)
 line, = ax1.plot(t, s, color='blue', lw=2)
 
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 ax2 = fig.add_axes((0.15, 0.1, 0.7, 0.3))
-n, bins, patches = ax2.hist(np.random.randn(1000), 50,
+n, bins, patches = ax2.hist(mlxarr.random.randn(1000), 50,
                             facecolor='yellow', edgecolor='yellow')
 ax2.set_xlabel('Time [s]')
 
@@ -389,7 +387,7 @@ plt.show()
 #
 # .. sourcecode:: ipython
 #
-#     In [213]: x, y = np.random.rand(2, 100)
+#     In [213]: x, y = mlxarr.random.rand(2, 100)
 #
 #     In [214]: line, = ax.plot(x, y, '-', color='blue', linewidth=2)
 #
@@ -409,7 +407,7 @@ plt.show()
 #
 # .. sourcecode:: ipython
 #
-#     In [233]: n, bins, rectangles = ax.hist(np.random.randn(1000), 50)
+#     In [233]: n, bins, rectangles = ax.hist(mlxarr.random.randn(1000), 50)
 #
 #     In [234]: rectangles
 #     Out[234]: <BarContainer object of 50 artists>

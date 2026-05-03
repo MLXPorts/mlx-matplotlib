@@ -7,22 +7,22 @@ Demonstrate use of a log color scale in contourf
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-from numpy import ma
+from matplotlib import _mlx_array as mlxarr
+from matplotlib._mlx_array import ma
 
 from matplotlib import ticker
 
 N = 100
-x = np.linspace(-3.0, 3.0, N)
-y = np.linspace(-2.0, 2.0, N)
+x = mlxarr.linspace(-3.0, 3.0, N)
+y = mlxarr.linspace(-2.0, 2.0, N)
 
-X, Y = np.meshgrid(x, y)
+X, Y = mlxarr.meshgrid(x, y)
 
 # A low hump with a spike coming out.
 # Needs to have z/colour axis on a log scale, so we see both hump and spike.
 # A linear scale only shows the spike.
-Z1 = np.exp(-X**2 - Y**2)
-Z2 = np.exp(-(X * 10)**2 - (Y * 10)**2)
+Z1 = mlxarr.exp(-X**2 - Y**2)
+Z2 = mlxarr.exp(-(X * 10)**2 - (Y * 10)**2)
 z = Z1 + 50 * Z2
 
 # Put in some negative values (lower left corner) to cause trouble with logs:
@@ -40,9 +40,9 @@ cs = ax.contourf(X, Y, z, locator=ticker.LogLocator(), cmap="PuBu_r")
 
 # Alternatively, you can manually set the levels
 # and the norm:
-# lev_exp = np.arange(np.floor(np.log10(z.min())-1),
-#                    np.ceil(np.log10(z.max())+1))
-# levs = np.power(10, lev_exp)
+# lev_exp = mlxarr.arange(mlxarr.floor(mlxarr.log10(z.min())-1),
+#                    mlxarr.ceil(mlxarr.log10(z.max())+1))
+# levs = mlxarr.power(10, lev_exp)
 # cs = ax.contourf(X, Y, z, levs, norm=colors.LogNorm())
 
 cbar = fig.colorbar(cs)

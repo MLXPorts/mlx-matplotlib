@@ -11,13 +11,12 @@ equal heights while maintaining their aspect ratios.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from mpl_toolkits.axes_grid1.axes_divider import HBoxDivider, VBoxDivider
 import mpl_toolkits.axes_grid1.axes_size as Size
 
-arr1 = np.arange(20).reshape((4, 5))
-arr2 = np.arange(20).reshape((5, 4))
+arr1 = mlxarr.arange(20).reshape((4, 5))
+arr2 = mlxarr.arange(20).reshape((5, 4))
 
 fig, (ax1, ax2) = plt.subplots(1, 2)
 ax1.imshow(arr1)

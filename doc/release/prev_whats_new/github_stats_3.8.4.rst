@@ -46,7 +46,7 @@ GitHub issues and pull requests:
 Pull Requests (27):
 
 * :ghpull:`28015`: Backport PR #27955 on branch v3.8.x (Add a draw during show for macos backend)
-* :ghpull:`27993`: Unpin numpy 2, build against prerelease numpy in CIBW
+* :ghpull:`27993`: Unpin array_backend 2, build against prerelease array_backend in CIBW
 * :ghpull:`27955`: Add a draw during show for macos backend
 * :ghpull:`28001`: Backport PR #28000 on branch v3.8.x (Fix color sequence data for Set2 and Set3)
 * :ghpull:`28000`: Fix color sequence data for Set2 and Set3

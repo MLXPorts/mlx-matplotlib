@@ -22,9 +22,9 @@ Still TODO:
 """
 
 from contextlib import nullcontext
+from array import array as _array
 from math import radians, cos, sin
-
-import numpy as np
+from matplotlib import _mlx_array as mlxarr
 from PIL import features
 
 import matplotlib as mpl
@@ -35,8 +35,52 @@ from matplotlib.font_manager import fontManager as _fontManager, get_font
 from matplotlib.ft2font import LoadFlags
 from matplotlib.mathtext import MathTextParser
 from matplotlib.path import Path
-from matplotlib.transforms import Bbox, BboxBase
+from matplotlib.transforms import Bbox, BboxBase, _as_float_memoryview
 from matplotlib.backends._backend_agg import RendererAgg as _RendererAgg
+
+
+class _BufferPath:
+    def __init__(self, path):
+        self.vertices = _as_float_memoryview(path.vertices)
+        self.codes = (
+            None if path.codes is None
+            else memoryview(_array("B", [int(code)
+                                         for code in path.codes.tolist()])))
+        self.should_simplify = path.should_simplify
+        self.simplify_threshold = path.simplify_threshold
+
+
+def _transform_to_memoryview(transform):
+    if hasattr(transform, "get_matrix"):
+        transform = transform.get_matrix()
+    elif hasattr(transform, "get_affine"):
+        transform = transform.get_affine().get_matrix()
+    return _as_float_memoryview(transform)
+
+
+def _plain_float_buffer(values, empty_fallback=None):
+    values = mlxarr.asarray(values)
+    shape = tuple(values.shape)
+    data = values.tolist()
+    if not shape:
+        shape = (1,)
+        data = [data]
+    if 0 in shape:
+        if empty_fallback is None:
+            empty_fallback = [0.0]
+        values = mlxarr.asarray(empty_fallback)
+        shape = tuple(values.shape)
+        data = values.tolist()
+
+    def flatten(value):
+        if isinstance(value, list):
+            for item in value:
+                yield from flatten(item)
+        else:
+            yield float(value)
+
+    buf = _array("d", list(flatten(data)))
+    return memoryview(buf).cast("B").cast("d", shape=shape)
 
 
 def get_hinting_flag():
@@ -86,29 +130,40 @@ class RendererAgg(RendererBase):
     def _update_methods(self):
         self.draw_gouraud_triangles = self._renderer.draw_gouraud_triangles
         self.draw_image = self._renderer.draw_image
-        self.draw_markers = self._renderer.draw_markers
-        self.draw_path_collection = self._renderer.draw_path_collection
-        self.draw_quad_mesh = self._renderer.draw_quad_mesh
         self.copy_from_bbox = self._renderer.copy_from_bbox
+
+    def draw_markers(self, gc, marker_path, marker_trans, path, transform,
+                     rgbFace=None):
+        if len(marker_path.vertices) == 0 or len(path.vertices) == 0:
+            return
+        marker_trans = _transform_to_memoryview(marker_trans)
+        transform = _transform_to_memoryview(transform)
+        self._renderer.draw_markers(
+            gc, _BufferPath(marker_path), marker_trans,
+            _BufferPath(path), transform, rgbFace)
 
     def draw_path(self, gc, path, transform, rgbFace=None):
         # docstring inherited
+        transform = _transform_to_memoryview(transform)
+        path = _BufferPath(path)
         nmax = mpl.rcParams['agg.path.chunksize']  # here at least for testing
-        npts = path.vertices.shape[0]
+        vertices = mlxarr.asarray(path.vertices)
+        codes = None if path.codes is None else mlxarr.asarray(path.codes)
+        npts = vertices.shape[0]
 
         if (npts > nmax > 100 and path.should_simplify and
                 rgbFace is None and gc.get_hatch() is None):
-            nch = np.ceil(npts / nmax)
-            chsize = int(np.ceil(npts / nch))
-            i0 = np.arange(0, npts, chsize)
-            i1 = np.zeros_like(i0)
+            nch = mlxarr.ceil(npts / nmax)
+            chsize = int(mlxarr.ceil(npts / nch))
+            i0 = mlxarr.arange(0, npts, chsize)
+            i1 = mlxarr.zeros_like(i0)
             i1[:-1] = i0[1:] - 1
             i1[-1] = npts
             for ii0, ii1 in zip(i0, i1):
-                v = path.vertices[ii0:ii1, :]
-                c = path.codes
+                v = vertices[int(ii0):int(ii1), :]
+                c = codes
                 if c is not None:
-                    c = c[ii0:ii1]
+                    c = c[int(ii0):int(ii1)]
                     c[0] = Path.MOVETO  # move to end of last chunk
                 p = Path(v, c)
                 p.simplify_threshold = path.simplify_threshold
@@ -126,6 +181,7 @@ class RendererAgg(RendererBase):
                         f"{path.simplify_threshold:.2f} on the input)."
                     )
                     raise OverflowError(msg) from None
+
         else:
             try:
                 self._renderer.draw_path(gc, path, transform, rgbFace)
@@ -170,6 +226,45 @@ class RendererAgg(RendererBase):
                         )
 
                 raise OverflowError(msg) from None
+
+    def draw_path_collection(self, gc, master_transform, paths, transforms,
+                             offsets, offset_trans, facecolors, edgecolors,
+                             linewidths, linestyles, antialiaseds, urls,
+                             offset_position, hatchcolors=None):
+        master_transform = _transform_to_memoryview(master_transform)
+        paths = [_BufferPath(path) for path in paths]
+        transforms = _plain_float_buffer(
+            transforms, [[[1.0, 0.0, 0.0],
+                          [0.0, 1.0, 0.0],
+                          [0.0, 0.0, 1.0]]])
+        offsets = _plain_float_buffer(offsets, [[0.0, 0.0]])
+        offset_trans = _transform_to_memoryview(offset_trans)
+        facecolors = _plain_float_buffer(facecolors, [[0.0, 0.0, 0.0, 0.0]])
+        edgecolors = _plain_float_buffer(edgecolors, [[0.0, 0.0, 0.0, 0.0]])
+        linewidths = _plain_float_buffer(linewidths, [1.0])
+        antialiaseds = memoryview(_array("B", [
+            int(value) for value in mlxarr.asarray(antialiaseds).tolist()
+        ]))
+        if hatchcolors is not None:
+            hatchcolors = _plain_float_buffer(
+                hatchcolors, [[0.0, 0.0, 0.0, 0.0]])
+        self._renderer.draw_path_collection(
+            gc, master_transform, paths, transforms, offsets, offset_trans,
+            facecolors, edgecolors, linewidths, linestyles, antialiaseds,
+            urls, offset_position, hatchcolors=hatchcolors)
+
+    def draw_quad_mesh(self, gc, master_transform, meshWidth, meshHeight,
+                       coordinates, offsets, offsetTrans, facecolors,
+                       antialiased, edgecolors):
+        master_transform = _transform_to_memoryview(master_transform)
+        coordinates = _plain_float_buffer(coordinates)
+        offsets = _plain_float_buffer(offsets, [[0.0, 0.0]])
+        offsetTrans = _transform_to_memoryview(offsetTrans)
+        facecolors = _plain_float_buffer(facecolors, [[0.0, 0.0, 0.0, 0.0]])
+        edgecolors = _plain_float_buffer(edgecolors, [[0.0, 0.0, 0.0, 0.0]])
+        self._renderer.draw_quad_mesh(
+            gc, master_transform, meshWidth, meshHeight, coordinates, offsets,
+            offsetTrans, facecolors, antialiased, edgecolors)
 
     def draw_mathtext(self, gc, x, y, s, prop, angle):
         """Draw mathtext using :mod:`matplotlib.mathtext`."""
@@ -233,7 +328,7 @@ class RendererAgg(RendererBase):
         texmanager = self.get_texmanager()
 
         Z = texmanager.get_grey(s, size, self.dpi)
-        Z = np.array(Z * 255.0, np.uint8)
+        Z = mlxarr.array(Z * 255.0, mlxarr.uint8)
 
         w, h, d = self.get_text_width_height_descent(s, prop, ismath="TeX")
         xd = d * sin(radians(angle))
@@ -264,7 +359,7 @@ class RendererAgg(RendererBase):
         return memoryview(self._renderer)
 
     def tostring_argb(self):
-        return np.asarray(self._renderer).take([3, 0, 1, 2], axis=2).tobytes()
+        return mlxarr.asarray(self._renderer).take([3, 0, 1, 2], axis=2).tobytes()
 
     def clear(self):
         self._renderer.clear()
@@ -333,9 +428,9 @@ class RendererAgg(RendererBase):
 
            def post_processing(image, dpi):
              # ny, nx, depth = image.shape
-             # image (numpy array) has RGBA channels and has a depth of 4.
+             # image (array_backend array) has RGBA channels and has a depth of 4.
              ...
-             # create a new_image (numpy array of 4 channels, size can be
+             # create a new_image (array_backend array of 4 channels, size can be
              # different). The resulting image may have offsets from
              # lower-left corner of the original image
              return new_image, offset_x, offset_y
@@ -343,7 +438,7 @@ class RendererAgg(RendererBase):
         The saved renderer is restored and the returned image from
         post_processing is plotted (using draw_image) on it.
         """
-        orig_img = np.asarray(self.buffer_rgba())
+        orig_img = mlxarr.asarray(self.buffer_rgba())
         slice_y, slice_x = cbook._get_nonzero_slices(orig_img[..., 3])
         cropped_img = orig_img[slice_y, slice_x]
 
@@ -354,7 +449,7 @@ class RendererAgg(RendererBase):
             img, ox, oy = post_processing(cropped_img / 255, self.dpi)
             gc = self.new_gc()
             if img.dtype.kind == 'f':
-                img = np.asarray(img * 255., np.uint8)
+                img = mlxarr.asarray(img * 255., mlxarr.uint8)
             self._renderer.draw_image(
                 gc, slice_x.start + ox, int(self.height) - slice_y.stop + oy,
                 img[::-1])

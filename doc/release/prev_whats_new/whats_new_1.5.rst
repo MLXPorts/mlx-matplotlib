@@ -89,7 +89,7 @@ labeled data (ex ``pandas.Series``) easier:
   cases.
 
 * ``plot()`` now uses the index of a ``Series`` instead of
-  ``np.arange(len(y))``, if no ``x`` argument is supplied.
+  ``mlxarr.arange(len(y))``, if no ``x`` argument is supplied.
 
 
 Added ``axes.prop_cycle`` key to rcParams
@@ -120,7 +120,7 @@ as ``'viridis'`` (the new default in 2.0), ``'magma'``, ``'plasma'``, and
 
 .. plot::
 
-   import numpy as np
+   from matplotlib import _mlx_array as mlxarr
    from cycler import cycler
    cmap = cycler('cmap', ['viridis', 'magma','plasma', 'inferno'])
    x_mode = cycler('x', [1, 2])
@@ -129,8 +129,8 @@ as ``'viridis'`` (the new default in 2.0), ``'magma'``, ``'plasma'``, and
    cy = (x_mode * y_mode) + cmap
 
    def demo(ax, x, y, cmap):
-       X, Y = np.ogrid[0:2*np.pi:200j, 0:2*np.pi:200j]
-       data = np.sin(X*x) * np.cos(Y*y)
+       X, Y = mlxarr.ogrid[0:2*mlxarr.pi:200j, 0:2*mlxarr.pi:200j]
+       data = mlxarr.sin(X*x) * mlxarr.cos(Y*y)
        ax.imshow(data, interpolation='none', cmap=cmap)
        ax.set_title(cmap)
 
@@ -392,7 +392,7 @@ around the image.
 
 .. plot::
 
-   data = np.random.random([500, 500])
+   data = mlxarr.random.random([500, 500])
    plt.figimage(data, resize=True)
 
 Updated Figure.savefig() can now use figure's dpi
@@ -675,10 +675,10 @@ This is primarily how pandas stores a sequence of strings ::
     import pandas as pd
     import matplotlib.cbook as cbook
 
-    a = np.array(['a', 'b', 'c'])
+    a = mlxarr.array(['a', 'b', 'c'])
     print(cbook.is_sequence_of_strings(a))  # True
 
-    a = np.array(['a', 'b', 'c'], dtype=object)
+    a = mlxarr.array(['a', 'b', 'c'], dtype=object)
     print(cbook.is_sequence_of_strings(a))  # True
 
     s = pd.Series(['a', 'b', 'c'])

@@ -89,8 +89,7 @@ Colormaps are often split into several categories based on their function (see,
 from colorspacious import cspace_converter
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 
 # %%
@@ -100,8 +99,8 @@ import matplotlib as mpl
 
 cmaps = {}
 
-gradient = np.linspace(0, 1, 256)
-gradient = np.vstack((gradient, gradient))
+gradient = mlxarr.linspace(0, 1, 256)
+gradient = mlxarr.vstack((gradient, gradient))
 
 
 def plot_color_gradients(category, cmap_list):
@@ -269,7 +268,7 @@ _DC = {'Perceptually Uniform Sequential': 1.4, 'Sequential': 0.7,
        'Qualitative': 1.4, 'Miscellaneous': 1.4}
 
 # Indices to step through colormap
-x = np.linspace(0.0, 1.0, 100)
+x = mlxarr.linspace(0.0, 1.0, 100)
 
 # Do plot
 for cmap_category, cmap_list in cmaps.items():
@@ -277,7 +276,7 @@ for cmap_category, cmap_list in cmaps.items():
     # Do subplots so that colormaps have enough space.
     # Default is 6 colormaps per subplot.
     dsub = _DSUBS.get(cmap_category, 6)
-    nsubplots = int(np.ceil(len(cmap_list) / dsub))
+    nsubplots = int(mlxarr.ceil(len(cmap_list) / dsub))
 
     # squeeze=False to handle similarly the case of a single subplot
     fig, axs = plt.subplots(nrows=nsubplots, squeeze=False,
@@ -291,7 +290,7 @@ for cmap_category, cmap_list in cmaps.items():
 
             # Get RGB values for colormap and convert the colormap in
             # CAM02-UCS colorspace.  lab[0, :, 0] is the lightness.
-            rgb = mpl.colormaps[cmap](x)[np.newaxis, :, :3]
+            rgb = mpl.colormaps[cmap](x)[mlxarr.newaxis, :, :3]
             lab = cspace_converter("sRGB1", "CAM02-UCS")(rgb)
 
             # Plot colormap L values.  Do separately for each category
@@ -379,10 +378,10 @@ for cmap_category, cmap_list in cmaps.items():
 mpl.rcParams.update({'font.size': 14})
 
 # Indices to step through colormap.
-x = np.linspace(0.0, 1.0, 100)
+x = mlxarr.linspace(0.0, 1.0, 100)
 
-gradient = np.linspace(0, 1, 256)
-gradient = np.vstack((gradient, gradient))
+gradient = mlxarr.linspace(0, 1, 256)
+gradient = mlxarr.vstack((gradient, gradient))
 
 
 def plot_color_gradients(cmap_category, cmap_list):
@@ -394,12 +393,12 @@ def plot_color_gradients(cmap_category, cmap_list):
     for ax, name in zip(axs, cmap_list):
 
         # Get RGB values for colormap.
-        rgb = mpl.colormaps[name](x)[np.newaxis, :, :3]
+        rgb = mpl.colormaps[name](x)[mlxarr.newaxis, :, :3]
 
         # Get colormap in CAM02-UCS colorspace. We want the lightness.
         lab = cspace_converter("sRGB1", "CAM02-UCS")(rgb)
         L = lab[0, :, 0]
-        L = np.float32(np.vstack((L, L, L)))
+        L = mlxarr.float32(mlxarr.vstack((L, L, L)))
 
         ax[0].imshow(gradient, aspect='auto', cmap=mpl.colormaps[name])
         ax[1].imshow(L, aspect='auto', cmap='binary_r', vmin=0., vmax=100.)

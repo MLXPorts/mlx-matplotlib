@@ -11,8 +11,7 @@ to plot_trisurf.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.tri as mtri
 
 fig = plt.figure(figsize=plt.figaspect(0.5))
@@ -22,16 +21,16 @@ fig = plt.figure(figsize=plt.figaspect(0.5))
 # ==========
 
 # Make a mesh in the space of parameterisation variables u and v
-u = np.linspace(0, 2.0 * np.pi, endpoint=True, num=50)
-v = np.linspace(-0.5, 0.5, endpoint=True, num=10)
-u, v = np.meshgrid(u, v)
+u = mlxarr.linspace(0, 2.0 * mlxarr.pi, endpoint=True, num=50)
+v = mlxarr.linspace(-0.5, 0.5, endpoint=True, num=10)
+u, v = mlxarr.meshgrid(u, v)
 u, v = u.flatten(), v.flatten()
 
 # This is the Mobius mapping, taking a u, v pair and returning an x, y, z
 # triple
-x = (1 + 0.5 * v * np.cos(u / 2.0)) * np.cos(u)
-y = (1 + 0.5 * v * np.cos(u / 2.0)) * np.sin(u)
-z = 0.5 * v * np.sin(u / 2.0)
+x = (1 + 0.5 * v * mlxarr.cos(u / 2.0)) * mlxarr.cos(u)
+y = (1 + 0.5 * v * mlxarr.cos(u / 2.0)) * mlxarr.sin(u)
+z = 0.5 * v * mlxarr.sin(u / 2.0)
 
 # Triangulate parameter space to determine the triangles
 tri = mtri.Triangulation(u, v)
@@ -51,16 +50,16 @@ ax.set_zlim(-1, 1)
 n_angles = 36
 n_radii = 8
 min_radius = 0.25
-radii = np.linspace(min_radius, 0.95, n_radii)
+radii = mlxarr.linspace(min_radius, 0.95, n_radii)
 
-angles = np.linspace(0, 2*np.pi, n_angles, endpoint=False)
-angles = np.repeat(angles[..., np.newaxis], n_radii, axis=1)
-angles[:, 1::2] += np.pi/n_angles
+angles = mlxarr.linspace(0, 2*mlxarr.pi, n_angles, endpoint=False)
+angles = mlxarr.repeat(angles[..., mlxarr.newaxis], n_radii, axis=1)
+angles[:, 1::2] += mlxarr.pi/n_angles
 
 # Map radius, angle pairs to x, y, z points.
-x = (radii*np.cos(angles)).flatten()
-y = (radii*np.sin(angles)).flatten()
-z = (np.cos(radii)*np.cos(3*angles)).flatten()
+x = (radii*mlxarr.cos(angles)).flatten()
+y = (radii*mlxarr.sin(angles)).flatten()
+z = (mlxarr.cos(radii)*mlxarr.cos(3*angles)).flatten()
 
 # Create the Triangulation; no triangles so Delaunay triangulation created.
 triang = mtri.Triangulation(x, y)

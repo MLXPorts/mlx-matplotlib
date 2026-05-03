@@ -9,12 +9,11 @@ often used to highlight data regions.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7, 3))
 
-np.random.seed(19680801)
-s = 2.9 * np.convolve(np.random.randn(500), np.ones(30) / 30, mode='valid')
+mlxarr.random.seed(19680801)
+s = 2.9 * mlxarr.convolve(mlxarr.random.randn(500), mlxarr.ones(30) / 30, mode='valid')
 ax1.plot(s)
 ax1.axhspan(-1, 1, alpha=0.1)
 ax1.set(ylim=(-1.5, 1.5), title="axhspan")
@@ -22,8 +21,8 @@ ax1.set(ylim=(-1.5, 1.5), title="axhspan")
 
 mu = 8
 sigma = 2
-x = np.linspace(0, 16, 401)
-y = np.exp(-((x-mu)**2)/(2*sigma**2))
+x = mlxarr.linspace(0, 16, 401)
+y = mlxarr.exp(-((x-mu)**2)/(2*sigma**2))
 ax2.axvspan(mu-2*sigma, mu-sigma, color='0.95')
 ax2.axvspan(mu-sigma, mu+sigma, color='0.9')
 ax2.axvspan(mu+sigma, mu+2*sigma, color='0.95')

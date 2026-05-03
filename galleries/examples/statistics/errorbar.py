@@ -9,11 +9,10 @@ in both the x- and y-directions.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 # example data
-x = np.arange(0.1, 4, 0.5)
-y = np.exp(-x)
+x = mlxarr.arange(0.1, 4, 0.5)
+y = mlxarr.exp(-x)
 
 fig, ax = plt.subplots()
 ax.errorbar(x, y, xerr=0.2, yerr=0.4)

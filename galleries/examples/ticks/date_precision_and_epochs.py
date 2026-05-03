@@ -3,7 +3,7 @@
 Date precision and epochs
 =========================
 
-Matplotlib can handle `.datetime` objects and `numpy.datetime64` objects using
+Matplotlib can handle `.datetime` objects and `array_backend.datetime64` objects using
 a unit converter that recognizes these dates and converts them to floating
 point numbers.
 
@@ -20,8 +20,7 @@ microseconds.
 import datetime
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.dates as mdates
 
 
@@ -94,7 +93,7 @@ print('After Roundtrip:  ', date2)
 # datetime64
 # ----------
 #
-# `numpy.datetime64` objects have microsecond precision for a much larger
+# `array_backend.datetime64` objects have microsecond precision for a much larger
 # timespace than `.datetime` objects.  However, currently Matplotlib time is
 # only converted back to datetime objects, which have microsecond resolution,
 # and years that only span 0000 to 9999.
@@ -102,7 +101,7 @@ print('After Roundtrip:  ', date2)
 _reset_epoch_for_tutorial()  # Don't do this.  Just for this tutorial.
 mdates.set_epoch(new_epoch)
 
-date1 = np.datetime64('2000-01-01T00:10:00.000012')
+date1 = mlxarr.datetime64('2000-01-01T00:10:00.000012')
 mdate1 = mdates.date2num(date1)
 print('Before Roundtrip: ', date1, 'Matplotlib date:', mdate1)
 date2 = mdates.num2date(mdate1)
@@ -119,11 +118,11 @@ print('After Roundtrip:  ', date2)
 _reset_epoch_for_tutorial()  # Don't do this.  Just for this tutorial.
 mdates.set_epoch(old_epoch)
 
-x = np.arange('2000-01-01T00:00:00.0', '2000-01-01T00:00:00.000100',
+x = mlxarr.arange('2000-01-01T00:00:00.0', '2000-01-01T00:00:00.000100',
               dtype='datetime64[us]')
 # simulate the plot being made using the old epoch
-xold = np.array([mdates.num2date(mdates.date2num(d)) for d in x])
-y = np.arange(0, len(x))
+xold = mlxarr.array([mdates.num2date(mdates.date2num(d)) for d in x])
+y = mlxarr.arange(0, len(x))
 
 # resetting the Epoch so plots are comparable
 _reset_epoch_for_tutorial()  # Don't do this.  Just for this tutorial.

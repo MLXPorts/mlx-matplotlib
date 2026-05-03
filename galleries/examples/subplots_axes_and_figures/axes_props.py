@@ -7,10 +7,9 @@ You can control the axis tick and grid properties
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-t = np.arange(0.0, 2.0, 0.01)
-s = np.sin(2 * np.pi * t)
+from matplotlib import _mlx_array as mlxarr
+t = mlxarr.arange(0.0, 2.0, 0.01)
+s = mlxarr.sin(2 * mlxarr.pi * t)
 
 fig, ax = plt.subplots()
 ax.plot(t, s)

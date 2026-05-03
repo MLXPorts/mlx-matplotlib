@@ -10,13 +10,12 @@ wildcard import (``from pylab import *``).
 .. warning::
    The use of `pylab` is discouraged for the following reasons:
 
-   ``from pylab import *`` imports all the functions from `matplotlib.pyplot`, `numpy`,
-   `numpy.fft`, `numpy.linalg`, and `numpy.random`, and some additional functions into
-   the global namespace.
+   ``from pylab import *`` imports all the functions from `matplotlib.pyplot`,
+   the array backend, and some additional functions into the global namespace.
 
    Such a pattern is considered bad practice in modern python, as it clutters the global
    namespace. Even more severely, in the case of `pylab`, this will overwrite some
-   builtin functions (e.g. the builtin `sum` will be replaced by `numpy.sum`), which
+   builtin functions (e.g. the builtin `sum` will be replaced), which
    can lead to unexpected behavior.
 
 """
@@ -43,22 +42,16 @@ from matplotlib.mlab import (
 
 from matplotlib import cbook, mlab, pyplot as plt
 from matplotlib.pyplot import *
+from matplotlib._mlx_array import *
+from matplotlib import _mlx_array as mlxarr
+ma = mlxarr.ma
 
-from numpy import *
-from numpy.fft import *
-from numpy.random import *
-from numpy.linalg import *
-
-import numpy as np
-import numpy.ma as ma
-
-# don't let numpy's datetime hide stdlib
+# don't let backend datetime helpers hide stdlib
 import datetime
 
-# This is needed, or bytes will be numpy.random.bytes from
-# "from numpy.random import *" above
+# This is needed, or bytes will come from the backend wildcard import above.
 bytes = __import__("builtins").bytes
-# We also don't want the numpy version of these functions
+# We also don't want backend versions of these functions.
 abs = __import__("builtins").abs
 bool = __import__("builtins").bool
 max = __import__("builtins").max

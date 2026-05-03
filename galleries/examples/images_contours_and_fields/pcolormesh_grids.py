@@ -16,8 +16,7 @@ the input vectors.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 # %%
 # Flat Shading
 # ------------
@@ -30,9 +29,9 @@ import numpy as np
 
 nrows = 3
 ncols = 5
-Z = np.arange(nrows * ncols).reshape(nrows, ncols)
-x = np.arange(ncols + 1)
-y = np.arange(nrows + 1)
+Z = mlxarr.arange(nrows * ncols).reshape(nrows, ncols)
+x = mlxarr.arange(ncols + 1)
+y = mlxarr.arange(nrows + 1)
 
 fig, ax = plt.subplots()
 ax.pcolormesh(x, y, Z, shading='flat', vmin=Z.min(), vmax=Z.max())
@@ -40,7 +39,7 @@ ax.pcolormesh(x, y, Z, shading='flat', vmin=Z.min(), vmax=Z.max())
 
 def _annotate(ax, x, y, title):
     # this all gets repeated below:
-    X, Y = np.meshgrid(x, y)
+    X, Y = mlxarr.meshgrid(x, y)
     ax.plot(X.flat, Y.flat, 'o', color='m')
     ax.set_xlim(-0.7, 5.2)
     ax.set_ylim(-0.7, 3.2)
@@ -59,8 +58,8 @@ _annotate(ax, x, y, "shading='flat'")
 # row and column of *Z* in this case, to match Matlab's behavior. If this
 # behavior is still desired, simply drop the last row and column manually:
 
-x = np.arange(ncols)  # note *not* ncols + 1 as before
-y = np.arange(nrows)
+x = mlxarr.arange(ncols)  # note *not* ncols + 1 as before
+y = mlxarr.arange(nrows)
 fig, ax = plt.subplots()
 ax.pcolormesh(x, y, Z[:-1, :-1], shading='flat', vmin=Z.min(), vmax=Z.max())
 _annotate(ax, x, y, "shading='flat': X, Y, C same shape")
@@ -91,14 +90,14 @@ _annotate(ax, x, y, "shading='nearest'")
 
 fig, axs = plt.subplots(2, 1, layout='constrained')
 ax = axs[0]
-x = np.arange(ncols)
-y = np.arange(nrows)
+x = mlxarr.arange(ncols)
+y = mlxarr.arange(nrows)
 ax.pcolormesh(x, y, Z, shading='auto', vmin=Z.min(), vmax=Z.max())
 _annotate(ax, x, y, "shading='auto'; X, Y, Z: same shape (nearest)")
 
 ax = axs[1]
-x = np.arange(ncols + 1)
-y = np.arange(nrows + 1)
+x = mlxarr.arange(ncols + 1)
+y = mlxarr.arange(nrows + 1)
 ax.pcolormesh(x, y, Z, shading='auto', vmin=Z.min(), vmax=Z.max())
 _annotate(ax, x, y, "shading='auto'; X, Y one larger than Z (flat)")
 
@@ -111,8 +110,8 @@ _annotate(ax, x, y, "shading='auto'; X, Y one larger than Z (flat)")
 # between the grid points.  The shapes of *X*, *Y*, *Z* must be the same.
 
 fig, ax = plt.subplots(layout='constrained')
-x = np.arange(ncols)
-y = np.arange(nrows)
+x = mlxarr.arange(ncols)
+y = mlxarr.arange(nrows)
 ax.pcolormesh(x, y, Z, shading='gouraud', vmin=Z.min(), vmax=Z.max())
 _annotate(ax, x, y, "shading='gouraud'; X, Y same shape as Z")
 

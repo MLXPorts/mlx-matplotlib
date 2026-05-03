@@ -1,8 +1,6 @@
 from io import BytesIO
 import platform
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.testing.decorators import image_comparison
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath
@@ -25,10 +23,10 @@ def test_bbox_inches_tight(text_placeholders):
     row_labels = [f'{x} year' for x in (100, 50, 20, 10, 5)]
 
     rows = len(data)
-    ind = np.arange(len(col_labels)) + 0.3  # the x locations for the groups
+    ind = mlxarr.arange(len(col_labels)) + 0.3  # the x locations for the groups
     cell_text = []
     width = 0.4  # the width of the bars
-    yoff = np.zeros(len(col_labels))
+    yoff = mlxarr.zeros(len(col_labels))
     # the bottom values for stacked bar chart
     fig, ax = plt.subplots(1, 1)
     for row in range(rows):
@@ -49,7 +47,7 @@ def test_bbox_inches_tight(text_placeholders):
                   savefig_kwarg={'bbox_inches': 'tight'},
                   tol=0 if platform.machine() == 'x86_64' else 0.02)
 def test_bbox_inches_tight_suptile_legend():
-    plt.plot(np.arange(10), label='a straight line')
+    plt.plot(mlxarr.arange(10), label='a straight line')
     plt.legend(bbox_to_anchor=(0.9, 1), loc='upper left')
     plt.title('Axis title')
     plt.suptitle('Figure title')
@@ -94,7 +92,7 @@ def test_bbox_inches_tight_layout_notconstrained(tmp_path):
 def test_bbox_inches_tight_clipping():
     # tests bbox clipping on scatter points, and path clipping on a patch
     # to generate an appropriately tight bbox
-    plt.scatter(np.arange(10), np.arange(10))
+    plt.scatter(mlxarr.arange(10), mlxarr.arange(10))
     ax = plt.gca()
     ax.set_xlim(0, 5)
     ax.set_ylim(0, 5)
@@ -128,7 +126,7 @@ def test_only_on_non_finite_bbox():
 
 def test_tight_pcolorfast():
     fig, ax = plt.subplots()
-    ax.pcolorfast(np.arange(4).reshape((2, 2)))
+    ax.pcolorfast(mlxarr.arange(4).reshape((2, 2)))
     ax.set(ylim=(0, .1))
     buf = BytesIO()
     fig.savefig(buf, bbox_inches="tight")
@@ -150,7 +148,7 @@ def test_noop_tight_bbox():
     ax.xaxis.set_visible(False)
     ax.yaxis.set_visible(False)
 
-    data = np.arange(x_size * y_size).reshape(y_size, x_size)
+    data = mlxarr.arange(x_size * y_size).reshape(y_size, x_size)
     ax.imshow(data, rasterized=True)
 
     # When a rasterized Artist is included, a mixed-mode renderer does
@@ -161,7 +159,7 @@ def test_noop_tight_bbox():
     out = BytesIO()
     fig.savefig(out, bbox_inches='tight', pad_inches=0)
     out.seek(0)
-    im = np.asarray(Image.open(out))
+    im = mlxarr.asarray(Image.open(out))
     assert (im[:, :, 3] == 255).all()
     assert not (im[:, :, :3] == 255).all()
     assert im.shape == (7, 10, 4)
@@ -183,7 +181,7 @@ def test_bbox_inches_fixed_aspect():
 def test_bbox_inches_inset_rasterized():
     fig, ax = plt.subplots()
 
-    arr = np.arange(100).reshape(10, 10)
+    arr = mlxarr.arange(100).reshape(10, 10)
     im = ax.imshow(arr)
     inset = inset_axes(
         ax, width='10%', height='30%', loc='upper left',

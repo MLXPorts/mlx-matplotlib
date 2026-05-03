@@ -19,9 +19,7 @@ from numbers import Real
 import operator
 import os
 import re
-
-import numpy as np
-
+from . import _mlx_array as mlxarr
 import matplotlib as mpl
 from matplotlib import _api, cbook
 from matplotlib.backends import backend_registry
@@ -101,9 +99,9 @@ def _listify_validator(scalar_validator, allow_stringlist=False, *,
                     val = _single_string_color_list(s, scalar_validator)
                 else:
                     raise
-        # Allow any ordered sequence type -- generators, np.ndarray, pd.Series
+        # Allow any ordered sequence type -- generators, mlxarr.ndarray, pd.Series
         # -- but not sets, whose iteration order is non-deterministic.
-        elif np.iterable(s) and not isinstance(s, (set, frozenset)):
+        elif mlxarr.iterable(s) and not isinstance(s, (set, frozenset)):
             # The condition on this list comprehension will preserve the
             # behavior of filtering out any empty strings (behavior was
             # from the original validate_stringlist()), while allowing
@@ -134,11 +132,11 @@ validate_anylist = _listify_validator(validate_any)
 
 def _validate_date(s):
     try:
-        np.datetime64(s)
+        mlxarr.datetime64(s)
         return s
     except ValueError:
         raise ValueError(
-            f'{s!r} should be a string that can be parsed by numpy.datetime64')
+            f'{s!r} should be a string that can be parsed by array_backend.datetime64')
 
 
 def validate_bool(b):
@@ -502,7 +500,7 @@ def _validate_linestyle(ls):
     def _is_iterable_not_string_like(x):
         # Explicitly exclude bytes/bytearrays so that they are not
         # nonsensically interpreted as sequences of numbers (codepoints).
-        return np.iterable(x) and not isinstance(x, (str, bytes, bytearray))
+        return mlxarr.iterable(x) and not isinstance(x, (str, bytes, bytearray))
 
     if _is_iterable_not_string_like(ls):
         if len(ls) == 2 and _is_iterable_not_string_like(ls[1]):

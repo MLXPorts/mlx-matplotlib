@@ -11,8 +11,7 @@ description of the annotation and text tools in Matplotlib, see the
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.patches import Ellipse
 from matplotlib.text import OffsetFrom
 
@@ -55,8 +54,8 @@ from matplotlib.text import OffsetFrom
 # Create our figure and data we'll use for plotting
 fig, ax = plt.subplots(figsize=(4, 4))
 
-t = np.arange(0.0, 5.0, 0.01)
-s = np.cos(2*np.pi*t)
+t = mlxarr.arange(0.0, 5.0, 0.01)
+s = mlxarr.cos(2*mlxarr.pi*t)
 
 # Plot a line and add some simple annotations
 line, = ax.plot(t, s)
@@ -111,8 +110,8 @@ ax.set(xlim=(-1, 5), ylim=(-3, 5))
 # Text keyword arguments like horizontal and vertical alignment are respected.
 
 fig, ax = plt.subplots(subplot_kw=dict(projection='polar'), figsize=(3, 3))
-r = np.arange(0, 1, 0.001)
-theta = 2*2*np.pi*r
+r = mlxarr.arange(0, 1, 0.001)
+theta = 2*2*mlxarr.pi*r
 line, = ax.plot(theta, r)
 
 ind = 800
@@ -137,8 +136,8 @@ fig, ax = plt.subplots(subplot_kw=dict(aspect='equal'))
 ax.add_artist(el)
 el.set_clip_box(ax.bbox)
 ax.annotate('the top',
-            xy=(np.pi/2., 10.),      # theta, radius
-            xytext=(np.pi/3, 20.),   # theta, radius
+            xy=(mlxarr.pi/2., 10.),      # theta, radius
+            xytext=(mlxarr.pi/3, 20.),   # theta, radius
             xycoords='polar',
             textcoords='polar',
             arrowprops=dict(facecolor='black', shrink=0.05),
@@ -159,8 +158,8 @@ ax.set(xlim=[-20, 20], ylim=[-20, 20])
 
 fig, ax = plt.subplots(figsize=(8, 5))
 
-t = np.arange(0.0, 5.0, 0.01)
-s = np.cos(2*np.pi*t)
+t = mlxarr.arange(0.0, 5.0, 0.01)
+s = mlxarr.cos(2*mlxarr.pi*t)
 line, = ax.plot(t, s, lw=3)
 
 ax.annotate(

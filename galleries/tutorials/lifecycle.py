@@ -58,8 +58,7 @@ It contains sales information for a number of companies.
 
 import matplotlib.pyplot as plt
 # sphinx_gallery_thumbnail_number = 10
-import numpy as np
-
+import mlx.core as mx
 data = {'Barton LLC': 109438.50,
         'Frami, Hills and Schmidt': 103569.59,
         'Fritsch, Russel and Anderson': 112214.71,
@@ -72,7 +71,7 @@ data = {'Barton LLC': 109438.50,
         'Will LLC': 104437.60}
 group_data = list(data.values())
 group_names = list(data.keys())
-group_mean = np.mean(group_data)
+group_mean = mx.mean(mx.array(group_data))
 
 # %%
 # Getting started
@@ -178,7 +177,7 @@ ax.set(xlim=(-10000, 140000), xlabel='Total Revenue', ylabel='Company',
 #
 # .. note::
 #
-#    While indexing in NumPy follows the form (row, column), the *figsize*
+#    While indexing in MLXArrayBackend follows the form (row, column), the *figsize*
 #    keyword argument follows the form (width, height). This follows
 #    conventions in visualization, which unfortunately are different from those
 #    of linear algebra.

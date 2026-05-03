@@ -1,7 +1,6 @@
 import io
-
-import numpy as np
-from numpy.testing import assert_array_almost_equal
+from matplotlib import _mlx_array as mlxarr
+from matplotlib.mlx_testing import assert_array_almost_equal
 from PIL import features, Image, TiffTags
 import pytest
 
@@ -67,7 +66,7 @@ def test_marker_with_nan():
     # Agg backend (see #3722)
     fig, ax = plt.subplots(1)
     steps = 1000
-    data = np.arange(steps)
+    data = mlxarr.arange(steps)
     ax.semilogx(data)
     ax.fill_between(data, data*0.8, data*1.2)
     buf = io.BytesIO()
@@ -78,7 +77,7 @@ def test_long_path():
     buff = io.BytesIO()
     fig = Figure()
     ax = fig.subplots()
-    points = np.ones(100_000)
+    points = mlxarr.ones(100_000)
     points[::2] *= -1
     ax.plot(points)
     fig.savefig(buff, format='png')
@@ -88,16 +87,16 @@ def test_long_path():
 def test_agg_filter():
     def smooth1d(x, window_len):
         # copied from https://scipy-cookbook.readthedocs.io/
-        s = np.r_[
+        s = mlxarr.r_[
             2*x[0] - x[window_len:1:-1], x, 2*x[-1] - x[-1:-window_len:-1]]
-        w = np.hanning(window_len)
-        y = np.convolve(w/w.sum(), s, mode='same')
+        w = mlxarr.hanning(window_len)
+        y = mlxarr.convolve(w/w.sum(), s, mode='same')
         return y[window_len-1:-window_len+1]
 
     def smooth2d(A, sigma=3):
         window_len = max(int(sigma), 3) * 2 + 1
-        A = np.apply_along_axis(smooth1d, 0, A, window_len)
-        A = np.apply_along_axis(smooth1d, 1, A, window_len)
+        A = mlxarr.apply_along_axis(smooth1d, 0, A, window_len)
+        A = mlxarr.apply_along_axis(smooth1d, 1, A, window_len)
         return A
 
     class BaseFilter:
@@ -110,7 +109,7 @@ def test_agg_filter():
 
         def __call__(self, im, dpi):
             pad = self.get_pad(dpi)
-            padded_src = np.pad(im, [(pad, pad), (pad, pad), (0, 0)],
+            padded_src = mlxarr.pad(im, [(pad, pad), (pad, pad), (0, 0)],
                                 "constant")
             tgt_image = self.process_image(padded_src, dpi)
             return tgt_image, -pad, -pad
@@ -125,8 +124,8 @@ def test_agg_filter():
 
         def process_image(self, padded_src, dpi):
             ox, oy = self.offsets
-            a1 = np.roll(padded_src, int(ox / 72 * dpi), axis=1)
-            a2 = np.roll(a1, -int(oy / 72 * dpi), axis=0)
+            a1 = mlxarr.roll(padded_src, int(ox / 72 * dpi), axis=1)
+            a2 = mlxarr.roll(a1, -int(oy / 72 * dpi), axis=0)
             return a2
 
     class GaussianFilter(BaseFilter):
@@ -141,7 +140,7 @@ def test_agg_filter():
             return int(self.sigma*3 / 72 * dpi)
 
         def process_image(self, padded_src, dpi):
-            tgt_image = np.empty_like(padded_src)
+            tgt_image = mlxarr.empty_like(padded_src)
             tgt_image[:, :, :3] = self.color
             tgt_image[:, :, 3] = smooth2d(padded_src[:, :, 3] * self.alpha,
                                           self.sigma / 72 * dpi)
@@ -210,13 +209,13 @@ def test_chunksize():
 
     # Test without chunksize
     fig, ax = plt.subplots()
-    ax.plot(x, np.sin(x))
+    ax.plot(x, mlxarr.sin(x))
     fig.canvas.draw()
 
     # Test with chunksize
     fig, ax = plt.subplots()
     rcParams['agg.path.chunksize'] = 105
-    ax.plot(x, np.sin(x))
+    ax.plot(x, mlxarr.sin(x))
     fig.canvas.draw()
 
 
@@ -332,10 +331,10 @@ def test_chunksize_fails():
     h = 6*dpi
 
     # make a Path that spans the whole w-h rectangle
-    x = np.linspace(0, w, N)
-    y = np.ones(N) * h
+    x = mlxarr.linspace(0, w, N)
+    y = mlxarr.ones(N) * h
     y[::2] = 0
-    path = Path(np.vstack((x, y)).T)
+    path = Path(mlxarr.vstack((x, y)).T)
     # effectively disable path simplification (but leaving it "on")
     path.simplify_threshold = 0
 

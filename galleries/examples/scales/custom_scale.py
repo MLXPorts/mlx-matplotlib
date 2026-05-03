@@ -25,9 +25,8 @@ Custom scales can be created in two ways
    * You want to limit the range of the axis (``limit_range_for_scale`` below).
 
 """
-
-import numpy as np
-from numpy import ma
+from matplotlib import _mlx_array as mlxarr
+from matplotlib._mlx_array import ma
 
 from matplotlib import scale as mscale
 from matplotlib import transforms as mtransforms
@@ -57,7 +56,7 @@ class MercatorLatitudeScale(mscale.ScaleBase):
     # used to select this scale.
     name = 'mercator'
 
-    def __init__(self, axis, *, thresh=np.deg2rad(85), **kwargs):
+    def __init__(self, axis, *, thresh=mlxarr.deg2rad(85), **kwargs):
         """
         Any keyword arguments passed to ``set_xscale`` and ``set_yscale`` will
         be passed along to the scale's constructor.
@@ -65,7 +64,7 @@ class MercatorLatitudeScale(mscale.ScaleBase):
         thresh: The degree above which to crop the data.
         """
         super().__init__(axis)
-        if thresh >= np.pi / 2:
+        if thresh >= mlxarr.pi / 2:
             raise ValueError("thresh must be less than pi/2")
         self.thresh = thresh
 
@@ -92,8 +91,8 @@ class MercatorLatitudeScale(mscale.ScaleBase):
         put a degree symbol after the value.
         """
         fmt = FuncFormatter(
-            lambda x, pos=None: f"{np.degrees(x):.0f}\N{DEGREE SIGN}")
-        axis.set(major_locator=FixedLocator(np.radians(range(-90, 90, 10))),
+            lambda x, pos=None: f"{mlxarr.degrees(x):.0f}\N{DEGREE SIGN}")
+        axis.set(major_locator=FixedLocator(mlxarr.radians(range(-90, 90, 10))),
                  major_formatter=fmt, minor_formatter=fmt)
 
     def limit_range_for_scale(self, vmin, vmax, minpos):
@@ -125,7 +124,7 @@ class MercatorLatitudeScale(mscale.ScaleBase):
 
         def transform_non_affine(self, a):
             """
-            This transform takes a numpy array and returns a transformed copy.
+            This transform takes a array_backend array and returns a transformed copy.
             Since the range of the Mercator scale is limited by the
             user-specified threshold, the input array must be masked to
             contain only valid values.  Matplotlib will handle masked arrays
@@ -136,9 +135,9 @@ class MercatorLatitudeScale(mscale.ScaleBase):
             """
             masked = ma.masked_where((a < -self.thresh) | (a > self.thresh), a)
             if masked.mask.any():
-                return ma.log(np.abs(ma.tan(masked) + 1 / ma.cos(masked)))
+                return ma.log(mlxarr.abs(ma.tan(masked) + 1 / ma.cos(masked)))
             else:
-                return np.log(np.abs(np.tan(a) + 1 / np.cos(a)))
+                return mlxarr.log(mlxarr.abs(mlxarr.tan(a) + 1 / mlxarr.cos(a)))
 
         def inverted(self):
             """
@@ -156,7 +155,7 @@ class MercatorLatitudeScale(mscale.ScaleBase):
             self.thresh = thresh
 
         def transform_non_affine(self, a):
-            return np.arctan(np.sinh(a))
+            return mlxarr.arctan(mlxarr.sinh(a))
 
         def inverted(self):
             return MercatorLatitudeScale.MercatorLatitudeTransform(self.thresh)
@@ -170,8 +169,8 @@ mscale.register_scale(MercatorLatitudeScale)
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
-    t = np.arange(-180.0, 180.0, 0.1)
-    s = np.radians(t)/2.
+    t = mlxarr.arange(-180.0, 180.0, 0.1)
+    s = mlxarr.radians(t)/2.
 
     plt.plot(t, s, '-', lw=2)
     plt.yscale('mercator')

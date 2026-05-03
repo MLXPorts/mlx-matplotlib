@@ -33,12 +33,11 @@ their relative zorder.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-r = np.linspace(0.3, 1, 30)
-theta = np.linspace(0, 4*np.pi, 30)
-x = r * np.sin(theta)
-y = r * np.cos(theta)
+from matplotlib import _mlx_array as mlxarr
+r = mlxarr.linspace(0.3, 1, 30)
+theta = mlxarr.linspace(0, 4*mlxarr.pi, 30)
+x = r * mlxarr.sin(theta)
+y = r * mlxarr.cos(theta)
 
 # %%
 # The following example contains a `.Line2D` created by `~.axes.Axes.plot()`
@@ -63,11 +62,11 @@ plt.tight_layout()
 # Many functions that create a visible object accepts a ``zorder`` parameter.
 # Alternatively, you can call ``set_zorder()`` on the created object later.
 
-x = np.linspace(0, 7.5, 100)
+x = mlxarr.linspace(0, 7.5, 100)
 plt.rcParams['lines.linewidth'] = 5
 plt.figure()
-plt.plot(x, np.sin(x), label='zorder=2', zorder=2)  # bottom
-plt.plot(x, np.sin(x+0.5), label='zorder=3',  zorder=3)
+plt.plot(x, mlxarr.sin(x), label='zorder=2', zorder=2)  # bottom
+plt.plot(x, mlxarr.sin(x+0.5), label='zorder=3',  zorder=3)
 plt.axhline(0, label='zorder=2.5', color='lightgrey', zorder=2.5)
 plt.title('Custom order of elements')
 l = plt.legend(loc='upper right')

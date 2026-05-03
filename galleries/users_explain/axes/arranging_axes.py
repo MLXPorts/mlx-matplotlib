@@ -98,8 +98,7 @@ location:
 # sphinx_gallery_thumbnail_number = 2
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 w, h = 4, 3
 margin = 0.5
 fig = plt.figure(figsize=(w, h), facecolor='lightblue')
@@ -307,8 +306,8 @@ fig.suptitle('Manually added subplots using add_gridspec')
 # Axes spanning rows or grids in a grid
 # -------------------------------------
 #
-# We can index the *spec* array using `NumPy slice syntax
-# <https://numpy.org/doc/stable/user/basics.indexing.html>`_
+# We can index the *spec* array using `MLXArrayBackend slice syntax
+# <https://array_backend.org/doc/stable/user/basics.indexing.html>`_
 # and the new Axes will span the slice.  This would be the same
 # as ``fig, axd = plt.subplot_mosaic([['ax0', 'ax0'], ['ax1', 'ax2']], ...)``:
 
@@ -389,8 +388,8 @@ fig.suptitle('nested gridspecs')
 # grids.
 
 
-def squiggle_xy(a, b, c, d, i=np.arange(0.0, 2*np.pi, 0.05)):
-    return np.sin(i*a)*np.cos(i*b), np.sin(i*c)*np.cos(i*d)
+def squiggle_xy(a, b, c, d, i=mlxarr.arange(0.0, 2*mlxarr.pi, 0.05)):
+    return mlxarr.sin(i*a)*mlxarr.cos(i*b), mlxarr.sin(i*c)*mlxarr.cos(i*d)
 
 fig = plt.figure(figsize=(8, 8), layout='constrained')
 outer_grid = fig.add_gridspec(4, 4, wspace=0, hspace=0)
@@ -400,7 +399,7 @@ for a in range(4):
         # gridspec inside gridspec
         inner_grid = outer_grid[a, b].subgridspec(3, 3, wspace=0, hspace=0)
         axs = inner_grid.subplots()  # Create all subplots for the inner grid.
-        for (c, d), ax in np.ndenumerate(axs):
+        for (c, d), ax in mlxarr.ndenumerate(axs):
             ax.plot(*squiggle_xy(a + 1, b + 1, c + 1, d + 1))
             ax.set(xticks=[], yticks=[])
 

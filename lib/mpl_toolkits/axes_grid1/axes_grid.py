@@ -1,9 +1,7 @@
 from numbers import Number
 import functools
 from types import MethodType
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib import _api, cbook
 from matplotlib.gridspec import SubplotSpec
 
@@ -125,7 +123,7 @@ class Grid:
                     "n_axes must be positive and not larger than nrows*ncols")
 
         self._horiz_pad_size, self._vert_pad_size = map(
-            Size.Fixed, np.broadcast_to(axes_pad, 2))
+            Size.Fixed, mlxarr.broadcast_to(axes_pad, 2))
 
         _api.check_in_list(["column", "row"], direction=direction)
         self._direction = direction
@@ -148,7 +146,7 @@ class Grid:
 
         rect = self._divider.get_position()
 
-        axes_array = np.full((self._nrows, self._ncols), None, dtype=object)
+        axes_array = mlxarr.full((self._nrows, self._ncols), None, dtype=object)
         for i in range(n_axes):
             col, row = self._get_col_row(i)
             if share_all:
@@ -255,7 +253,7 @@ class Grid:
         _api.check_in_list(["all", "L", "1", "keep"], mode=mode)
         if mode == "keep":
             return
-        for i, j in np.ndindex(self._nrows, self._ncols):
+        for i, j in mlxarr.ndindex(self._nrows, self._ncols):
             try:
                 ax = self.axes_row[i][j]
             except IndexError:

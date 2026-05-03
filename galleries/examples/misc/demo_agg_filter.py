@@ -11,8 +11,7 @@ rendering. You can modify the rendering of Artists by applying a filter via
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.artist import Artist
 from matplotlib.colors import LightSource
 import matplotlib.transforms as mtransforms
@@ -20,16 +19,16 @@ import matplotlib.transforms as mtransforms
 
 def smooth1d(x, window_len):
     # copied from https://scipy-cookbook.readthedocs.io/items/SignalSmooth.html
-    s = np.r_[2*x[0] - x[window_len:1:-1], x, 2*x[-1] - x[-1:-window_len:-1]]
-    w = np.hanning(window_len)
-    y = np.convolve(w/w.sum(), s, mode='same')
+    s = mlxarr.r_[2*x[0] - x[window_len:1:-1], x, 2*x[-1] - x[-1:-window_len:-1]]
+    w = mlxarr.hanning(window_len)
+    y = mlxarr.convolve(w/w.sum(), s, mode='same')
     return y[window_len-1:-window_len+1]
 
 
 def smooth2d(A, sigma=3):
     window_len = max(int(sigma), 3) * 2 + 1
-    A = np.apply_along_axis(smooth1d, 0, A, window_len)
-    A = np.apply_along_axis(smooth1d, 1, A, window_len)
+    A = mlxarr.apply_along_axis(smooth1d, 0, A, window_len)
+    A = mlxarr.apply_along_axis(smooth1d, 1, A, window_len)
     return A
 
 
@@ -43,7 +42,7 @@ class BaseFilter:
 
     def __call__(self, im, dpi):
         pad = self.get_pad(dpi)
-        padded_src = np.pad(im, [(pad, pad), (pad, pad), (0, 0)], "constant")
+        padded_src = mlxarr.pad(im, [(pad, pad), (pad, pad), (0, 0)], "constant")
         tgt_image = self.process_image(padded_src, dpi)
         return tgt_image, -pad, -pad
 
@@ -58,8 +57,8 @@ class OffsetFilter(BaseFilter):
 
     def process_image(self, padded_src, dpi):
         ox, oy = self.offsets
-        a1 = np.roll(padded_src, int(ox / 72 * dpi), axis=1)
-        a2 = np.roll(a1, -int(oy / 72 * dpi), axis=0)
+        a1 = mlxarr.roll(padded_src, int(ox / 72 * dpi), axis=1)
+        a2 = mlxarr.roll(a1, -int(oy / 72 * dpi), axis=0)
         return a2
 
 
@@ -75,7 +74,7 @@ class GaussianFilter(BaseFilter):
         return int(self.sigma*3 / 72 * dpi)
 
     def process_image(self, padded_src, dpi):
-        tgt_image = np.empty_like(padded_src)
+        tgt_image = mlxarr.empty_like(padded_src)
         tgt_image[:, :, :3] = self.color
         tgt_image[:, :, 3] = smooth2d(padded_src[:, :, 3] * self.alpha,
                                       self.sigma / 72 * dpi)
@@ -127,7 +126,7 @@ class LightFilter(BaseFilter):
         rgb2 = self.light_source.shade_rgb(rgb, elevation,
                                            fraction=self.fraction,
                                            blend_mode="overlay")
-        return np.concatenate([rgb2, alpha], -1)
+        return mlxarr.concatenate([rgb2, alpha], -1)
 
 
 class GrowFilter(BaseFilter):
@@ -138,9 +137,9 @@ class GrowFilter(BaseFilter):
         self.color = color
 
     def __call__(self, im, dpi):
-        alpha = np.pad(im[..., 3], self.pixels, "constant")
-        alpha2 = np.clip(smooth2d(alpha, self.pixels / 72 * dpi) * 5, 0, 1)
-        new_im = np.empty((*alpha2.shape, 4))
+        alpha = mlxarr.pad(im[..., 3], self.pixels, "constant")
+        alpha2 = mlxarr.clip(smooth2d(alpha, self.pixels / 72 * dpi) * 5, 0, 1)
+        new_im = mlxarr.empty((*alpha2.shape, 4))
         new_im[:, :, :3] = self.color
         new_im[:, :, 3] = alpha2
         offsetx, offsety = -self.pixels, -self.pixels
@@ -169,17 +168,17 @@ def filtered_text(ax):
 
     # prepare image
     delta = 0.025
-    x = np.arange(-3.0, 3.0, delta)
-    y = np.arange(-2.0, 2.0, delta)
-    X, Y = np.meshgrid(x, y)
-    Z1 = np.exp(-X**2 - Y**2)
-    Z2 = np.exp(-(X - 1)**2 - (Y - 1)**2)
+    x = mlxarr.arange(-3.0, 3.0, delta)
+    y = mlxarr.arange(-2.0, 2.0, delta)
+    X, Y = mlxarr.meshgrid(x, y)
+    Z1 = mlxarr.exp(-X**2 - Y**2)
+    Z2 = mlxarr.exp(-(X - 1)**2 - (Y - 1)**2)
     Z = (Z1 - Z2) * 2
 
     # draw
     ax.imshow(Z, interpolation='bilinear', origin='lower',
               cmap="gray", extent=(-3, 3, -2, 2), aspect='auto')
-    levels = np.arange(-1.2, 1.6, 0.2)
+    levels = mlxarr.arange(-1.2, 1.6, 0.2)
     CS = ax.contour(Z, levels,
                     origin='lower',
                     linewidths=2,
@@ -246,7 +245,7 @@ def drop_shadow_patches(ax):
     N = 5
     group1_means = [20, 35, 30, 35, 27]
 
-    ind = np.arange(N)  # the x locations for the groups
+    ind = mlxarr.arange(N)  # the x locations for the groups
     width = 0.35  # the width of the bars
 
     rects1 = ax.bar(ind, group1_means, width, color='r', ec="w", lw=2)

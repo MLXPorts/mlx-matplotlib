@@ -25,14 +25,13 @@ This example demonstrates two different APIs:
 from cycler import cycler
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 # %%
 # First we'll generate some sample data, in this case, four offset sine
 # curves.
-x = np.linspace(0, 2 * np.pi, 50)
-offsets = np.linspace(0, 2 * np.pi, 4, endpoint=False)
-yy = np.transpose([np.sin(x + phi) for phi in offsets])
+x = mlxarr.linspace(0, 2 * mlxarr.pi, 50)
+offsets = mlxarr.linspace(0, 2 * mlxarr.pi, 4, endpoint=False)
+yy = mlxarr.transpose([mlxarr.sin(x + phi) for phi in offsets])
 
 # %%
 # Now ``yy`` has shape

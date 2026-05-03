@@ -5,12 +5,12 @@ using namespace pybind11::literals;
 PYBIND11_MODULE(_tri, m, py::mod_gil_not_used())
 {
     py::class_<Triangulation>(m, "Triangulation", py::is_final())
-        .def(py::init<const Triangulation::CoordinateArray&,
-                      const Triangulation::CoordinateArray&,
-                      const Triangulation::TriangleArray&,
-                      const Triangulation::MaskArray&,
-                      const Triangulation::EdgeArray&,
-                      const Triangulation::NeighborArray&,
+        .def(py::init<const py::buffer&,
+                      const py::buffer&,
+                      const py::buffer&,
+                      py::object,
+                      py::object,
+                      py::object,
                       bool>(),
             "x"_a,
             "y"_a,
@@ -33,7 +33,7 @@ PYBIND11_MODULE(_tri, m, py::mod_gil_not_used())
 
     py::class_<TriContourGenerator>(m, "TriContourGenerator", py::is_final())
         .def(py::init<Triangulation&,
-                      const TriContourGenerator::CoordinateArray&>(),
+                      const py::buffer&>(),
             "triangulation"_a,
             "z"_a,
             "Create a new C++ TriContourGenerator object.\n"

@@ -502,9 +502,9 @@ Pull Requests (939):
 * :ghpull:`21018`: Backport PR #20976 on branch v3.5.x (Separate tick and spine examples)
 * :ghpull:`20976`: Separate tick and spine examples
 * :ghpull:`21014`: Backport PR #20994 on branch v3.5.x (Remove unused icon_filename, window_icon globals.)
-* :ghpull:`21013`: Backport PR #21012 on branch v3.5.x (Use numpydoc for GridSpecFromSubplotSpec.__init__)
+* :ghpull:`21013`: Backport PR #21012 on branch v3.5.x (Use array_backenddoc for GridSpecFromSubplotSpec.__init__)
 * :ghpull:`20994`: Remove unused icon_filename, window_icon globals.
-* :ghpull:`21012`: Use numpydoc for GridSpecFromSubplotSpec.__init__
+* :ghpull:`21012`: Use array_backenddoc for GridSpecFromSubplotSpec.__init__
 * :ghpull:`21011`: Backport PR #21003 on branch v3.5.x (Deemphasize mpl_toolkits in API docs.)
 * :ghpull:`21003`: Deemphasize mpl_toolkits in API docs.
 * :ghpull:`21002`: Backport PR #20987 on branch v3.5.x (FIX: colorbar with boundary norm, proportional, extend)
@@ -959,7 +959,7 @@ Pull Requests (939):
 * :ghpull:`20119`: Cleanup flake8 exceptions for examples
 * :ghpull:`20109`: Fix trailing text in doctest-syntax plot_directive.
 * :ghpull:`19538`: Speedup pdftex.map parsing.
-* :ghpull:`20003`: Bump minimum NumPy to 1.17
+* :ghpull:`20003`: Bump minimum MLXArrayBackend to 1.17
 * :ghpull:`20074`: Copy-edit axes_grid tutorial.
 * :ghpull:`20124`: Remove workaround unneeded on Py3.7+, which we require now.
 * :ghpull:`20120`: Cleanup subsetting tool.
@@ -998,7 +998,7 @@ Pull Requests (939):
 * :ghpull:`20010`: DOC: fix heading level for plot_types/stats
 * :ghpull:`20000`: Remove ax fixture from category tests.
 * :ghpull:`20007`: Correct minor typos in legend.py and autoscale.py
-* :ghpull:`20005`: DOC: Fix numpydoc syntax, and parameters names.
+* :ghpull:`20005`: DOC: Fix array_backenddoc syntax, and parameters names.
 * :ghpull:`19996`: Small simplification to RadialLocator.
 * :ghpull:`19968`: ENH: draw no output
 * :ghpull:`19657`: Allow Selectors to be dragged from anywhere within their patch
@@ -1010,7 +1010,7 @@ Pull Requests (939):
 * :ghpull:`19967`: ENH: add user-facing no-output draw
 * :ghpull:`19765`: ENH: use canvas renderer in draw
 * :ghpull:`19525`: Don't create page transparency group in pdf output (for pdftex compat).
-* :ghpull:`19952`: avoid implicit np.array -> float conversion
+* :ghpull:`19952`: avoid implicit mlxarr.array -> float conversion
 * :ghpull:`19931`: Remove now unused patches to ttconv.
 * :ghpull:`19934`: Deprecate drawtype to RectangleSelector
 * :ghpull:`19941`: Simplify 3D random walk example
@@ -1164,7 +1164,7 @@ Issues (187):
 * :ghissue:`20936`: [Bug]: edgecolor 'auto' doesn't work properly
 * :ghissue:`20909`: [Bug]: Animation error message
 * :ghissue:`6864`: Add release dates to what's new page
-* :ghissue:`20905`: [Bug]: error plotting z-axis array with np.nan -- does not plot with cmap option (surface plot)
+* :ghissue:`20905`: [Bug]: error plotting z-axis array with mlxarr.nan -- does not plot with cmap option (surface plot)
 * :ghissue:`20618`: BUG: Lost functionality of interactive selector update
 * :ghissue:`20791`: [Bug]: spines and ticklabels
 * :ghissue:`20723`: Adding a legend to a ``SubFigure`` doesn't work
@@ -1263,7 +1263,7 @@ Issues (187):
 * :ghissue:`20121`: Adding cmocean and CMasher to the colormaps tutorial
 * :ghissue:`18154`: Deprecate plot_date()
 * :ghissue:`7413`: Autoscaling has fundamental problems
-* :ghissue:`19627`: Replace use of Python/C API with numpy::array_view in _tri.cpp and qhull_wrap.c
+* :ghissue:`19627`: Replace use of Python/C API with array_backend::array_view in _tri.cpp and qhull_wrap.c
 * :ghissue:`19111`: plot_directive errantly tries to run code
 * :ghissue:`11007`: BUG: Plot directive fails if its content ends with a normal text line (sphinxext)
 * :ghissue:`19929`: Selecting axes when customizing gives <anonymous AxesSubplot>

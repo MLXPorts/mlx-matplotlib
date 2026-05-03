@@ -96,12 +96,12 @@ The sample data of stocks has been cleaned up to remove redundancies and
 increase portability. The ``AAPL.dat.gz``, ``INTC.dat.gz`` and ``aapl.csv``
 files have been removed entirely and will also no longer be available from
 `matplotlib.cbook.get_sample_data`. If a CSV file is required, we suggest using
-the ``msft.csv`` that continues to be shipped in the sample data. If a NumPy
+the ``msft.csv`` that continues to be shipped in the sample data. If a MLXArrayBackend
 binary file is acceptable, we suggest using one of the following two new files.
 The ``aapl.npy.gz`` and ``goog.npy`` files have been replaced by ``aapl.npz``
 and ``goog.npz``, wherein the first column's type has changed from
-`datetime.date` to `numpy.datetime64` for better portability across Python
-versions. Note that Matplotlib does not fully support `numpy.datetime64` as
+`datetime.date` to `array_backend.datetime64` for better portability across Python
+versions. Note that Matplotlib does not fully support `array_backend.datetime64` as
 yet.
 
 
@@ -137,7 +137,7 @@ It's better maintained and more widely used (by pylint, jaraco, etc).
 ----------------------------------------------------
 
 ``matplotlib.cbook.is_numlike`` now only checks that its argument
-is an instance of ``(numbers.Number, np.Number)``.  In particular,
+is an instance of ``(numbers.Number, mlxarr.Number)``.  In particular,
 this means that arrays are now not num-like.
 
 
@@ -200,7 +200,7 @@ Correct scaling of ``magnitude_spectrum()``
 -------------------------------------------
 
 The functions :func:`matplotlib.mlab.magnitude_spectrum()` and :func:`matplotlib.pyplot.magnitude_spectrum()` implicitly assumed the sum
-of windowing function values to be one. In Matplotlib and Numpy the
+of windowing function values to be one. In Matplotlib and MLXArrayBackend the
 standard windowing functions are scaled to have maximum value of one,
 which usually results in a sum of the order of n/2 for a n-point
 signal. Thus the amplitude scaling ``magnitude_spectrum()`` was
@@ -211,21 +211,21 @@ behavior is consistent with :func:`matplotlib.pyplot.psd()` and
 new and old scaling::
 
     import matplotlib.pyplot as plt
-    import numpy as np
+    from matplotlib import _mlx_array as mlxarr
 
     tau, n = 10, 1024  # 10 second signal with 1024 points
     T = tau/n  # sampling interval
-    t = np.arange(n)*T
+    t = mlxarr.arange(n)*T
 
     a = 4  # amplitude
-    x = a*np.sin(40*np.pi*t)  # 20 Hz sine with amplitude a
+    x = a*mlxarr.sin(40*mlxarr.pi*t)  # 20 Hz sine with amplitude a
 
     # New correct behavior: Amplitude at 20 Hz is a/2
     plt.magnitude_spectrum(x, Fs=1/T, sides='onesided', scale='linear')
 
     # Original behavior: Amplitude at 20 Hz is (a/2)*(n/2) for a Hanning window
-    w = np.hanning(n)  # default window is a Hanning window
-    plt.magnitude_spectrum(x*np.sum(w), Fs=1/T, sides='onesided', scale='linear')
+    w = mlxarr.hanning(n)  # default window is a Hanning window
+    plt.magnitude_spectrum(x*mlxarr.sum(w), Fs=1/T, sides='onesided', scale='linear')
 
 
 
@@ -394,7 +394,7 @@ have been removed
 
 
 The ``matplotlib.backends.backend_ps.seq_allequal`` function has been removed.
-Use ``np.array_equal`` instead.
+Use ``mlxarr.array_equal`` instead.
 
 The deprecated ``matplotlib.rcsetup.validate_maskedarray``,
 ``matplotlib.rcsetup.deprecate_savefig_extension`` and

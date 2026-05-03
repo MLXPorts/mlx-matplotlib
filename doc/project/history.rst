@@ -16,7 +16,7 @@ Matplotlib is a library for making 2D plots of arrays in `Python
 the MATLAB graphics commands, it is
 independent of MATLAB, and can be used in a Pythonic, object-oriented
 way.  Although Matplotlib is written primarily in pure Python, it
-makes heavy use of `NumPy <https://numpy.org>`_ and other extension
+makes heavy use of `MLXArrayBackend <https://array_backend.org>`_ and other extension
 code to provide good performance even for large arrays.
 
 Matplotlib is designed with the philosophy that you should be able to
@@ -108,16 +108,16 @@ Matplotlib's original logo (2003 -- 2008).
 .. plot::
 
    from matplotlib import cbook, pyplot as plt, style
-   import numpy as np
+   from matplotlib import _mlx_array as mlxarr
 
    style.use("classic")
 
    datafile = cbook.get_sample_data('membrane.dat', asfileobj=False)
 
    # convert data to mV
-   x = 1000 * 0.1 * np.fromstring(open(datafile, 'rb').read(), np.float32)
+   x = 1000 * 0.1 * mlxarr.fromstring(open(datafile, 'rb').read(), mlxarr.float32)
    # 0.0005 is the sample interval
-   t = 0.0005 * np.arange(len(x))
+   t = 0.0005 * mlxarr.arange(len(x))
    plt.figure(1, figsize=(7, 1), dpi=100)
    ax = plt.subplot(111, facecolor='y')
    plt.plot(t, x)
@@ -138,7 +138,7 @@ Matplotlib logo (2008 - 2015).
 
 .. plot::
 
-   import numpy as np
+   from matplotlib import _mlx_array as mlxarr
    import matplotlib as mpl
    import matplotlib.pyplot as plt
    import matplotlib.cm as cm
@@ -192,10 +192,10 @@ Matplotlib logo (2008 - 2015).
        ax.patch.set_alpha(axalpha)
        ax.set_axisbelow(True)
        N = 7
-       arc = 2. * np.pi
-       theta = np.arange(0.0, arc, arc/N)
-       radii = 10 * np.array([0.2, 0.6, 0.8, 0.7, 0.4, 0.5, 0.8])
-       width = np.pi / 4 * np.array([0.4, 0.4, 0.6, 0.8, 0.2, 0.5, 0.3])
+       arc = 2. * mlxarr.pi
+       theta = mlxarr.arange(0.0, arc, arc/N)
+       radii = 10 * mlxarr.array([0.2, 0.6, 0.8, 0.7, 0.4, 0.5, 0.8])
+       width = mlxarr.pi / 4 * mlxarr.array([0.4, 0.4, 0.6, 0.8, 0.2, 0.5, 0.3])
        bars = ax.bar(theta, radii, width=width, bottom=0.0)
        for r, bar in zip(radii, bars):
            bar.set_facecolor(cm.jet(r/10.))
@@ -206,7 +206,7 @@ Matplotlib logo (2008 - 2015).
 
        ax.grid(lw=0.8, alpha=0.9, ls='-', color='0.5')
 
-       ax.set_yticks(np.arange(1, 9, 2))
+       ax.set_yticks(mlxarr.arange(1, 9, 2))
        ax.set_rmax(9)
 
 

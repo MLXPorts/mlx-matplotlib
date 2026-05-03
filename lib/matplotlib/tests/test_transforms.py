@@ -1,7 +1,6 @@
 import copy
-
-import numpy as np
-from numpy.testing import (assert_allclose, assert_almost_equal,
+from matplotlib import _mlx_array as mlxarr
+from matplotlib.mlx_testing import (assert_allclose, assert_almost_equal,
                            assert_array_equal, assert_array_almost_equal)
 import pytest
 
@@ -15,6 +14,68 @@ from matplotlib.testing.decorators import image_comparison, check_figures_equal
 from unittest.mock import MagicMock
 
 
+def test_mlx_float64_setitem_preserves_python_float_precision():
+    import math
+
+    matrix = mlxarr.identity(1, dtype=mlxarr.float64)
+    value = math.cos(math.radians(90))
+
+    matrix[0, 0] = value
+
+    assert matrix[0, 0].item() == value
+
+
+def test_mlx_float64_python_scalar_ops_preserve_precision():
+    import math
+
+    value = math.cos(math.radians(90))
+    zero = mlxarr.zeros((1,), dtype=mlxarr.float64)
+    one = mlxarr.ones((1,), dtype=mlxarr.float64)
+
+    cases = [
+        (zero + value, 0.0 + value),
+        (value + zero, value + 0.0),
+        (zero - value, 0.0 - value),
+        (value - zero, value - 0.0),
+        (one * value, 1.0 * value),
+        (value * one, value * 1.0),
+        (value / one, value / 1.0),
+        (one // value, 1.0 // value),
+        (value % one, value % 1.0),
+        (value ** one, value ** 1.0),
+        (mlxarr.full((1,), value, dtype=mlxarr.float64), value),
+        (mlxarr.full_like(one, value), value),
+        (mlxarr.pad(mlxarr.array([0.0], dtype=mlxarr.float64), 1,
+                    constant_values=value), value),
+    ]
+
+    for result, expected in cases:
+        assert result[0].item() == expected
+
+
+@pytest.mark.parametrize("device_name", ["cpu", "gpu"])
+def test_path_affine_transform_accepts_mlx_stream(device_name):
+    import mlx.core as mx
+    from matplotlib import _path
+
+    device_type = getattr(mx, device_name)
+    if not mx.is_available(device_type):
+        pytest.skip(f"MLX {device_name} device is not available")
+
+    values = mlxarr.array([[1.0, 2.0], [3.0, 4.0]], dtype=float)
+    matrix = mlxarr.array(
+        [[2.0, 0.0, 1.0],
+         [0.0, 3.0, -1.0],
+         [0.0, 0.0, 1.0]],
+        dtype=float)
+
+    result = _path.affine_transform(values, matrix, stream=device_type)
+
+    assert result.shape == (2, 2)
+    assert_allclose(mlxarr.array(result.tolist(), dtype=float),
+                    [[3.0, 5.0], [7.0, 11.0]])
+
+
 class TestAffine2D:
     single_point = [1.0, 1.0]
     multiple_points = [[0.0, 2.0], [3.0, 3.0], [4.0, 0.0]]
@@ -22,12 +83,12 @@ class TestAffine2D:
 
     def test_init(self):
         Affine2D([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-        Affine2D(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], int))
-        Affine2D(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], float))
+        Affine2D(mlxarr.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], int))
+        Affine2D(mlxarr.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], float))
 
     def test_values(self):
-        np.random.seed(19680801)
-        values = np.random.random(6)
+        mlxarr.random.seed(19680801)
+        values = mlxarr.random.random(6)
         assert_array_equal(Affine2D.from_values(*values).to_values(), values)
 
     def test_modify_inplace(self):
@@ -38,26 +99,26 @@ class TestAffine2D:
         assert_array_equal(trans.get_matrix(), [[42, 0, 0], [0, 1, 0], [0, 0, 1]])
 
     def test_clear(self):
-        a = Affine2D(np.random.rand(3, 3) + 5)  # Anything non-identity.
+        a = Affine2D(mlxarr.random.rand(3, 3) + 5)  # Anything non-identity.
         a.clear()
         assert_array_equal(a.get_matrix(), [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
     def test_rotate(self):
-        r_pi_2 = Affine2D().rotate(np.pi / 2)
+        r_pi_2 = Affine2D().rotate(mlxarr.pi / 2)
         r90 = Affine2D().rotate_deg(90)
         assert_array_equal(r_pi_2.get_matrix(), r90.get_matrix())
         assert_array_almost_equal(r90.transform(self.single_point), [-1, 1])
         assert_array_almost_equal(r90.transform(self.multiple_points),
                                   [[-2, 0], [-3, 3], [0, 4]])
 
-        r_pi = Affine2D().rotate(np.pi)
+        r_pi = Affine2D().rotate(mlxarr.pi)
         r180 = Affine2D().rotate_deg(180)
         assert_array_equal(r_pi.get_matrix(), r180.get_matrix())
         assert_array_almost_equal(r180.transform(self.single_point), [-1, -1])
         assert_array_almost_equal(r180.transform(self.multiple_points),
                                   [[0, -2], [-3, -3], [-4, 0]])
 
-        r_pi_3_2 = Affine2D().rotate(3 * np.pi / 2)
+        r_pi_3_2 = Affine2D().rotate(3 * mlxarr.pi / 2)
         r270 = Affine2D().rotate_deg(270)
         assert_array_equal(r_pi_3_2.get_matrix(), r270.get_matrix())
         assert_array_almost_equal(r270.transform(self.single_point), [1, -1])
@@ -68,21 +129,21 @@ class TestAffine2D:
         assert_array_equal((r90 + r180).get_matrix(), r270.get_matrix())
 
     def test_rotate_around(self):
-        r_pi_2 = Affine2D().rotate_around(*self.pivot, np.pi / 2)
+        r_pi_2 = Affine2D().rotate_around(*self.pivot, mlxarr.pi / 2)
         r90 = Affine2D().rotate_deg_around(*self.pivot, 90)
         assert_array_equal(r_pi_2.get_matrix(), r90.get_matrix())
         assert_array_almost_equal(r90.transform(self.single_point), [1, 1])
         assert_array_almost_equal(r90.transform(self.multiple_points),
                                   [[0, 0], [-1, 3], [2, 4]])
 
-        r_pi = Affine2D().rotate_around(*self.pivot, np.pi)
+        r_pi = Affine2D().rotate_around(*self.pivot, mlxarr.pi)
         r180 = Affine2D().rotate_deg_around(*self.pivot, 180)
         assert_array_equal(r_pi.get_matrix(), r180.get_matrix())
         assert_array_almost_equal(r180.transform(self.single_point), [1, 1])
         assert_array_almost_equal(r180.transform(self.multiple_points),
                                   [[2, 0], [-1, -1], [-2, 2]])
 
-        r_pi_3_2 = Affine2D().rotate_around(*self.pivot, 3 * np.pi / 2)
+        r_pi_3_2 = Affine2D().rotate_around(*self.pivot, 3 * mlxarr.pi / 2)
         r270 = Affine2D().rotate_deg_around(*self.pivot, 270)
         assert_array_equal(r_pi_3_2.get_matrix(), r270.get_matrix())
         assert_array_almost_equal(r270.transform(self.single_point), [1, 1])
@@ -102,7 +163,7 @@ class TestAffine2D:
                            [[0, -4], [9, -6], [12, 0]])
 
     def test_skew(self):
-        trans_rad = Affine2D().skew(np.pi / 8, np.pi / 12)
+        trans_rad = Affine2D().skew(mlxarr.pi / 8, mlxarr.pi / 12)
         trans_deg = Affine2D().skew_deg(22.5, 15)
         assert_array_equal(trans_rad.get_matrix(), trans_deg.get_matrix())
         # Using ~atan(0.5), ~atan(0.25) produces roundish numbers on output.
@@ -344,10 +405,10 @@ class TestAffine2D:
 
 class TestAffineDeltaTransform:
     def test_invalidate(self):
-        before = np.array([[1.0, 4.0, 0.0],
+        before = mlxarr.array([[1.0, 4.0, 0.0],
                            [5.0, 1.0, 0.0],
                            [0.0, 0.0, 1.0]])
-        after = np.array([[1.0, 3.0, 0.0],
+        after = mlxarr.array([[1.0, 3.0, 0.0],
                           [5.0, 1.0, 0.0],
                           [0.0, 0.0, 1.0]])
 
@@ -396,7 +457,7 @@ def test_non_affine_caching():
 
     my_trans = AssertingNonAffineTransform()
     ax = plt.axes()
-    plt.plot(np.arange(10), transform=my_trans + ax.transData)
+    plt.plot(mlxarr.arange(10), transform=my_trans + ax.transData)
     plt.draw()
     # enable the transform to raise an exception if it's non-affine transform
     # method is triggered again.
@@ -415,7 +476,7 @@ def test_external_transform_api():
                     + axes.transData)
 
     ax = plt.axes()
-    line, = plt.plot(np.arange(10), transform=ScaledBy(10))
+    line, = plt.plot(mlxarr.arange(10), transform=ScaledBy(10))
     ax.set_xlim(0, 100)
     ax.set_ylim(0, 100)
     # assert that the top transform of the line is the scale transform.
@@ -433,23 +494,23 @@ def test_pre_transform_plotting():
     ax = plt.axes()
     times10 = mtransforms.Affine2D().scale(10)
 
-    ax.contourf(np.arange(48).reshape(6, 8), transform=times10 + ax.transData)
+    ax.contourf(mlxarr.arange(48).reshape(6, 8), transform=times10 + ax.transData)
 
-    ax.pcolormesh(np.linspace(0, 4, 7),
-                  np.linspace(5.5, 8, 9),
-                  np.arange(48).reshape(8, 6),
+    ax.pcolormesh(mlxarr.linspace(0, 4, 7),
+                  mlxarr.linspace(5.5, 8, 9),
+                  mlxarr.arange(48).reshape(8, 6),
                   transform=times10 + ax.transData)
 
-    ax.scatter(np.linspace(0, 10), np.linspace(10, 0),
+    ax.scatter(mlxarr.linspace(0, 10), mlxarr.linspace(10, 0),
                transform=times10 + ax.transData)
 
-    x = np.linspace(8, 10, 20)
-    y = np.linspace(1, 5, 20)
-    u = 2*np.sin(x) + np.cos(y[:, np.newaxis])
-    v = np.sin(x) - np.cos(y[:, np.newaxis])
+    x = mlxarr.linspace(8, 10, 20)
+    y = mlxarr.linspace(1, 5, 20)
+    u = 2*mlxarr.sin(x) + mlxarr.cos(y[:, mlxarr.newaxis])
+    v = mlxarr.sin(x) - mlxarr.cos(y[:, mlxarr.newaxis])
 
     ax.streamplot(x, y, u, v, transform=times10 + ax.transData,
-                  linewidth=np.hypot(u, v))
+                  linewidth=mlxarr.hypot(u, v))
 
     # reduce the vector data down a bit for barb and quiver plotting
     x, y = x[::3], y[::3]
@@ -462,11 +523,11 @@ def test_pre_transform_plotting():
 
 def test_contour_pre_transform_limits():
     ax = plt.axes()
-    xs, ys = np.meshgrid(np.linspace(15, 20, 15), np.linspace(12.4, 12.5, 20))
-    ax.contourf(xs, ys, np.log(xs * ys),
+    xs, ys = mlxarr.meshgrid(mlxarr.linspace(15, 20, 15), mlxarr.linspace(12.4, 12.5, 20))
+    ax.contourf(xs, ys, mlxarr.log(xs * ys),
                 transform=mtransforms.Affine2D().scale(0.1) + ax.transData)
 
-    expected = np.array([[1.5, 1.24],
+    expected = mlxarr.array([[1.5, 1.24],
                          [2., 1.25]])
     assert_almost_equal(expected, ax.dataLim.get_points())
 
@@ -474,11 +535,11 @@ def test_contour_pre_transform_limits():
 def test_pcolor_pre_transform_limits():
     # Based on test_contour_pre_transform_limits()
     ax = plt.axes()
-    xs, ys = np.meshgrid(np.linspace(15, 20, 15), np.linspace(12.4, 12.5, 20))
-    ax.pcolor(xs, ys, np.log(xs * ys)[:-1, :-1],
+    xs, ys = mlxarr.meshgrid(mlxarr.linspace(15, 20, 15), mlxarr.linspace(12.4, 12.5, 20))
+    ax.pcolor(xs, ys, mlxarr.log(xs * ys)[:-1, :-1],
               transform=mtransforms.Affine2D().scale(0.1) + ax.transData)
 
-    expected = np.array([[1.5, 1.24],
+    expected = mlxarr.array([[1.5, 1.24],
                          [2., 1.25]])
     assert_almost_equal(expected, ax.dataLim.get_points())
 
@@ -486,22 +547,22 @@ def test_pcolor_pre_transform_limits():
 def test_pcolormesh_pre_transform_limits():
     # Based on test_contour_pre_transform_limits()
     ax = plt.axes()
-    xs, ys = np.meshgrid(np.linspace(15, 20, 15), np.linspace(12.4, 12.5, 20))
-    ax.pcolormesh(xs, ys, np.log(xs * ys)[:-1, :-1],
+    xs, ys = mlxarr.meshgrid(mlxarr.linspace(15, 20, 15), mlxarr.linspace(12.4, 12.5, 20))
+    ax.pcolormesh(xs, ys, mlxarr.log(xs * ys)[:-1, :-1],
                   transform=mtransforms.Affine2D().scale(0.1) + ax.transData)
 
-    expected = np.array([[1.5, 1.24],
+    expected = mlxarr.array([[1.5, 1.24],
                          [2., 1.25]])
     assert_almost_equal(expected, ax.dataLim.get_points())
 
 
 def test_pcolormesh_gouraud_nans():
-    np.random.seed(19680801)
+    mlxarr.random.seed(19680801)
 
-    values = np.linspace(0, 180, 3)
-    radii = np.linspace(100, 1000, 10)
-    z, y = np.meshgrid(values, radii)
-    x = np.radians(np.random.rand(*z.shape) * 100)
+    values = mlxarr.linspace(0, 180, 3)
+    radii = mlxarr.linspace(100, 1000, 10)
+    z, y = mlxarr.meshgrid(values, radii)
+    x = mlxarr.radians(mlxarr.random.rand(*z.shape) * 100)
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="polar")
@@ -515,39 +576,39 @@ def test_pcolormesh_gouraud_nans():
 
 
 def test_Affine2D_from_values():
-    points = np.array([[0, 0],
+    points = mlxarr.array([[0, 0],
                        [10, 20],
                        [-1, 0],
                        ])
 
     t = mtransforms.Affine2D.from_values(1, 0, 0, 0, 0, 0)
     actual = t.transform(points)
-    expected = np.array([[0, 0], [10, 0], [-1, 0]])
+    expected = mlxarr.array([[0, 0], [10, 0], [-1, 0]])
     assert_almost_equal(actual, expected)
 
     t = mtransforms.Affine2D.from_values(0, 2, 0, 0, 0, 0)
     actual = t.transform(points)
-    expected = np.array([[0, 0], [0, 20], [0, -2]])
+    expected = mlxarr.array([[0, 0], [0, 20], [0, -2]])
     assert_almost_equal(actual, expected)
 
     t = mtransforms.Affine2D.from_values(0, 0, 3, 0, 0, 0)
     actual = t.transform(points)
-    expected = np.array([[0, 0], [60, 0], [0, 0]])
+    expected = mlxarr.array([[0, 0], [60, 0], [0, 0]])
     assert_almost_equal(actual, expected)
 
     t = mtransforms.Affine2D.from_values(0, 0, 0, 4, 0, 0)
     actual = t.transform(points)
-    expected = np.array([[0, 0], [0, 80], [0, 0]])
+    expected = mlxarr.array([[0, 0], [0, 80], [0, 0]])
     assert_almost_equal(actual, expected)
 
     t = mtransforms.Affine2D.from_values(0, 0, 0, 0, 5, 0)
     actual = t.transform(points)
-    expected = np.array([[5, 0], [5, 0], [5, 0]])
+    expected = mlxarr.array([[5, 0], [5, 0], [5, 0]])
     assert_almost_equal(actual, expected)
 
     t = mtransforms.Affine2D.from_values(0, 0, 0, 0, 0, 6)
     actual = t.transform(points)
-    expected = np.array([[0, 6], [0, 6], [0, 6]])
+    expected = mlxarr.array([[0, 6], [0, 6], [0, 6]])
     assert_almost_equal(actual, expected)
 
 
@@ -601,7 +662,7 @@ class NonAffineForTest(mtransforms.Transform):
 class TestBasicTransform:
     def setup_method(self):
 
-        self.ta1 = mtransforms.Affine2D(shorthand_name='ta1').rotate(np.pi / 2)
+        self.ta1 = mtransforms.Affine2D(shorthand_name='ta1').rotate(mlxarr.pi / 2)
         self.ta2 = mtransforms.Affine2D(shorthand_name='ta2').translate(10, 0)
         self.ta3 = mtransforms.Affine2D(shorthand_name='ta3').scale(1, 2)
 
@@ -704,16 +765,16 @@ class TestBasicTransform:
         # tests that a transform stack only calls as much is absolutely
         # necessary "non-affine" allowing the best possible optimization with
         # complex transformation stacks.
-        points = np.array([[0, 0], [10, 20], [np.nan, 1], [-1, 0]],
-                          dtype=np.float64)
+        points = mlxarr.array([[0, 0], [10, 20], [mlxarr.nan, 1], [-1, 0]],
+                          dtype=mlxarr.float64)
         na_pts = self.stack1.transform_non_affine(points)
         all_pts = self.stack1.transform(points)
 
-        na_expected = np.array([[1., 2.], [-19., 12.],
-                                [np.nan, np.nan], [1., 1.]], dtype=np.float64)
-        all_expected = np.array([[11., 4.], [-9., 24.],
-                                 [np.nan, np.nan], [11., 2.]],
-                                dtype=np.float64)
+        na_expected = mlxarr.array([[1., 2.], [-19., 12.],
+                                [mlxarr.nan, mlxarr.nan], [1., 1.]], dtype=mlxarr.float64)
+        all_expected = mlxarr.array([[11., 4.], [-9., 24.],
+                                 [mlxarr.nan, mlxarr.nan], [11., 2.]],
+                                dtype=mlxarr.float64)
 
         # check we have the expected results from doing the affine part only
         assert_array_almost_equal(na_pts, na_expected)
@@ -744,15 +805,15 @@ class TestTransformPlotInterface:
         ax = plt.axes()
         ax.plot([0.1, 1.2, 0.8], [0.9, 0.5, 0.8], transform=ax.transAxes)
         assert_array_equal(ax.dataLim.get_points(),
-                           np.array([[np.inf, np.inf],
-                                     [-np.inf, -np.inf]]))
+                           mlxarr.array([[mlxarr.inf, mlxarr.inf],
+                                     [-mlxarr.inf, -mlxarr.inf]]))
 
     def test_line_extent_data_coords(self):
         # a simple line in data coordinates
         ax = plt.axes()
         ax.plot([0.1, 1.2, 0.8], [0.9, 0.5, 0.8], transform=ax.transData)
         assert_array_equal(ax.dataLim.get_points(),
-                           np.array([[0.1,  0.5], [1.2,  0.9]]))
+                           mlxarr.array([[0.1,  0.5], [1.2,  0.9]]))
 
     def test_line_extent_compound_coords1(self):
         # a simple line in data coordinates in the y component, and in axes
@@ -762,8 +823,8 @@ class TestTransformPlotInterface:
                                                       ax.transData)
         ax.plot([0.1, 1.2, 0.8], [35, -5, 18], transform=trans)
         assert_array_equal(ax.dataLim.get_points(),
-                           np.array([[np.inf, -5.],
-                                     [-np.inf, 35.]]))
+                           mlxarr.array([[mlxarr.inf, -5.],
+                                     [-mlxarr.inf, 35.]]))
 
     def test_line_extent_predata_transform_coords(self):
         # a simple line in (offset + data) coordinates
@@ -771,7 +832,7 @@ class TestTransformPlotInterface:
         trans = mtransforms.Affine2D().scale(10) + ax.transData
         ax.plot([0.1, 1.2, 0.8], [35, -5, 18], transform=trans)
         assert_array_equal(ax.dataLim.get_points(),
-                           np.array([[1., -50.], [12., 350.]]))
+                           mlxarr.array([[1., -50.], [12., 350.]]))
 
     def test_line_extent_compound_coords2(self):
         # a simple line in (offset + data) coordinates in the y component, and
@@ -781,21 +842,21 @@ class TestTransformPlotInterface:
             ax.transAxes, mtransforms.Affine2D().scale(10) + ax.transData)
         ax.plot([0.1, 1.2, 0.8], [35, -5, 18], transform=trans)
         assert_array_equal(ax.dataLim.get_points(),
-                           np.array([[np.inf, -50.], [-np.inf, 350.]]))
+                           mlxarr.array([[mlxarr.inf, -50.], [-mlxarr.inf, 350.]]))
 
     def test_line_extents_affine(self):
         ax = plt.axes()
         offset = mtransforms.Affine2D().translate(10, 10)
-        plt.plot(np.arange(10), transform=offset + ax.transData)
-        expected_data_lim = np.array([[0., 0.], [9.,  9.]]) + 10
+        plt.plot(mlxarr.arange(10), transform=offset + ax.transData)
+        expected_data_lim = mlxarr.array([[0., 0.], [9.,  9.]]) + 10
         assert_array_almost_equal(ax.dataLim.get_points(), expected_data_lim)
 
     def test_line_extents_non_affine(self):
         ax = plt.axes()
         offset = mtransforms.Affine2D().translate(10, 10)
         na_offset = NonAffineForTest(mtransforms.Affine2D().translate(10, 10))
-        plt.plot(np.arange(10), transform=offset + na_offset + ax.transData)
-        expected_data_lim = np.array([[0., 0.], [9.,  9.]]) + 20
+        plt.plot(mlxarr.arange(10), transform=offset + na_offset + ax.transData)
+        expected_data_lim = mlxarr.array([[0., 0.], [9.,  9.]]) + 20
         assert_array_almost_equal(ax.dataLim.get_points(), expected_data_lim)
 
     def test_pathc_extents_non_affine(self):
@@ -806,7 +867,7 @@ class TestTransformPlotInterface:
         patch = mpatches.PathPatch(pth,
                                    transform=offset + na_offset + ax.transData)
         ax.add_patch(patch)
-        expected_data_lim = np.array([[0., 0.], [10.,  10.]]) + 20
+        expected_data_lim = mlxarr.array([[0., 0.], [10.,  10.]]) + 20
         assert_array_almost_equal(ax.dataLim.get_points(), expected_data_lim)
 
     def test_pathc_extents_affine(self):
@@ -815,7 +876,7 @@ class TestTransformPlotInterface:
         pth = Path([[0, 0], [0, 10], [10, 10], [10, 0]])
         patch = mpatches.PathPatch(pth, transform=offset + ax.transData)
         ax.add_patch(patch)
-        expected_data_lim = np.array([[0., 0.], [10.,  10.]]) + 10
+        expected_data_lim = mlxarr.array([[0., 0.], [10.,  10.]]) + 10
         assert_array_almost_equal(ax.dataLim.get_points(), expected_data_lim)
 
     def test_line_extents_for_non_affine_transData(self):
@@ -823,11 +884,11 @@ class TestTransformPlotInterface:
         # add 10 to the radius of the data
         offset = mtransforms.Affine2D().translate(0, 10)
 
-        plt.plot(np.arange(10), transform=offset + ax.transData)
+        plt.plot(mlxarr.arange(10), transform=offset + ax.transData)
         # the data lim of a polar plot is stored in coordinates
         # before a transData transformation, hence the data limits
         # are not what is being shown on the actual plot.
-        expected_data_lim = np.array([[0., 0.], [9.,  9.]]) + [0, 10]
+        expected_data_lim = mlxarr.array([[0., 0.], [9.,  9.]]) + [0, 10]
         assert_array_almost_equal(ax.dataLim.get_points(), expected_data_lim)
 
 
@@ -940,14 +1001,14 @@ def test_log_transform():
 
 def test_nan_overlap():
     a = mtransforms.Bbox([[0, 0], [1, 1]])
-    b = mtransforms.Bbox([[0, 0], [1, np.nan]])
+    b = mtransforms.Bbox([[0, 0], [1, mlxarr.nan]])
     assert not a.overlaps(b)
 
 
 def test_transform_angles():
     t = mtransforms.Affine2D()  # Identity transform
-    angles = np.array([20, 45, 60])
-    points = np.array([[0, 0], [1, 1], [2, 2]])
+    angles = mlxarr.array([20, 45, 60])
+    points = mlxarr.array([[0, 0], [1, 1], [2, 2]])
 
     # Identity transform does not change angles
     new_angles = t.transform_angles(angles, points)
@@ -964,10 +1025,10 @@ def test_transform_angles():
 
 def test_nonsingular():
     # test for zero-expansion type cases; other cases may be added later
-    zero_expansion = np.array([-0.001, 0.001])
-    cases = [(0, np.nan), (0, 0), (0, 7.9e-317)]
+    zero_expansion = mlxarr.array([-0.001, 0.001])
+    cases = [(0, mlxarr.nan), (0, 0), (0, 7.9e-317)]
     for args in cases:
-        out = np.array(mtransforms.nonsingular(*args))
+        out = mlxarr.array(mtransforms.nonsingular(*args))
         assert_array_equal(out, zero_expansion)
 
 
@@ -980,8 +1041,8 @@ def test_transformed_path():
     assert_allclose(trans_path.get_fully_transformed_path().vertices, points)
 
     # Changing the transform should change the result.
-    r2 = 1 / np.sqrt(2)
-    trans.rotate(np.pi / 4)
+    r2 = 1 / mlxarr.sqrt(2)
+    trans.rotate(mlxarr.pi / 4)
     assert_allclose(trans_path.get_fully_transformed_path().vertices,
                     [(0, 0), (r2, r2), (0, 2 * r2), (-r2, r2)],
                     atol=1e-15)
@@ -1028,7 +1089,7 @@ def test_lockable_bbox(locked_element):
     # Unlocking element should revert values back to the underlying Bbox.
     setattr(locked, 'locked_' + locked_element, None)
     assert getattr(locked, 'locked_' + locked_element) is None
-    assert np.all(orig.get_points() == locked.get_points())
+    assert mlxarr.all(orig.get_points() == locked.get_points())
 
     # Relocking an element should change its value, but not others.
     setattr(locked, 'locked_' + locked_element, 3)
@@ -1048,14 +1109,14 @@ def test_transformwrapper():
 
 @check_figures_equal()
 def test_scale_swapping(fig_test, fig_ref):
-    np.random.seed(19680801)
-    samples = np.random.normal(size=10)
-    x = np.linspace(-5, 5, 10)
+    mlxarr.random.seed(19680801)
+    samples = mlxarr.random.normal(size=10)
+    x = mlxarr.linspace(-5, 5, 10)
 
     for fig, log_state in zip([fig_test, fig_ref], [True, False]):
         ax = fig.subplots()
         ax.hist(samples, log=log_state, density=True)
-        ax.plot(x, np.exp(-(x**2) / 2) / np.sqrt(2 * np.pi))
+        ax.plot(x, mlxarr.exp(-(x**2) / 2) / mlxarr.sqrt(2 * mlxarr.pi))
         fig.canvas.draw()
         ax.set_yscale('linear')
 
@@ -1112,13 +1173,13 @@ def test_scaledrotation_initialization():
 
 def test_scaledrotation_get_matrix_invalid():
     """Test get_matrix when the matrix is invalid and needs recalculation."""
-    theta = np.pi / 2
+    theta = mlxarr.pi / 2
     trans_shift = MagicMock(transform=MagicMock(return_value=[[theta, 0]]))
     scaled_rot = _ScaledRotation(theta, trans_shift)
     scaled_rot._invalid = True
     matrix = scaled_rot.get_matrix()
     trans_shift.transform.assert_called_once_with([[theta, 0]])
-    expected_rotation = np.array([[0, -1],
+    expected_rotation = mlxarr.array([[0, -1],
                                   [1,  0]])
     assert matrix is not None
     assert_allclose(matrix[:2, :2], expected_rotation, atol=1e-15)

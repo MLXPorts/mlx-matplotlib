@@ -12,12 +12,11 @@ Below is an examples of such a plot:
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.ticker as mticker
 
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 UNIT = "Hz"
 
@@ -27,7 +26,7 @@ ax.yaxis.set_major_formatter(mticker.EngFormatter(
     unit=UNIT
 ))
 size = 100
-measurement = np.full(size, 1e9)
-noise = np.random.uniform(low=-2e3, high=2e3, size=size)
+measurement = mlxarr.full(size, 1e9)
+noise = mlxarr.random.uniform(low=-2e3, high=2e3, size=size)
 ax.plot(measurement + noise)
 plt.show()

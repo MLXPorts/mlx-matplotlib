@@ -8,9 +8,7 @@ differences between ``Axes.get_tightbbox`` and ``Axes.bbox`` are independent of
 Axes position. This may fail if ``Axes.adjustable`` is ``datalim`` as well as
 such cases as when left or right margin are affected by xlabel.
 """
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from matplotlib import _api, artist as martist
 from matplotlib.font_manager import FontProperties
@@ -63,8 +61,8 @@ def _auto_adjust_subplotpars(
         margin_right = 1 - _right if _right else None
         margin_top = 1 - _top if _top else None
 
-    vspaces = np.zeros((rows + 1, cols))
-    hspaces = np.zeros((rows, cols + 1))
+    vspaces = mlxarr.zeros((rows + 1, cols))
+    hspaces = mlxarr.zeros((rows, cols + 1))
 
     if ax_bbox_list is None:
         ax_bbox_list = [

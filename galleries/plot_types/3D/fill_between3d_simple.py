@@ -6,18 +6,17 @@ fill_between(x1, y1, z1, x2, y2, z2)
 See `~mpl_toolkits.mplot3d.axes3d.Axes3D.fill_between`.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 plt.style.use('_mpl-gallery')
 
 # Make data for a double helix
 n = 50
-theta = np.linspace(0, 2*np.pi, n)
-x1 = np.cos(theta)
-y1 = np.sin(theta)
-z1 = np.linspace(0, 1, n)
-x2 = np.cos(theta + np.pi)
-y2 = np.sin(theta + np.pi)
+theta = mlxarr.linspace(0, 2*mlxarr.pi, n)
+x1 = mlxarr.cos(theta)
+y1 = mlxarr.sin(theta)
+z1 = mlxarr.linspace(0, 1, n)
+x2 = mlxarr.cos(theta + mlxarr.pi)
+y2 = mlxarr.sin(theta + mlxarr.pi)
 z2 = z1
 
 # Plot

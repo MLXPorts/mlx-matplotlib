@@ -17,7 +17,7 @@ TeX and dvipng/dvips processing results are cached
 in ~/.matplotlib/tex.cache for reuse between sessions.
 
 `TexManager.get_rgba` can also be used to directly obtain raster output as RGBA
-NumPy arrays.
+MLXArrayBackend arrays.
 """
 
 import functools
@@ -26,9 +26,7 @@ import logging
 from pathlib import Path
 import subprocess
 from tempfile import TemporaryDirectory
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from matplotlib import cbook, dviread
 
@@ -356,7 +354,7 @@ class TexManager:
         >>> Z = texmanager.get_rgba(s, fontsize=12, dpi=80, rgb=(1, 0, 0))
         """
         alpha = cls.get_grey(tex, fontsize, dpi)
-        rgba = np.empty((*alpha.shape, 4))
+        rgba = mlxarr.empty((*alpha.shape, 4))
         rgba[..., :3] = mpl.colors.to_rgb(rgb)
         rgba[..., -1] = alpha
         return rgba

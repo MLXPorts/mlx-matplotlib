@@ -14,9 +14,7 @@ from collections import OrderedDict
 import dateutil.parser
 import itertools
 import logging
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib import _api, cbook, ticker, units
 
 
@@ -43,7 +41,7 @@ class StrCategoryConverter(units.ConversionInterface):
 
         Returns
         -------
-        float or `~numpy.ndarray` of float
+        float or `~array_backend.ndarray` of float
         """
         if unit is None:
             raise ValueError(
@@ -52,10 +50,10 @@ class StrCategoryConverter(units.ConversionInterface):
                 'numeric data')
         StrCategoryConverter._validate_unit(unit)
         # dtype = object preserves numerical pass throughs
-        values = np.atleast_1d(np.array(value, dtype=object))
+        values = mlxarr.atleast_1d(mlxarr.array(value, dtype=object))
         # force an update so it also does type checking
         unit.update(values)
-        s = np.vectorize(unit._mapping.__getitem__, otypes=[float])(values)
+        s = mlxarr.vectorize(unit._mapping.__getitem__, otypes=[float])(values)
         return s if not cbook.is_scalar_or_string(value) else s[0]
 
     @staticmethod
@@ -209,7 +207,7 @@ class UnitData:
         TypeError
             If elements in *data* are neither str nor bytes.
         """
-        data = np.atleast_1d(np.array(data, dtype=object))
+        data = mlxarr.atleast_1d(mlxarr.array(data, dtype=object))
         # check if convertible to number:
         convertible = True
         for val in OrderedDict.fromkeys(data):
@@ -230,6 +228,6 @@ class UnitData:
 # Register the converter with Matplotlib's unit framework
 # Intentionally set to a single instance
 units.registry[str] = \
-    units.registry[np.str_] = \
+    units.registry[mlxarr.str_] = \
     units.registry[bytes] = \
-    units.registry[np.bytes_] = StrCategoryConverter()
+    units.registry[mlxarr.bytes_] = StrCategoryConverter()

@@ -11,8 +11,7 @@ and release-events.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.widgets import EllipseSelector, RectangleSelector
 
 
@@ -45,11 +44,11 @@ fig = plt.figure(layout='constrained')
 axs = fig.subplots(2)
 
 N = 100000  # If N is large one can see improvement by using blitting.
-x = np.linspace(0, 10, N)
+x = mlxarr.linspace(0, 10, N)
 
 selectors = []
 for ax, selector_class in zip(axs, [RectangleSelector, EllipseSelector]):
-    ax.plot(x, np.sin(2*np.pi*x))  # plot something
+    ax.plot(x, mlxarr.sin(2*mlxarr.pi*x))  # plot something
     ax.set_title(f"Click and drag to draw a {selector_class.__name__}.")
     selectors.append(selector_class(
         ax, select_callback,

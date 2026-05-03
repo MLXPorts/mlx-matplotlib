@@ -11,8 +11,7 @@ rectangular box. In order to get a better sense of polar curves, please look at
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.projections import PolarAxes
 from matplotlib.transforms import Affine2D
 from mpl_toolkits.axisartist import GridHelperCurveLinear, HostAxes
@@ -22,14 +21,14 @@ import mpl_toolkits.axisartist.angle_helper as angle_helper
 def curvelinear_test2(fig):
     """Polar projection, but in a rectangular box."""
     # see demo_curvelinear_grid.py for details
-    tr = Affine2D().scale(np.pi / 180., 1.) + PolarAxes.PolarTransform()
+    tr = Affine2D().scale(mlxarr.pi / 180., 1.) + PolarAxes.PolarTransform()
 
     extreme_finder = angle_helper.ExtremeFinderCycle(20,
                                                      20,
                                                      lon_cycle=360,
                                                      lat_cycle=None,
                                                      lon_minmax=None,
-                                                     lat_minmax=(0, np.inf),
+                                                     lat_minmax=(0, mlxarr.inf),
                                                      )
 
     grid_locator1 = angle_helper.LocatorDMS(12)

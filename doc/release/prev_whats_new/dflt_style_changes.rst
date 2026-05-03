@@ -48,10 +48,10 @@ originally developed at Tableau.
 
 .. plot::
 
-  import numpy as np
+  from matplotlib import _mlx_array as mlxarr
   import matplotlib.pyplot as plt
 
-  th = np.linspace(0, 2*np.pi, 512)
+  th = mlxarr.linspace(0, 2*mlxarr.pi, 512)
 
   fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6, 3))
 
@@ -60,7 +60,7 @@ originally developed at Tableau.
       ax.set_title(title)
       for j, c in enumerate(colors):
           v_offset = -(j / len(colors))
-          ax.plot(th, .1*np.sin(th) + v_offset, color=c)
+          ax.plot(th, .1*mlxarr.sin(th) + v_offset, color=c)
           ax.annotate("'C{}'".format(j), (0, v_offset),
                       xytext=(-1.5, 0),
                       ha='right',
@@ -69,7 +69,7 @@ originally developed at Tableau.
                       textcoords='offset points',
                       family='monospace')
 
-          ax.annotate("{!r}".format(c), (2*np.pi, v_offset),
+          ax.annotate("{!r}".format(c), (2*mlxarr.pi, v_offset),
                       xytext=(1.5, 0),
                       ha='left',
                       va='center',
@@ -125,12 +125,12 @@ The new default colormap used by `matplotlib.cm.ScalarMappable` instances is
 
 .. plot::
 
-   import numpy as np
+   from matplotlib import _mlx_array as mlxarr
    import matplotlib.pyplot as plt
 
    N = M = 200
-   X, Y = np.ogrid[0:20:N*1j, 0:20:M*1j]
-   data = np.sin(np.pi * X*2 / 20) * np.cos(np.pi * Y*2 / 20)
+   X, Y = mlxarr.ogrid[0:20:N*1j, 0:20:M*1j]
+   data = mlxarr.sin(mlxarr.pi * X*2 / 20) * mlxarr.cos(mlxarr.pi * Y*2 / 20)
 
    fig, (ax2, ax1) = plt.subplots(1, 2, figsize=(7, 3))
    im = ax1.imshow(data, extent=[0, 200, 0, 200])
@@ -195,7 +195,7 @@ solid light grey lines.
 
 .. plot::
 
-   import numpy as np
+   from matplotlib import _mlx_array as mlxarr
    import matplotlib.pyplot as plt
 
    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6, 3))
@@ -287,16 +287,16 @@ The following changes were made to the default behavior of
 
 .. plot::
 
-   import numpy as np
+   from matplotlib import _mlx_array as mlxarr
    import matplotlib.pyplot as plt
 
-   np.random.seed(2)
+   mlxarr.random.seed(2)
 
    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6, 3))
 
-   x = np.arange(15)
-   y = np.random.rand(15)
-   y2 = np.random.rand(15)
+   x = mlxarr.arange(15)
+   y = mlxarr.random.rand(15)
+   y2 = mlxarr.random.rand(15)
    ax1.scatter(x, y, s=20, edgecolors='k', c='b', label='a')
    ax1.scatter(x, y2, s=20, edgecolors='k', c='b', label='b')
    ax1.legend()
@@ -312,7 +312,7 @@ The classic default behavior of `~matplotlib.axes.Axes.scatter` can
 only be recovered through ``mpl.style.use('classic')``.  The marker size
 can be recovered via ::
 
-  mpl.rcParam['lines.markersize'] = np.sqrt(20)
+  mpl.rcParam['lines.markersize'] = mlxarr.sqrt(20)
 
 however, this will also affect the default marker size of
 `~matplotlib.axes.Axes.plot`.  To recover the classic behavior on
@@ -334,7 +334,7 @@ The following changes were made to the default behavior of
 
 .. plot::
 
-   import numpy as np
+   from matplotlib import _mlx_array as mlxarr
    import matplotlib.pyplot as plt
    import matplotlib as mpl
    from cycler import cycler
@@ -343,8 +343,8 @@ The following changes were made to the default behavior of
 
    N = 15
 
-   x = np.arange(N)
-   y = np.ones_like(x)
+   x = mlxarr.arange(N)
+   y = mlxarr.ones_like(x)
 
    sty_cycle = (cycler('ls', ['--' ,':', '-.']) *
                 cycler('lw', [None, 1, 2, 5]))
@@ -401,14 +401,14 @@ By default, caps on the ends of errorbars are not present.
 
    import matplotlib as mpl
    import matplotlib.pyplot as plt
-   import numpy as np
+   from matplotlib import _mlx_array as mlxarr
 
    # example data
-   x = np.arange(0.1, 4, 0.5)
-   y = np.exp(-x)
+   x = mlxarr.arange(0.1, 4, 0.5)
+   y = mlxarr.exp(-x)
 
    # example variable error bar values
-   yerr = 0.1 + 0.2*np.sqrt(x)
+   yerr = 0.1 + 0.2*mlxarr.sqrt(x)
    xerr = 0.1 + yerr
 
    def demo(ax, rc, title):
@@ -453,10 +453,10 @@ obscuring data too much.
 
 .. plot::
 
-    import numpy as np
+    from matplotlib import _mlx_array as mlxarr
     import matplotlib.pyplot as plt
 
-    data = np.random.lognormal(size=(37, 4))
+    data = mlxarr.random.lognormal(size=(37, 4))
     fig, (old, new) = plt.subplots(ncols=2, sharey=True)
     with plt.style.context('default'):
         new.boxplot(data, labels=['A', 'B', 'C', 'D'])
@@ -518,16 +518,16 @@ cycle.
 .. plot::
 
    import matplotlib.pyplot as plt
-   import numpy as np
+   from matplotlib import _mlx_array as mlxarr
 
    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6, 3))
    fig.subplots_adjust(wspace=0.3)
-   th = np.linspace(0, 2*np.pi, 128)
+   th = mlxarr.linspace(0, 2*mlxarr.pi, 128)
    N = 5
 
    def demo(ax, extra_kwargs, title):
        ax.set_title(title)
-       return [ax.fill_between(th, np.sin((j / N) * np.pi + th), alpha=.5, **extra_kwargs)
+       return [ax.fill_between(th, mlxarr.sin((j / N) * mlxarr.pi + th), alpha=.5, **extra_kwargs)
                for j in range(N)]
 
    demo(ax1, {'facecolor': 'C0'}, 'classic')
@@ -551,7 +551,7 @@ default.  The default face color is now ``'C0'`` instead of ``'b'``.
 .. plot::
 
    import matplotlib.pyplot as plt
-   import numpy as np
+   from matplotlib import _mlx_array as mlxarr
    from matplotlib import rc_context
    import matplotlib.patches as mpatches
 
@@ -570,7 +570,7 @@ default.  The default face color is now ``'C0'`` instead of ``'b'``.
            ax_top.set_aspect('equal')
            ax_mid.bar(range(len(fracs)), fracs, tick_label=labels)
            plt.setp(ax_mid.get_xticklabels(), rotation=-45)
-           grid = np.mgrid[0.2:0.8:3j, 0.2:0.8:3j].reshape(2, -1).T
+           grid = mlxarr.mgrid[0.2:0.8:3j, 0.2:0.8:3j].reshape(2, -1).T
 
            ax_bottom.set_xlim(0, .75)
            ax_bottom.set_ylim(0, .75)
@@ -617,7 +617,7 @@ The default value of the ``align`` kwarg for both
 .. plot::
 
    import matplotlib.pyplot as plt
-   import numpy as np
+   from matplotlib import _mlx_array as mlxarr
 
    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(5, 5))
 
@@ -787,19 +787,19 @@ Legends
 
    import matplotlib as mpl
    import matplotlib.pyplot as plt
-   import numpy as np
+   from matplotlib import _mlx_array as mlxarr
 
    def demo(ax, rcparams, title):
-       np.random.seed(2)
+       mlxarr.random.seed(2)
        N = 25
        with mpl.rc_context(rc=rcparams):
            x = range(N)
-           y = np.cumsum(np.random.randn(N) )
+           y = mlxarr.cumsum(mlxarr.random.randn(N) )
            # unpack the single Line2D artist
            ln, = ax.plot(x, y, marker='s',
                          linestyle='-', label='plot')
            ax.fill_between(x, y, 0, label='fill', alpha=.5, color=ln.get_color())
-           ax.scatter(N*np.random.rand(N), np.random.rand(N), label='scatter')
+           ax.scatter(N*mlxarr.random.rand(N), mlxarr.random.rand(N), label='scatter')
            ax.set_title(title)
            ax.legend()
 
@@ -856,12 +856,12 @@ sampling) before colormapping.
 
    import matplotlib.pyplot as plt
    import matplotlib as mpl
-   import numpy as np
+   from matplotlib import _mlx_array as mlxarr
 
 
    def demo(ax, rcparams, title):
-       np.random.seed(2)
-       A = np.random.rand(5, 5)
+       mlxarr.random.seed(2)
+       A = mlxarr.random.rand(5, 5)
 
        with mpl.rc_context(rc=rcparams):
            ax.imshow(A)
@@ -931,9 +931,9 @@ sets the view limits to 5% wider than the data range.
 
    import matplotlib as mpl
    import matplotlib.pyplot as plt
-   import numpy
+   from matplotlib import _mlx_array as array_backend
 
-   data = np.zeros(1000)
+   data = mlxarr.zeros(1000)
    data[0] = 1
 
    fig = plt.figure(figsize=(6, 3))
@@ -995,22 +995,22 @@ a cleaner separation between subplots.
 
    import matplotlib as mpl
    import matplotlib.pyplot as plt
-   import numpy as np
+   from matplotlib import _mlx_array as mlxarr
 
-   th = np.linspace(0, 2*np.pi, 128)
-   y = np.sin(th)
+   th = mlxarr.linspace(0, 2*mlxarr.pi, 128)
+   y = mlxarr.sin(th)
 
    def demo(fig, rcparams, title, j):
-       np.random.seed(2)
+       mlxarr.random.seed(2)
        with mpl.rc_context(rc=rcparams):
 
            ax = fig.add_subplot(2, 2, j)
-           ax.hist(np.random.beta(0.5, 0.5, 10000), 25, density=True)
+           ax.hist(mlxarr.random.beta(0.5, 0.5, 10000), 25, density=True)
            ax.set_xlim(0, 1)
            ax.set_title(title)
 
            ax = fig.add_subplot(2, 2, j + 2)
-           ax.imshow(np.random.rand(5, 5))
+           ax.imshow(mlxarr.random.rand(5, 5))
 
    classic = {'xtick.direction': 'in',
               'ytick.direction': 'in',
@@ -1055,7 +1055,7 @@ two ticks visible.
 .. plot::
 
    import matplotlib.pyplot as plt
-   import numpy as np
+   from matplotlib import _mlx_array as mlxarr
 
    from matplotlib.ticker import AutoLocator
 
@@ -1109,16 +1109,16 @@ but cannot be controlled independently via `.rcParams`.
 
 .. plot::
 
-   import numpy as np
+   from matplotlib import _mlx_array as mlxarr
    import matplotlib.pyplot as plt
 
-   np.random.seed(2)
+   mlxarr.random.seed(2)
 
    fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(6, 3))
    fig.subplots_adjust(wspace=0.35, left=0.09, right=0.95)
 
-   x = np.linspace(0.9, 1.7, 10)
-   y = 10 ** x[np.random.randint(0, 10, 10)]
+   x = mlxarr.linspace(0.9, 1.7, 10)
+   y = 10 ** x[mlxarr.random.randint(0, 10, 10)]
 
    ax2.semilogy(x, y)
    ax2.set_title('v2.0')
@@ -1141,16 +1141,16 @@ digits, use ``rcParams['axes.formatter.offset_threshold'] = 2``.
 
 .. plot::
 
-   import numpy as np
+   from matplotlib import _mlx_array as mlxarr
    import matplotlib.pyplot as plt
 
-   np.random.seed(5)
+   mlxarr.random.seed(5)
 
    fig = plt.figure(figsize=(6, 3))
    fig.subplots_adjust(bottom=0.15, wspace=0.3, left=0.09, right=0.95)
 
-   x = np.linspace(2000, 2008, 9)
-   y = np.random.randn(9) + 50000
+   x = mlxarr.linspace(2000, 2008, 9)
+   y = mlxarr.random.randn(9) + 50000
 
    with plt.rc_context(rc={'axes.formatter.offset_threshold' : 2}):
        ax1 = fig.add_subplot(1, 2, 1)

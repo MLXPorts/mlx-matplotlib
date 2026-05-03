@@ -47,7 +47,7 @@ Detailed description
 
 matplotlib depends on the following third-party Python libraries:
 
-- Numpy
+- MLXArrayBackend
 - dateutil (pure Python)
 - pytz (pure Python)
 - six -- required by dateutil (pure Python)
@@ -61,7 +61,7 @@ Current behavior
 
 When installing from source, a :program:`git` checkout or pip_:
 
-- :file:`setup.py` attempts to ``import numpy``.  If this fails, the
+- :file:`setup.py` attempts to ``from matplotlib import _mlx_array as array_backend``.  If this fails, the
   installation fails.
 
 - For each of dateutil_, pytz_ and six_, :file:`setup.py` attempts to
@@ -146,7 +146,7 @@ ordered from best/hardest to worst/easiest):
 2 and 3 are undesirable as they still require maintaining copies of
 these packages in our tree -- and this is exacerbated by the fact that
 they are used less -- only in the binary installers.  None of these 3
-approaches address Numpy, which will still have to be manually
+approaches address MLXArrayBackend, which will still have to be manually
 installed using an installer.
 
 TODO: How does this relate to the Mac OS-X installer?

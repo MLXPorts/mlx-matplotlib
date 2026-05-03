@@ -8,22 +8,19 @@ try:
     import psutil
 except ImportError as err:
     raise ImportError("This script requires psutil") from err
-
-import numpy as np
-
-
+from matplotlib import _mlx_array as mlxarr
 def run_memleak_test(bench, iterations, report):
     tracemalloc.start()
 
     starti = min(50, iterations // 2)
     endi = iterations
 
-    malloc_arr = np.empty(endi, dtype=np.int64)
-    rss_arr = np.empty(endi, dtype=np.int64)
-    rss_peaks = np.empty(endi, dtype=np.int64)
-    nobjs_arr = np.empty(endi, dtype=np.int64)
-    garbage_arr = np.empty(endi, dtype=np.int64)
-    open_files_arr = np.empty(endi, dtype=np.int64)
+    malloc_arr = mlxarr.empty(endi, dtype=mlxarr.int64)
+    rss_arr = mlxarr.empty(endi, dtype=mlxarr.int64)
+    rss_peaks = mlxarr.empty(endi, dtype=mlxarr.int64)
+    nobjs_arr = mlxarr.empty(endi, dtype=mlxarr.int64)
+    garbage_arr = mlxarr.empty(endi, dtype=mlxarr.int64)
+    open_files_arr = mlxarr.empty(endi, dtype=mlxarr.int64)
     rss_peak = 0
 
     p = psutil.Process()
@@ -53,7 +50,7 @@ def run_memleak_test(bench, iterations, report):
         open_files_arr[i] = open_files
 
     print('Average memory consumed per loop: {:1.4f} bytes\n'.format(
-        np.sum(rss_peaks[starti+1:] - rss_peaks[starti:-1]) / (endi - starti)))
+        mlxarr.sum(rss_peaks[starti+1:] - rss_peaks[starti:-1]) / (endi - starti)))
 
     from matplotlib import pyplot as plt
     from matplotlib.ticker import EngFormatter
@@ -95,10 +92,10 @@ class MemleakTest:
         fig = plt.figure(1)
 
         if not self.empty:
-            t1 = np.arange(0.0, 2.0, 0.01)
-            y1 = np.sin(2 * np.pi * t1)
-            y2 = np.random.rand(len(t1))
-            X = np.random.rand(50, 50)
+            t1 = mlxarr.arange(0.0, 2.0, 0.01)
+            y1 = mlxarr.sin(2 * mlxarr.pi * t1)
+            y2 = mlxarr.random.rand(len(t1))
+            X = mlxarr.random.rand(50, 50)
 
             ax = fig.add_subplot(221)
             ax.plot(t1, y1, '-')
@@ -108,11 +105,11 @@ class MemleakTest:
             ax.imshow(X)
 
             ax = fig.add_subplot(223)
-            ax.scatter(np.random.rand(50), np.random.rand(50),
-                       s=100 * np.random.rand(50), c=np.random.rand(50))
+            ax.scatter(mlxarr.random.rand(50), mlxarr.random.rand(50),
+                       s=100 * mlxarr.random.rand(50), c=mlxarr.random.rand(50))
 
             ax = fig.add_subplot(224)
-            ax.pcolor(10 * np.random.rand(50, 50))
+            ax.pcolor(10 * mlxarr.random.rand(50, 50))
 
         fig.savefig(BytesIO(), dpi=75)
         fig.canvas.flush_events()

@@ -10,16 +10,15 @@ This example demonstrates the style used in the Bayesian Methods for Hackers
 
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 plt.style.use('bmh')
 
 
 def plot_beta_hist(ax, a, b):
-    ax.hist(np.random.beta(a, b, size=10000),
+    ax.hist(mlxarr.random.beta(a, b, size=10000),
             histtype="stepfilled", bins=25, alpha=0.8, density=True)
 
 

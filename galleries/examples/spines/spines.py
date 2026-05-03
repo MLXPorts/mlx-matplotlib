@@ -16,10 +16,9 @@ via the container ``ax.spines``.
 
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
-x = np.linspace(0, 2 * np.pi, 100)
-y = 2 * np.sin(x)
+from matplotlib import _mlx_array as mlxarr
+x = mlxarr.linspace(0, 2 * mlxarr.pi, 100)
+y = 2 * mlxarr.sin(x)
 
 # Constrained layout makes sure the labels don't overlap the Axes.
 fig, (ax0, ax1, ax2) = plt.subplots(nrows=3, layout='constrained')

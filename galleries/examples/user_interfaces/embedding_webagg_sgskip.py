@@ -27,9 +27,7 @@ import tornado.httpserver
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from matplotlib.backends.backend_webagg import (FigureManagerWebAgg,
                                                 new_figure_manager_given_figure)
@@ -42,8 +40,8 @@ def create_figure():
     """
     fig = Figure()
     ax = fig.add_subplot()
-    t = np.arange(0.0, 3.0, 0.01)
-    s = np.sin(2 * np.pi * t)
+    t = mlxarr.arange(0.0, 3.0, 0.01)
+    s = mlxarr.sin(2 * mlxarr.pi * t)
     ax.plot(t, s)
     return fig
 

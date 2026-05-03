@@ -6,15 +6,14 @@ Hillshading
 Demonstrates a few common tricks with shaded plots.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.colors import LightSource, Normalize
 
 
 def display_colorbar():
     """Display a correct numeric colorbar for a shaded plot."""
-    y, x = np.mgrid[-4:2:200j, -4:2:200j]
-    z = 10 * np.cos(x**2 + y**2)
+    y, x = mlxarr.mgrid[-4:2:200j, -4:2:200j]
+    z = 10 * mlxarr.cos(x**2 + y**2)
 
     cmap = plt.colormaps["copper"]
     ls = LightSource(315, 45)
@@ -33,8 +32,8 @@ def display_colorbar():
 
 def avoid_outliers():
     """Use a custom norm to control the displayed z-range of a shaded plot."""
-    y, x = np.mgrid[-4:2:200j, -4:2:200j]
-    z = 10 * np.cos(x**2 + y**2)
+    y, x = mlxarr.mgrid[-4:2:200j, -4:2:200j]
+    z = 10 * mlxarr.cos(x**2 + y**2)
 
     # Add some outliers...
     z[100, 105] = 2000
@@ -56,9 +55,9 @@ def avoid_outliers():
 
 def shade_other_data():
     """Demonstrates displaying different variables through shade and color."""
-    y, x = np.mgrid[-4:2:200j, -4:2:200j]
-    z1 = np.sin(x**2)  # Data to hillshade
-    z2 = np.cos(x**2 + y**2)  # Data to color
+    y, x = mlxarr.mgrid[-4:2:200j, -4:2:200j]
+    z1 = mlxarr.sin(x**2)  # Data to hillshade
+    z2 = mlxarr.cos(x**2 + y**2)  # Data to color
 
     norm = Normalize(z2.min(), z2.max())
     cmap = plt.colormaps["RdBu"]

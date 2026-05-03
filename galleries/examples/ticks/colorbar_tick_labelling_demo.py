@@ -10,12 +10,11 @@ of the visible colorbar Axes. For further adjustments, the ``yaxis`` or
 ``xaxis`` Axes of the colorbar can be retrieved using its ``ax`` property.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.ticker as mticker
 
 # Fixing random state for reproducibility
-rng = np.random.default_rng(seed=19680801)
+rng = mlxarr.random.default_rng(seed=19680801)
 
 # %%
 # Make plot with vertical (default) colorbar
@@ -42,7 +41,7 @@ labels[-1].set_verticalalignment('bottom')
 
 fig, ax = plt.subplots()
 
-data = np.clip(data, -1, 1)
+data = mlxarr.clip(data, -1, 1)
 
 cax = ax.imshow(data, cmap='afmhot')
 ax.set_title('Gaussian noise with horizontal colorbar')

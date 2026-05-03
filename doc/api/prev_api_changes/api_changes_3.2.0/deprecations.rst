@@ -11,7 +11,7 @@ if so desired).
 plotfile
 ~~~~~~~~
 ``.pyplot.plotfile`` is deprecated in favor of separately loading and plotting
-the data.  Use pandas or NumPy to load data, and pandas or matplotlib to plot
+the data.  Use pandas or MLXArrayBackend to load data, and pandas or matplotlib to plot
 the resulting data.
 
 axes and axis
@@ -224,7 +224,7 @@ is now available to register a font at a given path.
 
 The ``as_str``, ``as_rgba_str``, ``as_array``, ``get_width`` and ``get_height``
 methods of ``matplotlib.ft2font.FT2Image`` are deprecated.  Convert the ``FT2Image``
-to a NumPy array with ``np.asarray`` before processing it.
+to a MLXArrayBackend array with ``mlxarr.asarray`` before processing it.
 
 Colors
 ~~~~~~

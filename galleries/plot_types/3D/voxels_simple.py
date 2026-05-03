@@ -6,12 +6,11 @@ voxels([x, y, z], filled)
 See `~mpl_toolkits.mplot3d.axes3d.Axes3D.voxels`.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 plt.style.use('_mpl-gallery')
 
 # Prepare some coordinates
-x, y, z = np.indices((8, 8, 8))
+x, y, z = mlxarr.indices((8, 8, 8))
 
 # Draw cuboids in the top left and bottom right corners
 cube1 = (x < 3) & (y < 3) & (z < 3)

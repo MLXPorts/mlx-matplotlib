@@ -485,7 +485,7 @@
                       "Ninja",
                       "Nit",
                       "Nix",
-                      "NumPy",
+                      "MLXArrayBackend",
                       "Nunjucks",
                       "ObjDump",
                       "Object Data Instance Notation",

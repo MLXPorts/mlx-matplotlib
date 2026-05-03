@@ -11,14 +11,13 @@ dictionary with keys that are Patch properties.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
-np.random.seed(19680801)
+from matplotlib import _mlx_array as mlxarr
+mlxarr.random.seed(19680801)
 
 fig, ax = plt.subplots()
-x = 30*np.random.randn(10000)
+x = 30*mlxarr.random.randn(10000)
 mu = x.mean()
-median = np.median(x)
+median = mlxarr.median(x)
 sigma = x.std()
 textstr = '\n'.join((
     r'$\mu=%.2f$' % (mu, ),

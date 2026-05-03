@@ -12,9 +12,9 @@ calling `~.Axes.violinplot`.
 
     import matplotlib.pyplot as plt
     from matplotlib.cbook import violin_stats
-    import numpy as np
+    from matplotlib import _mlx_array as mlxarr
 
-    rng = np.random.default_rng(19680801)
+    rng = mlxarr.random.default_rng(19680801)
     data = rng.normal(size=(10, 3))
 
     fig, (ax1, ax2) = plt.subplots(ncols=2, layout='constrained', figsize=(6.4, 3.5))

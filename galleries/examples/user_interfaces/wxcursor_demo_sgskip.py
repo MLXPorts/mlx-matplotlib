@@ -7,9 +7,7 @@ Example to draw a cursor and report the data coords in wx.
 """
 
 import wx
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.backends.backend_wx import NavigationToolbar2Wx
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -21,8 +19,8 @@ class CanvasFrame(wx.Frame):
 
         self.figure = Figure()
         self.axes = self.figure.add_subplot()
-        t = np.arange(0.0, 3.0, 0.01)
-        s = np.sin(2*np.pi*t)
+        t = mlxarr.arange(0.0, 3.0, 0.01)
+        s = mlxarr.sin(2*mlxarr.pi*t)
 
         self.axes.plot(t, s)
         self.axes.set_xlabel('t')

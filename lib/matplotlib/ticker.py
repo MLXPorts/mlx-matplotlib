@@ -136,9 +136,7 @@ import locale
 import math
 from numbers import Integral
 import string
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from matplotlib import _api, cbook
 from matplotlib import transforms as mtransforms
@@ -660,7 +658,7 @@ class ScalarFormatter(Formatter):
 
     def format_data_short(self, value):
         # docstring inherited
-        if value is np.ma.masked:
+        if value is mlxarr.ma.masked:
             return ""
         if isinstance(value, Integral):
             fmt = "%d"
@@ -742,7 +740,7 @@ class ScalarFormatter(Formatter):
         locs = self.locs
         # Restrict to visible ticks.
         vmin, vmax = sorted(self.axis.get_view_interval())
-        locs = np.asarray(locs)
+        locs = mlxarr.asarray(locs)
         locs = locs[(vmin <= locs) & (locs <= vmax)]
         if not len(locs):
             self.offset = 0
@@ -761,7 +759,7 @@ class ScalarFormatter(Formatter):
         # equal up to that precision?
         # Note: Internally using oom instead of 10 ** oom avoids some numerical
         # accuracy issues.
-        oom_max = np.ceil(math.log10(abs_max))
+        oom_max = mlxarr.ceil(math.log10(abs_max))
         oom = 1 + next(oom for oom in itertools.count(oom_max, -1)
                        if abs_min // 10 ** oom != abs_max // 10 ** oom)
         if (abs_max - abs_min) / 10 ** oom <= 1e-2:
@@ -790,9 +788,9 @@ class ScalarFormatter(Formatter):
             return
         # restrict to visible ticks
         vmin, vmax = sorted(self.axis.get_view_interval())
-        locs = np.asarray(self.locs)
+        locs = mlxarr.asarray(self.locs)
         locs = locs[(vmin <= locs) & (locs <= vmax)]
-        locs = np.abs(locs)
+        locs = mlxarr.abs(locs)
         if not len(locs):
             self.orderOfMagnitude = 0
             return
@@ -818,11 +816,11 @@ class ScalarFormatter(Formatter):
             _locs = [*self.locs, *self.axis.get_view_interval()]
         else:
             _locs = self.locs
-        locs = (np.asarray(_locs) - self.offset) / 10. ** self.orderOfMagnitude
-        loc_range = np.ptp(locs)
+        locs = (mlxarr.asarray(_locs) - self.offset) / 10. ** self.orderOfMagnitude
+        loc_range = mlxarr.ptp(locs)
         # Curvilinear coordinates can yield two identical points.
         if loc_range == 0:
-            loc_range = np.max(np.abs(locs))
+            loc_range = mlxarr.max(mlxarr.abs(locs))
         # Both points might be zero.
         if loc_range == 0:
             loc_range = 1
@@ -835,7 +833,7 @@ class ScalarFormatter(Formatter):
         # refined estimate:
         thresh = 1e-3 * 10 ** loc_range_oom
         while sigfigs >= 0:
-            if np.abs(locs - np.round(locs, decimals=sigfigs)).max() < thresh:
+            if mlxarr.abs(locs - mlxarr.round(locs, decimals=sigfigs)).max() < thresh:
                 sigfigs -= 1
             else:
                 break
@@ -889,7 +887,7 @@ class LogFormatter(Formatter):
     major and minor ticks; the tick locations might be set manually,
     or by a locator that puts ticks at integer powers of base and
     at intermediate locations.  For this situation, disable the
-    minor_thresholds logic by using ``minor_thresholds=(np.inf, np.inf)``,
+    minor_thresholds logic by using ``minor_thresholds=(mlxarr.inf, mlxarr.inf)``,
     so that all ticks will be labeled.
 
     To disable labeling of minor ticks when 'labelOnlyBase' is False,
@@ -944,7 +942,7 @@ class LogFormatter(Formatter):
 
         The *locs* parameter is ignored in the present algorithm.
         """
-        if np.isinf(self.minor_thresholds[0]):
+        if mlxarr.isinf(self.minor_thresholds[0]):
             self._sublabels = None
             return
 
@@ -1000,12 +998,12 @@ class LogFormatter(Formatter):
             # Add labels between bases at log-spaced coefficients;
             # include base powers in case the locations include
             # "major" and "minor" points, as in colorbar.
-            c = np.geomspace(1, b, int(b)//2 + 1)
-            self._sublabels = set(np.round(c))
+            c = mlxarr.geomspace(1, b, int(b)//2 + 1)
+            self._sublabels = set(mlxarr.round(c))
             # For base 10, this yields (1, 2, 3, 4, 6, 10).
         else:
             # Label all integer multiples of base**n.
-            self._sublabels = set(np.arange(1, b + 1))
+            self._sublabels = set(mlxarr.arange(1, b + 1))
 
     def _num_to_string(self, x, vmin, vmax):
         return self._pprint_val(x, vmax - vmin) if 1 <= x <= 10000 else f"{x:1.0e}"
@@ -1020,7 +1018,7 @@ class LogFormatter(Formatter):
         # only label the decades
         fx = math.log(x) / math.log(b)
         is_x_decade = _is_close_to_int(fx)
-        exponent = round(fx) if is_x_decade else np.floor(fx)
+        exponent = round(fx) if is_x_decade else mlxarr.floor(fx)
         coeff = round(b ** (fx - exponent))
 
         if self.labelOnlyBase and not is_x_decade:
@@ -1100,7 +1098,7 @@ class LogFormatterMathtext(LogFormatter):
         # only label the decades
         fx = math.log(x) / math.log(b)
         is_x_decade = _is_close_to_int(fx)
-        exponent = round(fx) if is_x_decade else np.floor(fx)
+        exponent = round(fx) if is_x_decade else mlxarr.floor(fx)
         coeff = round(b ** (fx - exponent))
 
         if self.labelOnlyBase and not is_x_decade:
@@ -1234,7 +1232,7 @@ class LogitFormatter(Formatter):
         self._minor_number = minor_number
 
     def set_locs(self, locs):
-        self.locs = np.array(locs)
+        self.locs = mlxarr.array(locs)
         self._labelled.clear()
 
         if not self._minor:
@@ -1243,7 +1241,7 @@ class LogitFormatter(Formatter):
             _is_decade(x, rtol=1e-7)
             or _is_decade(1 - x, rtol=1e-7)
             or (_is_close_to_int(2 * x) and
-                int(np.round(2 * x)) == 1)
+                int(mlxarr.round(2 * x)) == 1)
             for x in locs
         ):
             # minor ticks are subsample from ideal, so no label
@@ -1260,14 +1258,14 @@ class LogitFormatter(Formatter):
                 # the previous, and between the ticks and the next one. Ticks
                 # with smallest minimum are chosen. As tiebreak, the ticks
                 # with smallest sum is chosen.
-                diff = np.diff(-np.log(1 / self.locs - 1))
-                space_pessimistic = np.minimum(
-                    np.concatenate(((np.inf,), diff)),
-                    np.concatenate((diff, (np.inf,))),
+                diff = mlxarr.diff(-mlxarr.log(1 / self.locs - 1))
+                space_pessimistic = mlxarr.minimum(
+                    mlxarr.concatenate(((mlxarr.inf,), diff)),
+                    mlxarr.concatenate((diff, (mlxarr.inf,))),
                 )
                 space_sum = (
-                    np.concatenate(((0,), diff))
-                    + np.concatenate((diff, (0,)))
+                    mlxarr.concatenate(((0,), diff))
+                    + mlxarr.concatenate((diff, (0,)))
                 )
                 good_minor = sorted(
                     range(len(self.locs)),
@@ -1277,7 +1275,7 @@ class LogitFormatter(Formatter):
 
     def _format_value(self, x, locs, sci_notation=True):
         if sci_notation:
-            exponent = math.floor(np.log10(x))
+            exponent = math.floor(mlxarr.log10(x))
             min_precision = 0
         else:
             exponent = 0
@@ -1286,10 +1284,10 @@ class LogitFormatter(Formatter):
         if len(locs) < 2:
             precision = min_precision
         else:
-            diff = np.sort(np.abs(locs - x))[1]
-            precision = -np.log10(diff) + exponent
+            diff = mlxarr.sort(mlxarr.abs(locs - x))[1]
+            precision = -mlxarr.log10(diff) + exponent
             precision = (
-                int(np.round(precision))
+                int(mlxarr.round(precision))
                 if _is_close_to_int(precision)
                 else math.ceil(precision)
             )
@@ -1519,7 +1517,7 @@ class EngFormatter(ScalarFormatter):
             # but format_eng(-0.0) = "-0.0"
             value = 0.0
 
-        pow10 = np.clip(pow10, min(self.ENG_PREFIXES), max(self.ENG_PREFIXES))
+        pow10 = mlxarr.clip(pow10, min(self.ENG_PREFIXES), max(self.ENG_PREFIXES))
 
         mant = sign * value / (10.0 ** pow10)
         # Taking care of the cases like 999.9..., which may be rounded to 1000
@@ -1768,7 +1766,7 @@ class IndexLocator(Locator):
 
     def tick_values(self, vmin, vmax):
         return self.raise_if_exceeds(
-            np.arange(vmin + self.offset, vmax + 1, self._base))
+            mlxarr.arange(vmin + self.offset, vmax + 1, self._base))
 
 
 class FixedLocator(Locator):
@@ -1783,7 +1781,7 @@ class FixedLocator(Locator):
     """
 
     def __init__(self, locs, nbins=None):
-        self.locs = np.asarray(locs)
+        self.locs = mlxarr.asarray(locs)
         _api.check_shape((None,), locs=self.locs)
         self.nbins = max(nbins, 2) if nbins is not None else None
 
@@ -1805,11 +1803,11 @@ class FixedLocator(Locator):
         """
         if self.nbins is None:
             return self.locs
-        step = max(int(np.ceil(len(self.locs) / self.nbins)), 1)
+        step = max(int(mlxarr.ceil(len(self.locs) / self.nbins)), 1)
         ticks = self.locs[::step]
         for i in range(1, step):
             ticks1 = self.locs[i::step]
-            if np.abs(ticks1).min() < np.abs(ticks).min():
+            if mlxarr.abs(ticks1).min() < mlxarr.abs(ticks).min():
                 ticks = ticks1
         return self.raise_if_exceeds(ticks)
 
@@ -1888,7 +1886,7 @@ class LinearLocator(Locator):
 
         if self.numticks == 0:
             return []
-        ticklocs = np.linspace(vmin, vmax, self.numticks)
+        ticklocs = mlxarr.linspace(vmin, vmax, self.numticks)
 
         return self.raise_if_exceeds(ticklocs)
 
@@ -1963,7 +1961,7 @@ class MultipleLocator(Locator):
         vmax -= self._offset
         vmin = self._edge.ge(vmin) * step
         n = (vmax - vmin + 0.001 * step) // step
-        locs = vmin - step + np.arange(n + 3) * step + self._offset
+        locs = vmin - step + mlxarr.arange(n + 3) * step + self._offset
         return self.raise_if_exceeds(locs)
 
     def view_limits(self, dmin, dmax):
@@ -2020,7 +2018,7 @@ class _Edge_integer:
     def closeto(self, ms, edge):
         # Allow more slop when the offset is large compared to the step.
         if self._offset > 0:
-            digits = np.log10(self._offset / self.step)
+            digits = mlxarr.log10(self._offset / self.step)
             tol = max(1e-10, 10 ** (digits - 12))
             tol = min(0.4999, tol)
         else:
@@ -2097,24 +2095,24 @@ class MaxNLocator(Locator):
 
     @staticmethod
     def _validate_steps(steps):
-        if not np.iterable(steps):
+        if not mlxarr.iterable(steps):
             raise ValueError('steps argument must be an increasing sequence '
                              'of numbers between 1 and 10 inclusive')
-        steps = np.asarray(steps)
-        if np.any(np.diff(steps) <= 0) or steps[-1] > 10 or steps[0] < 1:
+        steps = mlxarr.asarray(steps)
+        if mlxarr.any(mlxarr.diff(steps) <= 0) or steps[-1] > 10 or steps[0] < 1:
             raise ValueError('steps argument must be an increasing sequence '
                              'of numbers between 1 and 10 inclusive')
         if steps[0] != 1:
-            steps = np.concatenate([[1], steps])
+            steps = mlxarr.concatenate([[1], steps])
         if steps[-1] != 10:
-            steps = np.concatenate([steps, [10]])
+            steps = mlxarr.concatenate([steps, [10]])
         return steps
 
     @staticmethod
     def _staircase(steps):
         # Make an extended staircase within which the needed step will be
         # found.  This is probably much larger than necessary.
-        return np.concatenate([0.1 * steps[:-1], steps, [10 * steps[1]]])
+        return mlxarr.concatenate([0.1 * steps[:-1], steps, [10 * steps[1]]])
 
     def set_params(self, **kwargs):
         """
@@ -2150,7 +2148,7 @@ class MaxNLocator(Locator):
         if 'steps' in kwargs:
             steps = kwargs.pop('steps')
             if steps is None:
-                self._steps = np.array([1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10])
+                self._steps = mlxarr.array([1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10])
             else:
                 self._steps = self._validate_steps(steps)
             self._extended_steps = self._staircase(self._steps)
@@ -2168,7 +2166,7 @@ class MaxNLocator(Locator):
         """
         if self._nbins == 'auto':
             if self.axis is not None:
-                nbins = np.clip(self.axis.get_tick_space(),
+                nbins = mlxarr.clip(self.axis.get_tick_space(),
                                 max(1, self._min_n_ticks - 1), 9)
             else:
                 nbins = 9
@@ -2181,7 +2179,7 @@ class MaxNLocator(Locator):
         steps = self._extended_steps * scale
         if self._integer:
             # For steps > 1, keep only integer values.
-            igood = (steps < 1) | (np.abs(steps - np.round(steps)) < 0.001)
+            igood = (steps < 1) | (mlxarr.abs(steps - mlxarr.round(steps)) < 0.001)
             steps = steps[igood]
 
         raw_step = ((_vmax - _vmin) / nbins)
@@ -2200,7 +2198,7 @@ class MaxNLocator(Locator):
 
         # Find index of smallest large step
         if any(large_steps):
-            istep = np.nonzero(large_steps)[0][0]
+            istep = mlxarr.nonzero(large_steps)[0][0]
         else:
             istep = len(steps) - 1
 
@@ -2210,7 +2208,7 @@ class MaxNLocator(Locator):
         for step in steps[:istep+1][::-1]:
 
             if (self._integer and
-                    np.floor(_vmax) - np.ceil(_vmin) >= self._min_n_ticks - 1):
+                    mlxarr.floor(_vmax) - mlxarr.ceil(_vmin) >= self._min_n_ticks - 1):
                 step = max(1, step)
             best_vmin = (_vmin // step) * step
 
@@ -2221,7 +2219,7 @@ class MaxNLocator(Locator):
             edge = _Edge_integer(step, offset)
             low = edge.le(_vmin - best_vmin)
             high = edge.ge(_vmax - best_vmin)
-            ticks = np.arange(low, high + 1) * step + best_vmin
+            ticks = mlxarr.arange(low, high + 1) * step + best_vmin
             # Count only the ticks that will be displayed.
             nticks = ((ticks <= _vmax) & (ticks >= _vmin)).sum()
             if nticks >= self._min_n_ticks:
@@ -2265,15 +2263,15 @@ class MaxNLocator(Locator):
 
 def _is_decade(x, *, base=10, rtol=None):
     """Return True if *x* is an integer power of *base*."""
-    if not np.isfinite(x):
+    if not mlxarr.isfinite(x):
         return False
     if x == 0.0:
         return True
-    lx = np.log(abs(x)) / np.log(base)
+    lx = mlxarr.log(abs(x)) / mlxarr.log(base)
     if rtol is None:
-        return np.isclose(lx, np.round(lx))
+        return mlxarr.isclose(lx, mlxarr.round(lx))
     else:
-        return np.isclose(lx, np.round(lx), rtol=rtol)
+        return mlxarr.isclose(lx, mlxarr.round(lx), rtol=rtol)
 
 
 def _decade_less_equal(x, base):
@@ -2284,7 +2282,7 @@ def _decade_less_equal(x, base):
     """
     return (x if x == 0 else
             -_decade_greater_equal(-x, base) if x < 0 else
-            base ** np.floor(np.log(x) / np.log(base)))
+            base ** mlxarr.floor(mlxarr.log(x) / mlxarr.log(base)))
 
 
 def _decade_greater_equal(x, base):
@@ -2295,7 +2293,7 @@ def _decade_greater_equal(x, base):
     """
     return (x if x == 0 else
             -_decade_less_equal(-x, base) if x < 0 else
-            base ** np.ceil(np.log(x) / np.log(base)))
+            base ** mlxarr.ceil(mlxarr.log(x) / mlxarr.log(base)))
 
 
 def _decade_less(x, base):
@@ -2388,7 +2386,7 @@ class LogLocator(Locator):
             self._subs = subs
         else:
             try:
-                self._subs = np.asarray(subs, dtype=float)
+                self._subs = mlxarr.asarray(subs, dtype=float)
             except ValueError as e:
                 raise ValueError("subs must be None, 'all', 'auto' or "
                                  "a sequence of floats, not "
@@ -2405,16 +2403,16 @@ class LogLocator(Locator):
 
     def _log_b(self, x):
         # Use specialized logs if possible, as they can be more accurate; e.g.
-        # log(.001) / log(10) = -2.999... (whether math.log or np.log) due to
+        # log(.001) / log(10) = -2.999... (whether math.log or mlxarr.log) due to
         # floating point error.
-        return (np.log10(x) if self._base == 10 else
-                np.log2(x) if self._base == 2 else
-                np.log(x) / np.log(self._base))
+        return (mlxarr.log10(x) if self._base == 10 else
+                mlxarr.log2(x) if self._base == 2 else
+                mlxarr.log(x) / mlxarr.log(self._base))
 
     def tick_values(self, vmin, vmax):
         n_request = (
             self.numticks if self.numticks != "auto" else
-            np.clip(self.axis.get_tick_space(), 2, 9) if self.axis is not None else
+            mlxarr.clip(self.axis.get_tick_space(), 2, 9) if self.axis is not None else
             9)
 
         b = self._base
@@ -2422,7 +2420,7 @@ class LogLocator(Locator):
             if self.axis is not None:
                 vmin = self.axis.get_minpos()
 
-            if vmin <= 0.0 or not np.isfinite(vmin):
+            if vmin <= 0.0 or not mlxarr.isfinite(vmin):
                 raise ValueError(
                     "Data has no positive values, and therefore cannot be log-scaled.")
 
@@ -2438,12 +2436,12 @@ class LogLocator(Locator):
         if isinstance(self._subs, str):
             if n_avail >= 10 or b < 3:
                 if self._subs == 'auto':
-                    return np.array([])  # no minor or major ticks
+                    return mlxarr.array([])  # no minor or major ticks
                 else:
-                    subs = np.array([1.0])  # major ticks
+                    subs = mlxarr.array([1.0])  # major ticks
             else:
                 _first = 2.0 if self._subs == 'auto' else 1.0
-                subs = np.arange(_first, b)
+                subs = mlxarr.arange(_first, b)
         else:
             subs = self._subs
 
@@ -2451,7 +2449,7 @@ class LogLocator(Locator):
         # lower and the upper limit: QuadContourSet._autolev relies on this.
         if mpl.rcParams["_internal.classic_mode"]:  # keep historic formulas
             stride = max(math.ceil((n_avail - 1) / (n_request - 1)), 1)
-            decades = np.arange(emin - stride, emax + stride + 1, stride)
+            decades = mlxarr.arange(emin - stride, emax + stride + 1, stride)
         else:
             # *Determine the actual number of ticks*: Find the largest number
             # of ticks, no more than the requested number, that can actually
@@ -2513,12 +2511,12 @@ class LogLocator(Locator):
         if is_minor:
             if stride == 1 or n_avail <= 1:
                 # Minor ticks start in the decade preceding the first major tick.
-                ticklocs = np.concatenate([
+                ticklocs = mlxarr.concatenate([
                     subs * b**decade for decade in range(emin - 1, emax + 1)])
             else:
-                ticklocs = np.array([])
+                ticklocs = mlxarr.array([])
         else:
-            ticklocs = b ** np.array(decades)
+            ticklocs = b ** mlxarr.array(decades)
 
         if (len(subs) > 1
                 and stride == 1
@@ -2547,7 +2545,7 @@ class LogLocator(Locator):
     def nonsingular(self, vmin, vmax):
         if vmin > vmax:
             vmin, vmax = vmax, vmin
-        if not np.isfinite(vmin) or not np.isfinite(vmax):
+        if not mlxarr.isfinite(vmin) or not mlxarr.isfinite(vmax):
             vmin, vmax = 1, 10  # Initial range, no data plotted yet.
         elif vmax <= 0:
             _api.warn_external(
@@ -2557,7 +2555,7 @@ class LogLocator(Locator):
         else:
             # Consider shared axises
             minpos = min(axis.get_minpos() for axis in self.axis._get_shared_axis())
-            if not np.isfinite(minpos):
+            if not mlxarr.isfinite(minpos):
                 minpos = 1e-300  # This should never take effect.
             if vmin <= 0:
                 vmin = minpos
@@ -2659,8 +2657,8 @@ class SymmetricalLogLocator(Locator):
         base = self._base
 
         def get_log_range(lo, hi):
-            lo = np.floor(np.log(lo) / np.log(base))
-            hi = np.ceil(np.log(hi) / np.log(base))
+            lo = mlxarr.floor(mlxarr.log(lo) / mlxarr.log(base))
+            hi = mlxarr.ceil(mlxarr.log(hi) / mlxarr.log(base))
             return lo, hi
 
         # Calculate all the ranges, so we can determine striding
@@ -2682,16 +2680,16 @@ class SymmetricalLogLocator(Locator):
 
         decades = []
         if has_a:
-            decades.extend(-1 * (base ** (np.arange(a_lo, a_hi,
+            decades.extend(-1 * (base ** (mlxarr.arange(a_lo, a_hi,
                                                     stride)[::-1])))
 
         if has_b:
             decades.append(0.0)
 
         if has_c:
-            decades.extend(base ** (np.arange(c_lo, c_hi, stride)))
+            decades.extend(base ** (mlxarr.arange(c_lo, c_hi, stride)))
 
-        subs = np.asarray(self._subs)
+        subs = mlxarr.asarray(self._subs)
 
         if len(subs) > 1 or subs[0] != 1.0:
             ticklocs = []
@@ -2703,7 +2701,7 @@ class SymmetricalLogLocator(Locator):
         else:
             ticklocs = decades
 
-        return self.raise_if_exceeds(np.array(ticklocs))
+        return self.raise_if_exceeds(mlxarr.array(ticklocs))
 
     def view_limits(self, vmin, vmax):
         """Try to choose the view limits intelligently."""
@@ -2786,31 +2784,31 @@ class AsinhLocator(Locator):
 
     def tick_values(self, vmin, vmax):
         # Construct a set of uniformly-spaced "on-screen" locations.
-        ymin, ymax = self.linear_width * np.arcsinh(np.array([vmin, vmax])
+        ymin, ymax = self.linear_width * mlxarr.arcsinh(mlxarr.array([vmin, vmax])
                                                     / self.linear_width)
-        ys = np.linspace(ymin, ymax, self.numticks)
+        ys = mlxarr.linspace(ymin, ymax, self.numticks)
         zero_dev = abs(ys / (ymax - ymin))
         if ymin * ymax < 0:
             # Ensure that the zero tick-mark is included, if the axis straddles zero.
-            ys = np.hstack([ys[(zero_dev > 0.5 / self.numticks)], 0.0])
+            ys = mlxarr.hstack([ys[(zero_dev > 0.5 / self.numticks)], 0.0])
 
         # Transform the "on-screen" grid to the data space:
-        xs = self.linear_width * np.sinh(ys / self.linear_width)
+        xs = self.linear_width * mlxarr.sinh(ys / self.linear_width)
         zero_xs = (ys == 0)
 
         # Round the data-space values to be intuitive base-n numbers, keeping track of
         # positive and negative values separately and carefully treating the zero value.
-        with np.errstate(divide="ignore"):  # base ** log(0) = base ** -inf = 0.
+        with mlxarr.errstate(divide="ignore"):  # base ** log(0) = base ** -inf = 0.
             if self.base > 1:
-                pows = (np.sign(xs)
-                        * self.base ** np.floor(np.log(abs(xs)) / math.log(self.base)))
-                qs = np.outer(pows, self.subs).flatten() if self.subs else pows
+                pows = (mlxarr.sign(xs)
+                        * self.base ** mlxarr.floor(mlxarr.log(abs(xs)) / math.log(self.base)))
+                qs = mlxarr.outer(pows, self.subs).flatten() if self.subs else pows
             else:  # No need to adjust sign(pows), as it cancels out when computing qs.
-                pows = np.where(zero_xs, 1, 10**np.floor(np.log10(abs(xs))))
-                qs = pows * np.round(xs / pows)
-        ticks = np.array(sorted(set(qs)))
+                pows = mlxarr.where(zero_xs, 1, 10**mlxarr.floor(mlxarr.log10(abs(xs))))
+                qs = pows * mlxarr.round(xs / pows)
+        ticks = mlxarr.array(sorted(set(qs)))
 
-        return ticks if len(ticks) >= 2 else np.linspace(vmin, vmax, self.numticks)
+        return ticks if len(ticks) >= 2 else mlxarr.linspace(vmin, vmax, self.numticks)
 
 
 class LogitLocator(MaxNLocator):
@@ -2868,18 +2866,18 @@ class LogitLocator(MaxNLocator):
 
         vmin, vmax = self.nonsingular(vmin, vmax)
         binf = int(
-            np.floor(np.log10(vmin))
+            mlxarr.floor(mlxarr.log10(vmin))
             if vmin < 0.5
             else 0
             if vmin < 0.9
-            else -np.ceil(np.log10(1 - vmin))
+            else -mlxarr.ceil(mlxarr.log10(1 - vmin))
         )
         bsup = int(
-            np.ceil(np.log10(vmax))
+            mlxarr.ceil(mlxarr.log10(vmax))
             if vmax <= 0.5
             else 1
             if vmax <= 0.9
-            else -np.floor(np.log10(1 - vmax))
+            else -mlxarr.floor(mlxarr.log10(1 - vmax))
         )
         numideal = bsup - binf - 1
         if numideal >= 2:
@@ -2900,23 +2898,23 @@ class LogitLocator(MaxNLocator):
                         for b in range(binf, bsup + 1)
                         if (b % subsampling_factor) == 0
                     ]
-                return self.raise_if_exceeds(np.array(ticklocs))
+                return self.raise_if_exceeds(mlxarr.array(ticklocs))
             if self._minor:
                 ticklocs = []
                 for b in range(binf, bsup):
                     if b < -1:
-                        ticklocs.extend(np.arange(2, 10) * 10 ** b)
+                        ticklocs.extend(mlxarr.arange(2, 10) * 10 ** b)
                     elif b == -1:
-                        ticklocs.extend(np.arange(2, 5) / 10)
+                        ticklocs.extend(mlxarr.arange(2, 5) / 10)
                     elif b == 0:
-                        ticklocs.extend(np.arange(6, 9) / 10)
+                        ticklocs.extend(mlxarr.arange(6, 9) / 10)
                     else:
                         ticklocs.extend(
-                            1 - np.arange(2, 10)[::-1] * 10 ** (-b - 1)
+                            1 - mlxarr.arange(2, 10)[::-1] * 10 ** (-b - 1)
                         )
-                return self.raise_if_exceeds(np.array(ticklocs))
+                return self.raise_if_exceeds(mlxarr.array(ticklocs))
             ticklocs = [ideal_ticks(b) for b in range(binf, bsup + 1)]
-            return self.raise_if_exceeds(np.array(ticklocs))
+            return self.raise_if_exceeds(mlxarr.array(ticklocs))
         # the scale is zoomed so same ticks as linear scale can be used
         if self._minor:
             return []
@@ -2927,7 +2925,7 @@ class LogitLocator(MaxNLocator):
         initial_range = (standard_minpos, 1 - standard_minpos)
         if vmin > vmax:
             vmin, vmax = vmax, vmin
-        if not np.isfinite(vmin) or not np.isfinite(vmax):
+        if not mlxarr.isfinite(vmin) or not mlxarr.isfinite(vmax):
             vmin, vmax = initial_range  # Initial range, no data plotted yet.
         elif vmax <= 0 or vmin >= 1:
             # vmax <= 0 occurs when all values are negative
@@ -2943,7 +2941,7 @@ class LogitLocator(MaxNLocator):
                 if self.axis is not None
                 else standard_minpos
             )
-            if not np.isfinite(minpos):
+            if not mlxarr.isfinite(minpos):
                 minpos = standard_minpos  # This should never take effect.
             if vmin <= 0:
                 vmin = minpos
@@ -3010,7 +3008,7 @@ class AutoMinorLocator(Locator):
             _api.warn_external('AutoMinorLocator does not work on logarithmic scales')
             return []
 
-        majorlocs = np.unique(self.axis.get_majorticklocs())
+        majorlocs = mlxarr.unique(self.axis.get_majorticklocs())
         if len(majorlocs) < 2:
             # Need at least two major ticks to find minor tick locations.
             # TODO: Figure out a way to still be able to display minor ticks with less
@@ -3024,8 +3022,8 @@ class AutoMinorLocator(Locator):
                 else 'xtick.minor.ndivs']  # for x and z axis
 
         if self.ndivs == 'auto':
-            majorstep_mantissa = 10 ** (np.log10(majorstep) % 1)
-            ndivs = 5 if np.isclose(majorstep_mantissa, [1, 2.5, 5, 10]).any() else 4
+            majorstep_mantissa = 10 ** (mlxarr.log10(majorstep) % 1)
+            ndivs = 5 if mlxarr.isclose(majorstep_mantissa, [1, 2.5, 5, 10]).any() else 4
         else:
             ndivs = self.ndivs
 
@@ -3035,7 +3033,7 @@ class AutoMinorLocator(Locator):
         t0 = majorlocs[0]
         tmin = round((vmin - t0) / minorstep)
         tmax = round((vmax - t0) / minorstep) + 1
-        locs = (np.arange(tmin, tmax) * minorstep) + t0
+        locs = (mlxarr.arange(tmin, tmax) * minorstep) + t0
 
         return self.raise_if_exceeds(locs)
 

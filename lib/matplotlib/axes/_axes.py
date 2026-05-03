@@ -5,8 +5,7 @@ import math
 from numbers import Integral, Number, Real
 
 import re
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 import matplotlib.category  # Register category unit converter as side effect.
 import matplotlib.cbook as cbook
@@ -570,9 +569,9 @@ class Axes(_AxesBase):
 
             def invert(x):
                 # 1/x with special treatment of x == 0
-                x = np.array(x).astype(float)
-                near_zero = np.isclose(x, 0)
-                x[near_zero] = np.inf
+                x = mlxarr.array(x).astype(float)
+                near_zero = mlxarr.isclose(x, 0)
+                x[near_zero] = mlxarr.inf
                 x[~near_zero] = 1 / x[~near_zero]
                 return x
 
@@ -621,8 +620,8 @@ class Axes(_AxesBase):
             fig, ax = plt.subplots()
             ax.plot(range(1, 360, 5), range(1, 360, 5))
             ax.set_ylabel('degrees')
-            secax = ax.secondary_yaxis('right', functions=(np.deg2rad,
-                                                           np.rad2deg))
+            secax = ax.secondary_yaxis('right', functions=(mlxarr.deg2rad,
+                                                           mlxarr.rad2deg))
             secax.set_ylabel('radians')
 
         To add a secondary axis relative to your data, you can pass a transform
@@ -1150,20 +1149,20 @@ class Axes(_AxesBase):
         xmin, xmax, y = self._process_unit_info(
             [("x", xmin), ("x", xmax), ("y", y)], kwargs)
 
-        if not np.iterable(y):
+        if not mlxarr.iterable(y):
             y = [y]
-        if not np.iterable(xmin):
+        if not mlxarr.iterable(xmin):
             xmin = [xmin]
-        if not np.iterable(xmax):
+        if not mlxarr.iterable(xmax):
             xmax = [xmax]
 
         # Create and combine masked_arrays from input
         y, xmin, xmax = cbook._combine_masks(y, xmin, xmax)
-        y = np.ravel(y)
-        xmin = np.ravel(xmin)
-        xmax = np.ravel(xmax)
+        y = mlxarr.ravel(y)
+        xmin = mlxarr.ravel(xmin)
+        xmax = mlxarr.ravel(xmax)
 
-        masked_verts = np.ma.empty((len(y), 2, 2))
+        masked_verts = mlxarr.ma.empty((len(y), 2, 2))
         masked_verts[:, 0, 0] = xmin
         masked_verts[:, 0, 1] = y
         masked_verts[:, 1, 0] = xmax
@@ -1184,15 +1183,15 @@ class Axes(_AxesBase):
                 datalim = lines.get_datalim(self.transData)
                 t = lines.get_transform()
                 updatex, updatey = t.contains_branch_separately(self.transData)
-                minx = np.nanmin(datalim.xmin)
-                maxx = np.nanmax(datalim.xmax)
-                miny = np.nanmin(datalim.ymin)
-                maxy = np.nanmax(datalim.ymax)
+                minx = mlxarr.nanmin(datalim.xmin)
+                maxx = mlxarr.nanmax(datalim.xmax)
+                miny = mlxarr.nanmin(datalim.ymin)
+                maxy = mlxarr.nanmax(datalim.ymax)
             else:
-                minx = np.nanmin(masked_verts[..., 0])
-                maxx = np.nanmax(masked_verts[..., 0])
-                miny = np.nanmin(masked_verts[..., 1])
-                maxy = np.nanmax(masked_verts[..., 1])
+                minx = mlxarr.nanmin(masked_verts[..., 0])
+                maxx = mlxarr.nanmax(masked_verts[..., 0])
+                miny = mlxarr.nanmin(masked_verts[..., 1])
+                maxy = mlxarr.nanmax(masked_verts[..., 1])
 
             corners = (minx, miny), (maxx, maxy)
             self.update_datalim(corners, updatex, updatey)
@@ -1242,20 +1241,20 @@ class Axes(_AxesBase):
         x, ymin, ymax = self._process_unit_info(
             [("x", x), ("y", ymin), ("y", ymax)], kwargs)
 
-        if not np.iterable(x):
+        if not mlxarr.iterable(x):
             x = [x]
-        if not np.iterable(ymin):
+        if not mlxarr.iterable(ymin):
             ymin = [ymin]
-        if not np.iterable(ymax):
+        if not mlxarr.iterable(ymax):
             ymax = [ymax]
 
         # Create and combine masked_arrays from input
         x, ymin, ymax = cbook._combine_masks(x, ymin, ymax)
-        x = np.ravel(x)
-        ymin = np.ravel(ymin)
-        ymax = np.ravel(ymax)
+        x = mlxarr.ravel(x)
+        ymin = mlxarr.ravel(ymin)
+        ymax = mlxarr.ravel(ymax)
 
-        masked_verts = np.ma.empty((len(x), 2, 2))
+        masked_verts = mlxarr.ma.empty((len(x), 2, 2))
         masked_verts[:, 0, 0] = x
         masked_verts[:, 0, 1] = ymin
         masked_verts[:, 1, 0] = x
@@ -1276,15 +1275,15 @@ class Axes(_AxesBase):
                 datalim = lines.get_datalim(self.transData)
                 t = lines.get_transform()
                 updatex, updatey = t.contains_branch_separately(self.transData)
-                minx = np.nanmin(datalim.xmin)
-                maxx = np.nanmax(datalim.xmax)
-                miny = np.nanmin(datalim.ymin)
-                maxy = np.nanmax(datalim.ymax)
+                minx = mlxarr.nanmin(datalim.xmin)
+                maxx = mlxarr.nanmax(datalim.xmax)
+                miny = mlxarr.nanmin(datalim.ymin)
+                maxy = mlxarr.nanmax(datalim.ymax)
             else:
-                minx = np.nanmin(masked_verts[..., 0])
-                maxx = np.nanmax(masked_verts[..., 0])
-                miny = np.nanmin(masked_verts[..., 1])
-                maxy = np.nanmax(masked_verts[..., 1])
+                minx = mlxarr.nanmin(masked_verts[..., 0])
+                maxx = mlxarr.nanmax(masked_verts[..., 0])
+                miny = mlxarr.nanmin(masked_verts[..., 1])
+                maxy = mlxarr.nanmax(masked_verts[..., 1])
 
             corners = (minx, miny), (maxx, maxy)
             self.update_datalim(corners, updatex, updatey)
@@ -1407,12 +1406,12 @@ class Axes(_AxesBase):
                 [("y", lineoffsets), ("y", linelengths)], kwargs)
 
         # fix positions, noting that it can be a list of lists:
-        if not np.iterable(positions):
+        if not mlxarr.iterable(positions):
             positions = [positions]
-        elif any(np.iterable(position) for position in positions):
-            positions = [np.asanyarray(position) for position in positions]
+        elif any(mlxarr.iterable(position) for position in positions):
+            positions = [mlxarr.asanyarray(position) for position in positions]
         else:
-            positions = [np.asanyarray(positions)]
+            positions = [mlxarr.asanyarray(positions)]
 
         poss = []
         for position in positions:
@@ -1425,22 +1424,22 @@ class Axes(_AxesBase):
         linewidths = cbook._local_over_kwdict(linewidths, kwargs, 'linewidth')
         linestyles = cbook._local_over_kwdict(linestyles, kwargs, 'linestyle')
 
-        if not np.iterable(lineoffsets):
+        if not mlxarr.iterable(lineoffsets):
             lineoffsets = [lineoffsets]
-        if not np.iterable(linelengths):
+        if not mlxarr.iterable(linelengths):
             linelengths = [linelengths]
-        if not np.iterable(linewidths):
+        if not mlxarr.iterable(linewidths):
             linewidths = [linewidths]
-        if not np.iterable(colors):
+        if not mlxarr.iterable(colors):
             colors = [colors]
-        if not np.iterable(alpha):
+        if not mlxarr.iterable(alpha):
             alpha = [alpha]
-        if hasattr(linestyles, 'lower') or not np.iterable(linestyles):
+        if hasattr(linestyles, 'lower') or not mlxarr.iterable(linestyles):
             linestyles = [linestyles]
 
-        lineoffsets = np.asarray(lineoffsets)
-        linelengths = np.asarray(linelengths)
-        linewidths = np.asarray(linewidths)
+        lineoffsets = mlxarr.asarray(lineoffsets)
+        linelengths = mlxarr.asarray(linelengths)
+        linewidths = mlxarr.asarray(linewidths)
 
         if len(lineoffsets) == 0:
             raise ValueError('lineoffsets cannot be empty')
@@ -1465,13 +1464,13 @@ class Axes(_AxesBase):
             pass
 
         if len(lineoffsets) == 1 and len(positions) != 1:
-            lineoffsets = np.tile(lineoffsets, len(positions))
+            lineoffsets = mlxarr.tile(lineoffsets, len(positions))
             lineoffsets[0] = 0
-            lineoffsets = np.cumsum(lineoffsets)
+            lineoffsets = mlxarr.cumsum(lineoffsets)
         if len(linelengths) == 1:
-            linelengths = np.tile(linelengths, len(positions))
+            linelengths = mlxarr.tile(linelengths, len(positions))
         if len(linewidths) == 1:
-            linewidths = np.tile(linewidths, len(positions))
+            linewidths = mlxarr.tile(linewidths, len(positions))
         if len(colors) == 1:
             colors = list(colors) * len(positions)
         if len(alpha) == 1:
@@ -1517,13 +1516,13 @@ class Axes(_AxesBase):
 
         if len(positions) > 0:
             # try to get min/max
-            min_max = [(np.min(_p), np.max(_p)) for _p in positions
+            min_max = [(mlxarr.min(_p), mlxarr.max(_p)) for _p in positions
                        if len(_p) > 0]
             # if we have any non-empty positions, try to autoscale
             if len(min_max) > 0:
                 mins, maxes = zip(*min_max)
-                minpos = np.min(mins)
-                maxpos = np.max(maxes)
+                minpos = mlxarr.min(mins)
+                maxpos = mlxarr.max(maxes)
 
                 minline = (lineoffsets - linelengths).min()
                 maxline = (lineoffsets + linelengths).max()
@@ -1583,7 +1582,7 @@ class Axes(_AxesBase):
         >>> plot('xlabel', 'ylabel', data=obj)
 
         All indexable objects are supported. This could e.g. be a `dict`, a
-        `pandas.DataFrame` or a structured numpy array.
+        `pandas.DataFrame` or a structured array_backend array.
 
 
         **Plotting multiple sets of data**
@@ -1604,7 +1603,7 @@ class Axes(_AxesBase):
           Example:
 
           >>> x = [1, 2, 3]
-          >>> y = np.array([[1, 2], [3, 4], [5, 6]])
+          >>> y = mlxarr.array([[1, 2], [3, 4], [5, 6]])
           >>> plot(x, y)
 
           is equivalent to:
@@ -1958,7 +1957,7 @@ class Axes(_AxesBase):
             A detrending function applied to *x*.  It must have the
             signature ::
 
-                detrend(x: np.ndarray) -> np.ndarray
+                detrend(x: mlxarr.ndarray) -> mlxarr.ndarray
 
         normed : bool, default: True
             If ``True``, input vectors are normalised to unit length.
@@ -2012,7 +2011,7 @@ class Axes(_AxesBase):
 
         Notes
         -----
-        The cross correlation is performed with `numpy.correlate` with
+        The cross correlation is performed with `array_backend.correlate` with
         ``mode = "full"``.
         """
         return self.xcorr(x, x, **kwargs)
@@ -2038,7 +2037,7 @@ class Axes(_AxesBase):
             A detrending function applied to *x* and *y*.  It must have the
             signature ::
 
-                detrend(x: np.ndarray) -> np.ndarray
+                detrend(x: mlxarr.ndarray) -> mlxarr.ndarray
 
         normed : bool, default: True
             If ``True``, input vectors are normalised to unit length.
@@ -2092,20 +2091,23 @@ class Axes(_AxesBase):
 
         Notes
         -----
-        The cross correlation is performed with `numpy.correlate` with
+        The cross correlation is performed with `array_backend.correlate` with
         ``mode = "full"``.
         """
         Nx = len(x)
         if Nx != len(y):
             raise ValueError('x and y must be equal length')
 
-        x = detrend(np.asarray(x))
-        y = detrend(np.asarray(y))
+        x = detrend(mlxarr.asarray(x))
+        y = detrend(mlxarr.asarray(y))
 
-        correls = np.correlate(x, y, mode="full")
+        correls = mlxarr.correlate(x, y, mode="full")
 
         if normed:
-            correls = correls / np.sqrt(np.dot(x, x) * np.dot(y, y))
+            x_norm = x.astype(mlxarr.float32)
+            y_norm = y.astype(mlxarr.float32)
+            correls = correls / mlxarr.sqrt(
+                mlxarr.dot(x_norm, x_norm) * mlxarr.dot(y_norm, y_norm))
 
         if maxlags is None:
             maxlags = Nx - 1
@@ -2114,7 +2116,7 @@ class Axes(_AxesBase):
             raise ValueError('maxlags must be None or strictly '
                              'positive < %d' % Nx)
 
-        lags = np.arange(-maxlags, maxlags + 1)
+        lags = mlxarr.arange(-maxlags, maxlags + 1)
         correls = correls[Nx - 1 - maxlags:Nx + maxlags]
 
         if usevlines:
@@ -2212,7 +2214,7 @@ class Axes(_AxesBase):
         """
 
         # x should be an array...
-        assert type(xconv) is np.ndarray
+        assert type(xconv) is mlxarr.ndarray
 
         if xconv.size == 0:
             # xconv has already been converted, but maybe empty...
@@ -2226,9 +2228,9 @@ class Axes(_AxesBase):
             # having to be sure addition works across the whole
             # vector.  This is particularly an issue if
             # x0 and dx are lists so x0 + dx just concatenates the lists.
-            # We can't just cast x0 and dx to numpy arrays because that
+            # We can't just cast x0 and dx to array_backend arrays because that
             # removes the units from unit packages like `pint` that
-            # wrap numpy arrays.
+            # wrap array_backend arrays.
             try:
                 x0 = cbook._safe_first_finite(x0)
             except (TypeError, IndexError, KeyError):
@@ -2240,7 +2242,7 @@ class Axes(_AxesBase):
                 x = xconv
 
             delist = False
-            if not np.iterable(dx):
+            if not mlxarr.iterable(dx):
                 dx = [dx]
                 delist = True
             dx = [convert(x0 + ddx) - x for ddx in dx]
@@ -2501,20 +2503,20 @@ class Axes(_AxesBase):
         # subtracted uniformly
         if self.xaxis is not None:
             x0 = x
-            x = np.asarray(self.convert_xunits(x))
+            x = mlxarr.asarray(self.convert_xunits(x))
             width = self._convert_dx(width, x0, x, self.convert_xunits)
             if xerr is not None:
                 xerr = self._convert_dx(xerr, x0, x, self.convert_xunits)
         if self.yaxis is not None:
             y0 = y
-            y = np.asarray(self.convert_yunits(y))
+            y = mlxarr.asarray(self.convert_yunits(y))
             height = self._convert_dx(height, y0, y, self.convert_yunits)
             if yerr is not None:
                 yerr = self._convert_dx(yerr, y0, y, self.convert_yunits)
         try:
-            x, height, width, y, linewidth, hatch = np.broadcast_arrays(
+            x, height, width, y, linewidth, hatch = mlxarr.broadcast_arrays(
                 # Make args iterable too.
-                np.atleast_1d(x), height, width, y, linewidth, hatch
+                mlxarr.atleast_1d(x), height, width, y, linewidth, hatch
             )
         except ValueError as e:
             arg_map = {
@@ -2541,7 +2543,7 @@ class Axes(_AxesBase):
             tick_label_axis = self.yaxis
             tick_label_position = y
 
-        if not isinstance(label, str) and np.iterable(label):
+        if not isinstance(label, str) and mlxarr.iterable(label):
             bar_container_label = '_nolegend_'
             patch_labels = label
         else:
@@ -2551,8 +2553,8 @@ class Axes(_AxesBase):
             raise ValueError(f'number of labels ({len(patch_labels)}) '
                              f'does not match number of bars ({len(x)}).')
 
-        linewidth = itertools.cycle(np.atleast_1d(linewidth))
-        hatch = itertools.cycle(np.atleast_1d(hatch))
+        linewidth = itertools.cycle(mlxarr.atleast_1d(linewidth))
+        hatch = itertools.cycle(mlxarr.atleast_1d(hatch))
         facecolor = itertools.chain(itertools.cycle(facecolor),
                                     # Fallback if color == "none".
                                     itertools.repeat('none'))
@@ -2640,7 +2642,7 @@ class Axes(_AxesBase):
         self.add_container(bar_container)
 
         if tick_labels is not None:
-            tick_labels = np.broadcast_to(tick_labels, len(patches))
+            tick_labels = mlxarr.broadcast_to(tick_labels, len(patches))
             tick_label_axis.set_ticks(tick_label_position)
             tick_label_axis.set_ticklabels(tick_labels)
 
@@ -2850,7 +2852,7 @@ class Axes(_AxesBase):
         x_inverted = c > d
 
         # want to know whether to put label on positive or negative direction
-        # cannot use np.sign here because it will return 0 if x == 0
+        # cannot use mlxarr.sign here because it will return 0 if x == 0
         def sign(x):
             return 1 if x >= 0 else -1
 
@@ -2875,9 +2877,9 @@ class Axes(_AxesBase):
 
         annotations = []
 
-        if np.iterable(padding):
+        if mlxarr.iterable(padding):
             # if padding iterable, check length
-            padding = np.asarray(padding)
+            padding = mlxarr.asarray(padding)
             if len(padding) != len(bars):
                 raise ValueError(
                     f"padding must be of length {len(bars)} when passed as a sequence")
@@ -2898,7 +2900,7 @@ class Axes(_AxesBase):
                 extrema = max(x0, x1) if dat >= 0 else min(x0, x1)
                 length = abs(x0 - x1)
 
-            if err is None or np.size(err) == 0:
+            if err is None or mlxarr.size(err) == 0:
                 endpt = extrema
             elif orientation == "vertical":
                 endpt = err[:, 1].max() if dat >= 0 else err[:, 1].min()
@@ -2947,7 +2949,7 @@ class Axes(_AxesBase):
                         ha = 'right' if dat < 0 else 'left'  # also handles NaN
                     va = 'center'
 
-            if np.isnan(dat):
+            if mlxarr.isnan(dat):
                 lbl = ''
 
             if lbl is None:
@@ -3042,7 +3044,7 @@ class Axes(_AxesBase):
             x0, x1 = self.convert_xunits((x0, x0 + dx))
             vertices.append([(x0, y0), (x0, y1), (x1, y1), (x1, y0)])
 
-        col = mcoll.PolyCollection(np.array(vertices), **kwargs)
+        col = mcoll.PolyCollection(mlxarr.array(vertices), **kwargs)
         self.add_collection(col)
 
         return col
@@ -3131,7 +3133,7 @@ or pandas.DataFrame
 
                   categories = ["A", "B"]
                   dataset_labels = ["dataset_0", "dataset_1", "dataset_2"]
-                  array = np.random.random((2, 3))
+                  array = mlxarr.random.random((2, 3))
                   grouped_bar(array, tick_labels=categories, labels=dataset_labels)
 
             - a `pandas.DataFrame`.
@@ -3142,7 +3144,7 @@ or pandas.DataFrame
               .. code-block:: python
 
                   df = pd.DataFrame(
-                      np.random.random((2, 3)),
+                      mlxarr.random.random((2, 3)),
                       index=["A", "B"],
                       columns=["dataset_0", "dataset_1", "dataset_2"]
                   )
@@ -3152,7 +3154,7 @@ or pandas.DataFrame
 
               .. code-block::
 
-                  grouped_bar(df.to_numpy(), tick_labels=df.index, labels=df.columns)
+                  grouped_bar(df.to_array_backend(), tick_labels=df.index, labels=df.columns)
 
               Note that ``grouped_bar(df)`` produces a structurally equivalent plot like
               ``df.plot.bar()``.
@@ -3273,13 +3275,13 @@ or pandas.DataFrame
                 labels = heights.columns.tolist()
             if tick_labels is None:
                 tick_labels = heights.index.tolist()
-            heights = heights.to_numpy().T
+            heights = heights.to_array_backend().T
         elif hasattr(heights, 'keys'):  # dict
             if labels is not None:
                 raise ValueError("'labels' cannot be used if 'heights' is a mapping")
             labels = heights.keys()
             heights = list(heights.values())
-        elif hasattr(heights, 'shape'):  # numpy array
+        elif hasattr(heights, 'shape'):  # array_backend array
             heights = heights.T
 
         num_datasets = len(heights)
@@ -3297,13 +3299,13 @@ or pandas.DataFrame
                     )
 
         if positions is None:
-            group_centers = np.arange(num_groups)
+            group_centers = mlxarr.arange(num_groups)
             group_distance = 1
         else:
-            group_centers = np.asanyarray(positions)
+            group_centers = mlxarr.asanyarray(positions)
             if len(group_centers) > 1:
-                d = np.diff(group_centers)
-                if not np.allclose(d, d.mean()):
+                d = mlxarr.diff(group_centers)
+                if not mlxarr.allclose(d, d.mean()):
                     raise ValueError("'positions' must be equidistant")
                 group_distance = d[0]
             else:
@@ -3438,11 +3440,11 @@ or pandas.DataFrame
 
         if len(args) == 1:
             heads, = args
-            locs = np.arange(len(heads))
+            locs = mlxarr.arange(len(heads))
             args = ()
         elif isinstance(args[1], str):
             heads, *args = args
-            locs = np.arange(len(heads))
+            locs = mlxarr.arange(len(heads))
         else:
             locs, heads, *args = args
 
@@ -3490,11 +3492,11 @@ or pandas.DataFrame
             marker_x = heads
             marker_y = locs
             baseline_x = [bottom, bottom]
-            baseline_y = [np.min(locs), np.max(locs)]
+            baseline_y = [mlxarr.min(locs), mlxarr.max(locs)]
         else:
             marker_x = locs
             marker_y = heads
-            baseline_x = [np.min(locs), np.max(locs)]
+            baseline_x = [mlxarr.min(locs), mlxarr.max(locs)]
             baseline_y = [bottom, bottom]
 
         markerline, = self.plot(marker_x, marker_y,
@@ -3635,14 +3637,14 @@ or pandas.DataFrame
         self.set_aspect('equal')
         # The use of float32 is "historical", but can't be changed without
         # regenerating the test baselines.
-        x = np.asarray(x, np.float32)
+        x = mlxarr.asarray(x, mlxarr.float32)
         if x.ndim > 1:
             raise ValueError("x must be 1D")
 
-        if np.any(x < 0):
+        if mlxarr.any(x < 0):
             raise ValueError("Wedge sizes 'x' must be non negative values")
 
-        if not np.all(np.isfinite(x)):
+        if not mlxarr.all(mlxarr.isfinite(x)):
             raise ValueError('Wedge sizes must be finite numbers')
 
         sx = x.sum()
@@ -3670,7 +3672,7 @@ or pandas.DataFrame
             def get_next_color():
                 return next(color_cycle)
 
-        hatch_cycle = itertools.cycle(np.atleast_1d(hatch))
+        hatch_cycle = itertools.cycle(mlxarr.atleast_1d(hatch))
 
         _api.check_isinstance(Real, radius=radius, startangle=startangle)
         if radius <= 0:
@@ -3691,7 +3693,7 @@ or pandas.DataFrame
         for frac, label, expl in zip(x, labels, explode):
             x, y = center
             theta2 = (theta1 + frac) if counterclock else (theta1 - frac)
-            thetam = 2 * np.pi * 0.5 * (theta1 + theta2)
+            thetam = 2 * mlxarr.pi * 0.5 * (theta1 + theta2)
             x += expl * math.cos(thetam)
             y += expl * math.sin(thetam)
 
@@ -3721,7 +3723,7 @@ or pandas.DataFrame
                 label_rotation = 'horizontal'
                 if rotatelabels:
                     label_alignment_v = 'bottom' if yt > 0 else 'top'
-                    label_rotation = (np.rad2deg(thetam)
+                    label_rotation = (mlxarr.rad2deg(thetam)
                                       + (0 if xt > 0 else 180))
                 t = self.text(xt, yt, label,
                               clip_on=False,
@@ -3785,16 +3787,16 @@ or pandas.DataFrame
                     f'{errorevery=!r} is a not a tuple of two integers')
         elif isinstance(errorevery, slice):
             pass
-        elif not isinstance(errorevery, str) and np.iterable(errorevery):
+        elif not isinstance(errorevery, str) and mlxarr.iterable(errorevery):
             try:
                 x[errorevery]  # fancy indexing
             except (ValueError, IndexError) as err:
                 raise ValueError(
-                    f"{errorevery=!r} is iterable but not a valid NumPy fancy "
+                    f"{errorevery=!r} is iterable but not a valid MLXArrayBackend fancy "
                     "index to match 'xerr'/'yerr'") from err
         else:
             raise ValueError(f"{errorevery=!r} is not a recognized value")
-        everymask = np.zeros(len(x), bool)
+        everymask = mlxarr.zeros(len(x), bool)
         everymask[errorevery] = True
         return everymask
 
@@ -3952,10 +3954,10 @@ or pandas.DataFrame
         kwargs.setdefault('zorder', 2)
 
         # Casting to object arrays preserves units.
-        if not isinstance(x, np.ndarray):
-            x = np.asarray(x, dtype=object)
-        if not isinstance(y, np.ndarray):
-            y = np.asarray(y, dtype=object)
+        if not isinstance(x, mlxarr.ndarray):
+            x = mlxarr.asarray(x, dtype=object)
+        if not isinstance(y, mlxarr.ndarray):
+            y = mlxarr.asarray(y, dtype=object)
 
         def _upcast_err(err):
             """
@@ -3965,7 +3967,7 @@ or pandas.DataFrame
             length 2 tuple of equal length ndarray-subclasses that carry the
             unit information in the container.
 
-            If we have a tuple of nested numpy array (subclasses), we defer
+            If we have a tuple of nested array_backend array (subclasses), we defer
             coercing the units to be consistent to the underlying unit
             library (and implicitly the broadcasting).
 
@@ -3974,33 +3976,33 @@ or pandas.DataFrame
 
             if (
                     # make sure it is not a scalar
-                    np.iterable(err) and
+                    mlxarr.iterable(err) and
                     # and it is not empty
                     len(err) > 0 and
                     # and the first element is an array sub-class use
                     # safe_first_element because getitem is index-first not
                     # location first on pandas objects so err[0] almost always
                     # fails.
-                    isinstance(cbook._safe_first_finite(err), np.ndarray)
+                    isinstance(cbook._safe_first_finite(err), mlxarr.ndarray)
             ):
                 # Get the type of the first element
                 atype = type(cbook._safe_first_finite(err))
                 # Promote the outer container to match the inner container
-                if atype is np.ndarray:
-                    # Converts using np.asarray, because data cannot
-                    # be directly passed to init of np.ndarray
-                    return np.asarray(err, dtype=object)
-                # If atype is not np.ndarray, directly pass data to init.
+                if atype is mlxarr.ndarray:
+                    # Converts using mlxarr.asarray, because data cannot
+                    # be directly passed to init of mlxarr.ndarray
+                    return mlxarr.asarray(err, dtype=object)
+                # If atype is not mlxarr.ndarray, directly pass data to init.
                 # This works for types such as unyts and astropy units
                 return atype(err)
             # Otherwise wrap it in an object array
-            return np.asarray(err, dtype=object)
+            return mlxarr.asarray(err, dtype=object)
 
-        if xerr is not None and not isinstance(xerr, np.ndarray):
+        if xerr is not None and not isinstance(xerr, mlxarr.ndarray):
             xerr = _upcast_err(xerr)
-        if yerr is not None and not isinstance(yerr, np.ndarray):
+        if yerr is not None and not isinstance(yerr, mlxarr.ndarray):
             yerr = _upcast_err(yerr)
-        x, y = np.atleast_1d(x, y)  # Make sure all the args are iterable.
+        x, y = mlxarr.atleast_1d(x, y)  # Make sure all the args are iterable.
         if len(x) != len(y):
             raise ValueError("'x' and 'y' must have the same size")
 
@@ -4097,16 +4099,16 @@ or pandas.DataFrame
         ]:
             if err is None:
                 continue
-            lolims = np.broadcast_to(lolims, len(dep)).astype(bool)
-            uplims = np.broadcast_to(uplims, len(dep)).astype(bool)
+            lolims = mlxarr.broadcast_to(lolims, len(dep)).astype(bool)
+            uplims = mlxarr.broadcast_to(uplims, len(dep)).astype(bool)
             try:
-                np.broadcast_to(err, (2, len(dep)))
+                mlxarr.broadcast_to(err, (2, len(dep)))
             except ValueError:
                 raise ValueError(
-                    f"'{dep_axis}err' (shape: {np.shape(err)}) must be a "
+                    f"'{dep_axis}err' (shape: {mlxarr.shape(err)}) must be a "
                     f"scalar or a 1D or (2, n) array-like whose shape matches "
-                    f"'{dep_axis}' (shape: {np.shape(dep)})") from None
-            if err.dtype is np.dtype(object) and np.any(err == None):  # noqa: E711
+                    f"'{dep_axis}' (shape: {mlxarr.shape(dep)})") from None
+            if err.dtype is mlxarr.dtype(object) and mlxarr.any(err == None):  # noqa: E711
                 raise ValueError(
                     f"'{dep_axis}err' must not contain None. "
                     "Use NaN if you want to skip a value.")
@@ -4116,14 +4118,14 @@ or pandas.DataFrame
             # platforms), we select with `err==err` (which is False for nan).
             # Also, since datetime.timedelta cannot be compared with 0,
             # we compare with the negative error instead.
-            if np.any((check := err[err == err]) < -check):
+            if mlxarr.any((check := err[err == err]) < -check):
                 raise ValueError(
                     f"'{dep_axis}err' must not contain negative values")
             # This is like
-            #     elow, ehigh = np.broadcast_to(...)
+            #     elow, ehigh = mlxarr.broadcast_to(...)
             #     return dep - elow * ~lolims, dep + ehigh * ~uplims
             # except that broadcast_to would strip units.
-            low, high = dep + np.vstack([-(1 - lolims), 1 - uplims]) * err
+            low, high = dep + mlxarr.vstack([-(1 - lolims), 1 - uplims]) * err
             barcols.append(lines_func(
                 *apply_mask([indep, low, high], everymask), **eb_lines_style))
             if self.name == "polar" and dep_axis == "x":
@@ -4168,7 +4170,7 @@ or pandas.DataFrame
                     for theta, r in zip(l.get_xdata(), l.get_ydata()):
                         rotation = _ScaledRotation(theta=theta, trans_shift=trans_shift)
                         if axis == 'y':
-                            rotation += mtransforms.Affine2D().rotate(np.pi / 2)
+                            rotation += mtransforms.Affine2D().rotate(mlxarr.pi / 2)
                         ms = mmarkers.MarkerStyle(marker=marker,
                                                   transform=rotation)
                         self.add_line(mlines.Line2D([theta], [r], marker=ms,
@@ -4487,8 +4489,8 @@ or pandas.DataFrame
 
         # replace medians if necessary:
         if usermedians is not None:
-            if (len(np.ravel(usermedians)) != len(bxpstats) or
-                    np.shape(usermedians)[0] != len(bxpstats)):
+            if (len(mlxarr.ravel(usermedians)) != len(bxpstats) or
+                    mlxarr.shape(usermedians)[0] != len(bxpstats)):
                 raise ValueError(
                     "'usermedians' and 'x' have different lengths")
             else:
@@ -4750,7 +4752,7 @@ or pandas.DataFrame
 
         def do_patch(xs, ys, **kwargs):
             path = mpath.Path._create_closed(
-                np.column_stack([xs, ys][maybe_swap]))
+                mlxarr.column_stack([xs, ys][maybe_swap]))
             patch = mpatches.PathPatch(path, **kwargs)
             self.add_artist(patch)
             return patch
@@ -4765,22 +4767,22 @@ or pandas.DataFrame
         elif len(positions) != N:
             raise ValueError(datashape_message.format("positions"))
 
-        positions = np.array(positions)
+        positions = mlxarr.array(positions)
         if len(positions) > 0 and not all(isinstance(p, Real) for p in positions):
             raise TypeError("positions should be an iterable of numbers")
 
         # width
         if widths is None:
-            widths = [np.clip(0.15 * np.ptp(positions), 0.15, 0.5)] * N
-        elif np.isscalar(widths):
+            widths = [mlxarr.clip(0.15 * mlxarr.ptp(positions), 0.15, 0.5)] * N
+        elif mlxarr.isscalar(widths):
             widths = [widths] * N
         elif len(widths) != N:
             raise ValueError(datashape_message.format("widths"))
 
         # capwidth
         if capwidths is None:
-            capwidths = 0.5 * np.array(widths)
-        elif np.isscalar(capwidths):
+            capwidths = 0.5 * mlxarr.array(widths)
+        elif mlxarr.isscalar(capwidths):
             capwidths = [capwidths] * N
         elif len(capwidths) != N:
             raise ValueError(datashape_message.format("capwidths"))
@@ -4798,8 +4800,8 @@ or pandas.DataFrame
             cap_left = pos - capwidth * 0.5
             cap_right = pos + capwidth * 0.5
             cap_x = [cap_left, cap_right]
-            cap_lo = np.full(2, stats['whislo'])
-            cap_hi = np.full(2, stats['whishi'])
+            cap_lo = mlxarr.full(2, stats['whislo'])
+            cap_hi = mlxarr.full(2, stats['whishi'])
             # box and median coords
             box_left = pos - width * 0.5
             box_right = pos + width * 0.5
@@ -4851,7 +4853,7 @@ or pandas.DataFrame
             # maybe draw the fliers
             if showfliers:
                 flier_kw.setdefault('label', '_nolegend_')
-                flier_x = np.full(len(stats['fliers']), pos, dtype=np.float64)
+                flier_x = mlxarr.full(len(stats['fliers']), pos, dtype=mlxarr.float64)
                 flier_y = stats['fliers']
                 fliers.append(do_plot(flier_x, flier_y, **flier_kw))
 
@@ -4889,7 +4891,7 @@ or pandas.DataFrame
                               mticker.FixedLocator):
                 locator = mticker.FixedLocator([])
                 axis.set_major_locator(locator)
-            locator.locs = np.array([*locator.locs, *positions])
+            locator.locs = mlxarr.array([*locator.locs, *positions])
             formatter = axis.get_major_formatter()
             if not isinstance(axis.get_major_formatter(),
                               mticker.FixedFormatter):
@@ -4999,7 +5001,7 @@ or pandas.DataFrame
                  else get_next_color_func())
         c_is_string_or_strings = (
             isinstance(c, str)
-            or (np.iterable(c) and len(c) > 0
+            or (mlxarr.iterable(c) and len(c) > 0
                 and isinstance(cbook._safe_first_finite(c), str)))
 
         def invalid_shape_exception(csize, xsize):
@@ -5011,7 +5013,7 @@ or pandas.DataFrame
         valid_shape = True  # Unless proven otherwise below.
         if not c_was_none and kwcolor is None and not c_is_string_or_strings:
             try:  # First, does 'c' look suitable for value-mapping?
-                c = np.asanyarray(c, dtype=float)
+                c = mlxarr.asanyarray(c, dtype=float)
             except ValueError:
                 pass  # Failed to convert to float array; must be color specs.
             else:
@@ -5209,20 +5211,20 @@ or pandas.DataFrame
         edgecolors = kwargs.pop('edgecolor', None)
         # Process **kwargs to handle aliases, conflicts with explicit kwargs:
         x, y = self._process_unit_info([("x", x), ("y", y)], kwargs)
-        # np.ma.ravel yields an ndarray, not a masked array,
+        # mlxarr.ma.ravel yields an ndarray, not a masked array,
         # unless its argument is a masked array.
-        x = np.ma.ravel(x)
-        y = np.ma.ravel(y)
+        x = mlxarr.ma.ravel(x)
+        y = mlxarr.ma.ravel(y)
         if x.size != y.size:
             raise ValueError("x and y must be the same size")
 
         if s is None:
             s = (20 if mpl.rcParams['_internal.classic_mode'] else
                  mpl.rcParams['lines.markersize'] ** 2.0)
-        s = np.ma.ravel(s)
+        s = mlxarr.ma.ravel(s)
         if (len(s) not in (1, x.size) or
-                (not np.issubdtype(s.dtype, np.floating) and
-                 not np.issubdtype(s.dtype, np.integer))):
+                (not mlxarr.issubdtype(s.dtype, mlxarr.floating) and
+                 not mlxarr.issubdtype(s.dtype, mlxarr.integer))):
             raise ValueError(
                 "s must be a scalar, "
                 "or float array-like with the same size as x and y")
@@ -5237,7 +5239,7 @@ or pandas.DataFrame
                 get_next_color_func=self._get_patches_for_fill.get_next_color)
 
         if plotnonfinite and colors is None:
-            c = np.ma.masked_invalid(c)
+            c = mlxarr.ma.masked_invalid(c)
             x, y, s, edgecolors, linewidths = \
                 cbook._combine_masks(x, y, s, edgecolors, linewidths)
         else:
@@ -5246,8 +5248,8 @@ or pandas.DataFrame
                     x, y, s, c, colors, edgecolors, linewidths)
         # Unmask edgecolors if it was actually a single RGB or RGBA.
         if (x.size in (3, 4)
-                and np.ma.is_masked(edgecolors)
-                and not np.ma.is_masked(orig_edgecolor)):
+                and mlxarr.ma.is_masked(edgecolors)
+                and not mlxarr.ma.is_masked(orig_edgecolor)):
             edgecolors = edgecolors.data
 
         scales = s   # Renamed for readability below.
@@ -5301,12 +5303,12 @@ or pandas.DataFrame
 
             if linewidths is None:
                 linewidths = mpl.rcParams['lines.linewidth']
-            elif np.iterable(linewidths):
+            elif mlxarr.iterable(linewidths):
                 linewidths = [
                     lw if lw is not None else mpl.rcParams['lines.linewidth']
                     for lw in linewidths]
 
-        offsets = np.ma.column_stack([x, y])
+        offsets = mlxarr.ma.column_stack([x, y])
 
         collection = mcoll.PathCollection(
             (path,), scales,
@@ -5362,7 +5364,7 @@ or pandas.DataFrame
                xscale='linear', yscale='linear', extent=None,
                cmap=None, norm=None, vmin=None, vmax=None,
                alpha=None, linewidths=None, edgecolors='face',
-               reduce_C_function=np.mean, mincnt=None, marginals=False,
+               reduce_C_function=mlxarr.mean, mincnt=None, marginals=False,
                colorizer=None, **kwargs):
         """
         Make a 2D hexagonal binning plot of points *x*, *y*.
@@ -5394,14 +5396,13 @@ or pandas.DataFrame
             following illustration.
 
             .. plot::
-
-               import numpy
+from matplotlib import _mlx_array as array_backend
                import matplotlib.pyplot as plt
 
-               np.random.seed(19680801)
+               mlxarr.random.seed(19680801)
                n= 300
-               x = np.random.standard_normal(n)
-               y = np.random.standard_normal(n)
+               x = mlxarr.random.standard_normal(n)
+               y = mlxarr.random.standard_normal(n)
 
                fig, ax = plt.subplots(figsize=(4, 4))
                h = ax.hexbin(x, y, gridsize=(5, 3))
@@ -5489,7 +5490,7 @@ or pandas.DataFrame
             - *None*: Draw outlines in the default color.
             - An explicit color.
 
-        reduce_C_function : callable, default: `numpy.mean`
+        reduce_C_function : callable, default: `array_backend.mean`
             The function to aggregate *C* within the bins. It is ignored if
             *C* is not given. This must have the signature::
 
@@ -5497,12 +5498,12 @@ or pandas.DataFrame
 
             Commonly used functions are:
 
-            - `numpy.mean`: average of the points
-            - `numpy.sum`: integral of the point values
-            - `numpy.amax`: value taken from the largest point
+            - `array_backend.mean`: average of the points
+            - `array_backend.sum`: integral of the point values
+            - `array_backend.amax`: value taken from the largest point
 
             By default will only reduce cells with at least 1 point because some
-            reduction functions (such as `numpy.amax`) will error/warn with empty
+            reduction functions (such as `array_backend.amax`) will error/warn with empty
             input. Changing *mincnt* will adjust the cutoff, and if set to 0 will
             pass empty input to the reduction function.
 
@@ -5525,29 +5526,29 @@ or pandas.DataFrame
         x, y, C = cbook.delete_masked_points(x, y, C)
 
         # Set the size of the hexagon grid
-        if np.iterable(gridsize):
+        if mlxarr.iterable(gridsize):
             nx, ny = gridsize
         else:
             nx = gridsize
             ny = int(nx / math.sqrt(3))
         # Count the number of data in each hexagon
-        x = np.asarray(x, float)
-        y = np.asarray(y, float)
+        x = mlxarr.asarray(x, float)
+        y = mlxarr.asarray(y, float)
 
         # Will be log()'d if necessary, and then rescaled.
         tx = x
         ty = y
 
         if xscale == 'log':
-            if np.any(x <= 0.0):
+            if mlxarr.any(x <= 0.0):
                 raise ValueError(
                     "x contains non-positive values, so cannot be log-scaled")
-            tx = np.log10(tx)
+            tx = mlxarr.log10(tx)
         if yscale == 'log':
-            if np.any(y <= 0.0):
+            if mlxarr.any(y <= 0.0):
                 raise ValueError(
                     "y contains non-positive values, so cannot be log-scaled")
-            ty = np.log10(ty)
+            ty = mlxarr.log10(ty)
         if extent is not None:
             xmin, xmax, ymin, ymax = extent
             if xmin > xmax:
@@ -5578,14 +5579,14 @@ or pandas.DataFrame
         # Positions in hexagon index coordinates.
         ix = (tx - xmin) / sx
         iy = (ty - ymin) / sy
-        ix1 = np.round(ix).astype(int)
-        iy1 = np.round(iy).astype(int)
-        ix2 = np.floor(ix).astype(int)
-        iy2 = np.floor(iy).astype(int)
+        ix1 = mlxarr.round(ix).astype(int)
+        iy1 = mlxarr.round(iy).astype(int)
+        ix2 = mlxarr.floor(ix).astype(int)
+        iy2 = mlxarr.floor(iy).astype(int)
         # flat indices, plus one so that out-of-range points go to position 0.
-        i1 = np.where((0 <= ix1) & (ix1 < nx1) & (0 <= iy1) & (iy1 < ny1),
+        i1 = mlxarr.where((0 <= ix1) & (ix1 < nx1) & (0 <= iy1) & (iy1 < ny1),
                       ix1 * ny1 + iy1 + 1, 0)
-        i2 = np.where((0 <= ix2) & (ix2 < nx2) & (0 <= iy2) & (iy2 < ny2),
+        i2 = mlxarr.where((0 <= ix2) & (ix2 < nx2) & (0 <= iy2) & (iy2 < ny2),
                       ix2 * ny2 + iy2 + 1, 0)
 
         d1 = (ix - ix1) ** 2 + 3.0 * (iy - iy1) ** 2
@@ -5593,12 +5594,12 @@ or pandas.DataFrame
         bdist = (d1 < d2)
 
         if C is None:  # [1:] drops out-of-range points.
-            counts1 = np.bincount(i1[bdist], minlength=1 + nx1 * ny1)[1:]
-            counts2 = np.bincount(i2[~bdist], minlength=1 + nx2 * ny2)[1:]
-            accum = np.concatenate([counts1, counts2]).astype(float)
+            counts1 = mlxarr.bincount(i1[bdist], minlength=1 + nx1 * ny1)[1:]
+            counts2 = mlxarr.bincount(i2[~bdist], minlength=1 + nx2 * ny2)[1:]
+            accum = mlxarr.concatenate([counts1, counts2]).astype(float)
             if mincnt is not None:
-                accum[accum < mincnt] = np.nan
-            C = np.ones(len(x))
+                accum[accum < mincnt] = mlxarr.nan
+            C = mlxarr.ones(len(x))
         else:
             # store the C values in a list per hexagon index
             Cs_at_i1 = [[] for _ in range(1 + nx1 * ny1)]
@@ -5610,19 +5611,19 @@ or pandas.DataFrame
                     Cs_at_i2[i2[i]].append(C[i])
             if mincnt is None:
                 mincnt = 1
-            accum = np.array(
-                [reduce_C_function(acc) if len(acc) >= mincnt else np.nan
+            accum = mlxarr.array(
+                [reduce_C_function(acc) if len(acc) >= mincnt else mlxarr.nan
                  for Cs_at_i in [Cs_at_i1, Cs_at_i2]
                  for acc in Cs_at_i[1:]],  # [1:] drops out-of-range points.
                 float)
 
-        good_idxs = ~np.isnan(accum)
+        good_idxs = ~mlxarr.isnan(accum)
 
-        offsets = np.zeros((n, 2), float)
-        offsets[:nx1 * ny1, 0] = np.repeat(np.arange(nx1), ny1)
-        offsets[:nx1 * ny1, 1] = np.tile(np.arange(ny1), nx1)
-        offsets[nx1 * ny1:, 0] = np.repeat(np.arange(nx2) + 0.5, ny2)
-        offsets[nx1 * ny1:, 1] = np.tile(np.arange(ny2), nx2) + 0.5
+        offsets = mlxarr.zeros((n, 2), float)
+        offsets[:nx1 * ny1, 0] = mlxarr.repeat(mlxarr.arange(nx1), ny1)
+        offsets[:nx1 * ny1, 1] = mlxarr.tile(mlxarr.arange(ny1), nx1)
+        offsets[nx1 * ny1:, 0] = mlxarr.repeat(mlxarr.arange(nx2) + 0.5, ny2)
+        offsets[nx1 * ny1:, 1] = mlxarr.tile(mlxarr.arange(ny2), nx2) + 0.5
         offsets[:, 0] *= sx
         offsets[:, 1] *= sy
         offsets[:, 0] += xmin
@@ -5631,14 +5632,14 @@ or pandas.DataFrame
         offsets = offsets[good_idxs, :]
         accum = accum[good_idxs]
 
-        polygon = [sx, sy / 3] * np.array(
+        polygon = [sx, sy / 3] * mlxarr.array(
             [[.5, -.5], [.5, .5], [0., 1.], [-.5, .5], [-.5, -.5], [0., -1.]])
 
         if linewidths is None:
             linewidths = [mpl.rcParams['patch.linewidth']]
 
         if xscale == 'log' or yscale == 'log':
-            polygons = np.expand_dims(polygon, 0)
+            polygons = mlxarr.expand_dims(polygon, 0)
             if xscale == 'log':
                 polygons[:, :, 0] = 10.0 ** polygons[:, :, 0]
                 xmin = 10.0 ** xmin
@@ -5671,11 +5672,11 @@ or pandas.DataFrame
             bins = None
 
         if bins is not None:
-            if not np.iterable(bins):
+            if not mlxarr.iterable(bins):
                 minimum, maximum = min(accum), max(accum)
                 bins -= 1  # one less edge than bins
-                bins = minimum + (maximum - minimum) * np.arange(bins) / bins
-            bins = np.sort(bins)
+                bins = minimum + (maximum - minimum) * mlxarr.arange(bins) / bins
+            bins = mlxarr.sort(bins)
             accum = bins.searchsorted(accum)
 
         if colorizer:
@@ -5712,11 +5713,11 @@ or pandas.DataFrame
         ]:
 
             if zscale == "log":
-                bin_edges = np.geomspace(zmin, zmax, nbins + 1)
+                bin_edges = mlxarr.geomspace(zmin, zmax, nbins + 1)
             else:
-                bin_edges = np.linspace(zmin, zmax, nbins + 1)
+                bin_edges = mlxarr.linspace(zmin, zmax, nbins + 1)
 
-            verts = np.empty((nbins, 4, 2))
+            verts = mlxarr.empty((nbins, 4, 2))
             verts[:, 0, 0] = verts[:, 1, 0] = bin_edges[:-1]
             verts[:, 2, 0] = verts[:, 3, 0] = bin_edges[1:]
             verts[:, 0, 1] = verts[:, 3, 1] = .00
@@ -5725,15 +5726,15 @@ or pandas.DataFrame
                 verts = verts[:, :, ::-1]  # Swap x and y.
 
             # Sort z-values into bins defined by bin_edges.
-            bin_idxs = np.searchsorted(bin_edges, z) - 1
-            values = np.empty(nbins)
+            bin_idxs = mlxarr.searchsorted(bin_edges, z) - 1
+            values = mlxarr.empty(nbins)
             for i in range(nbins):
                 # Get C-values for each bin, and compute bin value with
                 # reduce_C_function.
                 ci = C[bin_idxs == i]
-                values[i] = reduce_C_function(ci) if len(ci) > 0 else np.nan
+                values[i] = reduce_C_function(ci) if len(ci) > 0 else mlxarr.nan
 
-            mask = ~np.isnan(values)
+            mask = ~mlxarr.isnan(values)
             verts = verts[mask]
             values = values[mask]
 
@@ -5996,7 +5997,7 @@ or pandas.DataFrame
 
     def _fill_between_process_units(self, ind_dir, dep_dir, ind, dep1, dep2, **kwargs):
         """Handle united data, such as dates."""
-        return map(np.ma.masked_invalid, self._process_unit_info(
+        return map(mlxarr.ma.masked_invalid, self._process_unit_info(
             [(ind_dir, ind), (dep_dir, dep1), (dep_dir, dep2)], kwargs))
 
     def fill_between(self, x, y1, y2=0, where=None, interpolate=False,
@@ -6294,27 +6295,27 @@ or pandas.DataFrame
             shading = 'auto'
 
         if len(args) == 1:
-            C = np.asanyarray(args[0])
+            C = mlxarr.asanyarray(args[0])
             nrows, ncols = C.shape[:2]
             if shading in ['gouraud', 'nearest']:
-                X, Y = np.meshgrid(np.arange(ncols), np.arange(nrows))
+                X, Y = mlxarr.meshgrid(mlxarr.arange(ncols), mlxarr.arange(nrows))
             else:
-                X, Y = np.meshgrid(np.arange(ncols + 1), np.arange(nrows + 1))
+                X, Y = mlxarr.meshgrid(mlxarr.arange(ncols + 1), mlxarr.arange(nrows + 1))
                 shading = 'flat'
         elif len(args) == 3:
             # Check x and y for bad data...
-            C = np.asanyarray(args[2])
+            C = mlxarr.asanyarray(args[2])
             # unit conversion allows e.g. datetime objects as axis values
             X, Y = args[:2]
             X, Y = self._process_unit_info([("x", X), ("y", Y)], kwargs)
             X, Y = (cbook.safe_masked_invalid(a, copy=True) for a in [X, Y])
 
             if funcname == 'pcolormesh':
-                if np.ma.is_masked(X) or np.ma.is_masked(Y):
+                if mlxarr.ma.is_masked(X) or mlxarr.ma.is_masked(Y):
                     raise ValueError(
                         'x and y arguments to pcolormesh cannot have '
                         'non-finite values or be of type '
-                        'numpy.ma.MaskedArray with masked values')
+                        'array_backend.ma.MaskedArray with masked values')
             nrows, ncols = C.shape[:2]
         else:
             raise _api.nargs_error(funcname, takes="1 or 3", given=len(args))
@@ -6357,10 +6358,10 @@ or pandas.DataFrame
                     # correctly, when expanding columns, the monotonicity of
                     # X coords needs to be checked. When expanding rows, the
                     # monotonicity of Y coords needs to be checked.
-                    if np.shape(X)[1] > 1:
-                        dX = np.diff(X, axis=1) * 0.5
+                    if mlxarr.shape(X)[1] > 1:
+                        dX = mlxarr.diff(X, axis=1) * 0.5
                         if (require_monotonicity and
-                                not (np.all(dX >= 0) or np.all(dX <= 0))):
+                                not (mlxarr.all(dX >= 0) or mlxarr.all(dX <= 0))):
                             _api.warn_external(
                                 f"The input coordinates to {funcname} are "
                                 "interpreted as cell centers, but are not "
@@ -6369,14 +6370,14 @@ or pandas.DataFrame
                                 "edges, in which case, please supply "
                                 f"explicit cell edges to {funcname}.")
 
-                        hstack = np.ma.hstack if np.ma.isMA(X) else np.hstack
+                        hstack = mlxarr.ma.hstack if mlxarr.ma.isMA(X) else mlxarr.hstack
                         X = hstack((X[:, [0]] - dX[:, [0]],
                                     X[:, :-1] + dX,
                                     X[:, [-1]] + dX[:, [-1]]))
                     else:
                         # This is just degenerate, but we can't reliably guess
                         # a dX if there is just one value.
-                        X = np.hstack((X, X))
+                        X = mlxarr.hstack((X, X))
                     return X
 
                 if ncols == Nx:
@@ -6566,15 +6567,15 @@ or pandas.DataFrame
 
         kwargs.setdefault('snap', False)
 
-        if np.ma.isMaskedArray(X) or np.ma.isMaskedArray(Y):
-            stack = np.ma.stack
-            X = np.ma.asarray(X)
-            Y = np.ma.asarray(Y)
+        if mlxarr.ma.isMaskedArray(X) or mlxarr.ma.isMaskedArray(Y):
+            stack = mlxarr.ma.stack
+            X = mlxarr.ma.asarray(X)
+            Y = mlxarr.ma.asarray(Y)
             # For bounds collections later
             x = X.compressed()
             y = Y.compressed()
         else:
-            stack = np.stack
+            stack = mlxarr.stack
             x = X
             y = Y
         coords = stack([X, Y], axis=-1)
@@ -6785,7 +6786,7 @@ or pandas.DataFrame
 
         X, Y, C, shading = self._pcolorargs('pcolormesh', *args,
                                             shading=shading, kwargs=kwargs)
-        coords = np.stack([X, Y], axis=-1)
+        coords = mlxarr.stack([X, Y], axis=-1)
 
         kwargs.setdefault('snap', mpl.rcParams['pcolormesh.snap'])
 
@@ -6815,8 +6816,8 @@ or pandas.DataFrame
 
         self.add_collection(collection, autolim=False)
 
-        minx, miny = np.min(coords, axis=0)
-        maxx, maxy = np.max(coords, axis=0)
+        minx, miny = mlxarr.min(coords, axis=0)
+        maxx, maxy = mlxarr.max(coords, axis=0)
         collection.sticky_edges.x[:] = [minx, maxx]
         collection.sticky_edges.y[:] = [miny, maxy]
         self.update_datalim(coords)
@@ -6941,15 +6942,15 @@ or pandas.DataFrame
         """
 
         C = args[-1]
-        nr, nc = np.shape(C)[:2]
+        nr, nc = mlxarr.shape(C)[:2]
         if len(args) == 1:
             style = "image"
             x = [0, nc]
             y = [0, nr]
         elif len(args) == 3:
             x, y = args[:2]
-            x = np.asarray(x)
-            y = np.asarray(y)
+            x = mlxarr.asarray(x)
+            y = mlxarr.asarray(y)
             if x.ndim == 1 and y.ndim == 1:
                 if x.size == 2 and y.size == 2:
                     style = "image"
@@ -6963,10 +6964,10 @@ or pandas.DataFrame
                             f"Length of Y ({y.size}) must be one larger than the "
                             f"number of rows in C ({nr})"
                         )
-                    dx = np.diff(x)
-                    dy = np.diff(y)
-                    if (np.ptp(dx) < 0.01 * abs(dx.mean()) and
-                            np.ptp(dy) < 0.01 * abs(dy.mean())):
+                    dx = mlxarr.diff(x)
+                    dy = mlxarr.diff(y)
+                    if (mlxarr.ptp(dx) < 0.01 * abs(dx.mean()) and
+                            mlxarr.ptp(dy) < 0.01 * abs(dy.mean())):
                         style = "image"
                     else:
                         style = "pcolorimage"
@@ -6984,8 +6985,8 @@ or pandas.DataFrame
                                                                  vmax=vmax)
         if style == "quadmesh":
             # data point in each cell is value at lower left corner
-            coords = np.stack([x, y], axis=-1)
-            if np.ndim(C) not in {2, 3}:
+            coords = mlxarr.stack([x, y], axis=-1)
+            if mlxarr.ndim(C) not in {2, 3}:
                 raise ValueError("C must be 2D or 3D")
             collection = mcoll.QuadMesh(
                 coords, array=C,
@@ -7011,7 +7012,7 @@ or pandas.DataFrame
             self.add_image(im)
             ret = im
 
-        if np.ndim(C) == 2:  # C.ndim == 3 is RGB(A) so doesn't need scaling.
+        if mlxarr.ndim(C) == 2:  # C.ndim == 3 is RGB(A) so doesn't need scaling.
             ret._scale_norm(norm, vmin, vmax)
 
         if ret.get_clip_path() is None:
@@ -7020,7 +7021,7 @@ or pandas.DataFrame
 
         ret.sticky_edges.x[:] = [xl, xr]
         ret.sticky_edges.y[:] = [yb, yt]
-        self.update_datalim(np.array([[xl, yb], [xr, yt]]))
+        self.update_datalim(mlxarr.array([[xl, yb], [xr, yt]]))
         self._request_autoscale_view(tight=True)
         return ret
 
@@ -7091,15 +7092,15 @@ or pandas.DataFrame
         """
         Compute and plot a histogram.
 
-        This method uses `numpy.histogram` to bin the data in *x* and count the
+        This method uses `array_backend.histogram` to bin the data in *x* and count the
         number of values in each bin, then draws the distribution either as a
         `.BarContainer` or `.Polygon`. The *bins*, *range*, *density*, and
-        *weights* parameters are forwarded to `numpy.histogram`.
+        *weights* parameters are forwarded to `array_backend.histogram`.
 
         If the data has already been binned and counted, use `~.bar` or
         `~.stairs` to plot the distribution::
 
-            counts, bins = np.histogram(x)
+            counts, bins = mlxarr.histogram(x)
             plt.stairs(counts, bins)
 
         Alternatively, plot pre-computed bins and counts using ``hist()`` by
@@ -7139,7 +7140,7 @@ or pandas.DataFrame
             *includes* 4.
 
             If *bins* is a string, it is one of the binning strategies
-            supported by `numpy.histogram_bin_edges`: 'auto', 'fd', 'doane',
+            supported by `array_backend.histogram_bin_edges`: 'auto', 'fd', 'doane',
             'scott', 'stone', 'rice', 'sturges', or 'sqrt'.
 
         range : tuple or None, default: None
@@ -7155,9 +7156,9 @@ or pandas.DataFrame
             If ``True``, draw and return a probability density: each bin
             will display the bin's raw count divided by the total number of
             counts *and the bin width*
-            (``density = counts / (sum(counts) * np.diff(bins))``),
+            (``density = counts / (sum(counts) * mlxarr.diff(bins))``),
             so that the area under the histogram integrates to 1
-            (``np.sum(density * np.diff(bins)) == 1``).
+            (``mlxarr.sum(density * mlxarr.diff(bins)) == 1``).
 
             If *stacked* is also ``True``, the sum of the histograms is
             normalized to 1.
@@ -7279,7 +7280,7 @@ such objects
         -----
         For large numbers of bins (>1000), plotting can be significantly
         accelerated by using `~.Axes.stairs` to plot a pre-computed histogram
-        (``plt.stairs(*np.histogram(data))``), or by setting *histtype* to
+        (``plt.stairs(*mlxarr.histogram(data))``), or by setting *histtype* to
         'step' or 'stepfilled' rather than 'bar' or 'barstacked'.
         """
         # Avoid shadowing the builtin.
@@ -7288,7 +7289,7 @@ such objects
 
         kwargs = cbook.normalize_kwargs(kwargs, mpatches.Patch)
 
-        if np.isscalar(x):
+        if mlxarr.isscalar(x):
             x = [x]
 
         bins = mpl._val_or_rc(bins, 'hist.bins')
@@ -7352,31 +7353,31 @@ such objects
 
         hist_kwargs = dict()
 
-        # if the bin_range is not given, compute without nan numpy
+        # if the bin_range is not given, compute without nan array_backend
         # does not do this for us when guessing the range (but will
         # happily ignore nans when computing the histogram).
         if bin_range is None:
-            xmin = np.inf
-            xmax = -np.inf
+            xmin = mlxarr.inf
+            xmax = -mlxarr.inf
             for xi in x:
                 if len(xi):
                     # python's min/max ignore nan,
-                    # np.minnan returns nan for all nan input
-                    xmin = min(xmin, np.nanmin(xi))
-                    xmax = max(xmax, np.nanmax(xi))
+                    # mlxarr.minnan returns nan for all nan input
+                    xmin = min(xmin, mlxarr.nanmin(xi))
+                    xmax = max(xmax, mlxarr.nanmax(xi))
             if xmin <= xmax:  # Only happens if we have seen a finite value.
                 bin_range = (xmin, xmax)
 
         # If bins are not specified either explicitly or via range,
         # we need to figure out the range required for all datasets,
-        # and supply that to np.histogram.
+        # and supply that to mlxarr.histogram.
         if not input_empty and len(x) > 1:
             if weights is not None:
-                _w = np.concatenate(w)
+                _w = mlxarr.concatenate(w)
             else:
                 _w = None
-            bins = np.histogram_bin_edges(
-                np.concatenate(x), bins, bin_range, _w)
+            bins = mlxarr.histogram_bin_edges(
+                mlxarr.concatenate(x), bins, bin_range, _w)
         else:
             hist_kwargs['range'] = bin_range
 
@@ -7390,22 +7391,22 @@ such objects
         for i in range(nx):
             # this will automatically overwrite bins,
             # so that each histogram uses the same bins
-            m, bins = np.histogram(x[i], bins, weights=w[i], **hist_kwargs)
+            m, bins = mlxarr.histogram(x[i], bins, weights=w[i], **hist_kwargs)
             tops.append(m)
-        tops = np.array(tops, float)  # causes problems later if it's an int
-        bins = np.array(bins, float)  # causes problems if float16
+        tops = mlxarr.array(tops, float)  # causes problems later if it's an int
+        bins = mlxarr.array(bins, float)  # causes problems if float16
         if stacked:
             tops = tops.cumsum(axis=0)
             # If a stacked density plot, normalize so the area of all the
             # stacked histograms together is 1
             if density:
-                tops = (tops / np.diff(bins)) / tops[-1].sum()
+                tops = (tops / mlxarr.diff(bins)) / tops[-1].sum()
         if cumulative:
             slc = slice(None)
             if isinstance(cumulative, Number) and cumulative < 0:
                 slc = slice(None, None, -1)
             if density:
-                tops = (tops * np.diff(bins))[:, slc].cumsum(axis=1)[:, slc]
+                tops = (tops * mlxarr.diff(bins))[:, slc].cumsum(axis=1)[:, slc]
             else:
                 tops = tops[:, slc].cumsum(axis=1)[:, slc]
 
@@ -7413,10 +7414,10 @@ such objects
 
         if histtype.startswith('bar'):
 
-            totwidth = np.diff(bins)
+            totwidth = mlxarr.diff(bins)
 
             if rwidth is not None:
-                dr = np.clip(rwidth, 0, 1)
+                dr = mlxarr.clip(rwidth, 0, 1)
             elif (len(tops) > 1 and
                   ((not stacked) or mpl.rcParams['_internal.classic_mode'])):
                 dr = 0.8
@@ -7445,7 +7446,7 @@ such objects
 
             for top, color in zip(tops, colors):
                 if bottom is None:
-                    bottom = np.zeros(len(top))
+                    bottom = mlxarr.zeros(len(top))
                 if stacked:
                     height = top - bottom
                 else:
@@ -7466,8 +7467,8 @@ such objects
 
         elif histtype.startswith('step'):
             # these define the perimeter of the polygon
-            x = np.zeros(4 * len(bins) - 3)
-            y = np.zeros(4 * len(bins) - 3)
+            x = mlxarr.zeros(4 * len(bins) - 3)
+            y = mlxarr.zeros(4 * len(bins) - 3)
 
             x[0:2*len(bins)-1:2], x[1:2*len(bins)-1:2] = bins, bins[:-1]
             x[2*len(bins)-1:] = x[1:2*len(bins)-1][::-1]
@@ -7539,7 +7540,7 @@ such objects
 
         # If None, make all labels None (via zip_longest below); otherwise,
         # cast each element to str, but keep a single str as it.
-        labels = [] if label is None else np.atleast_1d(np.asarray(label, str))
+        labels = [] if label is None else mlxarr.atleast_1d(mlxarr.asarray(label, str))
 
         if histtype == "step":
             ec = kwargs.get('edgecolor', colors)
@@ -7556,8 +7557,8 @@ such objects
         else:
             facecolors = itertools.cycle(mcolors.to_rgba_array(fc))
 
-        hatches = itertools.cycle(np.atleast_1d(kwargs.get('hatch', None)))
-        linewidths = itertools.cycle(np.atleast_1d(kwargs.get('linewidth', None)))
+        hatches = itertools.cycle(mlxarr.atleast_1d(kwargs.get('hatch', None)))
+        linewidths = itertools.cycle(mlxarr.atleast_1d(kwargs.get('linewidth', None)))
         if 'linestyle' in kwargs:
             linestyles = itertools.cycle(mlines._get_dash_patterns(kwargs['linestyle']))
         else:
@@ -7652,7 +7653,7 @@ such objects
             kwargs.setdefault('edgecolor', _color)
 
         if edges is None:
-            edges = np.arange(len(values) + 1)
+            edges = mlxarr.arange(len(values) + 1)
 
         edges, values, baseline = self._process_unit_info(
             [("x", edges), ("y", values), ("y", baseline)], kwargs)
@@ -7677,11 +7678,11 @@ such objects
 
         if baseline is not None:
             if orientation == 'vertical':
-                patch.sticky_edges.y.append(np.min(baseline))
-                self.update_datalim([(edges[0], np.min(baseline))])
+                patch.sticky_edges.y.append(mlxarr.min(baseline))
+                self.update_datalim([(edges[0], mlxarr.min(baseline))])
             else:
-                patch.sticky_edges.x.append(np.min(baseline))
-                self.update_datalim([(np.min(baseline), edges[0])])
+                patch.sticky_edges.x.append(mlxarr.min(baseline))
+                self.update_datalim([(mlxarr.min(baseline), edges[0])])
         self._request_autoscale_view()
         return patch
 
@@ -7783,7 +7784,7 @@ such objects
            elements into account.
         """
 
-        h, xedges, yedges = np.histogram2d(x, y, bins=bins, range=range,
+        h, xedges, yedges = mlxarr.histogram2d(x, y, bins=bins, range=range,
                                            density=density, weights=weights)
 
         if cmin is not None:
@@ -7861,19 +7862,19 @@ such objects
         _api.check_in_list(["horizontal", "vertical"], orientation=orientation)
         if "drawstyle" in kwargs or "ds" in kwargs:
             raise TypeError("Cannot pass 'drawstyle' or 'ds' to ecdf()")
-        if np.ma.getmask(x).any():
+        if mlxarr.ma.getmask(x).any():
             raise ValueError("ecdf() does not support masked entries")
-        x = np.asarray(x)
-        if np.isnan(x).any():
+        x = mlxarr.asarray(x)
+        if mlxarr.isnan(x).any():
             raise ValueError("ecdf() does not support NaNs")
-        argsort = np.argsort(x)
+        argsort = mlxarr.argsort(x)
         x = x[argsort]
         if weights is None:
             # Ensure that we end at exactly 1, avoiding floating point errors.
-            cum_weights = (1 + np.arange(len(x))) / len(x)
+            cum_weights = (1 + mlxarr.arange(len(x))) / len(x)
         else:
-            weights = np.take(weights, argsort)   # Reorder weights like we reordered x.
-            cum_weights = np.cumsum(weights / np.sum(weights))
+            weights = mlxarr.take(weights, argsort)   # Reorder weights like we reordered x.
+            cum_weights = mlxarr.cumsum(weights / mlxarr.sum(weights))
         if compress:
             # Get indices of unique x values.
             compress_idxs = [0, *(x[:-1] != x[1:]).nonzero()[0] + 1]
@@ -7994,14 +7995,14 @@ such objects
         else:
             psd_units = 'dB'
 
-        line = self.plot(freqs, 10 * np.log10(pxx), **kwargs)
+        line = self.plot(freqs, 10 * mlxarr.log10(pxx), **kwargs)
         self.set_xlabel('Frequency')
         self.set_ylabel('Power Spectral Density (%s)' % psd_units)
         self.grid(True)
 
         vmin, vmax = self.get_ybound()
-        step = max(10 * int(np.log10(vmax - vmin)), 1)
-        ticks = np.arange(math.floor(vmin), math.ceil(vmax) + 1, step)
+        step = max(10 * int(mlxarr.log10(vmax - vmin)), 1)
+        ticks = mlxarr.arange(math.floor(vmin), math.ceil(vmax) + 1, step)
         self.set_yticks(ticks)
 
         if return_line is None or not return_line:
@@ -8097,14 +8098,14 @@ such objects
         # pxy is complex
         freqs += Fc
 
-        line = self.plot(freqs, 10 * np.log10(np.abs(pxy)), **kwargs)
+        line = self.plot(freqs, 10 * mlxarr.log10(mlxarr.abs(pxy)), **kwargs)
         self.set_xlabel('Frequency')
         self.set_ylabel('Cross Spectrum Magnitude (dB)')
         self.grid(True)
 
         vmin, vmax = self.get_ybound()
-        step = max(10 * int(np.log10(vmax - vmin)), 1)
-        ticks = np.arange(math.floor(vmin), math.ceil(vmax) + 1, step)
+        step = max(10 * int(mlxarr.log10(vmax - vmin)), 1)
+        ticks = mlxarr.arange(math.floor(vmin), math.ceil(vmax) + 1, step)
         self.set_yticks(ticks)
 
         if return_line is None or not return_line:
@@ -8191,7 +8192,7 @@ such objects
         if yunits == 'energy':
             Z = spec
         else:  # yunits == 'dB'
-            Z = 20. * np.log10(spec)
+            Z = 20. * mlxarr.log10(spec)
 
         line, = self.plot(freqs, Z, **kwargs)
         self.set_xlabel('Frequency')
@@ -8541,18 +8542,18 @@ such objects
             Z = spec
         elif scale == 'dB':
             if mode is None or mode == 'default' or mode == 'psd':
-                Z = 10. * np.log10(spec)
+                Z = 10. * mlxarr.log10(spec)
             else:
-                Z = 20. * np.log10(spec)
+                Z = 20. * mlxarr.log10(spec)
         else:
             raise ValueError(f'Unknown scale {scale!r}')
 
-        Z = np.flipud(Z)
+        Z = mlxarr.flipud(Z)
 
         if xextent is None:
             # padding is needed for first and last segment:
             pad_xextent = (NFFT-noverlap) / Fs / 2
-            xextent = np.min(t) - pad_xextent, np.max(t) + pad_xextent
+            xextent = mlxarr.min(t) - pad_xextent, mlxarr.max(t) + pad_xextent
         xmin, xmax = xextent
         freqs += Fc
         extent = xmin, xmax, freqs[0], freqs[-1]
@@ -8650,8 +8651,8 @@ such objects
             marker = 's'
         _api.check_in_list(["upper", "lower"], origin=origin)
         if marker is None and markersize is None:
-            Z = np.asarray(Z)
-            mask = np.abs(Z) > precision
+            Z = mlxarr.asarray(Z)
+            mask = mlxarr.abs(Z) > precision
 
             if 'cmap' not in kwargs:
                 kwargs['cmap'] = mcolors.ListedColormap(['w', 'k'],
@@ -8670,13 +8671,13 @@ such objects
                     y = c.row
                     x = c.col
                 else:
-                    nonzero = np.abs(c.data) > precision
+                    nonzero = mlxarr.abs(c.data) > precision
                     y = c.row[nonzero]
                     x = c.col[nonzero]
             else:
-                Z = np.asarray(Z)
-                nonzero = np.abs(Z) > precision
-                y, x = np.nonzero(nonzero)
+                Z = mlxarr.asarray(Z)
+                nonzero = mlxarr.abs(Z) > precision
+                y, x = mlxarr.nonzero(nonzero)
             if marker is None:
                 marker = 's'
             if markersize is None:
@@ -8742,7 +8743,7 @@ such objects
         - Ticks are formatted to show integer indices.
 
         """
-        Z = np.asanyarray(Z)
+        Z = mlxarr.asanyarray(Z)
         kw = {'origin': 'upper',
               'interpolation': 'nearest',
               'aspect': 'equal',          # (already the imshow default)
@@ -9052,7 +9053,7 @@ such objects
             raise ValueError(datashape_message.format("positions"))
 
         # Validate widths
-        if np.isscalar(widths):
+        if mlxarr.isscalar(widths):
             widths = [widths] * N
         elif len(widths) != N:
             raise ValueError(datashape_message.format("widths"))
@@ -9063,7 +9064,7 @@ such objects
         # Calculate ranges for statistics lines (shape (2, N)).
         line_ends = [[-0.25 if side in ['both', 'low'] else 0],
                      [0.25 if side in ['both', 'high'] else 0]] \
-                          * np.array(widths) + positions
+                          * mlxarr.array(widths) + positions
 
         # Make a cycle of color to iterate through, using 'none' as fallback
         def cycle_color(color, alpha=None):
@@ -9133,7 +9134,7 @@ such objects
         bodies_zip = zip(vpstats, positions, widths, facecolor)
         for stats, pos, width, facecolor in bodies_zip:
             # The 0.5 factor reflects the fact that we plot from v-p to v+p.
-            vals = np.array(stats['vals'])
+            vals = mlxarr.array(stats['vals'])
             vals = 0.5 * width * vals / vals.max()
             bodies += [fill(stats['coords'],
                             -vals + pos if side in ['both', 'low'] else pos,
@@ -9161,7 +9162,7 @@ such objects
             artists['cmedians'] = perp_lines(medians, *line_ends)
         if quantiles:  # Render quantiles: each width is repeated qlen times.
             artists['cquantiles'] = perp_lines(
-                quantiles, *np.repeat(line_ends, qlens, axis=1))
+                quantiles, *mlxarr.repeat(line_ends, qlens, axis=1))
 
         return artists
 

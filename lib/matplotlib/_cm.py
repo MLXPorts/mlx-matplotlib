@@ -7,9 +7,7 @@ with the purpose and type of your colormap if you add data for one here.
 """
 
 from functools import partial
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 _binary_data = {
     'red':    ((0., 1., 1.), (1., 0., 0.)),
     'green':  ((0., 1., 1.), (1., 0., 0.)),
@@ -43,14 +41,14 @@ _copper_data = {'red':   ((0., 0., 0.),
                 'blue':  ((0., 0., 0.),
                           (1.0, 0.4975, 0.4975))}
 
-def _flag_red(x): return 0.75 * np.sin((x * 31.5 + 0.25) * np.pi) + 0.5
-def _flag_green(x): return np.sin(x * 31.5 * np.pi)
-def _flag_blue(x): return 0.75 * np.sin((x * 31.5 - 0.25) * np.pi) + 0.5
+def _flag_red(x): return 0.75 * mlxarr.sin((x * 31.5 + 0.25) * mlxarr.pi) + 0.5
+def _flag_green(x): return mlxarr.sin(x * 31.5 * mlxarr.pi)
+def _flag_blue(x): return 0.75 * mlxarr.sin((x * 31.5 - 0.25) * mlxarr.pi) + 0.5
 _flag_data = {'red': _flag_red, 'green': _flag_green, 'blue': _flag_blue}
 
-def _prism_red(x): return 0.75 * np.sin((x * 20.9 + 0.25) * np.pi) + 0.67
-def _prism_green(x): return 0.75 * np.sin((x * 20.9 - 0.25) * np.pi) + 0.33
-def _prism_blue(x): return -1.1 * np.sin((x * 20.9) * np.pi)
+def _prism_red(x): return 0.75 * mlxarr.sin((x * 20.9 + 0.25) * mlxarr.pi) + 0.67
+def _prism_green(x): return 0.75 * mlxarr.sin((x * 20.9 - 0.25) * mlxarr.pi) + 0.33
+def _prism_blue(x): return -1.1 * mlxarr.sin((x * 20.9) * mlxarr.pi)
 _prism_data = {'red': _prism_red, 'green': _prism_green, 'blue': _prism_blue}
 
 def _ch_helper(gamma, s, r, h, p0, p1, x):
@@ -60,8 +58,8 @@ def _ch_helper(gamma, s, r, h, p0, p1, x):
     # Calculate amplitude and angle of deviation from the black to white
     # diagonal in the plane of constant perceived intensity.
     a = h * xg * (1 - xg) / 2
-    phi = 2 * np.pi * (s / 3 + r * x)
-    return xg + a * (p0 * np.cos(phi) + p1 * np.sin(phi))
+    phi = 2 * mlxarr.pi * (s / 3 + r * x)
+    return xg + a * (p0 * mlxarr.cos(phi) + p1 * mlxarr.sin(phi))
 
 def cubehelix(gamma=1.0, s=0.5, r=-1.5, h=1.0):
     """
@@ -116,33 +114,33 @@ def _g3(x): return x
 def _g4(x): return x ** 2
 def _g5(x): return x ** 3
 def _g6(x): return x ** 4
-def _g7(x): return np.sqrt(x)
-def _g8(x): return np.sqrt(np.sqrt(x))
-def _g9(x): return np.sin(x * np.pi / 2)
-def _g10(x): return np.cos(x * np.pi / 2)
-def _g11(x): return np.abs(x - 0.5)
+def _g7(x): return mlxarr.sqrt(x)
+def _g8(x): return mlxarr.sqrt(mlxarr.sqrt(x))
+def _g9(x): return mlxarr.sin(x * mlxarr.pi / 2)
+def _g10(x): return mlxarr.cos(x * mlxarr.pi / 2)
+def _g11(x): return mlxarr.abs(x - 0.5)
 def _g12(x): return (2 * x - 1) ** 2
-def _g13(x): return np.sin(x * np.pi)
-def _g14(x): return np.abs(np.cos(x * np.pi))
-def _g15(x): return np.sin(x * 2 * np.pi)
-def _g16(x): return np.cos(x * 2 * np.pi)
-def _g17(x): return np.abs(np.sin(x * 2 * np.pi))
-def _g18(x): return np.abs(np.cos(x * 2 * np.pi))
-def _g19(x): return np.abs(np.sin(x * 4 * np.pi))
-def _g20(x): return np.abs(np.cos(x * 4 * np.pi))
+def _g13(x): return mlxarr.sin(x * mlxarr.pi)
+def _g14(x): return mlxarr.abs(mlxarr.cos(x * mlxarr.pi))
+def _g15(x): return mlxarr.sin(x * 2 * mlxarr.pi)
+def _g16(x): return mlxarr.cos(x * 2 * mlxarr.pi)
+def _g17(x): return mlxarr.abs(mlxarr.sin(x * 2 * mlxarr.pi))
+def _g18(x): return mlxarr.abs(mlxarr.cos(x * 2 * mlxarr.pi))
+def _g19(x): return mlxarr.abs(mlxarr.sin(x * 4 * mlxarr.pi))
+def _g20(x): return mlxarr.abs(mlxarr.cos(x * 4 * mlxarr.pi))
 def _g21(x): return 3 * x
 def _g22(x): return 3 * x - 1
 def _g23(x): return 3 * x - 2
-def _g24(x): return np.abs(3 * x - 1)
-def _g25(x): return np.abs(3 * x - 2)
+def _g24(x): return mlxarr.abs(3 * x - 1)
+def _g25(x): return mlxarr.abs(3 * x - 2)
 def _g26(x): return (3 * x - 1) / 2
 def _g27(x): return (3 * x - 2) / 2
-def _g28(x): return np.abs((3 * x - 1) / 2)
-def _g29(x): return np.abs((3 * x - 2) / 2)
+def _g28(x): return mlxarr.abs((3 * x - 1) / 2)
+def _g29(x): return mlxarr.abs((3 * x - 2) / 2)
 def _g30(x): return x / 0.32 - 0.78125
 def _g31(x): return 2 * x - 0.84
 def _g32(x):
-    ret = np.zeros(len(x))
+    ret = mlxarr.zeros(len(x))
     m = (x < 0.25)
     ret[m] = 4 * x[m]
     m = (x >= 0.25) & (x < 0.92)
@@ -150,7 +148,7 @@ def _g32(x):
     m = (x >= 0.92)
     ret[m] = x[m] / 0.08 - 11.5
     return ret
-def _g33(x): return np.abs(2 * x - 0.5)
+def _g33(x): return mlxarr.abs(2 * x - 0.5)
 def _g34(x): return 2 * x
 def _g35(x): return 2 * x - 0.5
 def _g36(x): return 2 * x - 1

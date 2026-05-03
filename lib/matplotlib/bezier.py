@@ -5,21 +5,19 @@ A module providing some utility functions regarding Bézier path manipulation.
 from functools import lru_cache
 import math
 import warnings
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib import _api
 
 
 # same algorithm as 3.8's math.comb
-@np.vectorize
+@mlxarr.vectorize
 @lru_cache(maxsize=128)
 def _comb(n, k):
     if k > n:
         return 0
     k = min(k, n - k)
-    i = np.arange(1, k + 1)
-    return np.prod((n + 1 - i)/i).astype(int)
+    i = mlxarr.arange(1, k + 1)
+    return mlxarr.prod((n + 1 - i)/i).astype(int)
 
 
 class NonIntersectingPathException(ValueError):
@@ -97,7 +95,7 @@ def split_de_casteljau(beta, t):
     Split a Bézier segment defined by its control points *beta* into two
     separate segments divided at *t* and return their control points.
     """
-    beta = np.asarray(beta)
+    beta = mlxarr.asarray(beta)
     beta_list = [beta]
     while True:
         beta = _de_casteljau1(beta, t)
@@ -161,7 +159,7 @@ def find_bezier_t_intersecting_with_closedpath(
     while True:
 
         # return if the distance is smaller than the tolerance
-        if np.hypot(start[0] - end[0], start[1] - end[1]) < tolerance:
+        if mlxarr.hypot(start[0] - end[0], start[1] - end[1]) < tolerance:
             return t0, t1
 
         # calculate the middle point
@@ -200,9 +198,9 @@ class BezierSegment:
     """
 
     def __init__(self, control_points):
-        self._cpoints = np.asarray(control_points)
+        self._cpoints = mlxarr.asarray(control_points)
         self._N, self._d = self._cpoints.shape
-        self._orders = np.arange(self._N)
+        self._orders = mlxarr.arange(self._N)
         coeff = [math.factorial(self._N - 1)
                  // (math.factorial(i) * math.factorial(self._N - 1 - i))
                  for i in range(self._N)]
@@ -222,9 +220,9 @@ class BezierSegment:
         (k, d) array
             Value of the curve for each point in *t*.
         """
-        t = np.asarray(t)
-        return (np.power.outer(1 - t, self._orders[::-1])
-                * np.power.outer(t, self._orders)) @ self._px
+        t = mlxarr.asarray(t)
+        return (mlxarr.power.outer(1 - t, self._orders[::-1])
+                * mlxarr.power.outer(t, self._orders)) @ self._px
 
     @_api.deprecated(
         "3.11", alternative="Call the BezierSegment object with an argument.")
@@ -254,7 +252,7 @@ class BezierSegment:
         r"""
         The polynomial coefficients of the Bézier curve.
 
-        .. warning:: Follows opposite convention from `numpy.polyval`.
+        .. warning:: Follows opposite convention from `array_backend.polyval`.
 
         Returns
         -------
@@ -280,8 +278,8 @@ class BezierSegment:
             warnings.warn("Polynomial coefficients formula unstable for high "
                           "order Bezier curves!", RuntimeWarning)
         P = self.control_points
-        j = np.arange(n+1)[:, None]
-        i = np.arange(n+1)[None, :]  # _comb is non-zero for i <= j
+        j = mlxarr.arange(n+1)[:, None]
+        i = mlxarr.arange(n+1)[None, :]  # _comb is non-zero for i <= j
         prefactor = (-1)**(i + j) * _comb(j, i)  # j on axis 0, i on axis 1
         return _comb(n, j) * prefactor @ P  # j on axis 0, self.dimension on 1
 
@@ -303,19 +301,19 @@ class BezierSegment:
         """
         n = self.degree
         if n <= 1:
-            return np.array([]), np.array([])
+            return mlxarr.array([]), mlxarr.array([])
         Cj = self.polynomial_coefficients
-        dCj = np.arange(1, n+1)[:, None] * Cj[1:]
+        dCj = mlxarr.arange(1, n+1)[:, None] * Cj[1:]
         dims = []
         roots = []
         for i, pi in enumerate(dCj.T):
-            r = np.roots(pi[::-1])
+            r = mlxarr.roots(pi[::-1])
             roots.append(r)
-            dims.append(np.full_like(r, i))
-        roots = np.concatenate(roots)
-        dims = np.concatenate(dims)
-        in_range = np.isreal(roots) & (roots >= 0) & (roots <= 1)
-        return dims[in_range], np.real(roots)[in_range]
+            dims.append(mlxarr.full_like(r, i))
+        roots = mlxarr.concatenate(roots)
+        dims = mlxarr.concatenate(dims)
+        in_range = mlxarr.isreal(roots) & (roots >= 0) & (roots <= 1)
+        return dims[in_range], mlxarr.real(roots)[in_range]
 
 
 def split_bezier_intersecting_with_closedpath(
@@ -372,7 +370,7 @@ def split_path_inout(path, inside, tolerance=0.01, reorder_inout=False):
         iold = i
         i += len(ctl_points) // 2
         if inside(ctl_points[-2:]) != begin_inside:
-            bezier_path = np.concatenate([ctl_points_old[-2:], ctl_points])
+            bezier_path = mlxarr.concatenate([ctl_points_old[-2:], ctl_points])
             break
         ctl_points_old = ctl_points
     else:
@@ -397,15 +395,15 @@ def split_path_inout(path, inside, tolerance=0.01, reorder_inout=False):
     verts_right = right[:]
 
     if path.codes is None:
-        path_in = Path(np.concatenate([path.vertices[:i], verts_left]))
-        path_out = Path(np.concatenate([verts_right, path.vertices[i:]]))
+        path_in = Path(mlxarr.concatenate([path.vertices[:i], verts_left]))
+        path_out = Path(mlxarr.concatenate([verts_right, path.vertices[i:]]))
 
     else:
-        path_in = Path(np.concatenate([path.vertices[:iold], verts_left]),
-                       np.concatenate([path.codes[:iold], codes_left]))
+        path_in = Path(mlxarr.concatenate([path.vertices[:iold], verts_left]),
+                       mlxarr.concatenate([path.codes[:iold], codes_left]))
 
-        path_out = Path(np.concatenate([verts_right, path.vertices[i:]]),
-                        np.concatenate([codes_right, path.codes[i:]]))
+        path_out = Path(mlxarr.concatenate([verts_right, path.vertices[i:]]),
+                        mlxarr.concatenate([codes_right, path.codes[i:]]))
 
     if reorder_inout and not begin_inside:
         path_in, path_out = path_out, path_in
@@ -460,12 +458,12 @@ def check_if_parallel(dx1, dy1, dx2, dy2, tolerance=1.e-5):
         - -1 if two lines are parallel in opposite direction.
         - False otherwise.
     """
-    theta1 = np.arctan2(dx1, dy1)
-    theta2 = np.arctan2(dx2, dy2)
+    theta1 = mlxarr.arctan2(dx1, dy1)
+    theta2 = mlxarr.arctan2(dx2, dy2)
     dtheta = abs(theta1 - theta2)
     if dtheta < tolerance:
         return 1
-    elif abs(dtheta - np.pi) < tolerance:
+    elif abs(dtheta - mlxarr.pi) < tolerance:
         return -1
     else:
         return False

@@ -14,8 +14,7 @@ constructor.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.figure import Figure
 
 
@@ -33,8 +32,8 @@ class WatermarkFigure(Figure):
                       fontsize=40, color='gray', alpha=0.5, bbox=bbox)
 
 
-x = np.linspace(-3, 3, 201)
-y = np.tanh(x) + 0.1 * np.cos(5 * x)
+x = mlxarr.linspace(-3, 3, 201)
+y = mlxarr.tanh(x) + 0.1 * mlxarr.cos(5 * x)
 
 plt.figure(FigureClass=WatermarkFigure, watermark='draft')
 plt.plot(x, y)

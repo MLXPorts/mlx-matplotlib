@@ -8,22 +8,20 @@ a faster generalization of `~.axes.Axes.pcolor`, but with some restrictions.
 
 This demo illustrates a bug in quadmesh with masked data.
 """
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib import pyplot as plt
 
 n = 12
-x = np.linspace(-1.5, 1.5, n)
-y = np.linspace(-1.5, 1.5, n * 2)
-X, Y = np.meshgrid(x, y)
-Qx = np.cos(Y) - np.cos(X)
-Qz = np.sin(Y) + np.sin(X)
-Z = np.sqrt(X**2 + Y**2) / 5
+x = mlxarr.linspace(-1.5, 1.5, n)
+y = mlxarr.linspace(-1.5, 1.5, n * 2)
+X, Y = mlxarr.meshgrid(x, y)
+Qx = mlxarr.cos(Y) - mlxarr.cos(X)
+Qz = mlxarr.sin(Y) + mlxarr.sin(X)
+Z = mlxarr.sqrt(X**2 + Y**2) / 5
 Z = (Z - Z.min()) / (Z.max() - Z.min())
 
 # The color array can include masked values.
-Zm = np.ma.masked_where(np.abs(Qz) < 0.5 * np.max(Qz), Z)
+Zm = mlxarr.ma.masked_where(mlxarr.abs(Qz) < 0.5 * mlxarr.max(Qz), Z)
 
 fig, axs = plt.subplots(nrows=1, ncols=3)
 axs[0].pcolormesh(Qx, Qz, Z, shading='gouraud')

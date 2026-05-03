@@ -20,8 +20,7 @@ import textwrap
 import time
 
 import fontTools
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from matplotlib import _api, cbook, _path, _text_helpers
 from matplotlib.backend_bases import (
@@ -488,7 +487,7 @@ class RendererPS(_backend_pdf_ps.RendererPDFPSBase):
     def set_linedash(self, offset, seq, store=True):
         if self.linedash is not None:
             oldo, oldseq = self.linedash
-            if np.array_equal(seq, oldseq) and oldo == offset:
+            if mlxarr.array_equal(seq, oldseq) and oldo == offset:
                 return
 
         self._pswriter.write(f"[{_nums_to_str(*seq)}] {_nums_to_str(offset)} setdash\n"
@@ -743,8 +742,8 @@ translate
 
         # Stick to bottom-left alignment, so subtract descent from the text-normal
         # direction since text is normally positioned by its baseline.
-        rangle = np.radians(angle + 90)
-        pos = _nums_to_str(x - bl * np.cos(rangle), y - bl * np.sin(rangle))
+        rangle = mlxarr.radians(angle + 90)
+        pos = _nums_to_str(x - bl * mlxarr.cos(rangle), y - bl * mlxarr.sin(rangle))
         self.psfrag.append(
             r'\psfrag{%s}[bl][bl][1][%f]{\fontsize{%f}{%f}%s}' % (
                 thetext, angle, fontsize, fontsize*1.25, tex))
@@ -858,14 +857,14 @@ grestore
         flat_points = points.reshape((shape[0] * shape[1], 2))
         flat_points = trans.transform(flat_points)
         flat_colors = colors.reshape((shape[0] * shape[1], 4))
-        points_min = np.min(flat_points, axis=0) - (1 << 12)
-        points_max = np.max(flat_points, axis=0) + (1 << 12)
-        factor = np.ceil((2 ** 32 - 1) / (points_max - points_min))
+        points_min = mlxarr.min(flat_points, axis=0) - (1 << 12)
+        points_max = mlxarr.max(flat_points, axis=0) + (1 << 12)
+        factor = mlxarr.ceil((2 ** 32 - 1) / (points_max - points_min))
 
         xmin, ymin = points_min
         xmax, ymax = points_max
 
-        data = np.empty(
+        data = mlxarr.empty(
             shape[0] * shape[1],
             dtype=[('flags', 'u1'), ('points', '2>u4'), ('colors', '3u1')])
         data['flags'] = 0

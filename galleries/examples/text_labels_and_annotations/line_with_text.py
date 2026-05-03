@@ -7,8 +7,7 @@ Override basic methods so an artist can contain another
 artist.  In this case, the line contains a Text instance to label it.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.lines as lines
 import matplotlib.text as mtext
 import matplotlib.transforms as mtransforms
@@ -52,11 +51,11 @@ class MyLine(lines.Line2D):
         self.text.draw(renderer)
 
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+mlxarr.random.seed(19680801)
 
 
 fig, ax = plt.subplots()
-x, y = np.random.rand(2, 20)
+x, y = mlxarr.random.rand(2, 20)
 line = MyLine(x, y, mfc='red', ms=12, label='line label')
 line.text.set_color('red')
 line.text.set_fontsize(16)

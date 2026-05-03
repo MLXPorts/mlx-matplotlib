@@ -11,8 +11,7 @@ See `~matplotlib.axes.Axes.stairs` when plotting :math:`y` between
 .. redirect-from:: /plot_types/basic/step
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+import mlx.core as mx
 plt.style.use('_mpl-gallery')
 
 # make data
@@ -23,7 +22,7 @@ fig, ax = plt.subplots()
 
 ax.stairs(y, linewidth=2.5)
 
-ax.set(xlim=(0, 8), xticks=np.arange(1, 8),
-       ylim=(0, 8), yticks=np.arange(1, 8))
+ax.set(xlim=(0, 8), xticks=mx.arange(1, 8),
+       ylim=(0, 8), yticks=mx.arange(1, 8))
 
 plt.show()

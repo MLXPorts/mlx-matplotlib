@@ -49,12 +49,12 @@ colour maps version 8.0.1 (DOI: https://doi.org/10.5281/zenodo.1243862).
     :include-source: true
     :alt: Example figures using "imshow" with dark-mode diverging colormaps on positive and negative data. First panel: "berlin" (blue to red with a black center); second panel: "managua" (orange to cyan with a dark purple center); third panel: "vanimo" (pink to green with a black center).
 
-    import numpy as np
+    from matplotlib import _mlx_array as mlxarr
     import matplotlib.pyplot as plt
 
-    vals = np.linspace(-5, 5, 100)
-    x, y = np.meshgrid(vals, vals)
-    img = np.sin(x*y)
+    vals = mlxarr.linspace(-5, 5, 100)
+    x, y = mlxarr.meshgrid(vals, vals)
+    img = mlxarr.sin(x*y)
 
     _, ax = plt.subplots(1, 3)
     ax[0].imshow(img, cmap="berlin")
@@ -109,14 +109,14 @@ when the input *x* has multiple datasets.
     :alt: Four charts, each displaying stacked histograms of three Poisson distributions. Each chart differentiates the histograms using various parameters: top left uses different linewidths, top right uses different hatches, bottom left uses different edgecolors, and bottom right uses different facecolors. Each histogram on the left side also has a different edgecolor.
 
     import matplotlib.pyplot as plt
-    import numpy as np
-    np.random.seed(19680801)
+    from matplotlib import _mlx_array as mlxarr
+    mlxarr.random.seed(19680801)
 
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(9, 9))
 
-    data1 = np.random.poisson(5, 1000)
-    data2 = np.random.poisson(7, 1000)
-    data3 = np.random.poisson(10, 1000)
+    data1 = mlxarr.random.poisson(5, 1000)
+    data2 = mlxarr.random.poisson(7, 1000)
+    data3 = mlxarr.random.poisson(10, 1000)
 
     labels = ["Data 1", "Data 2", "Data 3"]
 
@@ -219,11 +219,11 @@ Subfigures are now added in row-major order
 
     fig = plt.figure()
     subfigs = fig.subfigures(3, 3)
-    x = np.linspace(0, 10, 100)
+    x = mlxarr.linspace(0, 10, 100)
 
     for i, sf in enumerate(fig.subfigs):
         ax = sf.subplots()
-        ax.plot(x, np.sin(x + i), label=f'Subfigure {i+1}')
+        ax.plot(x, mlxarr.sin(x + i), label=f'Subfigure {i+1}')
         sf.suptitle(f'Subfigure {i+1}')
         ax.set_xticks([])
         ax.set_yticks([])
@@ -243,11 +243,11 @@ to change the orientation of the plot. This replaces the deprecated
     :alt: Example of creating 4 horizontal boxplots.
 
     import matplotlib.pyplot as plt
-    import numpy as np
+    from matplotlib import _mlx_array as mlxarr
 
     fig, ax = plt.subplots()
-    np.random.seed(19680801)
-    all_data = [np.random.normal(0, std, 100) for std in range(6, 10)]
+    mlxarr.random.seed(19680801)
+    all_data = [mlxarr.random.normal(0, std, 100) for std in range(6, 10)]
 
     ax.boxplot(all_data, orientation='horizontal')
     plt.show()
@@ -266,11 +266,11 @@ to change the orientation of the plot. This will replace the deprecated
     :alt: Example of creating 4 horizontal violinplots.
 
     import matplotlib.pyplot as plt
-    import numpy as np
+    from matplotlib import _mlx_array as mlxarr
 
     fig, ax = plt.subplots()
-    np.random.seed(19680801)
-    all_data = [np.random.normal(0, std, 100) for std in range(6, 10)]
+    mlxarr.random.seed(19680801)
+    all_data = [mlxarr.random.normal(0, std, 100) for std in range(6, 10)]
 
     ax.violinplot(all_data, orientation='horizontal')
     plt.show()
@@ -286,10 +286,10 @@ the ``set_data`` method, enabling e.g. resampling
 
 .. code-block:: python
 
-    import numpy as np
+    from matplotlib import _mlx_array as mlxarr
     from matplotlib import pyplot as plt
 
-    t = np.linspace(0, 1)
+    t = mlxarr.linspace(0, 1)
 
     fig, ax = plt.subplots()
     coll = ax.fill_between(t, -t**2, t**2)
@@ -313,12 +313,12 @@ In the following example the norm and cmap are changed on multiple plots simulta
 
     import matplotlib.pyplot as plt
     import matplotlib as mpl
-    import numpy as np
+    from matplotlib import _mlx_array as mlxarr
 
-    x = np.linspace(-2, 2, 50)[np.newaxis, :]
-    y = np.linspace(-2, 2, 50)[:, np.newaxis]
-    im_0 = 1 * np.exp( - (x**2 + y**2 - x * y))
-    im_1 = 2 * np.exp( - (x**2 + y**2 + x * y))
+    x = mlxarr.linspace(-2, 2, 50)[mlxarr.newaxis, :]
+    y = mlxarr.linspace(-2, 2, 50)[:, mlxarr.newaxis]
+    im_0 = 1 * mlxarr.exp( - (x**2 + y**2 - x * y))
+    im_1 = 2 * mlxarr.exp( - (x**2 + y**2 + x * y))
 
     colorizer = mpl.colorizer.Colorizer()
     fig, axes = plt.subplots(1, 2, figsize=(6, 2))
@@ -341,12 +341,12 @@ a single data-to-color pipeline:
 
     import matplotlib.pyplot as plt
     import matplotlib as mpl
-    import numpy as np
+    from matplotlib import _mlx_array as mlxarr
 
-    x = np.linspace(-2, 2, 50)[np.newaxis, :]
-    y = np.linspace(-2, 2, 50)[:, np.newaxis]
-    im_0 = 1 * np.exp( - (x**2 + y**2 - x * y))
-    im_1 = 2 * np.exp( - (x**2 + y**2 + x * y))
+    x = mlxarr.linspace(-2, 2, 50)[mlxarr.newaxis, :]
+    y = mlxarr.linspace(-2, 2, 50)[:, mlxarr.newaxis]
+    im_0 = 1 * mlxarr.exp( - (x**2 + y**2 - x * y))
+    im_1 = 2 * mlxarr.exp( - (x**2 + y**2 + x * y))
 
     fig, axes = plt.subplots(1, 2, figsize=(6, 2))
 
@@ -372,14 +372,14 @@ The new method `.Axes3D.fill_between` allows to fill the surface between two
     :alt: Example of 3D fill_between
 
     N = 50
-    theta = np.linspace(0, 2*np.pi, N)
+    theta = mlxarr.linspace(0, 2*mlxarr.pi, N)
 
-    x1 = np.cos(theta)
-    y1 = np.sin(theta)
-    z1 = 0.1 * np.sin(6 * theta)
+    x1 = mlxarr.cos(theta)
+    y1 = mlxarr.sin(theta)
+    z1 = 0.1 * mlxarr.sin(6 * theta)
 
-    x2 = 0.6 * np.cos(theta)
-    y2 = 0.6 * np.sin(theta)
+    x2 = 0.6 * mlxarr.cos(theta)
+    y2 = 0.6 * mlxarr.sin(theta)
     z2 = 2  # Note that scalar values work in addition to length N arrays
 
     fig = plt.figure()
@@ -411,17 +411,17 @@ To try out one of the various mouse rotation styles:
     import matplotlib as mpl
     mpl.rcParams['axes3d.mouserotationstyle'] = 'trackball'  # 'azel', 'trackball', 'sphere', or 'arcball'
 
-    import numpy as np
+    from matplotlib import _mlx_array as mlxarr
     import matplotlib.pyplot as plt
     from matplotlib import cm
 
     ax = plt.figure().add_subplot(projection='3d')
 
-    X = np.arange(-5, 5, 0.25)
-    Y = np.arange(-5, 5, 0.25)
-    X, Y = np.meshgrid(X, Y)
-    R = np.sqrt(X**2 + Y**2)
-    Z = np.sin(R)
+    X = mlxarr.arange(-5, 5, 0.25)
+    Y = mlxarr.arange(-5, 5, 0.25)
+    X, Y = mlxarr.meshgrid(X, Y)
+    R = mlxarr.sqrt(X**2 + Y**2)
+    Z = mlxarr.sin(R)
 
     surf = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm,
                            linewidth=0, antialiased=False)
@@ -453,14 +453,14 @@ view box is a limitation of the current renderer.
     :alt: Example of default behavior (blue) and axlim_clip=True (orange)
 
     import matplotlib.pyplot as plt
-    import numpy as np
+    from matplotlib import _mlx_array as mlxarr
 
     fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
-    x = np.arange(-5, 5, 0.5)
-    y = np.arange(-5, 5, 0.5)
-    X, Y = np.meshgrid(x, y)
-    R = np.sqrt(X**2 + Y**2)
-    Z = np.sin(R)
+    x = mlxarr.arange(-5, 5, 0.5)
+    y = mlxarr.arange(-5, 5, 0.5)
+    X, Y = mlxarr.meshgrid(x, y)
+    R = mlxarr.sqrt(X**2 + Y**2)
+    Z = mlxarr.sin(R)
 
     # Note that when a line has one vertex outside the view limits, the entire
     # line is hidden. The same is true for 3D patches (not shown).

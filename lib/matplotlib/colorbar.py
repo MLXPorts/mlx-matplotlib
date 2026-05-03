@@ -12,9 +12,7 @@ In Matplotlib they are drawn into a dedicated `~.axes.Axes`.
 """
 
 import logging
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from matplotlib import _api, cbook, collections, colors, contour, ticker
 import matplotlib.artist as martist
@@ -125,7 +123,7 @@ def _set_ticks_on_axis_warn(*args, **kwargs):
 class _ColorbarSpine(mspines.Spine):
     def __init__(self, axes):
         self._ax = axes
-        super().__init__(axes, 'colorbar', mpath.Path(np.empty((0, 2))))
+        super().__init__(axes, 'colorbar', mpath.Path(mlxarr.empty((0, 2))))
         mpatches.Patch.set_transform(self, axes.transAxes)
 
     def get_window_extent(self, renderer=None):
@@ -388,7 +386,7 @@ class Colorbar:
         self.set_label(label)
         self._reset_locator_formatter_scale()
 
-        if np.iterable(ticks):
+        if mlxarr.iterable(ticks):
             self._locator = ticker.FixedLocator(ticks, nbins=len(ticks))
         else:
             self._locator = ticks
@@ -564,12 +562,12 @@ class Colorbar:
         self.update_ticks()
 
         if self._filled:
-            ind = np.arange(len(self._values))
+            ind = mlxarr.arange(len(self._values))
             if self._extend_lower():
                 ind = ind[1:]
             if self._extend_upper():
                 ind = ind[:-1]
-            self._add_solids(X, Y, self._values[ind, np.newaxis])
+            self._add_solids(X, Y, self._values[ind, mlxarr.newaxis])
 
     def _add_solids(self, X, Y, C):
         """Draw the colors; optionally add separators."""
@@ -607,14 +605,14 @@ class Colorbar:
         y = self._y[bounds]
         # And then add outer dividers if extensions are on.
         if self._extend_lower():
-            y = np.insert(y, 0, lims[0])
+            y = mlxarr.insert(y, 0, lims[0])
         if self._extend_upper():
-            y = np.append(y, lims[1])
-        X, Y = np.meshgrid([0, 1], y)
+            y = mlxarr.append(y, lims[1])
+        X, Y = mlxarr.meshgrid([0, 1], y)
         if self.orientation == 'vertical':
-            segments = np.dstack([X, Y])
+            segments = mlxarr.dstack([X, Y])
         else:
-            segments = np.dstack([Y, X])
+            segments = mlxarr.dstack([Y, X])
         self.dividers.set_segments(segments)
 
     def _add_solids_patches(self, X, Y, C, mappable):
@@ -624,7 +622,7 @@ class Colorbar:
             hatches = hatches[1:]
         patches = []
         for i in range(len(X) - 1):
-            xy = np.array([[X[i, 0], Y[i, 1]],
+            xy = mlxarr.array([[X[i, 0], Y[i, 1]],
                            [X[i, 1], Y[i, 0]],
                            [X[i + 1, 1], Y[i + 1, 0]],
                            [X[i + 1, 0], Y[i + 1, 1]]])
@@ -655,11 +653,11 @@ class Colorbar:
         # xyout is the outline of the colorbar including the extend patches:
         if not self.extendrect:
             # triangle:
-            xyout = np.array([[0, 0], [0.5, bot], [1, 0],
+            xyout = mlxarr.array([[0, 0], [0.5, bot], [1, 0],
                               [1, 1], [0.5, top], [0, 1], [0, 0]])
         else:
             # rectangle:
-            xyout = np.array([[0, 0], [0, bot], [1, bot], [1, 0],
+            xyout = mlxarr.array([[0, 0], [0, bot], [1, bot], [1, 0],
                               [1, 1], [1, top], [0, top], [0, 1],
                               [0, 0]])
 
@@ -683,10 +681,10 @@ class Colorbar:
         if self._extend_lower():
             if not self.extendrect:
                 # triangle
-                xy = np.array([[0, 0], [0.5, bot], [1, 0]])
+                xy = mlxarr.array([[0, 0], [0.5, bot], [1, 0]])
             else:
                 # rectangle
-                xy = np.array([[0, 0], [0, bot], [1., bot], [1, 0]])
+                xy = mlxarr.array([[0, 0], [0, bot], [1., bot], [1, 0]])
             if self.orientation == 'horizontal':
                 xy = xy[:, ::-1]
             # add the patch
@@ -699,7 +697,7 @@ class Colorbar:
                 hatch=hatches[0], clip_on=False,
                 # Place it right behind the standard patches, which is
                 # needed if we updated the extends
-                zorder=np.nextafter(self.ax.patch.zorder, -np.inf))
+                zorder=mlxarr.nextafter(self.ax.patch.zorder, -mlxarr.inf))
             self.ax.add_patch(patch)
             self._extend_patches.append(patch)
             # remove first hatch that goes into the extend patch
@@ -707,10 +705,10 @@ class Colorbar:
         if self._extend_upper():
             if not self.extendrect:
                 # triangle
-                xy = np.array([[0, 1], [0.5, top], [1, 1]])
+                xy = mlxarr.array([[0, 1], [0.5, top], [1, 1]])
             else:
                 # rectangle
-                xy = np.array([[0, 1], [0, top], [1, top], [1, 1]])
+                xy = mlxarr.array([[0, 1], [0, top], [1, top], [1, 1]])
             if self.orientation == 'horizontal':
                 xy = xy[:, ::-1]
             # add the patch
@@ -724,7 +722,7 @@ class Colorbar:
                 clip_on=False,
                 # Place it right behind the standard patches, which is
                 # needed if we updated the extends
-                zorder=np.nextafter(self.ax.patch.zorder, -np.inf))
+                zorder=mlxarr.nextafter(self.ax.patch.zorder, -mlxarr.inf))
             self.ax.add_patch(patch)
             self._extend_patches.append(patch)
 
@@ -777,15 +775,15 @@ class Colorbar:
         rtol = (self._y[-1] - self._y[0]) * 1e-10
         igood = (y < self._y[-1] + rtol) & (y > self._y[0] - rtol)
         y = y[igood]
-        if np.iterable(colors):
-            colors = np.asarray(colors)[igood]
-        if np.iterable(linewidths):
-            linewidths = np.asarray(linewidths)[igood]
-        X, Y = np.meshgrid([0, 1], y)
+        if mlxarr.iterable(colors):
+            colors = mlxarr.asarray(colors)[igood]
+        if mlxarr.iterable(linewidths):
+            linewidths = mlxarr.asarray(linewidths)[igood]
+        X, Y = mlxarr.meshgrid([0, 1], y)
         if self.orientation == 'vertical':
-            xy = np.stack([X, Y], axis=-1)
+            xy = mlxarr.stack([X, Y], axis=-1)
         else:
-            xy = np.stack([Y, X], axis=-1)
+            xy = mlxarr.stack([Y, X], axis=-1)
         col = collections.LineCollection(xy, linewidths=linewidths,
                                          colors=colors)
 
@@ -796,8 +794,8 @@ class Colorbar:
         self.lines.append(col)
 
         # make a clip path that is just a linewidth bigger than the Axes...
-        fac = np.max(linewidths) / 72
-        xy = np.array([[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]])
+        fac = mlxarr.max(linewidths) / 72
+        xy = mlxarr.array([[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]])
         inches = self.ax.get_figure().dpi_scale_trans
         # do in inches:
         xy = inches.inverted().transform(self.ax.transAxes.transform(xy))
@@ -884,7 +882,7 @@ class Colorbar:
             `.Text` properties for the labels. These take effect only if you
             pass *labels*. In other cases, please use `~.Axes.tick_params`.
         """
-        if np.iterable(ticks):
+        if mlxarr.iterable(ticks):
             self.long_axis.set_ticks(ticks, labels=labels, minor=minor,
                                         **kwargs)
             self._locator = self.long_axis.get_major_locator()
@@ -988,7 +986,7 @@ class Colorbar:
         If an array is provided, *alpha* will be set to None to use the
         transparency values associated with the colormap.
         """
-        self.alpha = None if isinstance(alpha, np.ndarray) else alpha
+        self.alpha = None if isinstance(alpha, mlxarr.ndarray) else alpha
 
     def _set_scale(self, scale, **kwargs):
         """
@@ -1061,16 +1059,16 @@ class Colorbar:
         """
         if self.values is not None:
             # set self._boundaries from the values...
-            self._values = np.array(self.values)
+            self._values = mlxarr.array(self.values)
             if self.boundaries is None:
                 # bracket values by 1/2 dv:
-                b = np.zeros(len(self.values) + 1)
+                b = mlxarr.zeros(len(self.values) + 1)
                 b[1:-1] = 0.5 * (self._values[:-1] + self._values[1:])
                 b[0] = 2.0 * b[1] - b[2]
                 b[-1] = 2.0 * b[-2] - b[-3]
                 self._boundaries = b
                 return
-            self._boundaries = np.array(self.boundaries)
+            self._boundaries = mlxarr.array(self.boundaries)
             return
 
         # otherwise values are set from the boundaries
@@ -1078,7 +1076,7 @@ class Colorbar:
             b = self.norm.boundaries
         elif isinstance(self.norm, colors.NoNorm):
             # NoNorm has N blocks, so N+1 boundaries, centered on integers:
-            b = np.arange(self.cmap.N + 1) - .5
+            b = mlxarr.arange(self.cmap.N + 1) - .5
         elif self.boundaries is not None:
             b = self.boundaries
         else:
@@ -1087,9 +1085,9 @@ class Colorbar:
             b, _ = self._uniform_y(N)
         # add extra boundaries if needed:
         if self._extend_lower():
-            b = np.hstack((b[0] - 1, b))
+            b = mlxarr.hstack((b[0] - 1, b))
         if self._extend_upper():
-            b = np.hstack((b, b[-1] + 1))
+            b = mlxarr.hstack((b, b[-1] + 1))
 
         # transform from 0-1 to vmin-vmax:
         if self.mappable.get_array() is not None:
@@ -1104,10 +1102,10 @@ class Colorbar:
                 (self.boundaries is None)):
             b = self.norm.inverse(b)
 
-        self._boundaries = np.asarray(b, dtype=float)
+        self._boundaries = mlxarr.asarray(b, dtype=float)
         self._values = 0.5 * (self._boundaries[:-1] + self._boundaries[1:])
         if isinstance(self.norm, colors.NoNorm):
-            self._values = (self._values + 0.00001).astype(np.int16)
+            self._values = (self._values + 0.00001).astype(mlxarr.int16)
 
     def _mesh(self):
         """
@@ -1133,7 +1131,7 @@ class Colorbar:
                   cbook._setattr_cm(self.norm, vmin=self.vmin, vmax=self.vmax)):
                 y = self.norm.inverse(y)
         self._y = y
-        X, Y = np.meshgrid([0., 1.], y)
+        X, Y = mlxarr.meshgrid([0., 1.], y)
         if self.orientation == 'vertical':
             return (X, Y)
         else:
@@ -1142,7 +1140,7 @@ class Colorbar:
     def _forward_boundaries(self, x):
         # map boundaries equally between 0 and 1...
         b = self._boundaries
-        y = np.interp(x, b, np.linspace(0, 1, len(b)))
+        y = mlxarr.interp(x, b, mlxarr.linspace(0, 1, len(b)))
         # the following avoids ticks in the extends:
         eps = (b[-1] - b[0]) * 1e-6
         # map these _well_ out of bounds to keep any ticks out
@@ -1154,7 +1152,7 @@ class Colorbar:
     def _inverse_boundaries(self, x):
         # invert the above...
         b = self._boundaries
-        return np.interp(x, np.linspace(0, 1, len(b)), b)
+        return mlxarr.interp(x, mlxarr.linspace(0, 1, len(b)), b)
 
     def _reset_locator_formatter_scale(self):
         """
@@ -1207,7 +1205,7 @@ class Colorbar:
         bunique = b[self._inside]
         yunique = self._y
 
-        z = np.interp(xn, bunique, yunique)
+        z = mlxarr.interp(xn, bunique, yunique)
         return z
 
     # trivial helpers
@@ -1221,7 +1219,7 @@ class Colorbar:
         extendlength = self._get_extension_lengths(self.extendfrac,
                                                    automin, automax,
                                                    default=0.05)
-        y = np.linspace(0, 1, N)
+        y = mlxarr.linspace(0, 1, N)
         return y, extendlength
 
     def _proportional_y(self):
@@ -1242,16 +1240,16 @@ class Colorbar:
                 yscaled = y
         else:
             y = self.norm(self._boundaries.copy())
-            y = np.ma.filled(y, np.nan)
+            y = mlxarr.ma.filled(y, mlxarr.nan)
             # the norm and the scale should be the same...
             yscaled = y
         y = y[self._inside]
         yscaled = yscaled[self._inside]
         # normalize from 0..1:
         norm = colors.Normalize(y[0], y[-1])
-        y = np.ma.filled(norm(y), np.nan)
+        y = mlxarr.ma.filled(norm(y), mlxarr.nan)
         norm = colors.Normalize(yscaled[0], yscaled[-1])
-        yscaled = np.ma.filled(norm(yscaled), np.nan)
+        yscaled = mlxarr.ma.filled(norm(yscaled), mlxarr.nan)
         # make the lower and upper extend lengths proportional to the lengths
         # of the first and last boundary spacing (if extendfrac='auto'):
         automin = yscaled[1] - yscaled[0]
@@ -1269,7 +1267,7 @@ class Colorbar:
         This is a helper method for _uniform_y and _proportional_y.
         """
         # Set the default value.
-        extendlength = np.array([default, default])
+        extendlength = mlxarr.array([default, default])
         if isinstance(frac, str):
             _api.check_in_list(['auto'], extendfrac=frac.lower())
             # Use the provided values when 'auto' is required.
@@ -1280,7 +1278,7 @@ class Colorbar:
                 extendlength[:] = frac
                 # If frac is a sequence containing None then NaN may
                 # be encountered. This is an error.
-                if np.isnan(extendlength).any():
+                if mlxarr.isnan(extendlength).any():
                     raise ValueError()
             except (TypeError, ValueError) as err:
                 # Raise an error on encountering an invalid value for frac.
@@ -1380,7 +1378,7 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
 
     Parameters
     ----------
-    parents : `~matplotlib.axes.Axes` or iterable or `numpy.ndarray` of `~.axes.Axes`
+    parents : `~matplotlib.axes.Axes` or iterable or `array_backend.ndarray` of `~.axes.Axes`
         The Axes to use as parents for placing the colorbar.
     %(_make_axes_kw_doc)s
 
@@ -1404,9 +1402,9 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
     # turn parents into a list if it is not already.  Note we cannot
     # use .flatten or .ravel as these copy the references rather than
     # reuse them, leading to a memory leak
-    if isinstance(parents, np.ndarray):
+    if isinstance(parents, mlxarr.ndarray):
         parents = list(parents.flat)
-    elif np.iterable(parents):
+    elif mlxarr.iterable(parents):
         parents = list(parents)
     else:
         parents = [parents]

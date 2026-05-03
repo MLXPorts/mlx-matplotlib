@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 4 -*- */
 
 /* Utilities to create scalars and empty arrays that behave like the
-   Numpy array wrappers in numpy_cpp.h */
+   MLXArrayBackend array wrappers in array_backend_cpp.h */
 
 #ifndef MPL_SCALAR_H
 #define MPL_SCALAR_H

@@ -16,7 +16,7 @@ from .typing import (
     MarkEveryType,
     MarkerType,
 )
-from numpy.typing import ArrayLike
+from matplotlib._mlx_typing import ArrayLike
 
 def segment_hits(
     cx: ArrayLike, cy: ArrayLike, x: ArrayLike, y: ArrayLike, radius: ArrayLike

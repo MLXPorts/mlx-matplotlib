@@ -15,10 +15,11 @@ from io import BytesIO
 import json
 import mimetypes
 from pathlib import Path
-import random
 import sys
 import signal
 import threading
+
+import mlx.core as mx
 
 try:
     import tornado.web
@@ -226,7 +227,7 @@ class WebAggApplication(tornado.web.Application):
             for i in range(min(5, n)):
                 yield port + i
             for i in range(n - 5):
-                yield port + random.randint(-2 * n, 2 * n)
+                yield port + mx.random.randint(-2 * n, 2 * n + 1).item()
 
         if address is None:
             cls.address = mpl.rcParams['webagg.address']

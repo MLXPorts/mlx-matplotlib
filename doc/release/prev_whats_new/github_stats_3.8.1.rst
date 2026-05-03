@@ -149,7 +149,7 @@ Issues (24):
 * :ghissue:`26913`: Should ``ContourSet.allsegs`` and ``.allkinds`` be deprecated?
 * :ghissue:`26869`: [Bug]: Plot window not shown in Mac OS with backend set to default MacOSX
 * :ghissue:`16865`: Hexbin mincnt parameter docstring should say "more than or equal to" not "more than"
-* :ghissue:`27103`: [Bug]: hexbin cannot always accept np.max like functions as reduce_C_function
+* :ghissue:`27103`: [Bug]: hexbin cannot always accept mlxarr.max like functions as reduce_C_function
 * :ghissue:`27062`: [Bug]: ContourLabeler.clabel with manual != False breaks unconnected contours
 * :ghissue:`26971`: [Bug]: plt.clabel raises exception at very low DPI: ``ValueError: 'codes' must be a 1D list or array with the same length of 'vertices'. Your vertices have shape (2, 2) but your codes have shape (1,)``
 * :ghissue:`27188`: Small error in docstring of matplotlib.colors.from_levels_and_colors

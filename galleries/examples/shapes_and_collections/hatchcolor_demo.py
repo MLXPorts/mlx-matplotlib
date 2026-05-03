@@ -19,8 +19,7 @@ the hatch in a rectangle and a bar plot. The *hatchcolor* parameter is available
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.cm as cm
 from matplotlib.patches import Rectangle
 
@@ -32,8 +31,8 @@ ax1.add_patch(Rectangle((0.1, 0.5), 0.8, 0.3, hatch=".", hatchcolor='red',
 # If hatchcolor is not passed, the hatch will match the edge color
 ax1.add_patch(Rectangle((0.1, 0.1), 0.8, 0.3, hatch='x', edgecolor='orange', lw=2))
 
-x = np.arange(1, 5)
-y = np.arange(1, 5)
+x = mlxarr.arange(1, 5)
+y = mlxarr.arange(1, 5)
 
 ax2.bar(x, y, facecolor='none', edgecolor='red', hatch='//', hatchcolor='blue')
 ax2.set_xlim(0, 5)
@@ -52,10 +51,10 @@ fig, ax = plt.subplots()
 
 num_points_x = 10
 num_points_y = 9
-x = np.linspace(0, 1, num_points_x)
-y = np.linspace(0, 1, num_points_y)
+x = mlxarr.linspace(0, 1, num_points_x)
+y = mlxarr.linspace(0, 1, num_points_y)
 
-X, Y = np.meshgrid(x, y)
+X, Y = mlxarr.meshgrid(x, y)
 X[1::2, :] += (x[1] - x[0]) / 2  # stagger every alternate row
 
 # As ax.scatter (PathCollection) is drawn row by row, setting hatchcolors to the

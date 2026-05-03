@@ -1,5 +1,4 @@
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib.pyplot as plt
 from matplotlib.testing.decorators import image_comparison
 
@@ -11,7 +10,7 @@ def test_agg_filter_alpha():
     plt.rcParams['pcolormesh.snap'] = False
 
     ax = plt.axes()
-    x, y = np.mgrid[0:7, 0:8]
+    x, y = mlxarr.mgrid[0:7, 0:8]
     data = x**2 - y**2
     mesh = ax.pcolormesh(data, cmap='Reds', zorder=5)
 

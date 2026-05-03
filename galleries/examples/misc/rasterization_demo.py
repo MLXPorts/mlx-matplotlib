@@ -35,14 +35,13 @@ its physical size and the value of the ``dpi`` parameter passed to
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
+from matplotlib import _mlx_array as mlxarr
+d = mlxarr.arange(100).reshape(10, 10)  # the values to be color-mapped
+x, y = mlxarr.meshgrid(mlxarr.arange(11), mlxarr.arange(11))
 
-d = np.arange(100).reshape(10, 10)  # the values to be color-mapped
-x, y = np.meshgrid(np.arange(11), np.arange(11))
-
-theta = 0.25*np.pi
-xx = x*np.cos(theta) - y*np.sin(theta)  # rotate x by -theta
-yy = x*np.sin(theta) + y*np.cos(theta)  # rotate y by -theta
+theta = 0.25*mlxarr.pi
+xx = x*mlxarr.cos(theta) - y*mlxarr.sin(theta)  # rotate x by -theta
+yy = x*mlxarr.sin(theta) + y*mlxarr.cos(theta)  # rotate y by -theta
 
 fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, layout="constrained")
 

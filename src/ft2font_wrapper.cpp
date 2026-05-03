@@ -1,6 +1,4 @@
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
 #include <pybind11/stl.h>
 
 #include "ft2font.h"
@@ -706,11 +704,11 @@ const char *PyFT2Font_set_text__doc__ = R"""(
 
     Returns
     -------
-    np.ndarray[double]
+    mlxarr.ndarray[double]
         A sequence of x,y glyph positions in 26.6 subpixels; divide by 64 for pixels.
 )""";
 
-static py::array_t<double>
+static py::memoryview
 PyFT2Font_set_text(PyFT2Font *self, std::u32string_view text, double angle = 0.0,
                    std::variant<LoadFlags, FT_Int32> flags_or_int = LoadFlags::FORCE_AUTOHINT)
 {
@@ -734,12 +732,18 @@ PyFT2Font_set_text(PyFT2Font *self, std::u32string_view text, double angle = 0.0
 
     self->x->set_text(text, angle, static_cast<FT_Int32>(flags), xys);
 
-    py::ssize_t dims[] = { static_cast<py::ssize_t>(xys.size()) / 2, 2 };
-    py::array_t<double> result(dims);
-    if (xys.size() > 0) {
-        memcpy(result.mutable_data(), xys.data(), result.nbytes());
+    auto n = static_cast<py::ssize_t>(xys.size() / 2);
+    auto ba_size = n * 2 * static_cast<py::ssize_t>(sizeof(double));
+    py::bytearray ba = py::reinterpret_steal<py::bytearray>(
+        PyByteArray_FromStringAndSize(nullptr, ba_size));
+    if (!ba) {
+        throw py::error_already_set();
     }
-    return result;
+    if (!xys.empty()) {
+        std::memcpy(PyByteArray_AsString(ba.ptr()), xys.data(), xys.size() * sizeof(double));
+    }
+    py::object mv = py::module_::import("builtins").attr("memoryview")(ba);
+    return mv.attr("cast")("d", py::make_tuple(n, 2)).cast<py::memoryview>();
 }
 
 const char *PyFT2Font_get_num_glyphs__doc__ = "Return the number of loaded glyphs.";
@@ -991,8 +995,7 @@ PyFT2Font_draw_glyph_to_bitmap(PyFT2Font *self, py::buffer &image,
     auto yd = _double_to_<int>("y", vyd);
 
     self->x->draw_glyph_to_bitmap(
-        py::array_t<uint8_t, py::array::c_style>{image},
-        xd, yd, glyph->glyphInd, antialiased);
+        image, xd, yd, glyph->glyphInd, antialiased);
 }
 
 const char *PyFT2Font_get_glyph_name__doc__ = R"""(
@@ -1391,9 +1394,9 @@ const char *PyFT2Font_get_path__doc__ = R"""(
 
     Returns
     -------
-    vertices : np.ndarray[double]
+    vertices : mlxarr.ndarray[double]
         The (N, 2) array of vertices describing the current glyph.
-    codes : np.ndarray[np.uint8]
+    codes : mlxarr.ndarray[mlxarr.uint8]
         The (N, ) array of codes corresponding to the vertices.
 
     See Also
@@ -1412,19 +1415,32 @@ PyFT2Font_get_path(PyFT2Font *self)
 
     self->x->get_path(vertices, codes);
 
-    py::ssize_t length = codes.size();
-    py::ssize_t vertices_dims[2] = { length, 2 };
-    py::array_t<double> vertices_arr(vertices_dims);
-    if (length > 0) {
-        memcpy(vertices_arr.mutable_data(), vertices.data(), vertices_arr.nbytes());
-    }
-    py::ssize_t codes_dims[1] = { length };
-    py::array_t<unsigned char> codes_arr(codes_dims);
-    if (length > 0) {
-        memcpy(codes_arr.mutable_data(), codes.data(), codes_arr.nbytes());
-    }
+    auto length = static_cast<py::ssize_t>(codes.size());
 
-    return py::make_tuple(vertices_arr, codes_arr);
+    auto v_ba_size = length * 2 * static_cast<py::ssize_t>(sizeof(double));
+    py::bytearray v_ba = py::reinterpret_steal<py::bytearray>(
+        PyByteArray_FromStringAndSize(nullptr, v_ba_size));
+    if (!v_ba) {
+        throw py::error_already_set();
+    }
+    if (!vertices.empty()) {
+        std::memcpy(PyByteArray_AsString(v_ba.ptr()), vertices.data(), vertices.size() * sizeof(double));
+    }
+    py::object v_mv = py::module_::import("builtins").attr("memoryview")(v_ba);
+    v_mv = v_mv.attr("cast")("d", py::make_tuple(length, 2));
+
+    auto c_ba_size = length * static_cast<py::ssize_t>(sizeof(unsigned char));
+    py::bytearray c_ba = py::reinterpret_steal<py::bytearray>(
+        PyByteArray_FromStringAndSize(nullptr, c_ba_size));
+    if (!c_ba) {
+        throw py::error_already_set();
+    }
+    if (!codes.empty()) {
+        std::memcpy(PyByteArray_AsString(c_ba.ptr()), codes.data(), codes.size() * sizeof(unsigned char));
+    }
+    py::object c_mv = py::module_::import("builtins").attr("memoryview")(c_ba);
+
+    return py::make_tuple(v_mv, c_mv);
 }
 
 const char *PyFT2Font_get_image__doc__ = R"""(
@@ -1432,14 +1448,14 @@ const char *PyFT2Font_get_image__doc__ = R"""(
 
     Returns
     -------
-    np.ndarray[int]
+    mlxarr.ndarray[int]
 
     See Also
     --------
     .get_path
 )""";
 
-static py::array
+static py::memoryview
 PyFT2Font_get_image(PyFT2Font *self)
 {
     return self->x->get_image();
@@ -1771,7 +1787,9 @@ PYBIND11_MODULE(ft2font, m, py::mod_gil_not_used())
           "The original filename for this object.")
 
         .def_buffer([](PyFT2Font &self) -> py::buffer_info {
-            return self.x->get_image().request();
+            py::object image = self.x->get_image();
+            py::buffer buf = py::reinterpret_borrow<py::buffer>(image);
+            return buf.request();
         });
 
     m.attr("__freetype_version__") = version_string;

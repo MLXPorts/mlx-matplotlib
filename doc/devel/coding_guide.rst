@@ -48,8 +48,8 @@ Package imports
 
 Import the following modules using the standard scipy conventions::
 
-  import numpy as np
-  import numpy.ma as ma
+  from matplotlib import _mlx_array as mlxarr
+  from matplotlib import _mlx_array as array_backend.ma as ma
   import matplotlib as mpl
   import matplotlib.pyplot as plt
   import matplotlib.cbook as cbook
@@ -121,9 +121,9 @@ C/C++ extensions
   code.  The interface code should be named :file:`FOO_wrap.cpp` or
   :file:`FOO_wrapper.cpp`.
 
-* Header file documentation (aka docstrings) should be in Numpydoc
+* Header file documentation (aka docstrings) should be in MLXArrayBackenddoc
   format.  We don't plan on using automated tools for these
-  docstrings, and the Numpydoc format is well understood in the
+  docstrings, and the MLXArrayBackenddoc format is well understood in the
   scientific Python community.
 
 * C/C++ code in the :file:`extern/` directory is vendored, and should be kept

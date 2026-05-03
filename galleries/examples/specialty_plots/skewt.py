@@ -149,8 +149,7 @@ if __name__ == '__main__':
     from io import StringIO
 
     import matplotlib.pyplot as plt
-    import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
     from matplotlib.ticker import MultipleLocator, NullFormatter, ScalarFormatter
 
     # Some example data.
@@ -232,7 +231,7 @@ if __name__ == '__main__':
 
     # Parse the data
     sound_data = StringIO(data_txt)
-    p, h, T, Td = np.loadtxt(sound_data, unpack=True)
+    p, h, T, Td = mlxarr.loadtxt(sound_data, unpack=True)
 
     # Create a new figure. The dimensions here give a good aspect ratio
     fig = plt.figure(figsize=(6.5875, 6.2125))
@@ -251,7 +250,7 @@ if __name__ == '__main__':
     # Disables the log-formatting that comes with semilogy
     ax.yaxis.set_major_formatter(ScalarFormatter())
     ax.yaxis.set_minor_formatter(NullFormatter())
-    ax.set_yticks(np.linspace(100, 1000, 10))
+    ax.set_yticks(mlxarr.linspace(100, 1000, 10))
     ax.set_ylim(1050, 100)
 
     ax.xaxis.set_major_locator(MultipleLocator(10))

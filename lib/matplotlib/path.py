@@ -10,15 +10,56 @@ visualisation.
 """
 
 import copy
+from array import array as _array
 from functools import lru_cache
 from weakref import WeakValueDictionary
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from . import _api, _path
 from .cbook import _to_unmasked_float_array, simple_linear_interpolation
 from .bezier import BezierSegment
+
+
+def _path_values_to_memoryview(values):
+    if values is None:
+        return None
+    if isinstance(values, mlxarr.ndarray):
+        values = values.tolist()
+
+    def shape_of(value):
+        if isinstance(value, mlxarr.ndarray):
+            return tuple(value.shape)
+        if not isinstance(value, (list, tuple)):
+            return ()
+        if len(value) == 0:
+            return (0,)
+        return (len(value),) + shape_of(value[0])
+
+    def flatten(value):
+        if isinstance(value, mlxarr.ndarray):
+            value = value.tolist()
+        if isinstance(value, (list, tuple)):
+            for item in value:
+                yield from flatten(item)
+        else:
+            yield float(value)
+
+    shape = shape_of(values)
+    flat = list(flatten(values))
+    if not flat:
+        return None
+    buf = _array("d", flat)
+    return memoryview(buf).cast("B").cast("d", shape=shape)
+
+
+def _path_transform_to_memoryview(transform):
+    if transform is None:
+        return None
+    if hasattr(transform, "get_matrix"):
+        transform = transform.get_matrix()
+    elif hasattr(transform, "get_affine"):
+        transform = transform.get_affine().get_matrix()
+    return _path_values_to_memoryview(transform)
 
 
 class Path:
@@ -26,10 +67,10 @@ class Path:
     A series of possibly disconnected, possibly closed, line and curve
     segments.
 
-    The underlying storage is made up of two parallel numpy arrays:
+    The underlying storage is made up of two parallel array_backend arrays:
 
     - *vertices*: an (N, 2) float array of vertices
-    - *codes*: an N-length `numpy.uint8` array of path codes, or None
+    - *codes*: an N-length `array_backend.uint8` array of path codes, or None
 
     These two arrays always have the same length in the first
     dimension.  For example, to represent a cubic curve, you must
@@ -76,7 +117,7 @@ class Path:
         made up front in the constructor that will not change when the
         data changes.
     """
-    code_type = np.uint8
+    code_type = mlxarr.uint8
 
     # Path codes
     STOP = code_type(0)         # 1 vertex
@@ -129,7 +170,7 @@ class Path:
         _api.check_shape((None, 2), vertices=vertices)
 
         if codes is not None and len(vertices):
-            codes = np.asarray(codes, self.code_type)
+            codes = mlxarr.asarray(codes, self.code_type)
             if codes.ndim != 1 or len(codes) != len(vertices):
                 raise ValueError("'codes' must be a 1D list or array with the "
                                  "same length of 'vertices'. "
@@ -140,7 +181,7 @@ class Path:
                                  f"to 'MOVETO' ({self.MOVETO}).  "
                                  f"Your first code is {codes[0]}")
         elif closed and len(vertices):
-            codes = np.empty(len(vertices), dtype=self.code_type)
+            codes = mlxarr.empty(len(vertices), dtype=self.code_type)
             codes[0] = self.MOVETO
             codes[1:-1] = self.LINETO
             codes[-1] = self.CLOSEPOLY
@@ -196,7 +237,7 @@ class Path:
         an entry for the CLOSEPATH; this entry is added by `._create_closed`.
         """
         v = _to_unmasked_float_array(vertices)
-        return cls(np.concatenate([v, v[:1]]), closed=True)
+        return cls(mlxarr.concatenate([v, v[:1]]), closed=True)
 
     def _update_values(self):
         self._simplify_threshold = mpl.rcParams['path.simplify_threshold']
@@ -204,7 +245,7 @@ class Path:
             self._simplify_threshold > 0 and
             mpl.rcParams['path.simplify'] and
             len(self._vertices) >= 128 and
-            (self._codes is None or np.all(self._codes <= Path.LINETO))
+            (self._codes is None or mlxarr.all(self._codes <= Path.LINETO))
         )
 
     @property
@@ -327,8 +368,8 @@ class Path:
             raise ValueError("The third dimension of 'XY' must be 2")
         stride = numsides + 1
         nverts = numpolys * stride
-        verts = np.zeros((nverts, 2))
-        codes = np.full(nverts, cls.LINETO, dtype=cls.code_type)
+        verts = mlxarr.zeros((nverts, 2))
+        codes = mlxarr.full(nverts, cls.LINETO, dtype=cls.code_type)
         codes[0::stride] = cls.MOVETO
         codes[numsides::stride] = cls.CLOSEPOLY
         for i in range(numsides):
@@ -341,9 +382,9 @@ class Path:
         Concatenate a list of `Path`\s into a single `Path`, removing all `STOP`\s.
         """
         if not args:
-            return Path(np.empty([0, 2], dtype=np.float32))
-        vertices = np.concatenate([path.vertices for path in args])
-        codes = np.empty(len(vertices), dtype=cls.code_type)
+            return Path(mlxarr.empty([0, 2], dtype=mlxarr.float32))
+        vertices = mlxarr.concatenate([path.vertices for path in args])
+        codes = mlxarr.empty(len(vertices), dtype=cls.code_type)
         i = 0
         for path in args:
             size = len(path.vertices)
@@ -426,7 +467,7 @@ class Path:
             if extra_vertices:
                 for i in range(extra_vertices):
                     next(codes)
-                    curr_vertices = np.append(curr_vertices, next(vertices))
+                    curr_vertices = mlxarr.append(curr_vertices, next(vertices))
             yield curr_vertices, code
 
     def iter_bezier(self, **kwargs):
@@ -459,17 +500,17 @@ class Path:
                     raise ValueError("Malformed path, must start with MOVETO.")
             if code == Path.MOVETO:  # a point is like "CURVE1"
                 first_vert = verts
-                yield BezierSegment(np.array([first_vert])), code
+                yield BezierSegment(mlxarr.array([first_vert])), code
             elif code == Path.LINETO:  # "CURVE2"
-                yield BezierSegment(np.array([prev_vert, verts])), code
+                yield BezierSegment(mlxarr.array([prev_vert, verts])), code
             elif code == Path.CURVE3:
-                yield BezierSegment(np.array([prev_vert, verts[:2],
+                yield BezierSegment(mlxarr.array([prev_vert, verts[:2],
                                               verts[2:]])), code
             elif code == Path.CURVE4:
-                yield BezierSegment(np.array([prev_vert, verts[:2],
+                yield BezierSegment(mlxarr.array([prev_vert, verts[:2],
                                               verts[2:4], verts[4:]])), code
             elif code == Path.CLOSEPOLY:
-                yield BezierSegment(np.array([prev_vert, first_vert])), code
+                yield BezierSegment(mlxarr.array([prev_vert, first_vert])), code
             elif code == Path.STOP:
                 return
             else:
@@ -481,7 +522,7 @@ class Path:
         if self.codes is None:
             yield self
         else:
-            idxs = np.append((self.codes == Path.MOVETO).nonzero()[0], len(self.codes))
+            idxs = mlxarr.append((self.codes == Path.MOVETO).nonzero()[0], len(self.codes))
             for sl in map(slice, idxs, idxs[1:]):
                 yield Path._fast_from_codes_and_verts(
                     self.vertices[sl], self.codes[sl], self)
@@ -498,7 +539,8 @@ class Path:
         Path.iter_segments : for details of the keyword arguments.
         """
         vertices, codes = _path.cleanup_path(
-            self, transform, remove_nans, clip, snap, stroke_width, simplify,
+            self, _path_transform_to_memoryview(transform), remove_nans,
+            _path_values_to_memoryview(clip), snap, stroke_width, simplify,
             curves, sketch)
         pth = Path._fast_from_codes_and_verts(vertices, codes, self)
         if not simplify:
@@ -566,7 +608,9 @@ class Path:
         if transform and not transform.is_affine:
             self = transform.transform_path(self)
             transform = None
-        return _path.point_in_path(point[0], point[1], radius, self, transform)
+        return _path.point_in_path(
+            point[0], point[1], radius, self,
+            _path_transform_to_memoryview(transform))
 
     def contains_points(self, points, transform=None, radius=0.0):
         """
@@ -609,7 +653,8 @@ class Path:
         """
         if transform is not None:
             transform = transform.frozen()
-        result = _path.points_in_path(points, radius, self, transform)
+        result = _path.points_in_path(
+            points, radius, self, _path_transform_to_memoryview(transform))
         return result.astype('bool')
 
     def contains_path(self, path, transform=None):
@@ -621,7 +666,8 @@ class Path:
         """
         if transform is not None:
             transform = transform.frozen()
-        return _path.path_in_path(self, None, path, transform)
+        return _path.path_in_path(
+            self, None, path, _path_transform_to_memoryview(transform))
 
     def get_extents(self, transform=None, **kwargs):
         """
@@ -644,12 +690,12 @@ class Path:
             self = transform.transform_path(self)
         if self.codes is None:
             xys = self.vertices
-        elif len(np.intersect1d(self.codes, [Path.CURVE3, Path.CURVE4])) == 0:
+        elif len(mlxarr.intersect1d(self.codes, [Path.CURVE3, Path.CURVE4])) == 0:
             # Optimization for the straight line case.
             # Instead of iterating through each curve, consider
             # each line segment's end-points
             # (recall that STOP and CLOSEPOLY vertices are ignored)
-            xys = self.vertices[np.isin(self.codes,
+            xys = self.vertices[mlxarr.isin(self.codes,
                                         [Path.MOVETO, Path.LINETO])]
         else:
             xys = []
@@ -658,7 +704,7 @@ class Path:
                 _, dzeros = curve.axis_aligned_extrema()
                 # as can the ends of the curve
                 xys.append(curve([0, *dzeros, 1]))
-            xys = np.concatenate(xys)
+            xys = mlxarr.concatenate(xys)
         if len(xys):
             return Bbox([xys.min(axis=0), xys.max(axis=0)])
         else:
@@ -708,7 +754,7 @@ class Path:
             return self.make_compound_path(
                 *(p.interpolated(steps) for p in self._iter_connected_components()))
 
-        if self.codes is not None and self.CLOSEPOLY in self.codes and not np.all(
+        if self.codes is not None and self.CLOSEPOLY in self.codes and not mlxarr.all(
                 self.vertices[self.codes == self.CLOSEPOLY] == self.vertices[0]):
             vertices = self.vertices.copy()
             vertices[self.codes == self.CLOSEPOLY] = vertices[0]
@@ -718,7 +764,7 @@ class Path:
         vertices = simple_linear_interpolation(vertices, steps)
         codes = self.codes
         if codes is not None:
-            new_codes = np.full((len(codes) - 1) * steps + 1, Path.LINETO,
+            new_codes = mlxarr.full((len(codes) - 1) * steps + 1, Path.LINETO,
                                 dtype=self.code_type)
             new_codes[0::steps] = codes
         else:
@@ -759,7 +805,7 @@ class Path:
             if closed_only:
                 if len(vertices) < 3:
                     return []
-                elif np.any(vertices[0] != vertices[-1]):
+                elif mlxarr.any(vertices[0] != vertices[-1]):
                     vertices = [*vertices, vertices[0]]
 
             if transform is None:
@@ -769,8 +815,34 @@ class Path:
 
         # Deal with the case where there are curves and/or multiple
         # subpaths (using extension code)
-        return _path.convert_path_to_polygons(
-            self, transform, width, height, closed_only)
+        try:
+            return _path.convert_path_to_polygons(
+                self, transform, width, height, closed_only)
+        except TypeError:
+            polygons = []
+            current = []
+            for vertices, code in self.iter_segments(
+                    transform, curves=False, simplify=False):
+                point = list(mlxarr.ravel(vertices))
+                if len(point) >= 2:
+                    point = point[-2:]
+                if code == self.MOVETO:
+                    if current:
+                        polygons.append(current)
+                    current = [point]
+                elif code == self.CLOSEPOLY:
+                    if current and (not closed_only or len(current) >= 3):
+                        if closed_only and current[0] != current[-1]:
+                            current.append(current[0])
+                        polygons.append(current)
+                    current = []
+                else:
+                    current.append(point)
+            if current and (not closed_only or len(current) >= 3):
+                if closed_only and current[0] != current[-1]:
+                    current.append(current[0])
+                polygons.append(current)
+            return [mlxarr.asarray(poly) for poly in polygons]
 
     _unit_rectangle = None
 
@@ -798,11 +870,11 @@ class Path:
         else:
             path = None
         if path is None:
-            theta = ((2 * np.pi / numVertices) * np.arange(numVertices + 1)
+            theta = ((2 * mlxarr.pi / numVertices) * mlxarr.arange(numVertices + 1)
                      # This initial rotation is to make sure the polygon always
                      # "points-up".
-                     + np.pi / 2)
-            verts = np.column_stack((np.cos(theta), np.sin(theta)))
+                     + mlxarr.pi / 2)
+            verts = mlxarr.column_stack((mlxarr.cos(theta), mlxarr.sin(theta)))
             path = cls(verts, closed=True, readonly=True)
             if numVertices <= 16:
                 cls._unit_regular_polygons[numVertices] = path
@@ -822,13 +894,13 @@ class Path:
             path = None
         if path is None:
             ns2 = numVertices * 2
-            theta = (2*np.pi/ns2 * np.arange(ns2 + 1))
+            theta = (2*mlxarr.pi/ns2 * mlxarr.arange(ns2 + 1))
             # This initial rotation is to make sure the polygon always
             # "points-up"
-            theta += np.pi / 2.0
-            r = np.ones(ns2 + 1)
+            theta += mlxarr.pi / 2.0
+            r = mlxarr.ones(ns2 + 1)
             r[1::2] = innerCircle
-            verts = (r * np.vstack((np.cos(theta), np.sin(theta)))).T
+            verts = (r * mlxarr.vstack((mlxarr.cos(theta), mlxarr.sin(theta)))).T
             path = cls(verts, closed=True, readonly=True)
             if numVertices <= 16:
                 cls._unit_regular_stars[(numVertices, innerCircle)] = path
@@ -879,10 +951,10 @@ class Path:
           Bezier Cubic Splines <https://www.tinaja.com/glib/ellipse4.pdf>`_.
         """
         MAGIC = 0.2652031
-        SQRTHALF = np.sqrt(0.5)
+        SQRTHALF = mlxarr.sqrt(0.5)
         MAGIC45 = SQRTHALF * MAGIC
 
-        vertices = np.array([[0.0, -1.0],
+        vertices = mlxarr.array([[0.0, -1.0],
 
                              [MAGIC, -1.0],
                              [SQRTHALF-MAGIC45, -SQRTHALF-MAGIC45],
@@ -935,10 +1007,10 @@ class Path:
         """
         if cls._unit_circle_righthalf is None:
             MAGIC = 0.2652031
-            SQRTHALF = np.sqrt(0.5)
+            SQRTHALF = mlxarr.sqrt(0.5)
             MAGIC45 = SQRTHALF * MAGIC
 
-            vertices = np.array(
+            vertices = mlxarr.array(
                 [[0.0, -1.0],
 
                  [MAGIC, -1.0],
@@ -961,7 +1033,7 @@ class Path:
 
                 float)
 
-            codes = np.full(14, cls.CURVE4, dtype=cls.code_type)
+            codes = mlxarr.full(14, cls.CURVE4, dtype=cls.code_type)
             codes[0] = cls.MOVETO
             codes[-1] = cls.CLOSEPOLY
 
@@ -986,29 +1058,29 @@ class Path:
            polylines, quadratic or cubic Bezier curves
            <https://web.archive.org/web/20190318044212/http://www.spaceroots.org/documents/ellipse/index.html>`_.
         """
-        halfpi = np.pi * 0.5
+        halfpi = mlxarr.pi * 0.5
 
         eta1 = theta1
-        eta2 = theta2 - 360 * np.floor((theta2 - theta1) / 360)
+        eta2 = theta2 - 360 * mlxarr.floor((theta2 - theta1) / 360)
         # Ensure 2pi range is not flattened to 0 due to floating-point errors,
         # but don't try to expand existing 0 range.
         if theta2 != theta1 and eta2 <= eta1:
             eta2 += 360
-        eta1, eta2 = np.deg2rad([eta1, eta2])
+        eta1, eta2 = mlxarr.deg2rad([eta1, eta2])
 
         # number of curve segments to make
         if n is None:
-            n = int(2 ** np.ceil((eta2 - eta1) / halfpi))
+            n = int(2 ** mlxarr.ceil((eta2 - eta1) / halfpi))
         if n < 1:
             raise ValueError("n must be >= 1 or None")
 
         deta = (eta2 - eta1) / n
-        t = np.tan(0.5 * deta)
-        alpha = np.sin(deta) * (np.sqrt(4.0 + 3.0 * t * t) - 1) / 3.0
+        t = mlxarr.tan(0.5 * deta)
+        alpha = mlxarr.sin(deta) * (mlxarr.sqrt(4.0 + 3.0 * t * t) - 1) / 3.0
 
-        steps = np.linspace(eta1, eta2, n + 1, True)
-        cos_eta = np.cos(steps)
-        sin_eta = np.sin(steps)
+        steps = mlxarr.linspace(eta1, eta2, n + 1, True)
+        cos_eta = mlxarr.cos(steps)
+        sin_eta = mlxarr.sin(steps)
 
         xA = cos_eta[:-1]
         yA = sin_eta[:-1]
@@ -1022,8 +1094,8 @@ class Path:
 
         if is_wedge:
             length = n * 3 + 4
-            vertices = np.zeros((length, 2), float)
-            codes = np.full(length, cls.CURVE4, dtype=cls.code_type)
+            vertices = mlxarr.zeros((length, 2), float)
+            codes = mlxarr.full(length, cls.CURVE4, dtype=cls.code_type)
             vertices[1] = [xA[0], yA[0]]
             codes[0:2] = [cls.MOVETO, cls.LINETO]
             codes[-2:] = [cls.LINETO, cls.CLOSEPOLY]
@@ -1031,8 +1103,8 @@ class Path:
             end = length - 2
         else:
             length = n * 3 + 1
-            vertices = np.empty((length, 2), float)
-            codes = np.full(length, cls.CURVE4, dtype=cls.code_type)
+            vertices = mlxarr.empty((length, 2), float)
+            codes = mlxarr.full(length, cls.CURVE4, dtype=cls.code_type)
             vertices[0] = [xA[0], yA[0]]
             codes[0] = cls.MOVETO
             vertex_offset = 1
@@ -1127,7 +1199,16 @@ def get_path_collection_extents(
         raise ValueError("No paths provided")
     if len(offsets) == 0:
         raise ValueError("No offsets provided")
+    transforms = mlxarr.atleast_3d(transforms)
+    if getattr(transforms, "size", 0) == 0:
+        transforms = [master_transform.get_matrix()]
     extents, minpos = _path.get_path_collection_extents(
-        master_transform, paths, np.atleast_3d(transforms),
-        offsets, offset_transform)
+        _path_transform_to_memoryview(master_transform), paths,
+        _path_values_to_memoryview(transforms),
+        _path_values_to_memoryview(offsets),
+        _path_transform_to_memoryview(offset_transform))
+    if isinstance(extents, memoryview):
+        extents = [item for row in extents.tolist() for item in row]
+    if isinstance(minpos, memoryview):
+        minpos = minpos.tolist()
     return Bbox.from_extents(*extents, minpos=minpos)

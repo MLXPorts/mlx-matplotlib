@@ -7,7 +7,7 @@
 #define MPL_FT2FONT_H
 
 #include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
+#include "py_buffer.h"
 
 #include <set>
 #include <string>
@@ -131,7 +131,7 @@ class FT2Font
     long get_descent();
     void draw_glyphs_to_bitmap(bool antialiased);
     void draw_glyph_to_bitmap(
-        py::array_t<uint8_t, py::array::c_style> im,
+        const py::buffer &im,
         int x, int y, size_t glyphInd, bool antialiased);
     void get_glyph_name(unsigned int glyph_number, std::string &buffer, bool fallback);
     long get_name_index(char *name);
@@ -144,9 +144,15 @@ class FT2Font
         return face;
     }
 
-    py::array_t<uint8_t, py::array::c_style> &get_image()
+    py::memoryview get_image()
     {
-        return image;
+        static uint8_t dummy = 0;
+        auto *ptr = image.empty() ? &dummy : image.data();
+        return py::memoryview::from_buffer(
+            ptr,
+            {static_cast<py::ssize_t>(image_height), static_cast<py::ssize_t>(image_width)},
+            {static_cast<py::ssize_t>(image_width), static_cast<py::ssize_t>(1)},
+            true);
     }
     FT_Glyph const &get_last_glyph() const
     {
@@ -172,7 +178,9 @@ class FT2Font
   private:
     WarnFunc ft_glyph_warn;
     bool warn_if_used;
-    py::array_t<uint8_t, py::array::c_style> image;
+    std::vector<uint8_t> image;
+    long image_width = 0;
+    long image_height = 0;
     FT_Face face;
     FT_Vector pen;    /* untransformed origin  */
     std::vector<FT_Glyph> glyphs;

@@ -38,10 +38,10 @@ As an example, we can save the Line2D Artist returned from `.axes.Axes.plot`:
 
     In [209]: import matplotlib.pyplot as plt
     In [210]: import matplotlib.artist as martist
-    In [211]: import numpy as np
+    In [211]: from matplotlib import _mlx_array as mlxarr
 
     In [212]: fig, ax = plt.subplots()
-    In [213]: x, y = np.random.rand(2, 100)
+    In [213]: x, y = mlxarr.random.rand(2, 100)
     In [214]: lines = ax.plot(x, y, '-', label='example')
     In [215]: print(lines)
     [<matplotlib.lines.Line2D at 0xd378b0c>]
@@ -67,8 +67,8 @@ Line2D object.  So if we want to change the *linewidth* after the fact, we can d
     :include-source:
 
     fig, ax = plt.subplots(figsize=(4, 2.5))
-    x = np.arange(0, 13, 0.2)
-    y = np.sin(x)
+    x = mlxarr.arange(0, 13, 0.2)
+    y = mlxarr.sin(x)
     lines = ax.plot(x, y, '-', label='example', linewidth=0.2, color='blue')
     lines[0].set(color='green', linewidth=2)
 
@@ -143,10 +143,10 @@ same line is shown evolving over time (see :doc:`../animations/index`)
     :include-source:
 
     fig, ax = plt.subplots(figsize=(4, 2.5))
-    x = np.arange(0, 13, 0.2)
-    y = np.sin(x)
+    x = mlxarr.arange(0, 13, 0.2)
+    y = mlxarr.sin(x)
     lines = ax.plot(x, y, '-', label='example')
-    lines[0].set_data([x, np.cos(x)])
+    lines[0].set_data([x, mlxarr.cos(x)])
 
 Manually adding Artists
 ^^^^^^^^^^^^^^^^^^^^^^^

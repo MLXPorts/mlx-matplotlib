@@ -12,8 +12,7 @@ User-defined sequences can be added via `.ColorSequenceRegistry.register`.
 """
 
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 
 
@@ -23,8 +22,8 @@ def plot_color_sequences(names, ax):
     for n, name in enumerate(names):
         colors = mpl.color_sequences[name]
         n_colors = len(colors)
-        x = np.arange(n_colors)
-        y = np.full_like(x, n)
+        x = mlxarr.arange(n_colors)
+        y = mlxarr.full_like(x, n)
 
         ax.scatter(x, y, facecolor=colors, edgecolor='dimgray', s=200, zorder=2)
 

@@ -9,12 +9,11 @@ appear. These properties can also be set in ``.matplotlib/matplotlibrc``.
 
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 plt.rcParams['ytick.right'] = plt.rcParams['ytick.labelright'] = True
 plt.rcParams['ytick.left'] = plt.rcParams['ytick.labelleft'] = False
 
-x = np.arange(10)
+x = mlxarr.arange(10)
 
 fig, (ax0, ax1) = plt.subplots(2, 1, sharex=True, figsize=(6, 6))
 

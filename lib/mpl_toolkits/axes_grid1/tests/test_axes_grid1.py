@@ -29,9 +29,8 @@ from mpl_toolkits.axes_grid1.inset_locator import (
 from mpl_toolkits.axes_grid1.parasite_axes import HostAxes
 import mpl_toolkits.axes_grid1.mpl_axes
 import pytest
-
-import numpy as np
-from numpy.testing import assert_array_equal, assert_array_almost_equal
+from matplotlib import _mlx_array as mlxarr
+from matplotlib.mlx_testing import assert_array_equal, assert_array_almost_equal
 
 
 def test_divider_append_axes():
@@ -110,7 +109,7 @@ def test_axesgrid_colorbar_log_smoketest():
                     cbar_mode="single",
                     )
 
-    Z = 10000 * np.random.rand(10, 10)
+    Z = 10000 * mlxarr.random.rand(10, 10)
     im = grid[0].imshow(Z, interpolation="nearest", norm=LogNorm())
 
     grid.cbar_axes[0].colorbar(im)
@@ -136,7 +135,7 @@ def test_inset_locator():
     # Z is a 15x15 array
     Z = cbook.get_sample_data("axes_grid/bivariate_normal.npy")
     extent = (-3, 4, -4, 3)
-    Z2 = np.zeros((150, 150))
+    Z2 = mlxarr.zeros((150, 150))
     ny, nx = Z.shape
     Z2[30:30+ny, 30:30+nx] = Z
 
@@ -177,7 +176,7 @@ def test_inset_axes():
     # Z is a 15x15 array
     Z = cbook.get_sample_data("axes_grid/bivariate_normal.npy")
     extent = (-3, 4, -4, 3)
-    Z2 = np.zeros((150, 150))
+    Z2 = mlxarr.zeros((150, 150))
     ny, nx = Z.shape
     Z2[30:30+ny, 30:30+nx] = Z
 
@@ -367,7 +366,7 @@ def test_zooming_with_inverted_axes():
                   style=('classic', '_classic_test_patch'))
 def test_anchored_direction_arrows():
     fig, ax = plt.subplots()
-    ax.imshow(np.zeros((10, 10)), interpolation='nearest')
+    ax.imshow(mlxarr.zeros((10, 10)), interpolation='nearest')
 
     simple_arrow = AnchoredDirectionArrows(ax.transAxes, 'X', 'Y')
     ax.add_artist(simple_arrow)
@@ -378,7 +377,7 @@ def test_anchored_direction_arrows():
                   style=('classic', '_classic_test_patch'))
 def test_anchored_direction_arrows_many_args():
     fig, ax = plt.subplots()
-    ax.imshow(np.ones((10, 10)))
+    ax.imshow(mlxarr.ones((10, 10)))
 
     direction_arrows = AnchoredDirectionArrows(
             ax.transAxes, 'A', 'B', loc='upper right', color='red',
@@ -394,14 +393,14 @@ def test_axes_locatable_position():
     with mpl.rc_context({"figure.subplot.wspace": 0.02}):
         cax = divider.append_axes('right', size='5%')
     fig.canvas.draw()
-    assert np.isclose(cax.get_position(original=False).width,
+    assert mlxarr.isclose(cax.get_position(original=False).width,
                       0.03621495327102808)
 
 
 @image_comparison(['image_grid_each_left_label_mode_all.png'], style='mpl20',
                   savefig_kwarg={'bbox_inches': 'tight'})
 def test_image_grid_each_left_label_mode_all():
-    imdata = np.arange(100).reshape((10, 10))
+    imdata = mlxarr.arange(100).reshape((10, 10))
 
     fig = plt.figure(1, (3, 3))
     grid = ImageGrid(fig, (1, 1, 1), nrows_ncols=(3, 2), axes_pad=(0.5, 0.3),
@@ -419,7 +418,7 @@ def test_image_grid_each_left_label_mode_all():
 @image_comparison(['image_grid_single_bottom_label_mode_1.png'], style='mpl20',
                   savefig_kwarg={'bbox_inches': 'tight'})
 def test_image_grid_single_bottom():
-    imdata = np.arange(100).reshape((10, 10))
+    imdata = mlxarr.arange(100).reshape((10, 10))
 
     fig = plt.figure(1, (2.5, 1.5))
     grid = ImageGrid(fig, (0, 0, 1, 1), nrows_ncols=(1, 3),
@@ -443,7 +442,7 @@ def test_image_grid_label_mode_invalid():
                   savefig_kwarg={'bbox_inches': 'tight'})
 def test_image_grid():
     # test that image grid works with bbox_inches=tight.
-    im = np.arange(100).reshape((10, 10))
+    im = mlxarr.arange(100).reshape((10, 10))
 
     fig = plt.figure(1, (4, 4))
     grid = ImageGrid(fig, 111, nrows_ncols=(2, 2), axes_pad=0.1)
@@ -464,7 +463,7 @@ def test_gettightbbox():
 
     remove_ticks_and_titles(fig)
     bbox = fig.get_tightbbox(fig.canvas.get_renderer())
-    np.testing.assert_array_almost_equal(bbox.extents,
+    mlxarr.testing.assert_array_almost_equal(bbox.extents,
                                          [-17.7, -13.9, 7.2, 5.4])
 
 
@@ -579,8 +578,8 @@ def test_anchored_artists():
 
 
 def test_hbox_divider():
-    arr1 = np.arange(20).reshape((4, 5))
-    arr2 = np.arange(20).reshape((5, 4))
+    arr1 = mlxarr.arange(20).reshape((4, 5))
+    arr2 = mlxarr.arange(20).reshape((5, 4))
 
     fig, (ax1, ax2) = plt.subplots(1, 2)
     ax1.imshow(arr1)
@@ -602,8 +601,8 @@ def test_hbox_divider():
 
 
 def test_vbox_divider():
-    arr1 = np.arange(20).reshape((4, 5))
-    arr2 = np.arange(20).reshape((5, 4))
+    arr1 = mlxarr.arange(20).reshape((4, 5))
+    arr2 = mlxarr.arange(20).reshape((5, 4))
 
     fig, (ax1, ax2) = plt.subplots(1, 2)
     ax1.imshow(arr1)
@@ -635,11 +634,11 @@ def test_grid_axes_lists():
     fig = plt.figure()
     grid = Grid(fig, 111, (2, 3), direction="row")
     assert_array_equal(grid, grid.axes_all)
-    assert_array_equal(grid.axes_row, np.transpose(grid.axes_column))
-    assert_array_equal(grid, np.ravel(grid.axes_row), "row")
+    assert_array_equal(grid.axes_row, mlxarr.transpose(grid.axes_column))
+    assert_array_equal(grid, mlxarr.ravel(grid.axes_row), "row")
     assert grid.get_geometry() == (2, 3)
     grid = Grid(fig, 111, (2, 3), direction="column")
-    assert_array_equal(grid, np.ravel(grid.axes_column), "column")
+    assert_array_equal(grid, mlxarr.ravel(grid.axes_column), "column")
 
 
 @pytest.mark.parametrize('direction', ('row', 'column'))
@@ -647,7 +646,7 @@ def test_grid_axes_position(direction):
     """Test positioning of the axes in Grid."""
     fig = plt.figure()
     grid = Grid(fig, 111, (2, 2), direction=direction)
-    loc = [ax.get_axes_locator() for ax in np.ravel(grid.axes_row)]
+    loc = [ax.get_axes_locator() for ax in mlxarr.ravel(grid.axes_row)]
     # Test nx.
     assert loc[1].args[0] > loc[0].args[0]
     assert loc[0].args[0] == loc[2].args[0]
@@ -716,7 +715,7 @@ def test_auto_adjustable():
 def test_rgb_axes():
     fig = plt.figure()
     ax = RGBAxes(fig, (0.1, 0.1, 0.8, 0.8), pad=0.1)
-    rng = np.random.default_rng(19680801)
+    rng = mlxarr.random.default_rng(19680801)
     r = rng.random((5, 5))
     g = rng.random((5, 5))
     b = rng.random((5, 5))
@@ -729,7 +728,7 @@ def test_rgb_axes():
 @image_comparison(['imagegrid_cbar_mode.png'],
                   remove_text=True, style='mpl20', tol=0.3)
 def test_imagegrid_cbar_mode_edge():
-    arr = np.arange(16).reshape((4, 4))
+    arr = mlxarr.arange(16).reshape((4, 4))
 
     fig = plt.figure(figsize=(18, 9))
 
@@ -749,8 +748,8 @@ def test_imagegrid_cbar_mode_edge():
 
         ax1.imshow(arr, cmap='nipy_spectral')
         ax2.imshow(arr.T, cmap='hot')
-        ax3.imshow(np.hypot(arr, arr.T), cmap='jet')
-        ax4.imshow(np.arctan2(arr, arr.T), cmap='hsv')
+        ax3.imshow(mlxarr.hypot(arr, arr.T), cmap='jet')
+        ax4.imshow(mlxarr.arctan2(arr, arr.T), cmap='hsv')
 
         # In each row/column, the "first" colorbars must be overwritten by the
         # "second" ones.  To achieve this, clear out the axes first.

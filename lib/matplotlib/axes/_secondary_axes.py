@@ -1,8 +1,6 @@
 import functools
 import numbers
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib import _api, _docstring, transforms
 import matplotlib.ticker as mticker
 from matplotlib.axes._base import _AxesBase, _TransformedBoundsLocator
@@ -260,7 +258,7 @@ class SecondaryAxis(_AxesBase):
             lims = self._parent.get_ylim()
             set_lim = self.set_ylim
         order = lims[0] < lims[1]
-        lims = self._functions[0](np.array(lims))
+        lims = self._functions[0](mlxarr.array(lims))
         neworder = lims[0] < lims[1]
         if neworder != order:
             # Flip because the transform will take care of the flipping.
@@ -310,7 +308,7 @@ functions : 2-tuple of func, or Transform with an inverse
     function and its inverse.  i.e.
     ``functions=(lambda x: 2 / x, lambda x: 2 / x)`` would be an
     reciprocal transform with a factor of 2. Both functions must accept
-    numpy arrays as input.
+    array_backend arrays as input.
 
     The user can also directly supply a subclass of
     `.transforms.Transform` so long as it has an inverse.

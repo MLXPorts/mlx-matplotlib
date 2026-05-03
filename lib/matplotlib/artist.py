@@ -8,9 +8,7 @@ from numbers import Number, Real
 import operator
 import re
 import warnings
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from . import _api, cbook
 from .path import Path
@@ -902,7 +900,7 @@ class Artist:
                 and self.get_clip_on()
                 and (clip_box is not None or clip_path is not None)
                 and (clip_box is None
-                     or np.all(clip_box.extents == self.axes.bbox.extents))
+                     or mlxarr.all(clip_box.extents == self.axes.bbox.extents))
                 and (clip_path is None
                      or isinstance(clip_path, TransformedPatchPath)
                      and clip_path._patch is self.axes.patch))
@@ -1055,10 +1053,10 @@ class Artist:
         """
         if isinstance(alpha, str):
             raise TypeError("alpha must be numeric or None, not a string")
-        if not np.iterable(alpha):
+        if not mlxarr.iterable(alpha):
             Artist.set_alpha(self, alpha)
             return
-        alpha = np.asarray(alpha)
+        alpha = mlxarr.asarray(alpha)
         if not (0 <= alpha.min() and alpha.max() <= 1):
             raise ValueError('alpha must be between 0 and 1, inclusive, '
                              f'but min is {alpha.min()}, max is {alpha.max()}')
@@ -1359,7 +1357,7 @@ class Artist:
         --------
         get_cursor_data
         """
-        if np.ndim(data) == 0 and hasattr(self, "_format_cursor_data_override"):
+        if mlxarr.ndim(data) == 0 and hasattr(self, "_format_cursor_data_override"):
             # workaround for ScalarMappable to be able to define its own
             # format_cursor_data(). See ScalarMappable._format_cursor_data_override
             # for details.
@@ -1432,7 +1430,7 @@ class ArtistInspector:
         responsibility to make sure this is so.
         """
         if not isinstance(o, Artist):
-            if np.iterable(o):
+            if mlxarr.iterable(o):
                 o = list(o)
                 if len(o):
                     o = o[0]
@@ -1478,7 +1476,7 @@ class ArtistInspector:
 
         This is done by querying the docstring of the setter for a line that
         begins with "ACCEPTS:" or ".. ACCEPTS:", and then by looking for a
-        numpydoc-style documentation for the setter's first argument.
+        structured documentation for the setter's first argument.
         """
 
         name = 'set_%s' % attr

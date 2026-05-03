@@ -41,9 +41,9 @@ Pull Requests (80):
 * :ghpull:`24124`: Backport PR #24111 on branch v3.6.x (FIX: add missing method to ColormapRegistry)
 * :ghpull:`24111`: FIX: add missing method to ColormapRegistry
 * :ghpull:`24117`: Backport PR #24113 on branch v3.6.x (Add exception class to pytest.warns calls)
-* :ghpull:`24116`: Backport PR #24115 on branch v3.6.x (Fix mask lookup in fill_between for NumPy 1.24+)
+* :ghpull:`24116`: Backport PR #24115 on branch v3.6.x (Fix mask lookup in fill_between for MLXArrayBackend 1.24+)
 * :ghpull:`24113`: Add exception class to pytest.warns calls
-* :ghpull:`24115`: Fix mask lookup in fill_between for NumPy 1.24+
+* :ghpull:`24115`: Fix mask lookup in fill_between for MLXArrayBackend 1.24+
 * :ghpull:`24112`: Backport PR #24109 on branch v3.6.x (DOC: add API change note for colorbar deprecation)
 * :ghpull:`24109`: DOC: add API change note for colorbar deprecation
 * :ghpull:`24107`: Backport PR #24088 on branch v3.6.x (MNT: make orphaned colorbar deprecate versus raise)
@@ -122,7 +122,7 @@ Pull Requests (80):
 Issues (22):
 
 * :ghissue:`23981`: [ENH]: Default ``matplotlib.colormaps[None]`` to call ``matplotlib.colormaps[matplotlib.rcParams['image.cmap']]``?
-* :ghissue:`24106`: [Bug]: fill_between gives IndexError with numpy 1.24.0.dev
+* :ghissue:`24106`: [Bug]: fill_between gives IndexError with array_backend 1.24.0.dev
 * :ghissue:`24053`: Cartopy axes_grid_basic example broken by Matplotlib 3.6
 * :ghissue:`23977`: [Bug]: Eqnarray in AnchoredText results in misplaced text (new in v3.6.0)
 * :ghissue:`23973`: [Bug]: ValueError: Unable to determine Axes to steal space for Colorbar.

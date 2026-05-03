@@ -6,17 +6,16 @@ Color by y-value
 Use masked arrays to plot a line with different colors by y-value.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
-t = np.arange(0.0, 2.0, 0.01)
-s = np.sin(2 * np.pi * t)
+from matplotlib import _mlx_array as mlxarr
+t = mlxarr.arange(0.0, 2.0, 0.01)
+s = mlxarr.sin(2 * mlxarr.pi * t)
 
 upper = 0.77
 lower = -0.77
 
-supper = np.ma.masked_where(s < upper, s)
-slower = np.ma.masked_where(s > lower, s)
-smiddle = np.ma.masked_where((s < lower) | (s > upper), s)
+supper = mlxarr.ma.masked_where(s < upper, s)
+slower = mlxarr.ma.masked_where(s > lower, s)
+smiddle = mlxarr.ma.masked_where((s < lower) | (s > upper), s)
 
 fig, ax = plt.subplots()
 ax.plot(t, smiddle, t, slower, t, supper)

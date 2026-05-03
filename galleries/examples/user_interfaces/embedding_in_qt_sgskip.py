@@ -11,9 +11,7 @@ the binding name, or by first importing it.
 
 import sys
 import time
-
-import numpy as np
-
+from matplotlib import _mlx_array as mlxarr
 from matplotlib.backends.backend_qtagg import FigureCanvas
 from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.backends.qt_compat import QtWidgets
@@ -39,12 +37,12 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         layout.addWidget(NavigationToolbar(dynamic_canvas, self))
 
         self._static_ax = static_canvas.figure.subplots()
-        t = np.linspace(0, 10, 501)
-        self._static_ax.plot(t, np.tan(t), ".")
+        t = mlxarr.linspace(0, 10, 501)
+        self._static_ax.plot(t, mlxarr.tan(t), ".")
 
         self._dynamic_ax = dynamic_canvas.figure.subplots()
         # Set up a Line2D.
-        self.xdata = np.linspace(0, 10, 101)
+        self.xdata = mlxarr.linspace(0, 10, 101)
         self._update_ydata()
         self._line, = self._dynamic_ax.plot(self.xdata, self.ydata)
         # The below two timers must be attributes of self, so that the garbage
@@ -64,7 +62,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
     def _update_ydata(self):
         # Shift the sinusoid as a function of time.
-        self.ydata = np.sin(self.xdata + time.time())
+        self.ydata = mlxarr.sin(self.xdata + time.time())
 
     def _update_canvas(self):
         self._line.set_data(self.xdata, self.ydata)

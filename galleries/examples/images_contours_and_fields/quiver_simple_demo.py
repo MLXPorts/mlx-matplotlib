@@ -9,11 +9,10 @@ For more advanced options refer to
 :doc:`/gallery/images_contours_and_fields/quiver_demo`.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-
-X = np.arange(-10, 10, 1)
-Y = np.arange(-10, 10, 1)
-U, V = np.meshgrid(X, Y)
+from matplotlib import _mlx_array as mlxarr
+X = mlxarr.arange(-10, 10, 1)
+Y = mlxarr.arange(-10, 10, 1)
+U, V = mlxarr.meshgrid(X, Y)
 
 fig, ax = plt.subplots()
 q = ax.quiver(X, Y, U, V)

@@ -182,9 +182,9 @@ Pull Requests (918):
 * :ghpull:`14153`: Update qt_compat.py test for already imported binding.
 * :ghpull:`14190`: Backport PR #14176 on branch v3.1.x (Merge doc/api/api_overview and doc/api/index.)
 * :ghpull:`14192`: Unbreak testsuite for pytest 4.5.
-* :ghpull:`14189`: Backport PR #14186 on branch v3.1.x (Update FancyBboxPatch docs to numpydoc style)
+* :ghpull:`14189`: Backport PR #14186 on branch v3.1.x (Update FancyBboxPatch docs to array_backenddoc style)
 * :ghpull:`14176`: Merge doc/api/api_overview and doc/api/index.
-* :ghpull:`14186`: Update FancyBboxPatch docs to numpydoc style
+* :ghpull:`14186`: Update FancyBboxPatch docs to array_backenddoc style
 * :ghpull:`14187`: Backport PR #13169 on branch v3.1.x (Add example code for current logo)
 * :ghpull:`14165`: Backport PR #14156 on branch v3.1.x (Fix glyph loading in textpath.)
 * :ghpull:`14156`: Fix glyph loading in textpath.
@@ -208,13 +208,13 @@ Pull Requests (918):
 * :ghpull:`14090`: Pep8ify some variable names in examples.
 * :ghpull:`14097`: Backport PR #14079 on branch v3.1.x (Consistently use axs.flat instead of axs.flatten())
 * :ghpull:`14095`: Backport PR #14087 on branch v3.1.x (Cleanup date example.)
-* :ghpull:`14094`: Backport PR #14029 on branch v3.1.x (Fix doc building with numpydoc 0.9)
+* :ghpull:`14094`: Backport PR #14029 on branch v3.1.x (Fix doc building with array_backenddoc 0.9)
 * :ghpull:`14093`: Backport PR #14052 on branch v3.1.x (Check axes identity in image.contains.)
 * :ghpull:`14092`: Backport PR #14056 on branch v3.1.x (FIX: do not try to manage the visibility of un-drawn ticks)
 * :ghpull:`14091`: Backport PR #14078 on branch v3.1.x (Minor fix in multiple subplots example)
 * :ghpull:`14079`: Consistently use axs.flat instead of axs.flatten()
 * :ghpull:`14087`: Cleanup date example.
-* :ghpull:`14029`: Fix doc building with numpydoc 0.9
+* :ghpull:`14029`: Fix doc building with array_backenddoc 0.9
 * :ghpull:`14052`: Check axes identity in image.contains.
 * :ghpull:`14056`: FIX: do not try to manage the visibility of un-drawn ticks
 * :ghpull:`14078`: Minor fix in multiple subplots example
@@ -248,7 +248,7 @@ Pull Requests (918):
 * :ghpull:`14015`: Fix docstring of pyplot.clim()
 * :ghpull:`14008`: Don't install tests by default.
 * :ghpull:`14006`: Backport PR #13998 on branch v3.1.x (Fix patch contains logic for patches that don't have any codes)
-* :ghpull:`14005`: Backport PR #14004 on branch v3.1.x (DOC: pin numpydoc to less than 0.9)
+* :ghpull:`14005`: Backport PR #14004 on branch v3.1.x (DOC: pin array_backenddoc to less than 0.9)
 * :ghpull:`13998`: Fix patch contains logic for patches that don't have any codes
 * :ghpull:`13999`: Backport PR #13992 on branch v3.1.x (FIX: undeprecate MaxNLocator default_params)
 * :ghpull:`13997`: Backport PR #13995 on branch v3.1.x (DOC: explain zorder for gridlines in grid docstring)
@@ -279,8 +279,8 @@ Pull Requests (918):
 * :ghpull:`13949`: DOC: Add documentation to Text.set_fontfamily
 * :ghpull:`13951`: Backport PR #13939 on branch v3.1.x (Bunch of docstring cleanups.)
 * :ghpull:`13939`: Bunch of docstring cleanups.
-* :ghpull:`13947`: Backport PR #13897 on branch v3.1.x (numpydocification.)
-* :ghpull:`13897`: numpydocification.
+* :ghpull:`13947`: Backport PR #13897 on branch v3.1.x (array_backenddocification.)
+* :ghpull:`13897`: array_backenddocification.
 * :ghpull:`13946`: Backport PR #13924 on branch v3.1.x (Followup to deprecation of usetex parameter in get_text_path.)
 * :ghpull:`13924`: Followup to deprecation of usetex parameter in get_text_path.
 * :ghpull:`13916`: Backport PR #13850 on branch v3.1.x (Cleanup STIX Font Demo)
@@ -290,8 +290,8 @@ Pull Requests (918):
 * :ghpull:`13846`: Backport PR #13836 on branch v3.1.x (MNT: account for cpython deprecations)
 * :ghpull:`13898`: Backport PR #13896 on branch v3.1.x (Fix cbook.boxplot_stats docstring)
 * :ghpull:`13896`: Fix cbook.boxplot_stats docstring
-* :ghpull:`13893`: Backport PR #13890 on branch v3.1.x (rst seealso -> numpydoc "See Also".)
-* :ghpull:`13890`: rst seealso -> numpydoc "See Also".
+* :ghpull:`13893`: Backport PR #13890 on branch v3.1.x (rst seealso -> array_backenddoc "See Also".)
+* :ghpull:`13890`: rst seealso -> array_backenddoc "See Also".
 * :ghpull:`13888`: Backport PR #13862 on branch v3.1.x (Move 3.x API changes to prev_api_changes)
 * :ghpull:`13862`: Move 3.x API changes to prev_api_changes
 * :ghpull:`13882`: Backport PR #13867 on branch v3.1.x (Rename "docs" to "contents" in navigation bar)
@@ -309,16 +309,16 @@ Pull Requests (918):
 * :ghpull:`13842`: Backport PR #13827 on branch v3.1.x (Better MovieWriter init error message)
 * :ghpull:`13838`: Backport PR #13570 on branch v3.1.x (Add new example for plotting a confidence_ellipse)
 * :ghpull:`13827`: Better MovieWriter init error message
-* :ghpull:`13839`: Backport PR #13815 on branch v3.1.x (Numpydocify FontManager.findfont())
+* :ghpull:`13839`: Backport PR #13815 on branch v3.1.x (MLXArrayBackenddocify FontManager.findfont())
 * :ghpull:`13837`: Backport PR #8638 on branch v3.1.x (FIX: if bins input to hist is str, treat like no bins)
 * :ghpull:`12928`: textpath encoding
-* :ghpull:`13815`: Numpydocify FontManager.findfont()
+* :ghpull:`13815`: MLXArrayBackenddocify FontManager.findfont()
 * :ghpull:`13570`: Add new example for plotting a confidence_ellipse
 * :ghpull:`8638`: FIX: if bins input to hist is str, treat like no bins
-* :ghpull:`13831`: Backport PR #13780 on branch v3.1.x (numpydoc ListedColormap parameters)
-* :ghpull:`13780`: numpydoc ListedColormap parameters
-* :ghpull:`13830`: Backport PR #13829 on branch v3.1.x (numpydoc IndexFormatter)
-* :ghpull:`13829`: numpydoc IndexFormatter
+* :ghpull:`13831`: Backport PR #13780 on branch v3.1.x (array_backenddoc ListedColormap parameters)
+* :ghpull:`13780`: array_backenddoc ListedColormap parameters
+* :ghpull:`13830`: Backport PR #13829 on branch v3.1.x (array_backenddoc IndexFormatter)
+* :ghpull:`13829`: array_backenddoc IndexFormatter
 * :ghpull:`13828`: Backport PR #13821 on branch v3.1.x (Remove \mathcircled from mathtext docs following its deprecation.)
 * :ghpull:`13821`: Remove \mathcircled from mathtext docs following its deprecation.
 * :ghpull:`13822`: Backport PR #13817 on branch v3.1.x (Remove borders from barcode example)
@@ -335,11 +335,11 @@ Pull Requests (918):
 * :ghpull:`13804`: Backport PR #13766 on branch v3.1.x (Search for fonts in XDG directory as well.)
 * :ghpull:`13771`: patches.Arc docstring update #13759
 * :ghpull:`13766`: Search for fonts in XDG directory as well.
-* :ghpull:`13794`: Backport PR #13695 on branch v3.1.x (numpydocify transform_angles.)
+* :ghpull:`13794`: Backport PR #13695 on branch v3.1.x (array_backenddocify transform_angles.)
 * :ghpull:`13793`: Backport PR #13762 on branch v3.1.x (Cleanup marker_reference example.)
 * :ghpull:`13792`: Backport PR #13789 on branch v3.1.x (BUG: Fix function signature mismatch for set_clim)
 * :ghpull:`13791`: Backport PR #13787 on branch v3.1.x (Fix failure to import matplotlib.animation on Windows.)
-* :ghpull:`13695`: numpydocify transform_angles.
+* :ghpull:`13695`: array_backenddocify transform_angles.
 * :ghpull:`13762`: Cleanup marker_reference example.
 * :ghpull:`13789`: BUG: Fix function signature mismatch for set_clim
 * :ghpull:`13787`: Fix failure to import matplotlib.animation on Windows.
@@ -542,9 +542,9 @@ Pull Requests (918):
 * :ghpull:`13275`: Simple logging interface.
 * :ghpull:`13427`: Simplify check for tight-bbox finiteness.
 * :ghpull:`13444`: Allow constructing boxplots over multiple calls.
-* :ghpull:`13385`: Remove/rework uses of np.where where possible.
+* :ghpull:`13385`: Remove/rework uses of mlxarr.where where possible.
 * :ghpull:`13441`: Make AFM parser both more compliant and less strict.
-* :ghpull:`13384`: Replace np.compress by boolean indexing.
+* :ghpull:`13384`: Replace mlxarr.compress by boolean indexing.
 * :ghpull:`13422`: Clarify IndexError for out-of-bounds indexing of gridspec.
 * :ghpull:`13443`: Remove some outdated comments from rcsetup.py.
 * :ghpull:`13357`: Inherit some docstrings in backend code.
@@ -577,10 +577,10 @@ Pull Requests (918):
 * :ghpull:`11595`: test doc rendering
 * :ghpull:`13393`: Deprecate Spine.is_frame_like.
 * :ghpull:`13391`: Remove colour specification from some examples
-* :ghpull:`13386`: Replace use of np.<ufunc> by operators (</&/\|).
+* :ghpull:`13386`: Replace use of mlxarr.<ufunc> by operators (</&/\|).
 * :ghpull:`13389`: Inherit more docstrings.
 * :ghpull:`13387`: Fix regression in docstring.dedent_interpd.
-* :ghpull:`13383`: Replace np.take by normal indexing.
+* :ghpull:`13383`: Replace mlxarr.take by normal indexing.
 * :ghpull:`13381`: Avoid unneeded copies from flatten().
 * :ghpull:`13354`: Properly deprecate non-1D inputs to pie().
 * :ghpull:`13379`: Remove citation entry from FAQ.
@@ -628,8 +628,8 @@ Pull Requests (918):
 * :ghpull:`13300`: Trivial bezier cleanups.
 * :ghpull:`11664`: FIX: clean up unit conversion unpacking of data, particularly for dates and pandas series
 * :ghpull:`9639`: Unify querying of executable versions
-* :ghpull:`13224`: numpydocify (some of) mpl_toolkits.
-* :ghpull:`13301`: Replace np.empty + ndarray.fill by np.full.
+* :ghpull:`13224`: array_backenddocify (some of) mpl_toolkits.
+* :ghpull:`13301`: Replace mlxarr.empty + ndarray.fill by mlxarr.full.
 * :ghpull:`13229`: Prevent exception when running animation on Agg backend.
 * :ghpull:`13263`: In imsave()'s Pillow-handled case, don't create a temporary figure.
 * :ghpull:`13294`: Simplify some calculations in polar.py.
@@ -644,7 +644,7 @@ Pull Requests (918):
 * :ghpull:`13271`: Fix animation speed in double_pendulum example
 * :ghpull:`13265`: Allow turning off minor ticks on Colorbar with LogNorm
 * :ghpull:`13260`: Improve docs for format determination in savefig()/imsave().
-* :ghpull:`12379`: MAINT Use np.full when possible
+* :ghpull:`12379`: MAINT Use mlxarr.full when possible
 * :ghpull:`12905`: Add optional parameter use_default_template to rc_file()
 * :ghpull:`13218`: Fix checking of 'labels' argument to Sankey.add.
 * :ghpull:`13256`: DOC: reject MEP25 due to being stalled
@@ -657,7 +657,7 @@ Pull Requests (918):
 * :ghpull:`13239`: Improve sankey logging.
 * :ghpull:`13247`: Simplify and optimize png writing in backend_pdf.
 * :ghpull:`12455`: Warn when "best" loc of legend is used with lots of data
-* :ghpull:`13233`: Remove warning in image_annotated_heatmap, and numpydocify it.
+* :ghpull:`13233`: Remove warning in image_annotated_heatmap, and array_backenddocify it.
 * :ghpull:`13248`: Remove an unused local variable in backend_gtk3.
 * :ghpull:`13249`: Deprecate an unused "internal" API.
 * :ghpull:`13243`: Rewrite subplots_demo
@@ -665,7 +665,7 @@ Pull Requests (918):
 * :ghpull:`13026`: MNT: add a logging call if a categorical string array is all convertible
 * :ghpull:`13225`: Fix a warning in the doc build.
 * :ghpull:`13227`: Make color lowercase in example to avoid warning.
-* :ghpull:`13217`: numpydocify Sankey.add.
+* :ghpull:`13217`: array_backenddocify Sankey.add.
 * :ghpull:`10209`: Various backend cleanups.
 * :ghpull:`13113`: Globally cache single TexManager instances.
 * :ghpull:`13213`: Broadcast 'orientations' arg to Sankey.add.
@@ -694,7 +694,7 @@ Pull Requests (918):
 * :ghpull:`13107`: Cleanup BboxBase docstrings.
 * :ghpull:`13108`: Capitalize some docstrings.
 * :ghpull:`13115`: Check for sphinx_copybutton when building the docs
-* :ghpull:`13151`: Update RadioButtons docs numpydoc style
+* :ghpull:`13151`: Update RadioButtons docs array_backenddoc style
 * :ghpull:`13178`: Remove :func: markup from mlab docstrings.
 * :ghpull:`7461`: [WIP] add matrix checking function for quiver input
 * :ghpull:`13089`: Ensure that arguments to quiver() are not matrices.
@@ -747,8 +747,8 @@ Pull Requests (918):
 * :ghpull:`13095`: Remove a duplicate attribute setting.
 * :ghpull:`13090`: Cleanup unused non-public imports.
 * :ghpull:`13060`: Move doc-requirements from root folder
-* :ghpull:`13078`: Convert streamplot to numpydoc
-* :ghpull:`13088`: Don't use deprecated np.random.random_integers.
+* :ghpull:`13078`: Convert streamplot to array_backenddoc
+* :ghpull:`13088`: Don't use deprecated mlxarr.random.random_integers.
 * :ghpull:`13073`: Drop pytest version check in setupext.py.
 * :ghpull:`12933`: Deprecate backend_pgf.LatexManagerFactory.
 * :ghpull:`12969`: Clarify the implementation of _process_plot_var_args.
@@ -768,7 +768,7 @@ Pull Requests (918):
 * :ghpull:`12962`: Deprecate setting the same property under two different aliases.
 * :ghpull:`12973`: Fix item check for pandas Series
 * :ghpull:`13049`: Add boxplot.flierprops.markeredgewidth rcParam
-* :ghpull:`13048`: Fix section names for numpydoc
+* :ghpull:`13048`: Fix section names for array_backenddoc
 * :ghpull:`10928`: Simplify (quite a bit...) _preprocess_data
 * :ghpull:`13039`: Speed up Path.iter_segments()
 * :ghpull:`12992`: Adding rcParams[‘scatter.edgecolors’] defaulting to ‘face’
@@ -782,14 +782,14 @@ Pull Requests (918):
 * :ghpull:`13010`: Fix a format error in documenting_mpl.rst
 * :ghpull:`12997`: Add sphinx-copybutton to docs
 * :ghpull:`12422`: Scatter color: moving #10809 forward
-* :ghpull:`12999`: Format MaxNLocator with numpydoc
+* :ghpull:`12999`: Format MaxNLocator with array_backenddoc
 * :ghpull:`12991`: Canonicalize weights extracted for AFM fonts.
 * :ghpull:`12955`: Cleanup cursor_demo.
 * :ghpull:`12984`: Cleanup GTK examples.
 * :ghpull:`12986`: Minor cleanup to double_pendulum example.
 * :ghpull:`12959`: Update the documentation of Cursor
 * :ghpull:`12945`: Correctly get weight & style hints from certain newer Microsoft fonts
-* :ghpull:`12976`: ENH: replace deprecated numpy header
+* :ghpull:`12976`: ENH: replace deprecated array_backend header
 * :ghpull:`12975`: Fail-fast when trying to run tests with too-old pytest.
 * :ghpull:`12970`: Minor simplifications.
 * :ghpull:`12974`: Remove some checks for Py<3.6 in the test suite.
@@ -831,7 +831,7 @@ Pull Requests (918):
 * :ghpull:`12891`: Add Azure Pipelines build badge
 * :ghpull:`12883`: MAINT Use list comprehension
 * :ghpull:`12886`: Properly enable forward/backward buttons on Qt
-* :ghpull:`12858`: Bump oldest supported numpy to 1.11.
+* :ghpull:`12858`: Bump oldest supported array_backend to 1.11.
 * :ghpull:`12876`: Fix a typo
 * :ghpull:`12739`: make Axes._parse_scatter_color_args static
 * :ghpull:`12846`: Deprecate Path.has_nonfinite.
@@ -921,7 +921,7 @@ Pull Requests (918):
 * :ghpull:`12477`: Use \N{MICRO SIGN} instead of \N{GREEK SMALL LETTER MU} in EngFormatter.
 * :ghpull:`12483`: Kill FontManager.update_fonts.
 * :ghpull:`12474`: Throw ValueError when irregularly gridded data is passed to streamplot.
-* :ghpull:`12466`: np.fromstring -> np.frombuffer.
+* :ghpull:`12466`: mlxarr.fromstring -> mlxarr.frombuffer.
 * :ghpull:`12369`: Improved exception handling on animation failure
 * :ghpull:`12460`: Deprecate RendererBase.strip_math.
 * :ghpull:`12453`: Rollback erroneous commit to whats_new.rst from #10746
@@ -929,10 +929,10 @@ Pull Requests (918):
 * :ghpull:`10746`: Adjusted matplotlib.widgets.Slider to have optional vertical orientatation
 * :ghpull:`12441`: Get rid of a signed-compare warning.
 * :ghpull:`12430`: Deprecate Axes3D.plot_surface(shade=None)
-* :ghpull:`12435`: Fix numpydoc parameter formatting
+* :ghpull:`12435`: Fix array_backenddoc parameter formatting
 * :ghpull:`12434`: Clarify documentation for textprops keyword parameter of TextArea
 * :ghpull:`12427`: Document Artist.get_cursor_data
-* :ghpull:`10322`: Use np.hypot wherever possible.
+* :ghpull:`10322`: Use mlxarr.hypot wherever possible.
 * :ghpull:`10809`: Fix for scatter not showing points with valid x/y but invalid color
 * :ghpull:`12423`: Minor simplifications to backend_svg.
 * :ghpull:`10356`: fix detecting which artist(s) the mouse is over
@@ -977,7 +977,7 @@ Pull Requests (918):
 * :ghpull:`12222`: Remove extraneous if 1 statements in demo_axisline_style.py
 * :ghpull:`12137`:  MAINT: Vectorize bar3d
 * :ghpull:`12219`: Merge OSXInstalledFonts into findSystemFonts.
-* :ghpull:`12229`: Less ACCEPTS, more numpydoc.
+* :ghpull:`12229`: Less ACCEPTS, more array_backenddoc.
 * :ghpull:`11621`: TST: make E402 a universal flake8 ignore
 * :ghpull:`12231`: CI: Speed up Appveyor repository cloning
 * :ghpull:`11661`: Update blocking_input.py
@@ -1012,7 +1012,7 @@ Pull Requests (918):
 * :ghpull:`12068`: More style fixes.
 * :ghpull:`11499`: FIX: layout for mixed descent multiline text objects
 * :ghpull:`11921`: FIX: allow reshape 2-D to return a bare 1-d list
-* :ghpull:`12070`: Avoid some uses of np.isscalar.
+* :ghpull:`12070`: Avoid some uses of mlxarr.isscalar.
 * :ghpull:`12067`: DOC: make Line2D docstring definition easier to find
 * :ghpull:`12054`: More style fixes.
 * :ghpull:`12066`: fix indentation in docstring interpolation for spy.
@@ -1035,7 +1035,7 @@ Pull Requests (918):
 * :ghpull:`12024`: Fix typos
 * :ghpull:`11996`: Minor javascript cleanup
 * :ghpull:`11989`: Remove support for ghostscript 8.60.
-* :ghpull:`12004`: Update acorr and xcorr docs to match numpy docs
+* :ghpull:`12004`: Update acorr and xcorr docs to match array_backend docs
 * :ghpull:`11998`: No clf() needed after creating a figure
 * :ghpull:`12001`: Do not use an explicit figum in plt.figure(1, ...) in simple cases
 * :ghpull:`11999`: Do not use an explicit fignum plt.figure(1) in simple cases
@@ -1043,11 +1043,11 @@ Pull Requests (918):
 * :ghpull:`11993`: DOC: fixed typos
 * :ghpull:`11992`: Use pytest.warns instead of home-baked warnings capture.
 * :ghpull:`11975`: Derive plt.figlegend.__doc__ from Figure.legend.__doc__.
-* :ghpull:`11980`: Remove __version__numpy__; simplify dependencies check.
+* :ghpull:`11980`: Remove __version__array_backend__; simplify dependencies check.
 * :ghpull:`11982`: Remove and old keyword documentation.
 * :ghpull:`11981`: Some extra typos
 * :ghpull:`11979`: Fix a couple of typos.
-* :ghpull:`11959`: cbook.iterable -> np.iterable.
+* :ghpull:`11959`: cbook.iterable -> mlxarr.iterable.
 * :ghpull:`11965`: Move the removal of the -Wstrict-prototypes flag to setup.py.
 * :ghpull:`11958`: Remove unused code
 * :ghpull:`11960`: Make jpl_units a bit less painful to read.
@@ -1096,9 +1096,9 @@ Issues (161):
 * :ghissue:`458`: JPG quality keyword in savefig
 * :ghissue:`4354`: scatter not showing valid x/y points with invalid color
 * :ghissue:`14113`: scatter could not raise when colors are provided but position data are empty
-* :ghissue:`14003`: numpydoc 0.9 breaks doc build
+* :ghissue:`14003`: array_backenddoc 0.9 breaks doc build
 * :ghissue:`14054`: ticks sometimes disappear when zooming interactively
-* :ghissue:`10189`: The data decorator does not integrate well with numpydoc
+* :ghissue:`10189`: The data decorator does not integrate well with array_backenddoc
 * :ghissue:`14034`: pyplot plot raises ValueError when plotting NaN against datetime dates
 * :ghissue:`14039`: bar plot yerr lines/caps should respect zorder
 * :ghissue:`14042`: dynamic_image.py + saving animation broken
@@ -1143,7 +1143,7 @@ Issues (161):
 * :ghissue:`13487`: labelpad is not the spacing between the axis and the label
 * :ghissue:`13540`: Docs for matplotlib.pyplot.specgram() reference an unsupported mode setting
 * :ghissue:`8997`: Proposal: Grid arrangement by number of plots
-* :ghissue:`6928`: Cannot run ``setup.py build`` with numpy master
+* :ghissue:`6928`: Cannot run ``setup.py build`` with array_backend master
 * :ghissue:`12697`: Axes are drawn at wrong positions
 * :ghissue:`13478`: FuncAnimation:  interactive zoom/pan with blitting does not work
 * :ghissue:`11575`: Setting axis ticks in log scale produces duplicate tick labels.
@@ -1190,7 +1190,7 @@ Issues (161):
 * :ghissue:`13142`: Cannot plot bar graph with dates: "TypeError: ufunc subtract cannot use operands with types dtype('<M8[ns]') and dtype('float64')"
 * :ghissue:`8530`: Feature request: TIFF LZW compression support in savefig()
 * :ghissue:`13139`: font family ['serif'] not found. Falling back to DejaVu Sans
-* :ghissue:`1558`: Graceful handling of a numpy matrix
+* :ghissue:`1558`: Graceful handling of a array_backend matrix
 * :ghissue:`12954`: Fonts installed in the user directory are not detected (Windows 1809)
 * :ghissue:`3644`: Feature Request: manually set colorbar without mappable
 * :ghissue:`12862`: broken_barh appears not to work with datetime/timedelta objects
@@ -1215,7 +1215,7 @@ Issues (161):
 * :ghissue:`13028`: Bad rotation_mode/center_baseline combination even if rotation=0
 * :ghissue:`12745`: Sphinx copy button for code block
 * :ghissue:`12801`: scatter() should not drop data points at nonfinite coordinates
-* :ghissue:`12358`: Dropping support for Py3.5 and numpy 1.10
+* :ghissue:`12358`: Dropping support for Py3.5 and array_backend 1.10
 * :ghissue:`12994`: Axes range with set_xticks with categoricals
 * :ghissue:`12993`: Semantics of set_xticks for categoricals
 * :ghissue:`12946`: ~ in mathrm leads to Unknown symbol: \mathrm
@@ -1239,7 +1239,7 @@ Issues (161):
 * :ghissue:`12191`: "if 1:" blocks in examples
 * :ghissue:`12107`: warnings re: deprecated pytest API with pytest 3.8
 * :ghissue:`12010`: Popover over plot is very slow
-* :ghissue:`12118`: Scatter: empty np.arrays with non-numeric dtypes cause TypeError
+* :ghissue:`12118`: Scatter: empty mlxarr.arrays with non-numeric dtypes cause TypeError
 * :ghissue:`12072`: ``MaxNLocator`` changes the scientific notation exponent with different number of tick labels
 * :ghissue:`11795`: Un-align animations created with to_jshtml()?
 * :ghissue:`10201`: Available fonts are ignored by font_manager

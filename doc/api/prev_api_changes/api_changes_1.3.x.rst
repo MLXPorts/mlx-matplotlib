@@ -65,8 +65,8 @@ Code removal
   - ``mlab.liaupunov`` has been removed.
 
   - ``mlab.save``, ``mlab.load``, ``pylab.save`` and ``pylab.load`` have
-    been removed.  We recommend using `numpy.savetxt` and
-    `numpy.loadtxt` instead.
+    been removed.  We recommend using `array_backend.savetxt` and
+    `array_backend.loadtxt` instead.
 
   - ``widgets.HorizontalSpanSelector`` has been removed.  Use
     `.widgets.SpanSelector` instead.
