@@ -128,10 +128,10 @@ radius: float, default: 1
     The radius of the kernel, if method is SINC, LANCZOS or BLACKMAN.
 )""";
 
-static void image_resample(const py::buffer &input_array,
-                           const py::buffer &output_array,
-                           const py::object &transform,
-                           interpolation_e interpolation,
+static void image_resample(py::buffer input_array,
+                           py::buffer output_array,
+                           py::object transform,
+                           int interpolation,
                            bool resample_,
                            float alpha,
                            bool norm,
@@ -170,7 +170,7 @@ static void image_resample(const py::buffer &input_array,
     }
 
     resample_params_t params;
-    params.interpolation = interpolation;
+    params.interpolation = static_cast<interpolation_e>(interpolation);
     params.transform_mesh = nullptr;
     params.resample = resample_;
     params.norm = norm;
@@ -179,18 +179,31 @@ static void image_resample(const py::buffer &input_array,
 
     std::vector<double> transform_mesh;
 
-    if (transform.is_none()) {
-        params.is_affine = true;
-    } else {
-        bool is_affine = py::cast<bool>(transform.attr("is_affine"));
-        if (is_affine) {
+    const char *transform_stage = "checking transform";
+    try {
+        if (transform.is_none()) {
+            params.is_affine = true;
+        } else if (!py::hasattr(transform, "is_affine")) {
+            transform_stage = "converting affine transform";
             convert_trans_affine(transform, params.affine);
             params.is_affine = true;
         } else {
-            transform_mesh = get_transform_mesh(transform, out_info.shape[0], out_info.shape[1]);
-            params.transform_mesh = transform_mesh.data();
-            params.is_affine = false;
+            transform_stage = "reading transform.is_affine";
+            bool is_affine = py::cast<bool>(transform.attr("is_affine"));
+            if (is_affine) {
+                transform_stage = "converting affine transform";
+                convert_trans_affine(transform, params.affine);
+                params.is_affine = true;
+            } else {
+                transform_stage = "building transform mesh";
+                transform_mesh = get_transform_mesh(transform, out_info.shape[0], out_info.shape[1]);
+                params.transform_mesh = transform_mesh.data();
+                params.is_affine = false;
+            }
         }
+    } catch (const std::exception &e) {
+        throw std::runtime_error(std::string("image resample failed while ")
+                                 + transform_stage + ": " + e.what());
     }
 
     auto width = static_cast<unsigned long>(in_info.shape[1]);

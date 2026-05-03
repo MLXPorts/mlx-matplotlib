@@ -498,7 +498,7 @@ class HPacker(PackerBase):
             [bbox.width for bbox in bboxes], self.width, sep, self.mode)
 
         x0 = bboxes[0].x0
-        xoffsets -= ([bbox.x0 for bbox in bboxes] - x0)
+        xoffsets = xoffsets - (mlxarr.array([bbox.x0 for bbox in bboxes]) - x0)
 
         return (Bbox.from_bounds(x0, y0, width, y1 - y0).padded(pad),
                 [*zip(xoffsets, yoffsets)])

@@ -2497,6 +2497,20 @@ def _unpack_to_array_backend(x):
     if hasattr(x, 'to_array_backend'):
         # Assume that any to_array_backend() method actually returns a array_backend array
         return x.to_array_backend()
+    if hasattr(x, 'to_dict') and hasattr(x, 'columns'):
+        try:
+            columns = list(x.columns)
+            data = x.to_dict('list')
+            rows = [[data[column][row] for column in columns]
+                    for row in range(len(x))]
+            return mlxarr.asarray(rows)
+        except Exception:
+            pass
+    if hasattr(x, 'to_list'):
+        try:
+            return mlxarr.asarray(x.to_list())
+        except Exception:
+            pass
     if hasattr(x, 'values'):
         xtmp = x.values
         # For example a dict has a 'values' attribute, but it is not a property

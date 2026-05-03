@@ -107,7 +107,7 @@ def composite_images(images, renderer, magnification=1.0):
     for data, x, y, alpha in parts:
         trans = Affine2D().translate(x - bbox.x0, y - bbox.y0)
         _image.resample(data, output, trans, _image.NEAREST,
-                        resample=False, alpha=alpha)
+                        False, alpha, True, 1.0)
 
     return output, bbox.x0 / magnification, bbox.y0 / magnification
 
@@ -206,11 +206,8 @@ def _resample(
     out = mlxarr.zeros(out_shape + data.shape[2:], data.dtype)  # 2D->2D, 3D->3D.
     if resample is None:
         resample = image_obj.get_resample()
-    _image.resample(data, out, transform,
-                    _interpd_[interpolation],
-                    resample,
-                    alpha,
-                    image_obj.get_filternorm(),
+    _image.resample(data, out, transform, _interpd_[interpolation],
+                    resample, alpha, image_obj.get_filternorm(),
                     image_obj.get_filterrad())
     return out
 
@@ -482,8 +479,9 @@ class _ImageBase(mcolorizer.ColorizingArtist):
                 # pixels) and out_alpha (to what extent screen pixels are
                 # covered by data pixels: 0 outside the data extent, 1 inside
                 # (even for bad data), and intermediate values at the edges).
-                mask = (mlxarr.where(A.mask, mlxarr.float32(mlxarr.nan), mlxarr.float32(1))
-                        if A.mask.shape == A.shape  # nontrivial mask
+                A_mask = getattr(A, "mask", None)
+                mask = (mlxarr.where(A_mask, mlxarr.float32(mlxarr.nan), mlxarr.float32(1))
+                        if getattr(A_mask, "shape", None) == A.shape  # nontrivial mask
                         else mlxarr.ones_like(A, mlxarr.float32))
                 # we always have to interpolate the mask to account for
                 # non-affine transformations

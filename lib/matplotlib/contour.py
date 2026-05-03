@@ -1320,9 +1320,12 @@ class QuadContourSet(ContourSet):
             self._corner_mask = corner_mask
 
             x, y, z = self._contour_args(args, kwargs)
+            z_for_contour = z.filled(mlxarr.nan) if isinstance(
+                z, ma.MaskedArray) else z
 
             contour_generator = contourpy.contour_generator(
-                x, y, z, name=self._algorithm, corner_mask=self._corner_mask,
+                x, y, z_for_contour, name=self._algorithm,
+                corner_mask=self._corner_mask,
                 line_type=contourpy.LineType.SeparateCode,
                 fill_type=contourpy.FillType.OuterCode,
                 chunk_size=self.nchunk)

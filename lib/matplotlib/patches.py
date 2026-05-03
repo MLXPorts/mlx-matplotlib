@@ -1552,15 +1552,15 @@ class FancyArrow(Polygon):
             ])
             # if we're not including the head, shift up by head length
             if not self._length_includes_head:
-                left_half_arrow += [head_length, 0]
+                left_half_arrow = left_half_arrow + mlxarr.array([head_length, 0])
             # if the head starts at 0, shift up by another head length
             if self._head_starts_at_zero:
-                left_half_arrow += [head_length / 2, 0]
+                left_half_arrow = left_half_arrow + mlxarr.array([head_length / 2, 0])
             # figure out the shape, and complete accordingly
             if self._shape == 'left':
                 coords = left_half_arrow
             else:
-                right_half_arrow = left_half_arrow * [1, -1]
+                right_half_arrow = left_half_arrow * mlxarr.array([1, -1])
                 if self._shape == 'right':
                     coords = right_half_arrow
                 elif self._shape == 'full':
@@ -1578,10 +1578,10 @@ class FancyArrow(Polygon):
                 # Account for division by zero
                 cx, sx = 0, 1
             M = [[cx, sx], [-sx, cx]]
-            self.verts = mlxarr.dot(coords, M) + [
+            self.verts = mlxarr.dot(coords, mlxarr.array(M)) + mlxarr.array([
                 self._x + self._dx,
                 self._y + self._dy,
-            ]
+            ])
 
 
 _docstring.interpd.register(

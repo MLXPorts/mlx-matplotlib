@@ -39,6 +39,19 @@ if not hasattr(mx.array, "__round__"):
     mx.array.__round__ = lambda self, ndigits=None: round(
         float(self.item()), ndigits) if ndigits is not None else round(
             float(self.item()))
+if not hasattr(mx.array, "_mlx_array_orig_rpow"):
+    mx.array._mlx_array_orig_rpow = mx.array.__rpow__
+
+    def _array_rpow(self, other):
+        if isinstance(other, (int, float)) and float(other) == 10.0:
+            def pow10(value):
+                if isinstance(value, list):
+                    return [pow10(item) for item in value]
+                return 10.0 ** float(value)
+            return mx.array(pow10(self.tolist()), dtype=mx.float64)
+        return mx.array._mlx_array_orig_rpow(self, other)
+
+    mx.array.__rpow__ = _array_rpow
 if not hasattr(mx.array, "__divmod__"):
     def _array_divmod(self, other):
         left = _to_scalar(self)
@@ -132,6 +145,9 @@ if not hasattr(mx.array, "data"):
 if not hasattr(mx.array, "take"):
     mx.array.take = lambda self, indices, axis=None, mode=None: take(
         self, indices, axis=axis, mode=mode)
+if not hasattr(mx.array, "repeat"):
+    mx.array.repeat = lambda self, repeats, axis=None: repeat(
+        self, repeats, axis=axis)
 if not hasattr(mx.array, "_mlx_array_orig_mul"):
     mx.array._mlx_array_orig_mul = mx.array.__mul__
 
@@ -452,6 +468,8 @@ uint32 = DType(mx.uint32, "uint32", "u", 4, "I")
 uint64 = DType(mx.uint64, "uint64", "u", 8, "Q")
 longdouble = float64
 float128 = float64
+double = float64
+intp = int64
 floating = float
 integer = int
 number = (int, float)
@@ -469,6 +487,7 @@ _DTYPE_BY_NAME = {
     "float": float64,
     "double": float64,
     "int": int64,
+    "intp": intp,
     "longdouble": longdouble,
     "float128": float128,
     "O": _object_dtype,
@@ -1274,7 +1293,11 @@ def put(a: Any, indices: Any, values: Any) -> mx.array:
     return mx.array(flat).reshape(arr.shape)
 
 
-def where(condition: Any, x: Any, y: Any) -> mx.array:
+def where(condition: Any, x: Any = None, y: Any = None) -> mx.array:
+    if x is None and y is None:
+        return nonzero(condition)
+    if x is None or y is None:
+        raise ValueError("where requires both x and y when selecting values")
     cond = _to_mx(condition)
     x_arr = _to_mx(x)
     y_arr = _to_mx(y)
@@ -1294,6 +1317,16 @@ def where(condition: Any, x: Any, y: Any) -> mx.array:
         x_list = x_arr.tolist() if hasattr(x_arr, "tolist") else x_arr
         y_list = y_arr.tolist() if hasattr(y_arr, "tolist") else y_arr
         return _to_mx(choose(cond.tolist(), x_list, y_list))
+
+
+def extract(condition: Any, arr: Any):
+    arr_mx = _to_mx(arr)
+    cond_flat = list(_flatten(_to_mx(condition).tolist()))
+    arr_flat = list(_flatten(arr_mx.tolist()))
+    values = [value for keep, value in zip(cond_flat, arr_flat) if keep]
+    if isinstance(arr_mx, _PythonArray):
+        return _PythonArray(values, dtype=arr_mx.dtype)
+    return mx.array(values, dtype=arr_mx.dtype)
 
 
 def divide(a: Any, b: Any, dtype: Any | None = None, **kwargs: Any) -> mx.array:
@@ -1503,9 +1536,7 @@ def allclose(a: Any, b: Any, rtol: float = 1e-5, atol: float = 1e-8) -> bool:
 
 def array_equal(a: Any, b: Any) -> bool:
     if isinstance(a, _PythonArray) or isinstance(b, _PythonArray):
-        a_list = a.tolist() if isinstance(a, _PythonArray) else _to_mx(a).tolist()
-        b_list = b.tolist() if isinstance(b, _PythonArray) else _to_mx(b).tolist()
-        return a_list == b_list
+        return _testing_equal(a, b)
     return bool(mx.all(mx.equal(_to_mx(a), _to_mx(b))).item())
 
 
@@ -1593,8 +1624,16 @@ def log10(a: Any) -> mx.array:
     return mx.log10(_to_mx(a))
 
 
-def power(a: Any, b: Any) -> mx.array:
+def _power_impl(a: Any, b: Any) -> mx.array:
+    if isinstance(a, (int, float)) and float(a) == 10.0:
+        b_arr = _to_mx(b)
+        values = _coerce_nested(b_arr.tolist(), lambda value: 10.0 ** float(value))
+        return mx.array(values, dtype=mx.float64)
     return mx.power(_to_mx(a), _to_mx(b))
+
+
+def power(a: Any, b: Any) -> mx.array:
+    return _power_impl(a, b)
 
 
 def square(a: Any) -> mx.array:
@@ -1682,7 +1721,7 @@ def outer(a: Any, b: Any) -> mx.array:
 
 class _Power:
     def __call__(self, a: Any, b: Any, **kwargs: Any) -> mx.array:
-        return mx.power(_to_mx(a), _to_mx(b))
+        return _power_impl(a, b)
 
     def outer(self, a: Any, b: Any) -> mx.array:
         a = _to_mx(a)
@@ -1753,6 +1792,15 @@ def broadcast_to(a: Any, shape: Any) -> mx.array:
             return _PythonArray(_reshape_flat([], shape_tuple),
                                 dtype=getattr(arr, "dtype", _object_dtype),
                                 shape=shape_tuple)
+        if (getattr(arr, "ndim", None) == 1 and len(shape_tuple) == 2
+                and arr.shape[0] == shape_tuple[1]):
+            if isinstance(arr, _PythonArray):
+                return _PythonArray([arr.tolist()] * shape_tuple[0],
+                                    dtype=arr.dtype, shape=shape_tuple)
+            return mx.stack([arr] * shape_tuple[0], axis=0)
+        if getattr(arr, "size", None) == 1:
+            return full(shape_tuple, _to_scalar(arr),
+                        dtype=getattr(arr, "dtype", None))
         raise
 
 
@@ -1869,6 +1917,8 @@ def histogram(a: Any, bins: Any = 10,
     max_v = bin_edges[-1]
     width = (max_v - min_v) / bin_count if bin_count else 1.0
     for v, weight in zip(arr, weight_values):
+        if math.isnan(v):
+            continue
         if v < min_v or v > max_v:
             continue
         if v == max_v:
@@ -1993,6 +2043,11 @@ def searchsorted(a: Any, v: Any, side: str = "left"):
     if scalar:
         return result[0]
     return mx.array(result)
+
+
+def digitize(x: Any, bins: Any, right: bool = False):
+    side = "left" if right else "right"
+    return searchsorted(bins, x, side=side)
 
 
 def nan_to_num(x: Any, nan: float = 0.0, posinf: float | None = None, neginf: float | None = None):
@@ -2711,6 +2766,10 @@ class _Random:
     def random(self, size: Any | None = None):
         return mx.random.uniform(shape=_random_shape(size))
 
+    random_sample = random
+    sample = random
+    ranf = random
+
     def uniform(self, low: float = 0.0, high: float = 1.0, size: Any | None = None):
         return mx.random.uniform(low=low, high=high, shape=_random_shape(size))
 
@@ -2724,6 +2783,16 @@ class _Random:
         arr = _to_mx(x)
         idx = mx.random.permutation(arr.shape[0])
         return arr[idx]
+
+    def shuffle(self, x: Any) -> None:
+        shuffled = self.permutation(x)
+        if isinstance(x, list):
+            x[:] = shuffled.tolist()
+            return None
+        if isinstance(x, mx.array):
+            full_key = (slice(None),) * x.ndim if x.ndim else slice(None)
+            x[full_key] = shuffled
+        return None
 
     def default_rng(self, seed: int | None = None):
         if seed is not None:
@@ -2761,9 +2830,9 @@ default_rng = random.default_rng
 
 def _testing_plain(value: Any) -> Any:
     if isinstance(value, mx.array):
-        return value.tolist()
+        return _testing_plain(value.tolist())
     if isinstance(value, _PythonArray):
-        return value.tolist()
+        return _testing_plain(value.tolist())
     if isinstance(value, (list, tuple)):
         return [_testing_plain(item) for item in value]
     return value
@@ -2813,6 +2882,9 @@ class _Testing:
     def assert_array_max_ulp(self, a: Any, b: Any, maxulp: int = 1, dtype: Any | None = None):
         return self.assert_allclose(a, b, rtol=1e-6, atol=1e-12)
 
+    def assert_array_almost_equal_nulp(self, a: Any, b: Any, nulp: int = 1):
+        return self.assert_array_max_ulp(a, b, maxulp=nulp)
+
     def assert_raises(self, exc_type: type[BaseException], func, *args: Any, **kwargs: Any):
         try:
             func(*args, **kwargs)
@@ -2843,6 +2915,7 @@ masked = _MaskedConstant()
 class MaskedArray:
     data: mx.array
     mask: mx.array | None
+    __array_priority__ = 1000
 
     @property
     def shape(self):
@@ -2865,6 +2938,10 @@ class MaskedArray:
             return self.data
         return mx.where(self.mask, _to_mx(fill_value), self.data)
 
+    def fill(self, value: Any) -> None:
+        full_key = (slice(None),) * self.data.ndim if self.data.ndim else slice(None)
+        self.data[full_key] = full(self.data.shape, value, dtype=self.data.dtype)
+
     def compressed(self):
         if self.mask is None:
             return ravel(self.data)
@@ -2883,13 +2960,62 @@ class MaskedArray:
         return self.data.tolist()
 
     def min(self, *args: Any, **kwargs: Any):
-        return min(self.filled(), *args, **kwargs)
+        return mx.min(_to_mx(self.filled()), *args, **kwargs)
 
     def max(self, *args: Any, **kwargs: Any):
-        return max(self.filled(), *args, **kwargs)
+        return mx.max(_to_mx(self.filled()), *args, **kwargs)
 
     def astype(self, dtype: Any, *args: Any, **kwargs: Any):
         return MaskedArray(self.data.astype(dtype), self.mask)
+
+    def any(self, axis: int | None = None):
+        return any(self.filled(False), axis=axis)
+
+    def all(self, axis: int | None = None):
+        return all(self.filled(True), axis=axis)
+
+    def _combined_mask(self, other: Any):
+        other_mask = other.mask if isinstance(other, MaskedArray) else None
+        if self.mask is None:
+            return other_mask
+        if other_mask is None:
+            return self.mask
+        return logical_or(self.mask, other_mask)
+
+    def _binary(self, other: Any, op):
+        other_data = other.data if isinstance(other, MaskedArray) else other
+        return MaskedArray(op(self.data, other_data), self._combined_mask(other))
+
+    def _rbinary(self, other: Any, op):
+        other_data = other.data if isinstance(other, MaskedArray) else other
+        return MaskedArray(op(other_data, self.data), self._combined_mask(other))
+
+    def __mul__(self, other: Any):
+        return self._binary(other, operator.mul)
+
+    def __rmul__(self, other: Any):
+        return self._rbinary(other, operator.mul)
+
+    def __truediv__(self, other: Any):
+        return self._binary(other, operator.truediv)
+
+    def __rtruediv__(self, other: Any):
+        return self._rbinary(other, operator.truediv)
+
+    def __add__(self, other: Any):
+        return self._binary(other, operator.add)
+
+    def __radd__(self, other: Any):
+        return self._rbinary(other, operator.add)
+
+    def __sub__(self, other: Any):
+        return self._binary(other, operator.sub)
+
+    def __rsub__(self, other: Any):
+        return self._rbinary(other, operator.sub)
+
+    def __neg__(self):
+        return MaskedArray(-self.data, self.mask)
 
     def __len__(self):
         return len(self.data)
@@ -2920,8 +3046,13 @@ class MaskedArray:
         if self.mask is not None:
             self.mask[key] = False
 
-    def __array__(self):  # pragma: no cover - compatibility shim
-        return self.data
+    def __array__(self, dtype: Any | None = None, copy: bool | None = None):
+        if dtype is None:
+            return self.data
+        try:
+            return self.data.astype(dtype)
+        except (TypeError, ValueError):
+            return self.data
 
 
 class _MA:
@@ -3006,6 +3137,14 @@ class _MA:
             return data.filled(fill_value)
         return _to_mx(data)
 
+    def min(self, data: Any, *args: Any, **kwargs: Any):
+        return data.min(*args, **kwargs) if isinstance(data, MaskedArray) else min(
+            data, *args, **kwargs)
+
+    def max(self, data: Any, *args: Any, **kwargs: Any):
+        return data.max(*args, **kwargs) if isinstance(data, MaskedArray) else max(
+            data, *args, **kwargs)
+
     def masked_where(self, condition: Any, data: Any):
         return MaskedArray(data=_to_mx(data), mask=_to_mx(condition))
 
@@ -3088,6 +3227,34 @@ ma = _MA()
 
 
 class _Linalg:
+    def det(self, a: Any):
+        arr = _to_mx(a)
+
+        def matrix_det(values):
+            rows = [list(row) for row in values]
+            n = len(rows)
+            if _builtins.any(len(row) != n for row in rows):
+                raise ValueError("last two dimensions must be square")
+            if n == 0:
+                return 1.0
+            if n == 1:
+                return rows[0][0]
+            if n == 2:
+                return rows[0][0] * rows[1][1] - rows[0][1] * rows[1][0]
+            total = 0.0
+            for col, value in enumerate(rows[0]):
+                minor = [row[:col] + row[col + 1:] for row in rows[1:]]
+                total += ((-1) ** col) * value * matrix_det(minor)
+            return total
+
+        def det_nested(values, ndim):
+            if ndim == 2:
+                return matrix_det(values)
+            return [det_nested(item, ndim - 1) for item in values]
+
+        result = det_nested(arr.tolist(), arr.ndim)
+        return result if arr.ndim == 2 else mx.array(result)
+
     def __getattr__(self, name: str):
         return getattr(mx.linalg, name)
 
