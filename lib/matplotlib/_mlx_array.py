@@ -10,6 +10,7 @@ import itertools
 import operator
 import builtins as _builtins
 import gc
+import weakref
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any, Iterable, Iterator, List, Sequence, Tuple
@@ -338,16 +339,25 @@ if not hasattr(mx.array, "flat"):
 
     mx.array.flat = property(_array_flat)
 if not hasattr(mx.array, "flags"):
+    _array_writeable = {}
+
+    def _clear_array_writeable(key):
+        _array_writeable.pop(key, None)
+
     class _ArrayFlags:
+        def __init__(self, array):
+            self._key = id(array)
+            weakref.finalize(array, _clear_array_writeable, self._key)
+
         @property
         def writeable(self):
-            return True
+            return _array_writeable.get(self._key, True)
 
         @writeable.setter
         def writeable(self, value):
-            pass
+            _array_writeable[self._key] = bool(value)
 
-    mx.array.flags = property(lambda self: _ArrayFlags())
+    mx.array.flags = property(lambda self: _ArrayFlags(self))
 
 @dataclass(frozen=True)
 class DType:

@@ -1,6 +1,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/variant.h>
 
 #include <algorithm>
 #include <cmath>
@@ -9,11 +10,15 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <variant>
 #include <utility>
 #include <vector>
 
 #include "_image_resample.h"
 #include "mlx/array.h"
+#include "mlx/ops.h"
+#include "mlx/stream.h"
+#include "mlx/utils.h"
 #include "py_buffer.h"
 #include "py_converters.h"
 
@@ -35,6 +40,84 @@ struct ArrayInfo {
     std::vector<py::ssize_t> shape;
     std::vector<py::ssize_t> strides;
 };
+
+bool has_explicit_stream(const mx::StreamOrDevice& stream)
+{
+    return !std::holds_alternative<std::monostate>(stream);
+}
+
+mx::Device parse_mlx_device_repr(const std::string& repr)
+{
+    auto start = repr.find("Device(");
+    if (start == std::string::npos) {
+        throw py::type_error("stream must be an mlx.core.Stream or mlx.core.Device");
+    }
+
+    auto type_start = start + std::string("Device(").size();
+    auto comma = repr.find(',', type_start);
+    auto close = repr.find(')', comma);
+    if (comma == std::string::npos || close == std::string::npos) {
+        throw py::type_error("stream must be an mlx.core.Stream or mlx.core.Device");
+    }
+
+    auto type = repr.substr(type_start, comma - type_start);
+    auto index = std::stoi(repr.substr(comma + 1, close - comma - 1));
+    if (type == "cpu") {
+        return mx::Device(mx::Device::cpu, index);
+    }
+    if (type == "gpu") {
+        return mx::Device(mx::Device::gpu, index);
+    }
+    throw py::type_error("stream must be an mlx.core.Stream or mlx.core.Device");
+}
+
+mx::Stream parse_mlx_stream_repr(const std::string& repr)
+{
+    auto device = parse_mlx_device_repr(repr);
+    auto comma = repr.rfind(',');
+    auto close = repr.rfind(')');
+    if (comma == std::string::npos || close == std::string::npos || comma > close) {
+        throw py::type_error("stream must be an mlx.core.Stream or mlx.core.Device");
+    }
+    auto index = std::stoi(repr.substr(comma + 1, close - comma - 1));
+    return mx::Stream(index, device);
+}
+
+mx::StreamOrDevice as_stream_or_device(const py::object& stream)
+{
+    if (stream.is_none()) {
+        return std::monostate{};
+    }
+
+    nb::object nb_stream = nb::borrow<nb::object>(nb::handle(stream.ptr()));
+    try {
+        return nb::cast<mx::Stream>(nb_stream);
+    } catch (const nb::cast_error&) {
+    }
+    try {
+        return nb::cast<mx::Device>(nb_stream);
+    } catch (const nb::cast_error&) {
+    }
+    try {
+        return mx::Device(nb::cast<mx::Device::DeviceType>(nb_stream));
+    } catch (const nb::cast_error&) {
+    }
+
+    auto repr = py::repr(stream).cast<std::string>();
+    if (repr.rfind("Stream(", 0) == 0) {
+        return parse_mlx_stream_repr(repr);
+    }
+    if (repr.rfind("Device(", 0) == 0) {
+        return parse_mlx_device_repr(repr);
+    }
+    if (repr == "DeviceType.cpu") {
+        return mx::Device(mx::Device::cpu);
+    }
+    if (repr == "DeviceType.gpu") {
+        return mx::Device(mx::Device::gpu);
+    }
+    throw py::type_error("stream must be an mlx.core.Stream or mlx.core.Device");
+}
 
 std::string mlx_dtype_format(const mx::Dtype &dtype)
 {
@@ -90,7 +173,9 @@ mx::array as_mlx_array(py::handle obj)
     throw std::invalid_argument("object is not an MLX array");
 }
 
-ArrayInfo get_array_info(py::handle obj, bool writable)
+ArrayInfo get_array_info(py::handle obj,
+                         bool writable,
+                         const mx::StreamOrDevice& stream)
 {
     if (obj.is_none()) {
         throw py::type_error("resample(): incompatible function arguments");
@@ -99,18 +184,24 @@ ArrayInfo get_array_info(py::handle obj, bool writable)
     ArrayInfo info;
     info.owner = py::reinterpret_borrow<py::object>(obj);
 
-    if (is_mlx_array_like(obj)) {
-        if (writable && py::hasattr(info.owner, "flags")) {
-            py::object flags = info.owner.attr("flags");
-            if (py::hasattr(flags, "writeable") && !py::cast<bool>(flags.attr("writeable"))) {
-                throw py::value_error("Output array must be writeable");
-            }
+    if (writable && py::hasattr(info.owner, "flags")) {
+        py::object flags = info.owner.attr("flags");
+        if (py::hasattr(flags, "writeable") && !py::cast<bool>(flags.attr("writeable"))) {
+            throw py::value_error("Output array must be writeable");
         }
+    }
 
+    if (is_mlx_array_like(obj)) {
         info.mlx_array = as_mlx_array(obj);
+        if (!writable && has_explicit_stream(stream)) {
+            info.mlx_array = mx::contiguous(*info.mlx_array, false, stream);
+        }
         {
             py::gil_scoped_release release;
             info.mlx_array->eval();
+            if (has_explicit_stream(stream)) {
+                mx::synchronize(mx::to_stream(stream));
+            }
         }
 
         info.ptr = info.mlx_array->data<void>();
@@ -163,7 +254,8 @@ bool is_c_contiguous(const ArrayInfo &info)
 
 std::vector<double> get_transform_mesh(const py::object &transform,
                                       py::ssize_t height,
-                                      py::ssize_t width)
+                                      py::ssize_t width,
+                                      const mx::StreamOrDevice& stream)
 {
     auto inverse = transform.attr("inverted")();
 
@@ -191,7 +283,7 @@ std::vector<double> get_transform_mesh(const py::object &transform,
     mv = mv.attr("cast")("d", py::make_tuple(n, 2));
 
     py::object output = inverse.attr("transform")(mv);
-    auto out_info = get_array_info(output, false);
+    auto out_info = get_array_info(output, false, stream);
     if (out_info.ndim != 2 || out_info.shape[0] != n || out_info.shape[1] != 2) {
         throw std::runtime_error("Inverse transformed mesh must have shape (N, 2)");
     }
@@ -242,6 +334,9 @@ norm : bool, default: False
 
 radius: float, default: 1
     The radius of the kernel, if method is SINC, LANCZOS or BLACKMAN.
+
+stream : mlx.core.Stream or mlx.core.Device, optional
+    Stream or device used when staging MLX array inputs for C++ access.
 )""";
 
 static void image_resample(py::object input_array,
@@ -251,10 +346,12 @@ static void image_resample(py::object input_array,
                            bool resample_,
                            float alpha,
                            bool norm,
-                           float radius)
+                           float radius,
+                           py::object stream)
 {
-    auto in_info = get_array_info(input_array, false);
-    auto out_info = get_array_info(output_array, true);
+    auto stream_or_device = as_stream_or_device(stream);
+    auto in_info = get_array_info(input_array, false, stream_or_device);
+    auto out_info = get_array_info(output_array, true, stream_or_device);
 
     if (in_info.ndim != 2 && in_info.ndim != 3) {
         throw std::invalid_argument("Input buffer must be 2D or 3D");
@@ -304,18 +401,21 @@ static void image_resample(py::object input_array,
             params.is_affine = true;
         } else if (!py::hasattr(transform, "is_affine")) {
             transform_stage = "converting affine transform";
-            convert_trans_affine(transform, params.affine);
+            convert_trans_affine_with_stream(transform, params.affine, stream);
             params.is_affine = true;
         } else {
             transform_stage = "reading transform.is_affine";
             bool is_affine = py::cast<bool>(transform.attr("is_affine"));
             if (is_affine) {
                 transform_stage = "converting affine transform";
-                convert_trans_affine(transform, params.affine);
+                convert_trans_affine_with_stream(transform, params.affine, stream);
                 params.is_affine = true;
             } else {
                 transform_stage = "building transform mesh";
-                transform_mesh = get_transform_mesh(transform, out_info.shape[0], out_info.shape[1]);
+                transform_mesh = get_transform_mesh(transform,
+                                                    out_info.shape[0],
+                                                    out_info.shape[1],
+                                                    stream_or_device);
                 params.transform_mesh = transform_mesh.data();
                 params.is_affine = false;
             }
@@ -431,6 +531,8 @@ PYBIND11_MODULE(_image, m)
           "alpha"_a = 1.0f,
           "norm"_a = false,
           "radius"_a = 1.0f,
+          py::kw_only(),
+          "stream"_a = py::none(),
           image_resample__doc__);
 
     m.def("calculate_rms_and_diff", &calculate_rms_and_diff,

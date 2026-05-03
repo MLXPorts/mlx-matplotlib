@@ -1621,6 +1621,22 @@ def test__resample_valid_output():
         resample(mlxarr.zeros((9, 9)), out)
 
 
+def test__resample_accepts_mlx_stream():
+    import mlx.core as mx
+
+    data = mlxarr.array([[0.1, 0.3, 0.2]])
+    expected = mlxarr.array([[0.1, 0.1, 0.1, 0.3, 0.3,
+                              0.3, 0.3, 0.2, 0.2, 0.2]])
+    out = mlxarr.empty_like(expected)
+    transform = Affine2D().scale(sx=expected.shape[1] / data.shape[1], sy=1)
+
+    mpl._image.resample(data, out, transform,
+                        interpolation=mpl._image.NEAREST,
+                        stream=mx.default_stream(mx.default_device()))
+
+    assert_allclose(out, expected)
+
+
 @pytest.mark.parametrize("data, interpolation, expected",
     [(mlxarr.array([[0.1, 0.3, 0.2]]), mimage.NEAREST,
       mlxarr.array([[0.1, 0.1, 0.1, 0.3, 0.3, 0.3, 0.3, 0.2, 0.2, 0.2]])),

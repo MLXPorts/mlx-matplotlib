@@ -160,7 +160,8 @@ def _draw_list_compositing_images(
 
 
 def _resample(
-        image_obj, data, out_shape, transform, *, resample=None, alpha=1):
+        image_obj, data, out_shape, transform, *, resample=None, alpha=1,
+        stream=None):
     """
     Convenience wrapper around `._image.resample` to resample *data* to
     *out_shape* (with a third dimension if *data* is RGBA) that takes care of
@@ -208,7 +209,7 @@ def _resample(
         resample = image_obj.get_resample()
     _image.resample(data, out, transform, _interpd_[interpolation],
                     resample, alpha, image_obj.get_filternorm(),
-                    image_obj.get_filterrad())
+                    image_obj.get_filterrad(), stream=stream)
     return out
 
 

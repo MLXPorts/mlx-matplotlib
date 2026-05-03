@@ -1,13 +1,61 @@
 #include "py_converters.h"
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/variant.h>
+
+#include <variant>
 
 #include "mlx/array.h"
+#include "mlx/ops.h"
+#include "mlx/stream.h"
+#include "mlx/utils.h"
 
 namespace nb = nanobind;
 namespace mx = mlx::core;
 
 namespace {
+
+bool has_explicit_stream(const mx::StreamOrDevice& stream)
+{
+    return !std::holds_alternative<std::monostate>(stream);
+}
+
+mx::Device parse_mlx_device_repr(const std::string& repr)
+{
+    auto start = repr.find("Device(");
+    if (start == std::string::npos) {
+        throw py::type_error("stream must be an mlx.core.Stream or mlx.core.Device");
+    }
+
+    auto type_start = start + std::string("Device(").size();
+    auto comma = repr.find(',', type_start);
+    auto close = repr.find(')', comma);
+    if (comma == std::string::npos || close == std::string::npos) {
+        throw py::type_error("stream must be an mlx.core.Stream or mlx.core.Device");
+    }
+
+    auto type = repr.substr(type_start, comma - type_start);
+    auto index = std::stoi(repr.substr(comma + 1, close - comma - 1));
+    if (type == "cpu") {
+        return mx::Device(mx::Device::cpu, index);
+    }
+    if (type == "gpu") {
+        return mx::Device(mx::Device::gpu, index);
+    }
+    throw py::type_error("stream must be an mlx.core.Stream or mlx.core.Device");
+}
+
+mx::Stream parse_mlx_stream_repr(const std::string& repr)
+{
+    auto device = parse_mlx_device_repr(repr);
+    auto comma = repr.rfind(',');
+    auto close = repr.rfind(')');
+    if (comma == std::string::npos || close == std::string::npos || comma > close) {
+        throw py::type_error("stream must be an mlx.core.Stream or mlx.core.Device");
+    }
+    auto index = std::stoi(repr.substr(comma + 1, close - comma - 1));
+    return mx::Stream(index, device);
+}
 
 bool is_mlx_array_like(const py::object& obj)
 {
@@ -27,16 +75,60 @@ mx::array as_mlx_array(const py::object& obj)
     throw std::invalid_argument("object is not an MLX array");
 }
 
-bool convert_mlx_affine(const py::object& obj, agg::trans_affine& affine)
+mx::StreamOrDevice as_stream_or_device(const py::object& stream)
+{
+    if (stream.is_none()) {
+        return std::monostate{};
+    }
+
+    nb::object nb_stream = nb::borrow<nb::object>(nb::handle(stream.ptr()));
+    try {
+        return nb::cast<mx::Stream>(nb_stream);
+    } catch (const nb::cast_error&) {
+    }
+    try {
+        return nb::cast<mx::Device>(nb_stream);
+    } catch (const nb::cast_error&) {
+    }
+    try {
+        return mx::Device(nb::cast<mx::Device::DeviceType>(nb_stream));
+    } catch (const nb::cast_error&) {
+    }
+
+    auto repr = py::repr(stream).cast<std::string>();
+    if (repr.rfind("Stream(", 0) == 0) {
+        return parse_mlx_stream_repr(repr);
+    }
+    if (repr.rfind("Device(", 0) == 0) {
+        return parse_mlx_device_repr(repr);
+    }
+    if (repr == "DeviceType.cpu") {
+        return mx::Device(mx::Device::cpu);
+    }
+    if (repr == "DeviceType.gpu") {
+        return mx::Device(mx::Device::gpu);
+    }
+    throw py::type_error("stream must be an mlx.core.Stream or mlx.core.Device");
+}
+
+bool convert_mlx_affine(const py::object& obj,
+                        agg::trans_affine& affine,
+                        const mx::StreamOrDevice& stream)
 {
     if (!is_mlx_array_like(obj)) {
         return false;
     }
 
     auto array = as_mlx_array(obj);
+    if (has_explicit_stream(stream)) {
+        array = mx::contiguous(array, false, stream);
+    }
     {
         py::gil_scoped_release release;
         array.eval();
+        if (has_explicit_stream(stream)) {
+            mx::synchronize(mx::to_stream(stream));
+        }
     }
 
     if (array.ndim() != 2 || array.shape(0) != 3 || array.shape(1) != 3) {
@@ -63,10 +155,19 @@ bool convert_mlx_affine(const py::object& obj, agg::trans_affine& affine)
 
 void convert_trans_affine(const py::object& transform, agg::trans_affine& affine)
 {
+    convert_trans_affine_with_stream(transform, affine, py::none());
+}
+
+void convert_trans_affine_with_stream(const py::object& transform,
+                                      agg::trans_affine& affine,
+                                      const py::object& stream)
+{
     // If None assume identity transform so leave affine unchanged
     if (transform.is_none()) {
         return;
     }
+
+    auto stream_or_device = as_stream_or_device(stream);
 
     py::object affine_transform = transform;
     if (!py::hasattr(affine_transform, "to_values") &&
@@ -74,7 +175,7 @@ void convert_trans_affine(const py::object& transform, agg::trans_affine& affine
         affine_transform = affine_transform.attr("get_affine")();
     }
     if (!py::hasattr(affine_transform, "to_values")) {
-        if (convert_mlx_affine(affine_transform, affine)) {
+        if (convert_mlx_affine(affine_transform, affine, stream_or_device)) {
             return;
         }
 

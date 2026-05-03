@@ -109,6 +109,8 @@ extension_data = {
       '-I' + nanobind_include_dir,
       '-I' + nanobind_robin_map_include_dir,
       '-I' + mlx_include_dir,
+      '-DNB_DOMAIN=mlx',
+      '-DNB_STATIC',
     ],
     'override_options': ['cpp_std=c++20'],
     'build_rpath': mlx_lib_dir,
