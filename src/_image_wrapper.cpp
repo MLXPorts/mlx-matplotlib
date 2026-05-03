@@ -1,32 +1,149 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <nanobind/nanobind.h>
 
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "_image_resample.h"
+#include "mlx/array.h"
 #include "py_buffer.h"
 #include "py_converters.h"
 
 namespace py = pybind11;
+namespace nb = nanobind;
+namespace mx = mlx::core;
 using namespace pybind11::literals;
 
 namespace {
 
+struct ArrayInfo {
+    py::object owner;
+    py::buffer buffer;
+    std::optional<mx::array> mlx_array;
+    void *ptr = nullptr;
+    py::ssize_t ndim = 0;
+    py::ssize_t itemsize = 0;
+    std::string format;
+    std::vector<py::ssize_t> shape;
+    std::vector<py::ssize_t> strides;
+};
+
+std::string mlx_dtype_format(const mx::Dtype &dtype)
+{
+    switch (dtype) {
+    case mx::bool_:
+        return "?";
+    case mx::uint8:
+        return "B";
+    case mx::uint16:
+        return "H";
+    case mx::uint32:
+        return "I";
+    case mx::uint64:
+        return "Q";
+    case mx::int8:
+        return "b";
+    case mx::int16:
+        return "h";
+    case mx::int32:
+        return "i";
+    case mx::int64:
+        return "q";
+    case mx::float16:
+        return "e";
+    case mx::float32:
+        return "f";
+    case mx::bfloat16:
+        return "B";
+    case mx::float64:
+        return "d";
+    case mx::complex64:
+        return "Zf";
+    default:
+        throw std::invalid_argument("unsupported MLX dtype");
+    }
+}
+
+bool is_mlx_array_like(py::handle obj)
+{
+    nb::object nb_obj = nb::borrow<nb::object>(nb::handle(obj.ptr()));
+    return nb::isinstance<mx::array>(nb_obj) || nb::hasattr(nb_obj, "__mlx_array__");
+}
+
+mx::array as_mlx_array(py::handle obj)
+{
+    nb::object nb_obj = nb::borrow<nb::object>(nb::handle(obj.ptr()));
+    if (nb::isinstance<mx::array>(nb_obj)) {
+        return nb::cast<mx::array>(nb_obj);
+    }
+    if (nb::hasattr(nb_obj, "__mlx_array__")) {
+        return nb::cast<mx::array>(nb_obj.attr("__mlx_array__")());
+    }
+    throw std::invalid_argument("object is not an MLX array");
+}
+
+ArrayInfo get_array_info(py::handle obj, bool writable)
+{
+    if (obj.is_none()) {
+        throw py::type_error("resample(): incompatible function arguments");
+    }
+
+    ArrayInfo info;
+    info.owner = py::reinterpret_borrow<py::object>(obj);
+
+    if (is_mlx_array_like(obj)) {
+        if (writable && py::hasattr(info.owner, "flags")) {
+            py::object flags = info.owner.attr("flags");
+            if (py::hasattr(flags, "writeable") && !py::cast<bool>(flags.attr("writeable"))) {
+                throw py::value_error("Output array must be writeable");
+            }
+        }
+
+        info.mlx_array = as_mlx_array(obj);
+        {
+            py::gil_scoped_release release;
+            info.mlx_array->eval();
+        }
+
+        info.ptr = info.mlx_array->data<void>();
+        info.ndim = static_cast<py::ssize_t>(info.mlx_array->ndim());
+        info.itemsize = static_cast<py::ssize_t>(info.mlx_array->itemsize());
+        info.format = mlx_dtype_format(info.mlx_array->dtype());
+        info.shape.assign(info.mlx_array->shape().begin(), info.mlx_array->shape().end());
+        info.strides.assign(info.mlx_array->strides().begin(), info.mlx_array->strides().end());
+        for (auto &stride : info.strides) {
+            stride *= info.itemsize;
+        }
+        return info;
+    }
+
+    info.buffer = py::reinterpret_borrow<py::buffer>(obj);
+    py::buffer_info buffer_info = info.buffer.request(writable);
+    info.ptr = buffer_info.ptr;
+    info.ndim = buffer_info.ndim;
+    info.itemsize = buffer_info.itemsize;
+    info.format = buffer_info.format;
+    info.shape = std::move(buffer_info.shape);
+    info.strides = std::move(buffer_info.strides);
+    return info;
+}
+
 template <typename T>
-bool buffer_is(const py::buffer_info &info)
+bool buffer_is(const ArrayInfo &info)
 {
     return info.itemsize == static_cast<py::ssize_t>(sizeof(T))
         && info.format == py::format_descriptor<T>::format();
 }
 
-bool is_c_contiguous(const py::buffer_info &info)
+bool is_c_contiguous(const ArrayInfo &info)
 {
     if (info.ndim <= 0) {
         return true;
@@ -74,8 +191,7 @@ std::vector<double> get_transform_mesh(const py::object &transform,
     mv = mv.attr("cast")("d", py::make_tuple(n, 2));
 
     py::object output = inverse.attr("transform")(mv);
-    py::buffer out_buf = py::reinterpret_borrow<py::buffer>(output);
-    auto out_info = out_buf.request(false);
+    auto out_info = get_array_info(output, false);
     if (out_info.ndim != 2 || out_info.shape[0] != n || out_info.shape[1] != 2) {
         throw std::runtime_error("Inverse transformed mesh must have shape (N, 2)");
     }
@@ -128,8 +244,8 @@ radius: float, default: 1
     The radius of the kernel, if method is SINC, LANCZOS or BLACKMAN.
 )""";
 
-static void image_resample(py::buffer input_array,
-                           py::buffer output_array,
+static void image_resample(py::object input_array,
+                           py::object output_array,
                            py::object transform,
                            int interpolation,
                            bool resample_,
@@ -137,8 +253,8 @@ static void image_resample(py::buffer input_array,
                            bool norm,
                            float radius)
 {
-    auto in_info = input_array.request(false);
-    auto out_info = output_array.request(true);
+    auto in_info = get_array_info(input_array, false);
+    auto out_info = get_array_info(output_array, true);
 
     if (in_info.ndim != 2 && in_info.ndim != 3) {
         throw std::invalid_argument("Input buffer must be 2D or 3D");
@@ -164,8 +280,11 @@ static void image_resample(py::buffer input_array,
     }
 
     if (in_info.ndim == 3) {
-        if (in_info.shape[2] != 4 || out_info.shape[2] != 4) {
-            throw std::invalid_argument("3D buffers must be RGBA with trailing dimension 4");
+        if (in_info.shape[2] != 4) {
+            throw std::invalid_argument("3D input array must be RGBA");
+        }
+        if (out_info.shape[2] != 4) {
+            throw std::invalid_argument("3D output array must be RGBA");
         }
     }
 
@@ -297,15 +416,21 @@ static py::tuple calculate_rms_and_diff(const py::buffer &expected_image,
 
 PYBIND11_MODULE(_image, m)
 {
+#if NB_VERSION_MAJOR > 2 || (NB_VERSION_MAJOR == 2 && NB_VERSION_MINOR >= 12)
+    nb::detail::nb_module_exec(NB_DOMAIN_STR, m.ptr());
+#else
+    nb::detail::init(NB_DOMAIN_STR);
+#endif
+
     m.def("resample", &image_resample,
           "input_array"_a,
           "output_array"_a,
-          "transform"_a,
-          "interpolation"_a,
-          "resample"_a,
-          "alpha"_a,
-          "norm"_a,
-          "radius"_a,
+          "transform"_a = py::none(),
+          "interpolation"_a = static_cast<int>(NEAREST),
+          "resample"_a = false,
+          "alpha"_a = 1.0f,
+          "norm"_a = false,
+          "radius"_a = 1.0f,
           image_resample__doc__);
 
     m.def("calculate_rms_and_diff", &calculate_rms_and_diff,
