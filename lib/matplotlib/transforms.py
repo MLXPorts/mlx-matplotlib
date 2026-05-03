@@ -74,7 +74,12 @@ def _as_float_memoryview(values):
         shape = (len(values),)
         flat = values
     buf = _array("d", flat)
-    return memoryview(buf).cast("B").cast("d", shape=shape)
+    mv = memoryview(buf)
+    # Python rejects cast() with zeros in shape; an empty array.array("d") is
+    # already typed as "d" with 1D shape (0,) so skip the reshape cast.
+    if not flat:
+        return mv
+    return mv.cast("B").cast("d", shape=shape)
 
 
 def affine_transform(values, mtx):

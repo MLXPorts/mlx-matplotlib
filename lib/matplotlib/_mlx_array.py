@@ -57,6 +57,40 @@ if not hasattr(mx.array, "__round__"):
     mx.array.__round__ = lambda self, ndigits=None: round(
         float(self.item()), ndigits) if ndigits is not None else round(
             float(self.item()))
+if not hasattr(mx.array, "__array_interface__"):
+    _MX_DTYPE_TO_TYPESTR = {
+        mx.float32: "<f4", mx.float64: "<f8", mx.float16: "<f2",
+        mx.bfloat16: "<f2",
+        mx.int8: "<i1", mx.int16: "<i2", mx.int32: "<i4", mx.int64: "<i8",
+        mx.uint8: "|u1", mx.uint16: "<u2", mx.uint32: "<u4", mx.uint64: "<u8",
+        mx.bool_: "|u1",
+    }
+    _MX_DTYPE_TO_ARRAY_FMT = {
+        mx.float32: "f", mx.float64: "d",
+        mx.int8: "b", mx.int16: "h", mx.int32: "i", mx.int64: "q",
+        mx.uint8: "B", mx.uint16: "H", mx.uint32: "I", mx.uint64: "Q",
+        mx.bool_: "B",
+    }
+
+    def _mx_array_interface(self):
+        typestr = _MX_DTYPE_TO_TYPESTR.get(self.dtype, "<f4")
+        fmt = _MX_DTYPE_TO_ARRAY_FMT.get(self.dtype)
+        flat = list(_flatten(self.tolist()))
+        from array import array as _stdlib_array
+        if fmt is not None:
+            data = _stdlib_array(fmt, flat).tobytes()
+        else:
+            # float16/bfloat16: convert via float32
+            data = _stdlib_array("f", [float(v) for v in flat]).tobytes()
+            typestr = "<f4"
+        return {
+            "data": data,
+            "shape": self.shape,
+            "typestr": typestr,
+            "version": 3,
+        }
+
+    mx.array.__array_interface__ = property(_mx_array_interface)
 if not hasattr(mx.array, "_mlx_array_orig_rpow"):
     mx.array._mlx_array_orig_rpow = mx.array.__rpow__
 
@@ -442,6 +476,20 @@ if not hasattr(mx.array, "_mlx_array_orig_rsub"):
 
     def _array_rsub(self, other):
         other = _coerce_float64_value(self, other)
+        if isinstance(other, (list, tuple)):
+            other = mx.array([_to_scalar(item) for item in other],
+                             dtype=self.dtype)
+        elif isinstance(other, _PythonArray):
+            other = mx.array(other.tolist(), dtype=self.dtype).reshape(other.shape)
+        elif (hasattr(other, "__array__")
+              and not isinstance(other, (mx.array, _PythonArray))):
+            try:
+                other = _to_mx(other.__array__())
+            except TypeError:
+                try:
+                    other = _to_mx(other.__array__(dtype=float))
+                except Exception:
+                    pass
         return mx.array._mlx_array_orig_rsub(self, other)
 
     mx.array.__rsub__ = _array_rsub
@@ -862,6 +910,16 @@ class _PythonArray:
     def ravel(self):
         return _PythonArray(list(_flatten(self._data)), dtype=self.dtype)
 
+    @property
+    def T(self):
+        if self.ndim < 2:
+            return _PythonArray(self._data, dtype=self.dtype, shape=self.shape)
+        flat = list(_flatten(self._data))
+        rows, cols = self.shape[0], self.shape[1]
+        transposed = [[flat[r * cols + c] for r in range(rows)]
+                      for c in range(cols)]
+        return _PythonArray(transposed, dtype=self.dtype)
+
     def reshape(self, shape: Any):
         flat = list(_flatten(self._data))
         shape_tuple = _shape_tuple(shape)
@@ -1259,8 +1317,13 @@ def full(shape: Any, fill_value: Any, dtype: Any | None = None) -> mx.array:
 def empty(shape: Any, dtype: Any | None = None) -> mx.array:
     if dtype is _builtins.object or dtype == "object":
         return _ObjectNDArray(shape)
+    unwrapped = _unwrap_dtype(dtype)
+    if isinstance(dtype, (list, tuple)) and _builtins.all(
+            isinstance(f, tuple) for f in dtype):
+        # Structured dtype — not representable in MLX; fall back to object array.
+        return _ObjectNDArray(shape)
     # MLX does not expose uninitialized arrays; use zeros as a safe fallback.
-    return mx.zeros(shape, dtype=_unwrap_dtype(dtype))
+    return mx.zeros(shape, dtype=unwrapped)
 
 
 def zeros_like(a: Any, dtype: Any | None = None) -> mx.array:
@@ -1753,7 +1816,13 @@ def isnan(a: Any) -> mx.array:
 
 
 def isclose(a: Any, b: Any, rtol: float = 1e-5, atol: float = 1e-8) -> mx.array:
-    return mx.isclose(_to_mx(a), _to_mx(b), rtol=rtol, atol=atol)
+    a_mx = _to_mx(a)
+    b_mx = _to_mx(b)
+    if isinstance(a_mx, _PythonArray):
+        a_mx = a_mx.astype(mx.float64)
+    if isinstance(b_mx, _PythonArray):
+        b_mx = b_mx.astype(mx.float64)
+    return mx.isclose(a_mx, b_mx, rtol=rtol, atol=atol)
 
 
 def allclose(a: Any, b: Any, rtol: float = 1e-5, atol: float = 1e-8) -> bool:
@@ -2231,13 +2300,14 @@ def correlate(a: Any, v: Any, mode: str = "valid") -> mx.array:
     return convolve(a, list(reversed(list(_flatten(_to_mx(v).tolist())))), mode=mode)
 
 
-def interp(x: Any, xp: Any, fp: Any):
-    x_list = _to_mx(x).tolist()
-    is_scalar = not isinstance(x_list, list)
-    if is_scalar:
-        x_list = [x_list]
-    xp_list = _to_mx(xp).tolist()
-    fp_list = _to_mx(fp).tolist()
+def interp(x: Any, xp: Any, fp: Any,
+           left: Any = None, right: Any = None):
+    x_data = _to_mx(x)
+    x_list = list(_flatten(x_data.tolist() if hasattr(x_data, "tolist")
+                            else x_data))
+    is_scalar = not isinstance(_to_mx(x).tolist(), list)
+    xp_list = list(_flatten(_to_mx(xp).tolist()))
+    fp_list = list(_flatten(_to_mx(fp).tolist()))
     if not isinstance(xp_list, list):
         xp_list = [xp_list]
     if not isinstance(fp_list, list):
@@ -2245,10 +2315,10 @@ def interp(x: Any, xp: Any, fp: Any):
     out = []
     for xv in x_list:
         if xv <= xp_list[0]:
-            out.append(fp_list[0])
+            out.append(fp_list[0] if left is None else left)
             continue
         if xv >= xp_list[-1]:
-            out.append(fp_list[-1])
+            out.append(fp_list[-1] if right is None else right)
             continue
         for i in range(1, len(xp_list)):
             if xv <= xp_list[i]:
@@ -2992,8 +3062,8 @@ def _random_shape(size: Any | None = None, args: Tuple[Any, ...] = ()) -> Tuple[
 
 
 class _Random:
-    def seed(self, seed_val: int | None = None):
-        mx.random.seed(seed_val or 0)
+    def seed(self, seed: int | None = None):
+        mx.random.seed(seed or 0)
 
     def rand(self, *shape: int):
         return mx.random.uniform(shape=_random_shape(args=shape))
@@ -3304,6 +3374,12 @@ class MaskedArray:
         if self.mask is not None and bool(_to_scalar(self.mask)):
             return False
         return bool(_to_scalar(self.data))
+
+    def __int__(self):
+        return int(_to_scalar(self.data))
+
+    def __float__(self):
+        return float(_to_scalar(self.data))
 
     def __len__(self):
         return len(self.data)
