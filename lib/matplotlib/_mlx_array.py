@@ -25,6 +25,12 @@ except ImportError:
 def _coerce_float64_value(target: Any, value: Any) -> Any:
     if _mlx_overrides is None:
         return value
+    if isinstance(value, float):
+        target_dtype = getattr(target, "dtype", None)
+        if target_dtype in {
+                mx.bool_, mx.int8, mx.int16, mx.int32, mx.int64,
+                mx.uint8, mx.uint16, mx.uint32, mx.uint64}:
+            return _mlx_overrides.float64_scalar(value)
     return _mlx_overrides.coerce_float64_value(target, value)
 
 
@@ -161,6 +167,8 @@ if not hasattr(mx.array, "take"):
 if not hasattr(mx.array, "repeat"):
     mx.array.repeat = lambda self, repeats, axis=None: repeat(
         self, repeats, axis=axis)
+if not hasattr(mx.array, "argsort"):
+    mx.array.argsort = lambda self, axis=-1: argsort(self, axis=axis)
 if not hasattr(mx.array, "_mlx_array_orig_mul"):
     mx.array._mlx_array_orig_mul = mx.array.__mul__
 
@@ -239,10 +247,40 @@ if not hasattr(mx.array, "_mlx_array_orig_astype"):
     mx.array._mlx_array_orig_astype = mx.array.astype
 
     def _array_astype(self, dtype, *args, **kwargs):
-        return mx.array._mlx_array_orig_astype(
-            self, _unwrap_dtype(dtype), *args, **kwargs)
+        dtype = _unwrap_dtype(dtype)
+        if dtype is _builtins.object:
+            return _PythonArray(self.tolist(), dtype=_object_dtype)
+        return mx.array._mlx_array_orig_astype(self, dtype, *args, **kwargs)
 
     mx.array.astype = _array_astype
+if not hasattr(mx.array, "_mlx_array_orig_max_method"):
+    mx.array._mlx_array_orig_max_method = mx.array.max
+
+    def _array_max_method(self, axis=None, out=None, keepdims=False,
+                          initial=None, where=True):
+        if initial is not None and self.size == 0:
+            return mx.array(initial, dtype=self.dtype)
+        result = mx.array._mlx_array_orig_max_method(
+            self, axis=axis, keepdims=keepdims)
+        if initial is not None:
+            result = mx.maximum(result, mx.array(initial, dtype=result.dtype))
+        return result
+
+    mx.array.max = _array_max_method
+if not hasattr(mx.array, "_mlx_array_orig_min_method"):
+    mx.array._mlx_array_orig_min_method = mx.array.min
+
+    def _array_min_method(self, axis=None, out=None, keepdims=False,
+                          initial=None, where=True):
+        if initial is not None and self.size == 0:
+            return mx.array(initial, dtype=self.dtype)
+        result = mx.array._mlx_array_orig_min_method(
+            self, axis=axis, keepdims=keepdims)
+        if initial is not None:
+            result = mx.minimum(result, mx.array(initial, dtype=result.dtype))
+        return result
+
+    mx.array.min = _array_min_method
 if not hasattr(mx.array, "_mlx_array_orig_setitem"):
     mx.array._mlx_array_orig_setitem = mx.array.__setitem__
 
@@ -287,6 +325,10 @@ if not hasattr(mx.array, "_mlx_array_orig_getitem"):
     mx.array._mlx_array_orig_getitem = mx.array.__getitem__
 
     def _array_getitem(self, key):
+        def is_bool_array(value):
+            return (isinstance(value, mx.array)
+                    and (value.dtype == mx.bool_ or "bool" in str(value.dtype)))
+
         def scalar_index(value):
             if isinstance(value, mx.array) and value.size == 1:
                 if value.dtype == mx.bool_ or str(value.dtype).endswith("bool"):
@@ -327,6 +369,8 @@ if not hasattr(mx.array, "_mlx_array_orig_getitem"):
         if isinstance(key, tuple) and _builtins.any(
                 isinstance(part, (list, tuple)) for part in key):
             return mx.array(_python_getitem(self.tolist(), key), dtype=self.dtype)
+        if isinstance(key, tuple) and _builtins.any(is_bool_array(part) for part in key):
+            return mx.array(_python_getitem(self.tolist(), key), dtype=self.dtype)
         if isinstance(key, mx.array) and (key.dtype == mx.bool_ or
                                           str(key.dtype).endswith("bool_")):
             values = self.tolist()
@@ -335,6 +379,12 @@ if not hasattr(mx.array, "_mlx_array_orig_getitem"):
                 values = [values]
             if not isinstance(mask, list):
                 mask = [mask]
+            mask_flat = list(_flatten(mask))
+            values_flat = list(_flatten(values))
+            if len(mask_flat) == len(values_flat):
+                return mx.array([value for value, keep in zip(values_flat, mask_flat)
+                                 if keep],
+                                dtype=self.dtype)
             return mx.array([value for value, keep in zip(values, mask) if keep],
                             dtype=self.dtype)
         try:
@@ -531,10 +581,15 @@ def _unwrap_dtype(dtype: Any | None) -> Any | None:
         return mx.int64
     if dtype is _builtins.float:
         return mx.float64
+    if dtype is _builtins.object:
+        return _builtins.object
     if isinstance(dtype, str):
         if dtype.startswith(("S", "U")) or dtype in {"O", "object", "str", "bytes"}:
             return _builtins.object
         return _STRING_TO_MX_DTYPE.get(dtype, dtype)
+    name = getattr(dtype, "__name__", None)
+    if name in _STRING_TO_MX_DTYPE:
+        return _STRING_TO_MX_DTYPE[name]
     return dtype
 
 
@@ -721,6 +776,10 @@ class _PythonArray:
         return self.shape[0] if self.shape else 1
 
     def __getitem__(self, key: Any) -> Any:
+        if isinstance(key, str):
+            values = self._data if isinstance(self._data, list) else [self._data]
+            if values and _builtins.all(isinstance(value, dict) for value in values):
+                return _PythonArray([value[key] for value in values])
         if isinstance(key, mx.array):
             key = key.tolist()
         if isinstance(key, range):
@@ -742,6 +801,24 @@ class _PythonArray:
         return _PythonArray(value, dtype=self.dtype) if isinstance(value, list) else value
 
     def __setitem__(self, key: Any, value: Any) -> None:
+        if isinstance(key, mx.array):
+            key = key.tolist()
+        if isinstance(key, list):
+            def set_mask(data, mask):
+                if isinstance(mask, list):
+                    if not isinstance(data, list):
+                        return value if _builtins.any(_flatten(mask)) else data
+                    for idx, keep in enumerate(mask):
+                        if isinstance(keep, list):
+                            data[idx] = set_mask(data[idx], keep)
+                        elif keep:
+                            data[idx] = value
+                    return data
+                return value if mask else data
+
+            if _builtins.all(isinstance(item, bool) for item in _flatten(key)):
+                self._data = set_mask(self._data, key)
+                return
         if not isinstance(key, tuple):
             self._data[key] = value
             return
@@ -758,6 +835,26 @@ class _PythonArray:
         if self.size != 1:
             raise ValueError("can only convert an array of size 1 to a Python scalar")
         return next(_flatten(self._data))
+
+    def min(self, axis: Any | None = None, initial: Any | None = None,
+            where: Any = True):
+        values = [value for value in _flatten(self._data)
+                  if value is not None and value is not masked]
+        if not values:
+            if initial is not None:
+                return initial
+            return nan
+        return _builtins.min(values)
+
+    def max(self, axis: Any | None = None, initial: Any | None = None,
+            where: Any = True):
+        values = [value for value in _flatten(self._data)
+                  if value is not None and value is not masked]
+        if not values:
+            if initial is not None:
+                return initial
+            return nan
+        return _builtins.max(values)
 
     def squeeze(self):
         return _PythonArray(_squeeze_nested(self._data), dtype=self.dtype)
@@ -990,6 +1087,8 @@ def _python_getitem(data: Any, key: Any) -> Any:
         if isinstance(key, range):
             key = list(key)
         if isinstance(key, (list, tuple)):
+            if _builtins.all(isinstance(item, bool) for item in key):
+                return [value for value, keep in zip(data, key) if keep]
             return [data[int(item)] for item in key]
         return data[key]
     if not key:
@@ -1005,7 +1104,10 @@ def _python_getitem(data: Any, key: Any) -> Any:
             and _builtins.all(isinstance(item, int) for item in first)):
         first = list(first)
     if isinstance(first, list):
-        selected = [data[int(item)] for item in first]
+        if _builtins.all(isinstance(item, bool) for item in first):
+            selected = [item for item, keep in zip(data, first) if keep]
+        else:
+            selected = [data[int(item)] for item in first]
     else:
         selected = data[first]
     if rest and isinstance(first, (slice, list)):
@@ -1017,6 +1119,10 @@ def _python_getitem(data: Any, key: Any) -> Any:
 
 def _to_mx(x: Any, dtype: Any | None = None) -> mx.array:
     if isinstance(x, flatiter):
+        x = x.tolist()
+    if isinstance(x, memoryview):
+        if dtype is None and x.format in {"B", "b"}:
+            dtype = mx.uint8
         x = x.tolist()
     if isinstance(x, range):
         x = list(x)
@@ -1038,6 +1144,12 @@ def _to_mx(x: Any, dtype: Any | None = None) -> mx.array:
             x = x.__array__(dtype=dtype)
     if isinstance(x, mx.array) and dtype is None:
         return x
+    if (isinstance(dtype, (list, tuple))
+            and _builtins.all(isinstance(field, (list, tuple)) and field
+                              for field in dtype)):
+        names = [field[0] for field in dtype]
+        rows = [dict(zip(names, row)) for row in x]
+        return _PythonArray(rows, dtype=_object_dtype)
     dtype = _unwrap_dtype(dtype)
     if isinstance(x, (list, tuple)):
         x = _copy_nested(x)
@@ -1177,8 +1289,26 @@ def empty_like(a: Any, dtype: Any | None = None) -> mx.array:
 
 def arange(*args: Any, **kwargs: Any) -> mx.array:
     args = tuple(_to_scalar(arg) if isinstance(arg, mx.array) else arg for arg in args)
+    dtype_arg = kwargs.get("dtype")
+    if isinstance(dtype_arg, str) and dtype_arg.startswith("datetime64"):
+        unit = "D"
+        if "[" in dtype_arg and dtype_arg.endswith("]"):
+            unit = dtype_arg[dtype_arg.index("[") + 1:-1]
+        start = datetime64(args[0])
+        stop = datetime64(args[1])
+        step_value = args[2] if len(args) > 2 else 1
+        step = step_value if isinstance(step_value, timedelta) else timedelta64(
+            step_value, unit)
+        values = []
+        current = start
+        while current < stop:
+            values.append(current)
+            current = current + step
+        return _PythonArray(values, dtype=_object_dtype)
     if "dtype" in kwargs:
         kwargs["dtype"] = _unwrap_dtype(kwargs["dtype"])
+    elif _builtins.any(isinstance(arg, float) for arg in args if arg is not None):
+        kwargs["dtype"] = mx.float64
     return mx.arange(*args, **kwargs)
 
 
@@ -2103,8 +2233,15 @@ def correlate(a: Any, v: Any, mode: str = "valid") -> mx.array:
 
 def interp(x: Any, xp: Any, fp: Any):
     x_list = _to_mx(x).tolist()
+    is_scalar = not isinstance(x_list, list)
+    if is_scalar:
+        x_list = [x_list]
     xp_list = _to_mx(xp).tolist()
     fp_list = _to_mx(fp).tolist()
+    if not isinstance(xp_list, list):
+        xp_list = [xp_list]
+    if not isinstance(fp_list, list):
+        fp_list = [fp_list]
     out = []
     for xv in x_list:
         if xv <= xp_list[0]:
@@ -2120,7 +2257,7 @@ def interp(x: Any, xp: Any, fp: Any):
                 t = (xv - x0) / (x1 - x0)
                 out.append(y0 + t * (y1 - y0))
                 break
-    return mx.array(out)
+    return out[0] if is_scalar else mx.array(out)
 
 
 def searchsorted(a: Any, v: Any, side: str = "left"):
@@ -2211,11 +2348,13 @@ def median(a: Any, axis: int | None = None, overwrite_input: bool | None = None)
     raise NotImplementedError("median currently supports axis 0, axis 1, or None")
 
 
-def average(a: Any, weights: Any | None = None):
+def average(a: Any, axis: int | None = None, weights: Any | None = None):
     arr = _to_mx(a)
     if weights is None:
-        return mean(arr)
+        return mean(arr, axis=axis)
     w = _to_mx(weights)
+    if axis is not None:
+        return _to_scalar(mx.sum(arr * w, axis=axis) / mx.sum(w, axis=axis))
     return _to_scalar(mx.sum(arr * w) / mx.sum(w))
 
 
@@ -2580,16 +2719,25 @@ def broadcast_arrays(*args: Any, **kwargs: Any):
         pass
 
     target_shape: Tuple[int, ...] = ()
-    for arg in converted:
+    target_index = 0
+    arg_shapes = []
+    for idx, arg in enumerate(converted):
+        arg_index = len(arg_shapes)
         if arg is None:
+            arg_shapes.append(())
             continue
         shape = tuple(getattr(arg, "shape", ()))
-        if math.prod(shape or (1,)) > math.prod(target_shape or (1,)):
+        arg_shapes.append(shape)
+        size = math.prod(shape or (1,))
+        target_size = math.prod(target_shape or (1,))
+        if size > target_size or (
+                size == target_size and len(shape) > len(target_shape)):
             target_shape = shape
+            target_index = arg_index
 
     target_size = math.prod(target_shape) if target_shape else 1
     result = []
-    for arg in converted:
+    for idx, arg in enumerate(converted):
         if arg is None:
             data = _reshape_flat([None] * target_size, target_shape)
             result.append(_PythonArray(data, dtype=_object_dtype))
@@ -2600,9 +2748,20 @@ def broadcast_arrays(*args: Any, **kwargs: Any):
                 data = _reshape_flat([arg.item()] * target_size, target_shape)
                 result.append(_PythonArray(data, dtype=arg.dtype))
             else:
-                raise ValueError("shape mismatch: objects cannot be broadcast")
+                raise ValueError(
+                    "shape mismatch: objects cannot be broadcast to a single "
+                    f"shape. Mismatch is between arg {idx} with shape "
+                    f"{arg.shape} and arg {target_index} with shape "
+                    f"{target_shape}.")
         else:
-            result.append(mx.broadcast_to(arg, target_shape))
+            try:
+                result.append(mx.broadcast_to(arg, target_shape))
+            except ValueError as exc:
+                raise ValueError(
+                    "shape mismatch: objects cannot be broadcast to a single "
+                    f"shape. Mismatch is between arg {idx} with shape "
+                    f"{arg_shapes[idx]} and arg {target_index} with shape "
+                    f"{target_shape}.") from exc
     return tuple(result)
 
 
@@ -2842,6 +3001,9 @@ class _Random:
     def randn(self, *shape: int):
         return mx.random.normal(shape=_random_shape(args=shape))
 
+    def standard_normal(self, size: Any | None = None):
+        return mx.random.normal(shape=_random_shape(size))
+
     def randint(self, low: int, high: int | None = None, size: Any | None = None):
         if high is None:
             low, high = 0, low
@@ -2909,6 +3071,9 @@ class _Generator:
 
     def normal(self, loc: float = 0.0, scale: float = 1.0, size: Any | None = None):
         return self._random.normal(loc=loc, scale=scale, size=size)
+
+    def standard_normal(self, size: Any | None = None):
+        return self._random.standard_normal(size=size)
 
     def lognormal(self, mean: float = 0.0, sigma: float = 1.0, size: Any | None = None):
         return self._random.lognormal(mean=mean, sigma=sigma, size=size)
@@ -3114,6 +3279,32 @@ class MaskedArray:
     def __neg__(self):
         return MaskedArray(-self.data, self.mask)
 
+    def __lt__(self, other: Any):
+        return self._binary(other, operator.lt)
+
+    def __le__(self, other: Any):
+        return self._binary(other, operator.le)
+
+    def __gt__(self, other: Any):
+        return self._binary(other, operator.gt)
+
+    def __ge__(self, other: Any):
+        return self._binary(other, operator.ge)
+
+    def __eq__(self, other: Any):
+        return self._binary(other, operator.eq)
+
+    def __ne__(self, other: Any):
+        return self._binary(other, operator.ne)
+
+    def __bool__(self):
+        if self.size != 1:
+            raise ValueError(
+                "The truth value of an array with more than one element is ambiguous")
+        if self.mask is not None and bool(_to_scalar(self.mask)):
+            return False
+        return bool(_to_scalar(self.data))
+
     def __len__(self):
         return len(self.data)
 
@@ -3134,6 +3325,11 @@ class MaskedArray:
         return MaskedArray(data, mask)
 
     def __setitem__(self, key: Any, value: Any) -> None:
+        if value is masked:
+            if self.mask is None:
+                self.mask = mx.zeros(self.data.shape, dtype=bool_.mx_dtype)
+            self.mask[key] = True
+            return
         if isinstance(value, MaskedArray):
             self.data[key] = value.data
             if self.mask is not None and value.mask is not None:

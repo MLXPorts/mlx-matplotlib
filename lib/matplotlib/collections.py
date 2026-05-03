@@ -544,8 +544,9 @@ class Collection(mcolorizer.ColorizingArtist):
         # if the point is *inside* of the path instead.
         ind = _path.point_in_path_collection(
             mouseevent.x, mouseevent.y, pickradius,
-            transform.frozen(), paths, self.get_transforms(),
-            offsets, offset_trf, pickradius <= 0)
+            transform.frozen(), paths,
+            mlxarr.asarray(self.get_transforms(), dtype=float),
+            mlxarr.asarray(offsets, dtype=float), offset_trf, pickradius <= 0)
         return len(ind) > 0, dict(ind=ind)
 
     def set_urls(self, urls):

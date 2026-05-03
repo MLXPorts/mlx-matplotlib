@@ -2950,7 +2950,7 @@ def _make_norm_from_scale(
             # i.e. A[mlxarr.isfinite(...)], but also for non-array A's
             in_trf_domain = mlxarr.extract(mlxarr.isfinite(self._trf.transform(A)), A)
             if in_trf_domain.size == 0:
-                in_trf_domain = mlxarr.ma.masked
+                in_trf_domain = [1, 10]
             return super().autoscale_None(in_trf_domain)
 
     if base_norm_cls is Normalize:

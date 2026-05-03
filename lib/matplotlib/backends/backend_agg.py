@@ -134,6 +134,8 @@ class RendererAgg(RendererBase):
 
     def draw_markers(self, gc, marker_path, marker_trans, path, transform,
                      rgbFace=None):
+        if len(marker_path.vertices) == 0 or len(path.vertices) == 0:
+            return
         marker_trans = _transform_to_memoryview(marker_trans)
         transform = _transform_to_memoryview(transform)
         self._renderer.draw_markers(

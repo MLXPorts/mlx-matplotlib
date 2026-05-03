@@ -143,8 +143,49 @@ namespace PYBIND11_NAMESPACE { namespace detail {
         PYBIND11_TYPE_CASTER(agg::trans_affine, const_name("trans_affine"));
 
         bool load(handle src, bool) {
-            // If None assume identity transform so leave affine unchanged
             if (src.is_none()) {
+                return true;
+            }
+
+            py::object transform = py::reinterpret_borrow<py::object>(src);
+            if (!py::hasattr(transform, "to_values") &&
+                    py::hasattr(transform, "get_affine")) {
+                transform = transform.attr("get_affine")();
+            }
+            if (py::hasattr(transform, "to_values")) {
+                py::sequence values = transform.attr("to_values")();
+                if (py::len(values) != 6) {
+                    throw std::invalid_argument("Invalid affine transformation values");
+                }
+
+                value.sx = py::cast<double>(values[0]);
+                value.shy = py::cast<double>(values[1]);
+                value.shx = py::cast<double>(values[2]);
+                value.sy = py::cast<double>(values[3]);
+                value.tx = py::cast<double>(values[4]);
+                value.ty = py::cast<double>(values[5]);
+                return true;
+            }
+
+            if (py::hasattr(transform, "__mlx_array__")) {
+                transform = transform.attr("__mlx_array__")();
+            }
+            if (py::hasattr(transform, "tolist")) {
+                py::sequence rows = transform.attr("tolist")();
+                if (py::len(rows) != 3) {
+                    throw std::invalid_argument("Invalid affine transformation matrix");
+                }
+                py::sequence row0 = rows[0].cast<py::sequence>();
+                py::sequence row1 = rows[1].cast<py::sequence>();
+                if (py::len(row0) != 3 || py::len(row1) != 3) {
+                    throw std::invalid_argument("Invalid affine transformation matrix");
+                }
+                value.sx = py::cast<double>(row0[0]);
+                value.shx = py::cast<double>(row0[1]);
+                value.tx = py::cast<double>(row0[2]);
+                value.shy = py::cast<double>(row1[0]);
+                value.sy = py::cast<double>(row1[1]);
+                value.ty = py::cast<double>(row1[2]);
                 return true;
             }
 
@@ -160,7 +201,6 @@ namespace PYBIND11_NAMESPACE { namespace detail {
             value.shy = array(1, 0);
             value.sy = array(1, 1);
             value.ty = array(1, 2);
-
             return true;
         }
     };
