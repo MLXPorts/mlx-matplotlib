@@ -1621,8 +1621,13 @@ def test__resample_valid_output():
         resample(mlxarr.zeros((9, 9)), out)
 
 
-def test__resample_accepts_mlx_stream():
+@pytest.mark.parametrize("device_name", ["cpu", "gpu"])
+def test__resample_accepts_mlx_stream(device_name):
     import mlx.core as mx
+
+    device_type = getattr(mx, device_name)
+    if not mx.is_available(device_type):
+        pytest.skip(f"MLX {device_name} device is not available")
 
     data = mlxarr.array([[0.1, 0.3, 0.2]])
     expected = mlxarr.array([[0.1, 0.1, 0.1, 0.3, 0.3,
@@ -1632,7 +1637,7 @@ def test__resample_accepts_mlx_stream():
 
     mpl._image.resample(data, out, transform,
                         interpolation=mpl._image.NEAREST,
-                        stream=mx.default_stream(mx.default_device()))
+                        stream=device_type)
 
     assert_allclose(out, expected)
 

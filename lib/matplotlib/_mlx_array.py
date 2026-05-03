@@ -16,6 +16,17 @@ from datetime import datetime, timedelta
 from typing import Any, Iterable, Iterator, List, Sequence, Tuple
 
 import mlx.core as mx
+try:
+    from matplotlib import _mlx_overrides
+except ImportError:
+    _mlx_overrides = None
+
+
+def _coerce_float64_value(target: Any, value: Any) -> Any:
+    if _mlx_overrides is None:
+        return value
+    return _mlx_overrides.coerce_float64_value(target, value)
+
 
 # Matplotlib's array-facing internals routinely request float64 arrays.
 # MLX's GPU backend rejects float64 constructors, so keep this compatibility
@@ -44,6 +55,7 @@ if not hasattr(mx.array, "_mlx_array_orig_rpow"):
     mx.array._mlx_array_orig_rpow = mx.array.__rpow__
 
     def _array_rpow(self, other):
+        other = _coerce_float64_value(self, other)
         if isinstance(other, (int, float)) and float(other) == 10.0:
             def pow10(value):
                 if isinstance(value, list):
@@ -153,6 +165,7 @@ if not hasattr(mx.array, "_mlx_array_orig_mul"):
     mx.array._mlx_array_orig_mul = mx.array.__mul__
 
     def _array_mul(self, other):
+        other = _coerce_float64_value(self, other)
         if isinstance(other, (list, tuple)):
             other = mx.array(other, dtype=self.dtype)
         elif isinstance(other, _PythonArray):
@@ -164,6 +177,7 @@ if not hasattr(mx.array, "_mlx_array_orig_rmul"):
     mx.array._mlx_array_orig_rmul = mx.array.__rmul__
 
     def _array_rmul(self, other):
+        other = _coerce_float64_value(self, other)
         if isinstance(other, (list, tuple)):
             other = mx.array(other, dtype=self.dtype)
         return mx.array._mlx_array_orig_rmul(self, other)
@@ -173,6 +187,7 @@ if not hasattr(mx.array, "_mlx_array_orig_truediv"):
     mx.array._mlx_array_orig_truediv = mx.array.__truediv__
 
     def _array_truediv(self, other):
+        other = _coerce_float64_value(self, other)
         if isinstance(other, (list, tuple)):
             other = mx.array(other, dtype=self.dtype)
         return mx.array._mlx_array_orig_truediv(self, other)
@@ -182,11 +197,44 @@ if not hasattr(mx.array, "_mlx_array_orig_rtruediv"):
     mx.array._mlx_array_orig_rtruediv = mx.array.__rtruediv__
 
     def _array_rtruediv(self, other):
+        other = _coerce_float64_value(self, other)
         if isinstance(other, (list, tuple)):
             other = mx.array(other, dtype=self.dtype)
         return mx.array._mlx_array_orig_rtruediv(self, other)
 
     mx.array.__rtruediv__ = _array_rtruediv
+if not hasattr(mx.array, "_mlx_array_orig_floordiv"):
+    mx.array._mlx_array_orig_floordiv = mx.array.__floordiv__
+
+    def _array_floordiv(self, other):
+        other = _coerce_float64_value(self, other)
+        return mx.array._mlx_array_orig_floordiv(self, other)
+
+    mx.array.__floordiv__ = _array_floordiv
+if not hasattr(mx.array, "_mlx_array_orig_rfloordiv"):
+    mx.array._mlx_array_orig_rfloordiv = mx.array.__rfloordiv__
+
+    def _array_rfloordiv(self, other):
+        other = _coerce_float64_value(self, other)
+        return mx.array._mlx_array_orig_rfloordiv(self, other)
+
+    mx.array.__rfloordiv__ = _array_rfloordiv
+if not hasattr(mx.array, "_mlx_array_orig_mod"):
+    mx.array._mlx_array_orig_mod = mx.array.__mod__
+
+    def _array_mod(self, other):
+        other = _coerce_float64_value(self, other)
+        return mx.array._mlx_array_orig_mod(self, other)
+
+    mx.array.__mod__ = _array_mod
+if not hasattr(mx.array, "_mlx_array_orig_rmod"):
+    mx.array._mlx_array_orig_rmod = mx.array.__rmod__
+
+    def _array_rmod(self, other):
+        other = _coerce_float64_value(self, other)
+        return mx.array._mlx_array_orig_rmod(self, other)
+
+    mx.array.__rmod__ = _array_rmod
 if not hasattr(mx.array, "_mlx_array_orig_astype"):
     mx.array._mlx_array_orig_astype = mx.array.astype
 
@@ -199,6 +247,8 @@ if not hasattr(mx.array, "_mlx_array_orig_setitem"):
     mx.array._mlx_array_orig_setitem = mx.array.__setitem__
 
     def _array_setitem(self, key, value):
+        if _mlx_overrides is not None:
+            value = _coerce_float64_value(self, value)
         if isinstance(value, (list, tuple)):
             value = mx.array(value, dtype=self.dtype)
         elif isinstance(value, _PythonArray):
@@ -307,6 +357,7 @@ if not hasattr(mx.array, "_mlx_array_orig_sub"):
     mx.array._mlx_array_orig_sub = mx.array.__sub__
 
     def _array_sub(self, other):
+        other = _coerce_float64_value(self, other)
         if isinstance(other, (list, tuple)):
             other = mx.array([_to_scalar(item) for item in other],
                              dtype=self.dtype)
@@ -319,6 +370,7 @@ if not hasattr(mx.array, "_mlx_array_orig_add"):
     mx.array._mlx_array_orig_add = mx.array.__add__
 
     def _array_add(self, other):
+        other = _coerce_float64_value(self, other)
         if isinstance(other, (list, tuple)):
             other = mx.array([_to_scalar(item) for item in other],
                              dtype=self.dtype)
@@ -327,6 +379,30 @@ if not hasattr(mx.array, "_mlx_array_orig_add"):
         return mx.array._mlx_array_orig_add(self, other)
 
     mx.array.__add__ = _array_add
+if not hasattr(mx.array, "_mlx_array_orig_radd"):
+    mx.array._mlx_array_orig_radd = mx.array.__radd__
+
+    def _array_radd(self, other):
+        other = _coerce_float64_value(self, other)
+        return mx.array._mlx_array_orig_radd(self, other)
+
+    mx.array.__radd__ = _array_radd
+if not hasattr(mx.array, "_mlx_array_orig_rsub"):
+    mx.array._mlx_array_orig_rsub = mx.array.__rsub__
+
+    def _array_rsub(self, other):
+        other = _coerce_float64_value(self, other)
+        return mx.array._mlx_array_orig_rsub(self, other)
+
+    mx.array.__rsub__ = _array_rsub
+if not hasattr(mx.array, "_mlx_array_orig_pow"):
+    mx.array._mlx_array_orig_pow = mx.array.__pow__
+
+    def _array_pow(self, other):
+        other = _coerce_float64_value(self, other)
+        return mx.array._mlx_array_orig_pow(self, other)
+
+    mx.array.__pow__ = _array_pow
 if not hasattr(mx.array, "flat"):
     def _array_flat(self):
         def flatten(value):
@@ -460,6 +536,12 @@ def _unwrap_dtype(dtype: Any | None) -> Any | None:
             return _builtins.object
         return _STRING_TO_MX_DTYPE.get(dtype, dtype)
     return dtype
+
+
+def _coerce_float64_fill_value(dtype: Any | None, value: Any) -> Any:
+    if _mlx_overrides is None or _unwrap_dtype(dtype) != mx.float64:
+        return value
+    return _mlx_overrides.float64_scalar(value)
 
 
 # Public dtypes (MLXArrayBackend-like: usable as dtype= and callable constructors).
@@ -1057,7 +1139,9 @@ def full(shape: Any, fill_value: Any, dtype: Any | None = None) -> mx.array:
         return _PythonArray(_reshape_flat([fill_value] * math.prod(shape_tuple),
                                           shape_tuple),
                             dtype=_object_dtype)
-    return mx.full(shape, fill_value, dtype=_unwrap_dtype(dtype))
+    dtype = _unwrap_dtype(dtype)
+    fill_value = _coerce_float64_fill_value(dtype, fill_value)
+    return mx.full(shape, fill_value, dtype=dtype)
 
 
 def empty(shape: Any, dtype: Any | None = None) -> mx.array:
@@ -1081,7 +1165,9 @@ def full_like(a: Any, fill_value: Any, dtype: Any | None = None) -> mx.array:
     arr = _to_mx(a)
     if isinstance(arr, _PythonArray) or _contains_object_data(fill_value):
         return full(arr.shape, fill_value, dtype=dtype or _object_dtype)
-    return mx.full(arr.shape, fill_value, dtype=_unwrap_dtype(dtype) or arr.dtype)
+    dtype = _unwrap_dtype(dtype) or arr.dtype
+    fill_value = _coerce_float64_fill_value(dtype, fill_value)
+    return mx.full(arr.shape, fill_value, dtype=dtype)
 
 
 def empty_like(a: Any, dtype: Any | None = None) -> mx.array:
@@ -2580,6 +2666,7 @@ def pad(array: Any, pad_width: Any, mode: str = "constant", constant_values: Any
         pad_width = [(pad_width, pad_width)] * arr.ndim
     pad_width = list(pad_width)
     new_shape = [arr.shape[i] + pad_width[i][0] + pad_width[i][1] for i in range(arr.ndim)]
+    constant_values = _coerce_float64_fill_value(arr.dtype, constant_values)
     out = mx.full(new_shape, constant_values, dtype=arr.dtype)
     slices = tuple(slice(pad_width[i][0], pad_width[i][0] + arr.shape[i]) for i in range(arr.ndim))
     out[slices] = arr

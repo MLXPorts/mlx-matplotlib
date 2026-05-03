@@ -116,12 +116,31 @@ extension_data = {
     'build_rpath': mlx_lib_dir,
     'install_rpath': mlx_lib_dir,
   },
+  '_mlx_overrides': {
+    'subdir': 'matplotlib',
+    'sources': files(
+      '_mlx_overrides.cpp',
+    ),
+    'dependencies': [pybind11_dep],
+    'override_options': ['cpp_std=c++20'],
+  },
   '_path': {
     'subdir': 'matplotlib',
     'sources': files(
       '_path_wrapper.cpp',
-    ),
-    'dependencies': [agg_dep, pybind11_dep],
+      'py_converters.cpp',
+    ) + [nanobind_combined_cpp],
+    'dependencies': [agg_dep, pybind11_dep, mlx_dep],
+    'cpp_args': [
+      '-I' + nanobind_include_dir,
+      '-I' + nanobind_robin_map_include_dir,
+      '-I' + mlx_include_dir,
+      '-DNB_DOMAIN=mlx',
+      '-DNB_STATIC',
+    ],
+    'override_options': ['cpp_std=c++20'],
+    'build_rpath': mlx_lib_dir,
+    'install_rpath': mlx_lib_dir,
   },
   '_qhull': {
     'subdir': 'matplotlib',

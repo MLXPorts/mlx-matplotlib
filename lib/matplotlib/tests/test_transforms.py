@@ -14,6 +14,68 @@ from matplotlib.testing.decorators import image_comparison, check_figures_equal
 from unittest.mock import MagicMock
 
 
+def test_mlx_float64_setitem_preserves_python_float_precision():
+    import math
+
+    matrix = mlxarr.identity(1, dtype=mlxarr.float64)
+    value = math.cos(math.radians(90))
+
+    matrix[0, 0] = value
+
+    assert matrix[0, 0].item() == value
+
+
+def test_mlx_float64_python_scalar_ops_preserve_precision():
+    import math
+
+    value = math.cos(math.radians(90))
+    zero = mlxarr.zeros((1,), dtype=mlxarr.float64)
+    one = mlxarr.ones((1,), dtype=mlxarr.float64)
+
+    cases = [
+        (zero + value, 0.0 + value),
+        (value + zero, value + 0.0),
+        (zero - value, 0.0 - value),
+        (value - zero, value - 0.0),
+        (one * value, 1.0 * value),
+        (value * one, value * 1.0),
+        (value / one, value / 1.0),
+        (one // value, 1.0 // value),
+        (value % one, value % 1.0),
+        (value ** one, value ** 1.0),
+        (mlxarr.full((1,), value, dtype=mlxarr.float64), value),
+        (mlxarr.full_like(one, value), value),
+        (mlxarr.pad(mlxarr.array([0.0], dtype=mlxarr.float64), 1,
+                    constant_values=value), value),
+    ]
+
+    for result, expected in cases:
+        assert result[0].item() == expected
+
+
+@pytest.mark.parametrize("device_name", ["cpu", "gpu"])
+def test_path_affine_transform_accepts_mlx_stream(device_name):
+    import mlx.core as mx
+    from matplotlib import _path
+
+    device_type = getattr(mx, device_name)
+    if not mx.is_available(device_type):
+        pytest.skip(f"MLX {device_name} device is not available")
+
+    values = mlxarr.array([[1.0, 2.0], [3.0, 4.0]], dtype=float)
+    matrix = mlxarr.array(
+        [[2.0, 0.0, 1.0],
+         [0.0, 3.0, -1.0],
+         [0.0, 0.0, 1.0]],
+        dtype=float)
+
+    result = _path.affine_transform(values, matrix, stream=device_type)
+
+    assert result.shape == (2, 2)
+    assert_allclose(mlxarr.array(result.tolist(), dtype=float),
+                    [[3.0, 5.0], [7.0, 11.0]])
+
+
 class TestAffine2D:
     single_point = [1.0, 1.0]
     multiple_points = [[0.0, 2.0], [3.0, 3.0], [4.0, 0.0]]

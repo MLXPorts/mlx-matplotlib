@@ -97,3 +97,27 @@ def test_invalid_input():
     with pytest.raises(ImageComparisonFailure,
                        match=r'expected size: \(16, 16, 4\) actual size \(16, 16, 3\)'):
         _image.calculate_rms_and_diff(img, img[:, :, :3])
+
+
+@pytest.mark.parametrize("device_name", ["cpu", "gpu"])
+def test_calculate_rms_and_diff_accepts_mlx_stream(device_name):
+    import mlx.core as mx
+
+    device_type = getattr(mx, device_name)
+    if not mx.is_available(device_type):
+        pytest.skip(f"MLX {device_name} device is not available")
+
+    expected = mlxarr.zeros((2, 2, 3), dtype=mlxarr.uint8)
+    actual = mlxarr.array(
+        [[[12, 0, 0], [0, 0, 0]],
+         [[0, 0, 0], [0, 0, 0]]],
+        dtype=mlxarr.uint8)
+
+    rms, abs_diff = _image.calculate_rms_and_diff(
+        expected, actual, stream=device_type)
+
+    assert rms == approx(12 / (2 * 2 * 3) ** 0.5)
+    assert isinstance(abs_diff, memoryview)
+    assert abs_diff.shape == (2, 2, 3)
+    assert abs_diff.tobytes() == bytes(
+        [12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])

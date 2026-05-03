@@ -42,7 +42,6 @@ import weakref
 import math
 from array import array as _array
 from matplotlib import _mlx_array as mlxarr
-from matplotlib import _mlx_array as mlxarr
 inv = mlxarr.linalg.inv
 
 from matplotlib import _api
@@ -80,7 +79,7 @@ def _as_float_memoryview(values):
 
 def affine_transform(values, mtx):
     result = _path_affine_transform(
-        _as_float_memoryview(values), _as_float_memoryview(mtx))
+        mlxarr.asarray(values, dtype=float), mlxarr.asarray(mtx, dtype=float))
     return mlxarr.array(result.tolist(), dtype=float)
 
 
@@ -2164,7 +2163,7 @@ class IdentityTransform(Affine2DBase):
     A special class that does one thing, the identity transform, in a
     fast way.
     """
-    _mtx = mlxarr.identity(3)
+    _mtx = mlxarr.identity(3, dtype=mlxarr.float64)
 
     def frozen(self):
         # docstring inherited

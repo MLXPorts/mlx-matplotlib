@@ -464,34 +464,90 @@ static void image_resample(py::object input_array,
     }
 }
 
-static py::tuple calculate_rms_and_diff(const py::buffer &expected_image,
-                                       const py::buffer &actual_image)
+[[noreturn]] void throw_image_comparison_failure(const std::string &message)
 {
-    mpl::BufferView<unsigned char, 3> expected(expected_image);
-    mpl::BufferView<unsigned char, 3> actual(actual_image);
+    py::object exc = py::module_::import("matplotlib.testing.exceptions")
+                         .attr("ImageComparisonFailure");
+    PyErr_SetString(exc.ptr(), message.c_str());
+    throw py::error_already_set();
+}
 
-    if (expected.shape(2) != 3 && expected.shape(2) != 4) {
-        throw py::value_error("Expected image must be RGB or RGBA");
+std::string dimensionality(py::ssize_t ndim)
+{
+    return std::to_string(ndim) + "-dimensional";
+}
+
+std::string shape_to_string(const ArrayInfo &info)
+{
+    std::string result = "(";
+    for (size_t i = 0; i < info.shape.size(); ++i) {
+        if (i != 0) {
+            result += ", ";
+        }
+        result += std::to_string(info.shape[i]);
     }
-    if (actual.shape(2) != expected.shape(2)
-        || actual.shape(0) != expected.shape(0)
-        || actual.shape(1) != expected.shape(1)) {
-        throw py::value_error("Images must have the same shape");
+    if (info.shape.size() == 1) {
+        result += ",";
+    }
+    result += ")";
+    return result;
+}
+
+static py::tuple calculate_rms_and_diff(py::object expected_image,
+                                       py::object actual_image,
+                                       py::object stream)
+{
+    auto stream_or_device = as_stream_or_device(stream);
+    auto expected = get_array_info(expected_image, false, stream_or_device);
+    auto actual = get_array_info(actual_image, false, stream_or_device);
+
+    if (expected.ndim != 3) {
+        throw_image_comparison_failure("Expected image must be 3-dimensional, but is "
+                                       + dimensionality(expected.ndim));
+    }
+    if (actual.ndim != 3) {
+        throw_image_comparison_failure("Actual image must be 3-dimensional, but is "
+                                       + dimensionality(actual.ndim));
+    }
+    if (!buffer_is<std::uint8_t>(expected)) {
+        throw_image_comparison_failure("Expected image must be uint8");
+    }
+    if (!buffer_is<std::uint8_t>(actual)) {
+        throw_image_comparison_failure("Actual image must be uint8");
     }
 
-    auto height = expected.shape(0);
-    auto width = expected.shape(1);
-    auto depth = expected.shape(2);
+    if (expected.shape[2] != 3 && expected.shape[2] != 4) {
+        throw_image_comparison_failure("Expected image must be RGB or RGBA but has depth "
+                                       + std::to_string(expected.shape[2]));
+    }
+    if (actual.shape[2] != expected.shape[2]
+        || actual.shape[0] != expected.shape[0]
+        || actual.shape[1] != expected.shape[1]) {
+        throw_image_comparison_failure("Image sizes do not match expected size: "
+                                       + shape_to_string(expected)
+                                       + " actual size "
+                                       + shape_to_string(actual));
+    }
+
+    auto height = expected.shape[0];
+    auto width = expected.shape[1];
+    auto depth = expected.shape[2];
 
     std::vector<unsigned char> diff;
     diff.resize(static_cast<size_t>(height * width * depth));
+
+    auto at = [](const ArrayInfo &info, py::ssize_t y, py::ssize_t x, py::ssize_t c) {
+        auto base = static_cast<const unsigned char *>(info.ptr);
+        auto offset = y * info.strides[0] + x * info.strides[1] + c * info.strides[2];
+        return *(base + offset);
+    };
 
     double sum_sq = 0.0;
     for (py::ssize_t y = 0; y < height; ++y) {
         for (py::ssize_t x = 0; x < width; ++x) {
             for (py::ssize_t c = 0; c < depth; ++c) {
-                auto e = expected(y, x, c);
-                auto a = actual(y, x, c);
+                auto e = at(expected, y, x, c);
+                auto a = at(actual, y, x, c);
                 auto d = static_cast<int>(e) - static_cast<int>(a);
                 sum_sq += static_cast<double>(d * d);
                 diff[static_cast<size_t>((y * width + x) * depth + c)] = static_cast<unsigned char>(std::abs(d));
@@ -537,7 +593,9 @@ PYBIND11_MODULE(_image, m)
 
     m.def("calculate_rms_and_diff", &calculate_rms_and_diff,
           "expected"_a,
-          "actual"_a);
+          "actual"_a,
+          py::kw_only(),
+          "stream"_a = py::none());
 
     // Export interpolation enum values.
     m.attr("NEAREST") = py::int_(static_cast<int>(NEAREST));

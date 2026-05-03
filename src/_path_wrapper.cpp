@@ -1,5 +1,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/variant.h>
 
 #include <array>
 #include <cstdint>
@@ -7,16 +9,136 @@
 #include <limits>
 #include <optional>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "_backend_agg_basic_types.h"
 #include "_path.h"
+#include "mlx/array.h"
+#include "mlx/ops.h"
+#include "mlx/stream.h"
+#include "mlx/utils.h"
 #include "py_adaptors.h"
 #include "py_buffer.h"
 #include "py_converters.h"
 
 namespace py = pybind11;
+namespace nb = nanobind;
+namespace mx = mlx::core;
 using namespace pybind11::literals;
+
+static bool has_explicit_stream(const mx::StreamOrDevice& stream)
+{
+    return !std::holds_alternative<std::monostate>(stream);
+}
+
+static mx::Device parse_mlx_device_repr(const std::string& repr)
+{
+    auto start = repr.find("Device(");
+    if (start == std::string::npos) {
+        throw py::type_error("stream must be an mlx.core.Stream or mlx.core.Device");
+    }
+
+    auto type_start = start + std::string("Device(").size();
+    auto comma = repr.find(',', type_start);
+    auto close = repr.find(')', comma);
+    if (comma == std::string::npos || close == std::string::npos) {
+        throw py::type_error("stream must be an mlx.core.Stream or mlx.core.Device");
+    }
+
+    auto type = repr.substr(type_start, comma - type_start);
+    auto index = std::stoi(repr.substr(comma + 1, close - comma - 1));
+    if (type == "cpu") {
+        return mx::Device(mx::Device::cpu, index);
+    }
+    if (type == "gpu") {
+        return mx::Device(mx::Device::gpu, index);
+    }
+    throw py::type_error("stream must be an mlx.core.Stream or mlx.core.Device");
+}
+
+static mx::Stream parse_mlx_stream_repr(const std::string& repr)
+{
+    auto device = parse_mlx_device_repr(repr);
+    auto comma = repr.rfind(',');
+    auto close = repr.rfind(')');
+    if (comma == std::string::npos || close == std::string::npos || comma > close) {
+        throw py::type_error("stream must be an mlx.core.Stream or mlx.core.Device");
+    }
+    auto index = std::stoi(repr.substr(comma + 1, close - comma - 1));
+    return mx::Stream(index, device);
+}
+
+static mx::StreamOrDevice as_stream_or_device(const py::object& stream)
+{
+    if (stream.is_none()) {
+        return std::monostate{};
+    }
+
+    nb::object nb_stream = nb::borrow<nb::object>(nb::handle(stream.ptr()));
+    try {
+        return nb::cast<mx::Stream>(nb_stream);
+    } catch (const nb::cast_error&) {
+    }
+    try {
+        return nb::cast<mx::Device>(nb_stream);
+    } catch (const nb::cast_error&) {
+    }
+    try {
+        return mx::Device(nb::cast<mx::Device::DeviceType>(nb_stream));
+    } catch (const nb::cast_error&) {
+    }
+
+    auto repr = py::repr(stream).cast<std::string>();
+    if (repr.rfind("Stream(", 0) == 0) {
+        return parse_mlx_stream_repr(repr);
+    }
+    if (repr.rfind("Device(", 0) == 0) {
+        return parse_mlx_device_repr(repr);
+    }
+    if (repr == "DeviceType.cpu") {
+        return mx::Device(mx::Device::cpu);
+    }
+    if (repr == "DeviceType.gpu") {
+        return mx::Device(mx::Device::gpu);
+    }
+    throw py::type_error("stream must be an mlx.core.Stream or mlx.core.Device");
+}
+
+static bool is_mlx_array_like(py::handle obj)
+{
+    nb::object nb_obj = nb::borrow<nb::object>(nb::handle(obj.ptr()));
+    return nb::isinstance<mx::array>(nb_obj) || nb::hasattr(nb_obj, "__mlx_array__");
+}
+
+static mx::array as_mlx_array(py::handle obj)
+{
+    nb::object nb_obj = nb::borrow<nb::object>(nb::handle(obj.ptr()));
+    if (nb::isinstance<mx::array>(nb_obj)) {
+        return nb::cast<mx::array>(nb_obj);
+    }
+    if (nb::hasattr(nb_obj, "__mlx_array__")) {
+        return nb::cast<mx::array>(nb_obj.attr("__mlx_array__")());
+    }
+    throw std::invalid_argument("object is not an MLX array");
+}
+
+static mx::array evaluated_mlx_array(py::handle obj,
+                                    const mx::StreamOrDevice& stream)
+{
+    auto array = as_mlx_array(obj);
+    if (has_explicit_stream(stream)) {
+        array = mx::contiguous(array, false, stream);
+    }
+    {
+        py::gil_scoped_release release;
+        array.eval();
+        if (has_explicit_stream(stream)) {
+            mx::synchronize(mx::to_stream(stream));
+        }
+    }
+    return array;
+}
 
 static py::memoryview make_memoryview(const void *data,
                                       py::ssize_t nbytes,
@@ -158,8 +280,94 @@ static py::list Py_clip_path_to_rect(mpl::PathIterator path, agg::rect_d rect, b
     return convert_polygon_vector(result);
 }
 
-static py::memoryview Py_affine_transform(const py::buffer &vertices_arr, agg::trans_affine trans)
+static py::memoryview Py_affine_transform(py::object vertices_obj,
+                                          py::object transform_obj,
+                                          py::object stream)
 {
+    agg::trans_affine trans;
+    convert_trans_affine_with_stream(transform_obj, trans, stream);
+    auto stream_or_device = as_stream_or_device(stream);
+
+    if (is_mlx_array_like(vertices_obj)) {
+        auto vertices = evaluated_mlx_array(vertices_obj, stream_or_device);
+        if (vertices.dtype() != mx::float64) {
+            throw py::value_error("vertices must be float64");
+        }
+        if (vertices.ndim() == 2) {
+            if (vertices.shape(1) != 2) {
+                throw py::value_error("vertices must have shape (N, 2)");
+            }
+
+            auto n = static_cast<py::ssize_t>(vertices.shape(0));
+            std::vector<double> result(static_cast<size_t>(n) * 2);
+            struct Out2D {
+                double *ptr;
+                py::ssize_t n;
+                py::ssize_t ndim() const { return 2; }
+                py::ssize_t shape(py::ssize_t i) const { return i == 0 ? n : 2; }
+                py::ssize_t size() const { return n * 2; }
+                double &operator()(py::ssize_t i, py::ssize_t j) { return ptr[i * 2 + j]; }
+            } out{result.data(), n};
+
+            const double *data = vertices.data<double>();
+            auto stride0 = static_cast<py::ssize_t>(vertices.strides(0));
+            auto stride1 = static_cast<py::ssize_t>(vertices.strides(1));
+            struct In2D {
+                const double *ptr;
+                py::ssize_t n;
+                py::ssize_t stride0;
+                py::ssize_t stride1;
+                py::ssize_t ndim() const { return 2; }
+                py::ssize_t shape(py::ssize_t i) const { return i == 0 ? n : 2; }
+                py::ssize_t size() const { return n * 2; }
+                const double &operator()(py::ssize_t i, py::ssize_t j) const
+                {
+                    return ptr[i * stride0 + j * stride1];
+                }
+            } in{data, n, stride0, stride1};
+
+            affine_transform_2d(in, trans, out);
+            return make_memoryview(result.data(),
+                                   n * 2 * static_cast<py::ssize_t>(sizeof(double)),
+                                   "d",
+                                   py::make_tuple(n, 2));
+        }
+
+        if (vertices.ndim() == 1) {
+            auto n = static_cast<py::ssize_t>(vertices.shape(0));
+            std::vector<double> result(static_cast<size_t>(n));
+            struct Out1D {
+                double *ptr;
+                py::ssize_t n;
+                py::ssize_t ndim() const { return 1; }
+                py::ssize_t shape(py::ssize_t i) const { return i == 0 ? n : 0; }
+                py::ssize_t size() const { return n; }
+                double &operator()(py::ssize_t i) { return ptr[i]; }
+            } out{result.data(), n};
+
+            const double *data = vertices.data<double>();
+            auto stride0 = static_cast<py::ssize_t>(vertices.strides(0));
+            struct In1D {
+                const double *ptr;
+                py::ssize_t n;
+                py::ssize_t stride0;
+                py::ssize_t ndim() const { return 1; }
+                py::ssize_t shape(py::ssize_t i) const { return i == 0 ? n : 0; }
+                py::ssize_t size() const { return n; }
+                const double &operator()(py::ssize_t i) const { return ptr[i * stride0]; }
+            } in{data, n, stride0};
+
+            affine_transform_1d(in, trans, out);
+            return make_memoryview(result.data(),
+                                   n * static_cast<py::ssize_t>(sizeof(double)),
+                                   "d",
+                                   py::make_tuple(n));
+        }
+
+        throw py::value_error("vertices must be 1D or 2D");
+    }
+
+    py::buffer vertices_arr = py::reinterpret_borrow<py::buffer>(vertices_obj);
     auto info = vertices_arr.request(false);
     if (info.ndim == 2) {
         mpl::BufferView<double, 2> vertices(vertices_arr);
@@ -385,6 +593,12 @@ static bool Py_is_sorted_and_has_non_nan(py::object obj)
 
 PYBIND11_MODULE(_path, m, py::mod_gil_not_used())
 {
+#if NB_VERSION_MAJOR > 2 || (NB_VERSION_MAJOR == 2 && NB_VERSION_MINOR >= 12)
+    nb::detail::nb_module_exec(NB_DOMAIN_STR, m.ptr());
+#else
+    nb::detail::init(NB_DOMAIN_STR);
+#endif
+
     m.def("point_in_path", &Py_point_in_path, "x"_a, "y"_a, "radius"_a, "path"_a, "trans"_a);
     m.def("points_in_path", &Py_points_in_path, "points"_a, "radius"_a, "path"_a, "trans"_a);
     m.def("get_path_collection_extents",
@@ -407,7 +621,11 @@ PYBIND11_MODULE(_path, m, py::mod_gil_not_used())
           "filled"_a);
     m.def("path_in_path", &Py_path_in_path, "path_a"_a, "trans_a"_a, "path_b"_a, "trans_b"_a);
     m.def("clip_path_to_rect", &Py_clip_path_to_rect, "path"_a, "rect"_a, "inside"_a);
-    m.def("affine_transform", &Py_affine_transform, "points"_a, "trans"_a);
+    m.def("affine_transform", &Py_affine_transform,
+          "points"_a,
+          "trans"_a,
+          py::kw_only(),
+          "stream"_a = py::none());
     m.def("count_bboxes_overlapping_bbox", &Py_count_bboxes_overlapping_bbox, "bbox"_a, "bboxes"_a);
     m.def("path_intersects_path", &Py_path_intersects_path, "path1"_a, "path2"_a, "filled"_a = false);
     m.def("path_intersects_rectangle",
