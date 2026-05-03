@@ -2104,7 +2104,10 @@ class Axes(_AxesBase):
         correls = mlxarr.correlate(x, y, mode="full")
 
         if normed:
-            correls = correls / mlxarr.sqrt(mlxarr.dot(x, x) * mlxarr.dot(y, y))
+            x_norm = x.astype(mlxarr.float32)
+            y_norm = y.astype(mlxarr.float32)
+            correls = correls / mlxarr.sqrt(
+                mlxarr.dot(x_norm, x_norm) * mlxarr.dot(y_norm, y_norm))
 
         if maxlags is None:
             maxlags = Nx - 1

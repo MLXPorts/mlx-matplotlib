@@ -189,7 +189,8 @@ def test_acorr_integers(fig_test, fig_ref):
     ax_ref = fig_ref.subplots()
 
     # Normalized autocorrelation
-    norm_auto_corr = mlxarr.correlate(x, x, mode="full")/mlxarr.dot(x, x)
+    x_norm = x.astype(mlxarr.float32)
+    norm_auto_corr = mlxarr.correlate(x, x, mode="full")/mlxarr.dot(x_norm, x_norm)
     lags = mlxarr.arange(-maxlags, maxlags+1)
     norm_auto_corr = norm_auto_corr[Nx-1-maxlags:Nx+maxlags]
     ax_ref.vlines(lags, [0], norm_auto_corr)
