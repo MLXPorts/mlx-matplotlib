@@ -7,26 +7,27 @@ void convert_trans_affine(const py::object& transform, agg::trans_affine& affine
         return;
     }
 
-    try {
-        py::buffer buf = py::reinterpret_borrow<py::buffer>(transform);
-        mpl::BufferView<double, 2> array(buf);
-        if (array.shape(0) == 3 && array.shape(1) == 3) {
-            affine.sx = array(0, 0);
-            affine.shx = array(0, 1);
-            affine.tx = array(0, 2);
-            affine.shy = array(1, 0);
-            affine.sy = array(1, 1);
-            affine.ty = array(1, 2);
-            return;
-        }
-    } catch (const std::exception&) {
-    }
-
     py::object affine_transform = transform;
     if (!py::hasattr(affine_transform, "to_values") &&
             py::hasattr(affine_transform, "get_affine")) {
         affine_transform = affine_transform.attr("get_affine")();
     }
+    if (!py::hasattr(affine_transform, "to_values")) {
+        py::buffer buf = py::reinterpret_borrow<py::buffer>(affine_transform);
+        mpl::BufferView<double, 2> array(buf);
+        if (array.shape(0) != 3 || array.shape(1) != 3) {
+            throw std::invalid_argument("Invalid affine transformation matrix");
+        }
+
+        affine.sx = array(0, 0);
+        affine.shx = array(0, 1);
+        affine.tx = array(0, 2);
+        affine.shy = array(1, 0);
+        affine.sy = array(1, 1);
+        affine.ty = array(1, 2);
+        return;
+    }
+
     py::sequence values = affine_transform.attr("to_values")();
     if (py::len(values) != 6) {
         throw std::invalid_argument("Invalid affine transformation values");
