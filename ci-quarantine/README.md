@@ -12,6 +12,8 @@ only as inert provenance. They must not live at their service-discovery paths.
 - `circleci/fetch_doc_logs.py` was used by upstream CircleCI/GitHub workflow
   glue to retrieve Sphinx logs.
 - `azure-pipelines.yml` was the upstream Azure Pipelines configuration.
+- `appveyor.yml` was `.appveyor.yml`; AppVeyor would run upstream Windows CI
+  and upload artifacts/coverage from this port.
 
 ## Active CI
 
