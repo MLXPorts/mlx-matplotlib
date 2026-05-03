@@ -40,11 +40,22 @@ if not hasattr(mx.array, "__round__"):
         float(self.item()), ndigits) if ndigits is not None else round(
             float(self.item()))
 if not hasattr(mx.array, "__divmod__"):
-    mx.array.__divmod__ = lambda self, other: divmod(
-        _to_scalar(self), _to_scalar(other))
+    def _array_divmod(self, other):
+        left = _to_scalar(self)
+        right = _to_scalar(other)
+        if not isinstance(left, mx.array) and not isinstance(right, mx.array):
+            return _builtins.divmod(left, right)
+        left_arr = _to_mx(left)
+        right_arr = _to_mx(right)
+        quotient = mx.floor(left_arr / right_arr)
+        return quotient, left_arr - quotient * right_arr
+
+    mx.array.__divmod__ = _array_divmod
 if not hasattr(mx.array, "__rdivmod__"):
-    mx.array.__rdivmod__ = lambda self, other: divmod(
-        _to_scalar(other), _to_scalar(self))
+    def _array_rdivmod(self, other):
+        return _array_divmod(_to_mx(other), self)
+
+    mx.array.__rdivmod__ = _array_rdivmod
 if not hasattr(mx.array, "__rand__"):
     mx.array.__rand__ = lambda self, other: mx.logical_and(_to_mx(other), self)
 if not hasattr(mx.array, "__ror__"):
@@ -56,9 +67,20 @@ if not hasattr(mx.array, "_mlx_array_orig_eq"):
 
     def _array_eq(self, other):
         if isinstance(other, (int, float, bool)) and self.size == 1:
-            return mx.array(self.item() == other, dtype=mx.bool_)
+            left = self.item()
+            if isinstance(left, float) or isinstance(other, float):
+                return mx.array(math.isclose(
+                    float(left), float(other), rel_tol=1e-12, abs_tol=1e-12),
+                    dtype=mx.bool_)
+            return mx.array(left == other, dtype=mx.bool_)
         if isinstance(other, mx.array) and self.size == 1 and other.size == 1:
-            return mx.array(self.item() == other.item(), dtype=mx.bool_)
+            left = self.item()
+            right = other.item()
+            if isinstance(left, float) or isinstance(right, float):
+                return mx.array(math.isclose(
+                    float(left), float(right), rel_tol=1e-12, abs_tol=1e-12),
+                    dtype=mx.bool_)
+            return mx.array(left == right, dtype=mx.bool_)
         if isinstance(other, (list, tuple)):
             other = mx.array(other, dtype=self.dtype)
         return mx.array._mlx_array_orig_eq(self, other)
@@ -69,14 +91,42 @@ if not hasattr(mx.array, "_mlx_array_orig_ne"):
 
     def _array_ne(self, other):
         if isinstance(other, (int, float, bool)) and self.size == 1:
-            return mx.array(self.item() != other, dtype=mx.bool_)
+            left = self.item()
+            if isinstance(left, float) or isinstance(other, float):
+                return mx.array(not math.isclose(
+                    float(left), float(other), rel_tol=1e-12, abs_tol=1e-12),
+                    dtype=mx.bool_)
+            return mx.array(left != other, dtype=mx.bool_)
         if isinstance(other, mx.array) and self.size == 1 and other.size == 1:
-            return mx.array(self.item() != other.item(), dtype=mx.bool_)
+            left = self.item()
+            right = other.item()
+            if isinstance(left, float) or isinstance(right, float):
+                return mx.array(not math.isclose(
+                    float(left), float(right), rel_tol=1e-12, abs_tol=1e-12),
+                    dtype=mx.bool_)
+            return mx.array(left != right, dtype=mx.bool_)
         if isinstance(other, (list, tuple)):
             other = mx.array(other, dtype=self.dtype)
         return mx.array._mlx_array_orig_ne(self, other)
 
     mx.array.__ne__ = _array_ne
+if not hasattr(mx.array, "_mlx_array_orig_iter"):
+    mx.array._mlx_array_orig_iter = mx.array.__iter__
+
+    def _array_iter(self):
+        if self.ndim == 0:
+            raise TypeError("iteration over a 0-d array")
+
+        def generate():
+            for item in mx.array._mlx_array_orig_iter(self):
+                if self.ndim == 1 and isinstance(item, mx.array) and item.size == 1:
+                    yield item.item()
+                else:
+                    yield item
+
+        return generate()
+
+    mx.array.__iter__ = _array_iter
 if not hasattr(mx.array, "data"):
     mx.array.data = property(lambda self: self)
 if not hasattr(mx.array, "take"):
@@ -88,6 +138,8 @@ if not hasattr(mx.array, "_mlx_array_orig_mul"):
     def _array_mul(self, other):
         if isinstance(other, (list, tuple)):
             other = mx.array(other, dtype=self.dtype)
+        elif isinstance(other, _PythonArray):
+            other = mx.array(other.tolist(), dtype=self.dtype).reshape(other.shape)
         return mx.array._mlx_array_orig_mul(self, other)
 
     mx.array.__mul__ = _array_mul
@@ -132,7 +184,36 @@ if not hasattr(mx.array, "_mlx_array_orig_setitem"):
     def _array_setitem(self, key, value):
         if isinstance(value, (list, tuple)):
             value = mx.array(value, dtype=self.dtype)
-        return mx.array._mlx_array_orig_setitem(self, key, value)
+        elif isinstance(value, _PythonArray):
+            value = mx.array(value.tolist(), dtype=self.dtype).reshape(value.shape)
+        try:
+            return mx.array._mlx_array_orig_setitem(self, key, value)
+        except ValueError:
+            is_bool_key = (
+                isinstance(key, mx.array)
+                and (key.dtype == mx.bool_ or "bool" in str(key.dtype)))
+            if not is_bool_key:
+                raise
+            data_flat = list(_flatten(self.tolist()))
+            mask_flat = list(_flatten(key.tolist()))
+            if hasattr(value, "tolist"):
+                value = value.tolist()
+            if (hasattr(value, "shape")
+                    and tuple(value.shape) == tuple(self.shape)):
+                value_flat = list(_flatten(value.tolist()))
+            else:
+                value_flat = list(_flatten(value))
+            if not value_flat:
+                return None
+            value_iter = itertools.cycle(value_flat) if len(value_flat) == 1 else iter(value_flat)
+            for idx, keep in enumerate(mask_flat):
+                if keep:
+                    data_flat[idx] = next(value_iter)
+            replacement = mx.array(_reshape_flat(data_flat, tuple(self.shape)),
+                                   dtype=self.dtype)
+            full_key = ((slice(None),) * self.ndim
+                        if self.ndim else slice(None))
+            return mx.array._mlx_array_orig_setitem(self, full_key, replacement)
 
     mx.array.__setitem__ = _array_setitem
 if not hasattr(mx.array, "_mlx_array_orig_getitem"):
@@ -212,6 +293,8 @@ if not hasattr(mx.array, "_mlx_array_orig_sub"):
         if isinstance(other, (list, tuple)):
             other = mx.array([_to_scalar(item) for item in other],
                              dtype=self.dtype)
+        elif isinstance(other, _PythonArray):
+            other = mx.array(other.tolist(), dtype=self.dtype).reshape(other.shape)
         return mx.array._mlx_array_orig_sub(self, other)
 
     mx.array.__sub__ = _array_sub
@@ -222,6 +305,8 @@ if not hasattr(mx.array, "_mlx_array_orig_add"):
         if isinstance(other, (list, tuple)):
             other = mx.array([_to_scalar(item) for item in other],
                              dtype=self.dtype)
+        elif isinstance(other, _PythonArray):
+            other = mx.array(other.tolist(), dtype=self.dtype).reshape(other.shape)
         return mx.array._mlx_array_orig_add(self, other)
 
     mx.array.__add__ = _array_add
@@ -272,6 +357,10 @@ class DType:
     @property
     def type(self) -> "DType":
         return self
+
+    @property
+    def isnative(self) -> bool:
+        return True
 
     def __eq__(self, other: Any) -> bool:
         return _unwrap_dtype(other) == self.mx_dtype
@@ -502,14 +591,15 @@ _py_max = _builtins.max
 
 
 class _PythonArray:
-    def __init__(self, data: Any, dtype: Any | None = None):
+    def __init__(self, data: Any, dtype: Any | None = None,
+                 shape: Tuple[int, ...] | None = None):
         if isinstance(data, _PythonArray):
             self._data = _copy_nested(data._data)
             self.dtype = data.dtype if dtype is None else dtype
         else:
             self._data = _copy_nested(data)
             self.dtype = dtype or _object_dtype
-        self.shape = _infer_shape(self._data)
+        self.shape = tuple(shape) if shape is not None else _infer_shape(self._data)
         self.ndim = len(self.shape)
         self.size = math.prod(self.shape) if self.shape else 1
 
@@ -532,6 +622,10 @@ class _PythonArray:
             return _PythonArray([values[int(v)] for v in key], dtype=self.dtype)
         if isinstance(key, tuple):
             value = _python_getitem(self._data, key)
+            if (self.size == 0 and self.ndim == 1 and len(key) == 2
+                    and isinstance(key[0], slice) and key[1] is None):
+                return _PythonArray(value, dtype=self.dtype,
+                                    shape=(self.shape[0], 1))
             return _PythonArray(value, dtype=self.dtype) if isinstance(value, list) else value
         value = self._data[key] if isinstance(self._data, list) else self._data
         return _PythonArray(value, dtype=self.dtype) if isinstance(value, list) else value
@@ -574,7 +668,75 @@ class _PythonArray:
         mx_dtype = _unwrap_dtype(dtype)
         if mx_dtype is _builtins.object:
             return _PythonArray(self, dtype=_object_dtype)
-        return mx.array(self.tolist(), dtype=mx_dtype)
+        data = self.tolist()
+        if mx_dtype in {mx.float16, mx.float32, mx.float64, mx.bfloat16}:
+            data = _coerce_nested(data, float)
+        elif mx_dtype in {mx.int8, mx.int16, mx.int32, mx.int64,
+                          mx.uint8, mx.uint16, mx.uint32, mx.uint64}:
+            data = _coerce_nested(data, int)
+        return mx.array(data, dtype=mx_dtype)
+
+    def _elementwise(self, other: Any, op, out_dtype: Any | None = None):
+        left = list(_flatten(self._data))
+        if isinstance(other, _PythonArray):
+            right = list(_flatten(other.tolist()))
+        elif isinstance(other, mx.array):
+            right = list(_flatten(other.tolist()))
+        elif isinstance(other, (list, tuple)):
+            right = list(_flatten(other))
+        else:
+            right = [other] * len(left)
+        if len(right) == 1 and len(left) != 1:
+            right = right * len(left)
+        values = [op(a, b) for a, b in zip(left, right)]
+        data = _reshape_flat(values, self.shape) if values else []
+        if out_dtype is None:
+            return _PythonArray(data, dtype=self.dtype, shape=self.shape)
+        return mx.array(data, dtype=out_dtype).reshape(self.shape)
+
+    def __eq__(self, other: Any):
+        return self._elementwise(other, operator.eq, bool_.mx_dtype)
+
+    def __ne__(self, other: Any):
+        return self._elementwise(other, operator.ne, bool_.mx_dtype)
+
+    def __lt__(self, other: Any):
+        return self._elementwise(other, operator.lt, bool_.mx_dtype)
+
+    def __le__(self, other: Any):
+        return self._elementwise(other, operator.le, bool_.mx_dtype)
+
+    def __gt__(self, other: Any):
+        return self._elementwise(other, operator.gt, bool_.mx_dtype)
+
+    def __ge__(self, other: Any):
+        return self._elementwise(other, operator.ge, bool_.mx_dtype)
+
+    def __neg__(self):
+        return self._elementwise(0, lambda value, _: -value)
+
+    def _numeric(self):
+        return self.astype(float)
+
+    def __add__(self, other: Any):
+        if self.size == 0 and getattr(other, "size", None) == 0:
+            return other
+        return self._numeric() + other
+
+    def __radd__(self, other: Any):
+        if self.size == 0 and getattr(other, "size", None) == 0:
+            return other
+        return other + self._numeric()
+
+    def __sub__(self, other: Any):
+        if self.size == 0 and getattr(other, "size", None) == 0:
+            return -other
+        return self._numeric() - other
+
+    def __rsub__(self, other: Any):
+        if self.size == 0 and getattr(other, "size", None) == 0:
+            return other
+        return other - self._numeric()
 
     def tolist(self):
         return _copy_nested(self._data)
@@ -620,6 +782,18 @@ def _copy_nested(value: Any) -> Any:
     if isinstance(value, range):
         return list(value)
     return value
+
+
+def _coerce_nested(value: Any, func) -> Any:
+    if isinstance(value, _PythonArray):
+        return _coerce_nested(value.tolist(), func)
+    if isinstance(value, mx.array):
+        return _coerce_nested(value.tolist(), func)
+    if isinstance(value, tuple):
+        return [_coerce_nested(v, func) for v in value]
+    if isinstance(value, list):
+        return [_coerce_nested(v, func) for v in value]
+    return func(value)
 
 
 def _infer_shape(value: Any) -> Tuple[int, ...]:
@@ -893,10 +1067,25 @@ def arange(*args: Any, **kwargs: Any) -> mx.array:
     return mx.arange(*args, **kwargs)
 
 
-def linspace(*args: Any, **kwargs: Any) -> mx.array:
-    if "dtype" in kwargs:
-        kwargs["dtype"] = _unwrap_dtype(kwargs["dtype"])
-    return mx.linspace(*args, **kwargs)
+def linspace(start: Any, stop: Any, num: int = 50, endpoint: bool = True,
+             retstep: bool = False, dtype: Any | None = None,
+             axis: int = 0) -> mx.array:
+    start = _to_scalar(start)
+    stop = _to_scalar(stop)
+    num = int(num)
+    if num <= 0:
+        result = mx.array([], dtype=_unwrap_dtype(dtype) or mx.float32)
+        return (result, nan) if retstep else result
+    div = num - 1 if endpoint and num > 1 else num
+    step = (stop - start) / div if div else nan
+    effective_stop = stop if endpoint else stop - step
+    kwargs = {}
+    if dtype is not None:
+        kwargs["dtype"] = _unwrap_dtype(dtype)
+    else:
+        kwargs["dtype"] = mx.float64
+    result = mx.linspace(start, effective_stop, num, **kwargs)
+    return (result, step) if retstep else result
 
 
 def logspace(start: float, stop: float, num: int = 50, base: float = 10.0) -> mx.array:
@@ -1011,7 +1200,17 @@ def vstack(tup: Sequence[Any]) -> mx.array:
 
 
 def tile(a: Any, reps: Any) -> mx.array:
-    return mx.tile(_to_mx(a), _shape_tuple(reps))
+    arr = _to_mx(a)
+    reps_tuple = _shape_tuple(reps)
+    if isinstance(arr, _PythonArray):
+        data = arr.tolist()
+        if len(reps_tuple) == 1:
+            repeat_count = reps_tuple[0]
+            if isinstance(data, list):
+                return _PythonArray(data * repeat_count, dtype=arr.dtype)
+            return _PythonArray([data] * repeat_count, dtype=arr.dtype)
+        raise NotImplementedError("object tiling supports one-dimensional reps")
+    return mx.tile(arr, reps_tuple)
 
 
 def repeat(a: Any, repeats: Any, axis: int | None = None) -> mx.array:
@@ -1076,7 +1275,25 @@ def put(a: Any, indices: Any, values: Any) -> mx.array:
 
 
 def where(condition: Any, x: Any, y: Any) -> mx.array:
-    return mx.where(_to_mx(condition), _to_mx(x), _to_mx(y))
+    cond = _to_mx(condition)
+    x_arr = _to_mx(x)
+    y_arr = _to_mx(y)
+    try:
+        return mx.where(cond, x_arr, y_arr)
+    except (TypeError, ValueError):
+        def choose(c, xv, yv):
+            if isinstance(c, list):
+                return [
+                    choose(ci,
+                           xv[i] if isinstance(xv, list) else xv,
+                           yv[i] if isinstance(yv, list) else yv)
+                    for i, ci in enumerate(c)
+                ]
+            return xv if c else yv
+
+        x_list = x_arr.tolist() if hasattr(x_arr, "tolist") else x_arr
+        y_list = y_arr.tolist() if hasattr(y_arr, "tolist") else y_arr
+        return _to_mx(choose(cond.tolist(), x_list, y_list))
 
 
 def divide(a: Any, b: Any, dtype: Any | None = None, **kwargs: Any) -> mx.array:
@@ -1396,6 +1613,9 @@ def round(a: Any, decimals: int = 0) -> mx.array:
     return mx.round(_to_mx(a), decimals=decimals)
 
 
+around = round
+
+
 def tan(a: Any) -> mx.array:
     return mx.tan(_to_mx(a))
 
@@ -1524,7 +1744,16 @@ def meshgrid(*arrays: Any, **kwargs: Any) -> List[mx.array]:
 
 
 def broadcast_to(a: Any, shape: Any) -> mx.array:
-    return mx.broadcast_to(_to_mx(a), _shape_tuple(shape))
+    arr = _to_mx(a)
+    shape_tuple = _shape_tuple(shape)
+    try:
+        return mx.broadcast_to(arr, shape_tuple)
+    except (TypeError, ValueError):
+        if getattr(arr, "size", None) == 0 and math.prod(shape_tuple) == 0:
+            return _PythonArray(_reshape_flat([], shape_tuple),
+                                dtype=getattr(arr, "dtype", _object_dtype),
+                                shape=shape_tuple)
+        raise
 
 
 def broadcast_arrays(*args: Any, **kwargs: Any) -> Tuple[mx.array, ...]:
@@ -2641,6 +2870,18 @@ class MaskedArray:
             return ravel(self.data)
         return ravel(self.data[~self.mask])
 
+    def ravel(self):
+        mask = ravel(self.mask) if self.mask is not None else None
+        return MaskedArray(ravel(self.data), mask)
+
+    def reshape(self, *shape: Any):
+        newshape = shape[0] if len(shape) == 1 else shape
+        mask = reshape(self.mask, newshape) if self.mask is not None else None
+        return MaskedArray(reshape(self.data, newshape), mask)
+
+    def tolist(self):
+        return self.data.tolist()
+
     def min(self, *args: Any, **kwargs: Any):
         return min(self.filled(), *args, **kwargs)
 
@@ -2669,6 +2910,16 @@ class MaskedArray:
             mask = self.mask[key]
         return MaskedArray(data, mask)
 
+    def __setitem__(self, key: Any, value: Any) -> None:
+        if isinstance(value, MaskedArray):
+            self.data[key] = value.data
+            if self.mask is not None and value.mask is not None:
+                self.mask[key] = value.mask
+            return
+        self.data[key] = value
+        if self.mask is not None:
+            self.mask[key] = False
+
     def __array__(self):  # pragma: no cover - compatibility shim
         return self.data
 
@@ -2677,14 +2928,37 @@ class _MA:
     masked = masked
     MaskedArray = MaskedArray
 
-    def array(self, data: Any, mask: Any | None = None, dtype: Any | None = None, copy: bool | None = None):
+    @staticmethod
+    def _dtype_like(value: Any) -> bool:
+        if value in {_builtins.bool, _builtins.int, _builtins.float,
+                     _builtins.object}:
+            return True
+        if isinstance(value, (DType, str, type)):
+            return True
+        try:
+            return value in _DTYPE_BY_MX
+        except TypeError:
+            return False
+
+    def array(self, data: Any, dtype: Any | None = None,
+              copy: bool | None = None, order: Any | None = None,
+              mask: Any | None = None, **kwargs: Any):
+        if mask is None and dtype is not None and not self._dtype_like(dtype):
+            mask = dtype
+            dtype = None
         arr = _to_mx(data, dtype=dtype)
-        mask_arr = (_to_mx(mask) if mask is not None
-                    else mx.zeros(arr.shape, dtype=bool_.mx_dtype))
+        if mask is None or mask is False:
+            mask_arr = mx.zeros(arr.shape, dtype=bool_.mx_dtype)
+        elif mask is True:
+            mask_arr = mx.ones(arr.shape, dtype=bool_.mx_dtype)
+        else:
+            mask_arr = _to_mx(mask)
         return MaskedArray(data=arr, mask=mask_arr)
 
-    def masked_array(self, data: Any, mask: Any | None = None, dtype: Any | None = None, copy: bool | None = None):
-        return self.array(data, mask=mask, dtype=dtype, copy=copy)
+    def masked_array(self, data: Any, mask: Any | None = None,
+                     dtype: Any | None = None, copy: bool | None = None,
+                     **kwargs: Any):
+        return self.array(data, dtype=dtype, copy=copy, mask=mask, **kwargs)
 
     def asarray(self, data: Any, dtype: Any | None = None):
         if isinstance(data, MaskedArray):
@@ -2717,6 +2991,16 @@ class _MA:
         arr = _to_mx(data)
         return mx.zeros(arr.shape, dtype=bool_.mx_dtype)
 
+    def mask_or(self, m1: Any, m2: Any, copy: bool | None = None,
+                shrink: bool | None = None):
+        if (m1 is None or m1 is False) and (m2 is None or m2 is False):
+            return None
+        if m1 is None or m1 is False:
+            return _to_mx(m2)
+        if m2 is None or m2 is False:
+            return _to_mx(m1)
+        return logical_or(m1, m2)
+
     def filled(self, data: Any, fill_value: Any = 0):
         if isinstance(data, MaskedArray):
             return data.filled(fill_value)
@@ -2747,6 +3031,11 @@ class _MA:
         mask = mx.ones(shape, dtype=bool_.mx_dtype)
         return MaskedArray(data=arr, mask=mask)
 
+    def empty(self, shape: Any, dtype: Any | None = None):
+        arr = globals()["empty"](shape, dtype=dtype)
+        return MaskedArray(data=arr, mask=mx.zeros(_shape_tuple(shape),
+                                                   dtype=bool_.mx_dtype))
+
     def count(self, data: Any):
         if not isinstance(data, MaskedArray) or data.mask is None:
             return int(_to_mx(data).size)
@@ -2759,6 +3048,11 @@ class _MA:
     def sqrt(self, data: Any):
         arr = self.filled(data, fill_value=nan)
         return MaskedArray(data=mx.sqrt(_to_mx(arr)), mask=self.getmaskarray(data))
+
+    def arctan2(self, y: Any, x: Any):
+        mask = self.mask_or(self.getmask(y), self.getmask(x))
+        result = mx.arctan2(_to_mx(self.getdata(y)), _to_mx(self.getdata(x)))
+        return MaskedArray(data=result, mask=mask) if mask is not None else result
 
     def ptp(self, data: Any, axis: int | None = None):
         arr = self.filled(data, fill_value=nan)

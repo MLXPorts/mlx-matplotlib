@@ -815,8 +815,34 @@ class Path:
 
         # Deal with the case where there are curves and/or multiple
         # subpaths (using extension code)
-        return _path.convert_path_to_polygons(
-            self, transform, width, height, closed_only)
+        try:
+            return _path.convert_path_to_polygons(
+                self, transform, width, height, closed_only)
+        except TypeError:
+            polygons = []
+            current = []
+            for vertices, code in self.iter_segments(
+                    transform, curves=False, simplify=False):
+                point = list(mlxarr.ravel(vertices))
+                if len(point) >= 2:
+                    point = point[-2:]
+                if code == self.MOVETO:
+                    if current:
+                        polygons.append(current)
+                    current = [point]
+                elif code == self.CLOSEPOLY:
+                    if current and (not closed_only or len(current) >= 3):
+                        if closed_only and current[0] != current[-1]:
+                            current.append(current[0])
+                        polygons.append(current)
+                    current = []
+                else:
+                    current.append(point)
+            if current and (not closed_only or len(current) >= 3):
+                if closed_only and current[0] != current[-1]:
+                    current.append(current[0])
+                polygons.append(current)
+            return [mlxarr.asarray(poly) for poly in polygons]
 
     _unit_rectangle = None
 
