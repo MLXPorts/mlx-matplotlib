@@ -1,75 +1,164 @@
-[![PyPi](https://img.shields.io/pypi/v/matplotlib)](https://pypi.org/project/matplotlib/)
-[![Conda](https://img.shields.io/conda/vn/conda-forge/matplotlib)](https://anaconda.org/conda-forge/matplotlib)
-[![Downloads](https://img.shields.io/pypi/dm/matplotlib)](https://pypi.org/project/matplotlib)
-[![NUMFocus](https://img.shields.io/badge/powered%20by-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A)](https://numfocus.org)
-[![LFX Health Score](https://insights.linuxfoundation.org/api/badge/health-score?project=matplotlib)](https://insights.linuxfoundation.org/project/matplotlib)
+# mlx-matplotlib
 
-[![Discourse help forum](https://img.shields.io/badge/help_forum-discourse-blue.svg)](https://discourse.matplotlib.org)
-[![Gitter](https://badges.gitter.im/matplotlib/matplotlib.svg)](https://gitter.im/matplotlib/matplotlib)
-[![GitHub issues](https://img.shields.io/badge/issue_tracking-github-blue.svg)](https://github.com/matplotlib/matplotlib/issues)
-[![Contributing](https://img.shields.io/badge/PR-Welcome-%23FF8300.svg?)](https://matplotlib.org/stable/devel/index.html)
+**An MLX-first port of [Matplotlib](https://matplotlib.org/) — plotting with Python, accelerated on Apple Silicon via [MLX](https://github.com/ml-explore/mlx).**
 
-[![GitHub actions status](https://github.com/matplotlib/matplotlib/workflows/Tests/badge.svg)](https://github.com/matplotlib/matplotlib/actions?query=workflow%3ATests)
-[![Azure pipelines status](https://dev.azure.com/matplotlib/matplotlib/_apis/build/status/matplotlib.matplotlib?branchName=main)](https://dev.azure.com/matplotlib/matplotlib/_build/latest?definitionId=1&branchName=main)
-[![AppVeyor status](https://ci.appveyor.com/api/projects/status/github/matplotlib/matplotlib?branch=main&svg=true)](https://ci.appveyor.com/project/matplotlib/matplotlib)
-[![Codecov status](https://codecov.io/github/matplotlib/matplotlib/badge.svg?branch=main&service=github)](https://app.codecov.io/gh/matplotlib/matplotlib)
-[![EffVer Versioning](https://img.shields.io/badge/version_scheme-EffVer-0097a7)](https://jacobtomlinson.dev/effver)
+> This repository is a fork of [matplotlib/matplotlib](https://github.com/matplotlib/matplotlib).
+> It is **not** the upstream Matplotlib project. For the canonical, production-ready
+> plotting library, please use upstream Matplotlib. See [Upstream references](#upstream-references)
+> at the end of this document.
 
-![Matplotlib logotype](https://matplotlib.org/_static/logo2.svg)
+---
 
-Matplotlib is a comprehensive library for creating static, animated, and
-interactive visualizations in Python.
+## About this fork
 
-Check out our [home page](https://matplotlib.org/) for more information.
+`mlx-matplotlib` is part of the [MLXPorts](https://github.com/MLXPorts) effort
+to bring widely-used scientific Python libraries to a first-class MLX backend
+on Apple Silicon. The goal is to keep the familiar `pyplot` / `Figure` / `Axes`
+API while progressively replacing NumPy-bound numeric paths with
+[MLX](https://github.com/ml-explore/mlx) arrays and kernels where it matters
+for performance on Apple GPUs and the Neural Engine.
 
-![image](https://matplotlib.org/_static/readme_preview.png)
+### MLX-first philosophy
 
-Matplotlib produces publication-quality figures in a variety of hardcopy
-formats and interactive environments across platforms. Matplotlib can be
-used in Python scripts, Python/IPython shells, web application servers,
-and various graphical user interface toolkits.
+This port is **MLX-first**, not MLX-as-an-afterthought:
+
+- **MLX arrays are first-class inputs.** Plotting functions are intended to
+  accept `mlx.core.array` directly — without a forced detour through NumPy —
+  wherever the upstream API accepts array-likes.
+- **Stay on-device when possible.** Reductions, transforms, colormap
+  evaluations, and other vectorized numeric work used by the rendering
+  pipeline are migrated to MLX so that data prepared on the GPU does not have
+  to round-trip through host memory just to draw a chart.
+- **Lazy / unified-memory aware.** The port respects MLX's lazy evaluation
+  model and Apple Silicon's unified memory; we avoid eager `.numpy()` /
+  `np.asarray(...)` conversions in hot paths.
+- **Upstream API compatibility.** Existing Matplotlib code should keep
+  working. NumPy inputs are still supported. MLX is an additional, preferred
+  path — not a replacement for the public API.
+- **Apple Silicon is the primary target.** CI, benchmarks, and the default
+  development environment assume `arm64` macOS with MLX available. Other
+  platforms are best-effort.
+
+### What has changed vs. upstream
+
+This fork is currently in an early porting / infrastructure phase. The
+high-level changes from upstream Matplotlib are:
+
+- **Repository identity.** Project metadata, badges, and CI are scoped to
+  `MLXPorts/mlx-matplotlib` rather than `matplotlib/matplotlib`.
+- **CI surface trimmed for a fork.** Upstream's release, nightly-wheel,
+  Cygwin, stale-bot, labeler, contributor-greeter, CircleCI, Azure Pipelines,
+  and AppVeyor integrations are not appropriate for a downstream fork and
+  have been moved aside. See
+  [`github-workflows-quarantine/README.md`](github-workflows-quarantine/README.md)
+  and [`ci-quarantine/README.md`](ci-quarantine/README.md) for the full list
+  and rationale. Only the core test workflow (`.github/workflows/tests.yml`)
+  is left active.
+- **MLX integration work.** Adding MLX as a supported array backend across
+  the numeric paths used by the rendering pipeline. This work is ongoing —
+  see open pull requests and issues for current status.
+
+### Fork point
+
+- **Upstream repository:** [matplotlib/matplotlib](https://github.com/matplotlib/matplotlib)
+- **Forked from upstream commit:** `ea40d72fb0` (Merge pull request #30657)
+- **Upstream HEAD at fork-time snapshot:** `08fe8bc4ad` (Merge pull request #31111)
 
 ## Install
 
-See the [install
-documentation](https://matplotlib.org/stable/users/installing/index.html),
-which is generated from `/doc/install/index.rst`
+> ⚠️ This fork is under active development and is **not** published to PyPI or
+> conda-forge. Install from source if you want to try it. For a stable
+> plotting library, install upstream `matplotlib` instead.
+
+For development, the upstream conda environment file still applies:
+
+```sh
+conda env create -f environment.yml
+conda activate mpl-dev
+pip install --verbose --no-build-isolation --editable ".[dev]"
+```
+
+You will additionally need [MLX](https://github.com/ml-explore/mlx) installed
+to exercise the MLX-backed code paths:
+
+```sh
+pip install mlx
+```
 
 ## Contribute
 
-You've discovered a bug or something else you want to change — excellent!
+Contributions specific to the MLX port (new MLX-backed code paths,
+benchmarks, Apple Silicon CI improvements, bug reports against this fork)
+are very welcome — please open an issue or pull request on
+[`MLXPorts/mlx-matplotlib`](https://github.com/MLXPorts/mlx-matplotlib).
 
-You've worked out a way to fix it — even better!
+Contributions to **core Matplotlib behavior** that are not specific to MLX or
+Apple Silicon should generally go to
+[upstream Matplotlib](https://github.com/matplotlib/matplotlib) instead, so
+that the wider community benefits and we can pull the changes back in via
+merges from upstream.
 
-You want to tell us about it — best of all!
+## Maintainer
 
-Start at the [contributing
-guide](https://matplotlib.org/devdocs/devel/contribute.html)!
+- **Sydney Renee** &lt;<sydney@solace.ofharmony.ai>&gt; — [@sydneyrenee](https://github.com/sydneyrenee)
 
-## Contact
+## Acknowledgements
 
-[Discourse](https://discourse.matplotlib.org/) is the discussion forum
-for general questions and discussions and our recommended starting
-point.
+Enormous thanks to John D. Hunter (1968–2012), who created Matplotlib, and to
+the hundreds of [Matplotlib
+contributors](https://github.com/matplotlib/matplotlib/graphs/contributors)
+and the [Matplotlib steering
+council](https://matplotlib.org/stable/project/team.html) who have built and
+maintained the library for two decades. This port stands entirely on their
+work — it is a re-aiming of an excellent existing library at a new hardware
+backend, not a from-scratch effort. All credit for the design, API, rendering
+architecture, and the bulk of the code in this repository belongs to the
+upstream Matplotlib community.
 
-Our active mailing lists (which are mirrored on Discourse) are:
+Matplotlib is a [NumFOCUS](https://numfocus.org)-sponsored project; please
+consider supporting the upstream project directly.
 
--   [Users](https://mail.python.org/mailman/listinfo/matplotlib-users)
-    mailing list: <matplotlib-users@python.org>
--   [Announcement](https://mail.python.org/mailman/listinfo/matplotlib-announce)
-    mailing list: <matplotlib-announce@python.org>
--   [Development](https://mail.python.org/mailman/listinfo/matplotlib-devel)
-    mailing list: <matplotlib-devel@python.org>
+## Citing
 
-[Gitter](https://gitter.im/matplotlib/matplotlib) is for coordinating
-development and asking questions directly related to contributing to
-matplotlib.
+If your work uses plots produced via this port, please **cite upstream
+Matplotlib** — not this fork. A ready-made citation entry is available at
+<https://matplotlib.org/stable/users/project/citing.html>.
 
-## Citing Matplotlib
+## License
 
-If Matplotlib contributes to a project that leads to publication, please
-acknowledge this by citing Matplotlib.
+This project inherits Matplotlib's license. See the [`LICENSE/`](LICENSE/)
+directory for the full Matplotlib license and the licenses of bundled
+third-party components.
 
-[A ready-made citation
-entry](https://matplotlib.org/stable/users/project/citing.html) is
-available.
+---
+
+## Upstream references
+
+All of the following point to the upstream Matplotlib project, which this
+fork is derived from. They are the authoritative sources for documentation,
+support, and releases of Matplotlib itself.
+
+- **Home page:** <https://matplotlib.org/>
+- **Upstream repository:** <https://github.com/matplotlib/matplotlib>
+- **Stable documentation:** <https://matplotlib.org/stable/>
+- **Installation guide:** <https://matplotlib.org/stable/users/installing/index.html>
+- **Contributing guide:** <https://matplotlib.org/devdocs/devel/contribute.html>
+- **Citation entry:** <https://matplotlib.org/stable/users/project/citing.html>
+- **PyPI:** <https://pypi.org/project/matplotlib/>
+- **conda-forge:** <https://anaconda.org/conda-forge/matplotlib>
+
+### Upstream community / discussion
+
+- **Discourse (recommended):** <https://discourse.matplotlib.org/>
+- **Gitter (development chat):** <https://gitter.im/matplotlib/matplotlib>
+- **Users mailing list:** <https://mail.python.org/mailman/listinfo/matplotlib-users> — <matplotlib-users@python.org>
+- **Announcement mailing list:** <https://mail.python.org/mailman/listinfo/matplotlib-announce> — <matplotlib-announce@python.org>
+- **Development mailing list:** <https://mail.python.org/mailman/listinfo/matplotlib-devel> — <matplotlib-devel@python.org>
+
+Please **do not** direct upstream Matplotlib questions to this fork's issue
+tracker; use the upstream channels above.
+
+### MLX
+
+- **MLX:** <https://github.com/ml-explore/mlx>
+- **MLX documentation:** <https://ml-explore.github.io/mlx/>
