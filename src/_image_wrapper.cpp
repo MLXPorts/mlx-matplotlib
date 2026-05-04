@@ -193,7 +193,8 @@ ArrayInfo get_array_info(py::handle obj,
 
     if (is_mlx_array_like(obj)) {
         info.mlx_array = as_mlx_array(obj);
-        if (!writable && has_explicit_stream(stream)) {
+        if (!writable && (has_explicit_stream(stream)
+                || !info.mlx_array->flags().row_contiguous)) {
             info.mlx_array = mx::contiguous(*info.mlx_array, false, stream);
         }
         {

@@ -55,7 +55,9 @@ class Triangulation:
         if triangles is None:
             # No triangulation specified, so use matplotlib._qhull to obtain
             # Delaunay triangulation.
-            self.triangles, self._neighbors = _qhull.delaunay(x, y, sys.flags.verbose)
+            triangles, neighbors = _qhull.delaunay(self.x, self.y, sys.flags.verbose)
+            self.triangles = mlxarr.asarray(triangles, dtype=mlxarr.int32)
+            self._neighbors = mlxarr.asarray(neighbors, dtype=mlxarr.int32)
             self.is_delaunay = True
         else:
             # Triangulation specified. Copy, since we may correct triangle

@@ -1629,10 +1629,12 @@ def test__resample_accepts_mlx_stream(device_name):
     if not mx.is_available(device_type):
         pytest.skip(f"MLX {device_name} device is not available")
 
-    data = mlxarr.array([[0.1, 0.3, 0.2]])
+    data = mlxarr.array([[0.1, 0.3, 0.2]], dtype=mlxarr.float32,
+                        stream=device_type)
     expected = mlxarr.array([[0.1, 0.1, 0.1, 0.3, 0.3,
-                              0.3, 0.3, 0.2, 0.2, 0.2]])
-    out = mlxarr.empty_like(expected)
+                              0.3, 0.3, 0.2, 0.2, 0.2]],
+                            dtype=mlxarr.float32, stream=device_type)
+    out = mlxarr.empty_like(expected, stream=device_type)
     transform = Affine2D().scale(sx=expected.shape[1] / data.shape[1], sy=1)
 
     mpl._image.resample(data, out, transform,

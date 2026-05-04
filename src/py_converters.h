@@ -67,6 +67,18 @@ namespace PYBIND11_NAMESPACE { namespace detail {
                 return true;
             }
 
+            if (py::isinstance<py::tuple>(src) || py::isinstance<py::list>(src)) {
+                py::sequence rect_seq = py::reinterpret_borrow<py::sequence>(src);
+                if (py::len(rect_seq) != 4) {
+                    throw py::value_error("Invalid bounding box");
+                }
+                value.x1 = py::cast<double>(rect_seq[0]);
+                value.y1 = py::cast<double>(rect_seq[1]);
+                value.x2 = py::cast<double>(rect_seq[2]);
+                value.y2 = py::cast<double>(rect_seq[3]);
+                return true;
+            }
+
             py::buffer rect_buf = py::reinterpret_borrow<py::buffer>(src);
             mpl::BufferView<double, 2> rect_arr;
             mpl::BufferView<double, 1> rect_vec;

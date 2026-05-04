@@ -35,6 +35,12 @@ _double_to_(const char *name, double_or_<T> &var)
     }
 }
 
+static py::object mlx_zeros(py::tuple shape, const char *dtype_name)
+{
+    py::object mx = py::module_::import("mlx.core");
+    return mx.attr("zeros")(shape, "dtype"_a = mx.attr(dtype_name));
+}
+
 /**********************************************************************
  * Enumerations
  * */
@@ -708,7 +714,7 @@ const char *PyFT2Font_set_text__doc__ = R"""(
         A sequence of x,y glyph positions in 26.6 subpixels; divide by 64 for pixels.
 )""";
 
-static py::memoryview
+static py::object
 PyFT2Font_set_text(PyFT2Font *self, std::u32string_view text, double angle = 0.0,
                    std::variant<LoadFlags, FT_Int32> flags_or_int = LoadFlags::FORCE_AUTOHINT)
 {
@@ -733,6 +739,10 @@ PyFT2Font_set_text(PyFT2Font *self, std::u32string_view text, double angle = 0.0
     self->x->set_text(text, angle, static_cast<FT_Int32>(flags), xys);
 
     auto n = static_cast<py::ssize_t>(xys.size() / 2);
+    if (n == 0) {
+        return mlx_zeros(py::make_tuple(0, 2), "float64");
+    }
+
     auto ba_size = n * 2 * static_cast<py::ssize_t>(sizeof(double));
     py::bytearray ba = py::reinterpret_steal<py::bytearray>(
         PyByteArray_FromStringAndSize(nullptr, ba_size));
@@ -1416,6 +1426,11 @@ PyFT2Font_get_path(PyFT2Font *self)
     self->x->get_path(vertices, codes);
 
     auto length = static_cast<py::ssize_t>(codes.size());
+    if (length == 0) {
+        return py::make_tuple(
+            mlx_zeros(py::make_tuple(0, 2), "float64"),
+            mlx_zeros(py::make_tuple(0), "uint8"));
+    }
 
     auto v_ba_size = length * 2 * static_cast<py::ssize_t>(sizeof(double));
     py::bytearray v_ba = py::reinterpret_steal<py::bytearray>(

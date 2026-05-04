@@ -78,6 +78,8 @@ def _as_float_memoryview(values):
     # Python rejects cast() with zeros in shape; an empty array.array("d") is
     # already typed as "d" with 1D shape (0,) so skip the reshape cast.
     if not flat:
+        if len(shape) > 1:
+            return mlxarr.zeros(shape, dtype=mlxarr.float64)
         return mv
     return mv.cast("B").cast("d", shape=shape)
 
@@ -1566,7 +1568,7 @@ class Transform(TransformNode):
         # Convert the result back to the shape of the input values.
         if ndim == 0:
             assert not mlxarr.ma.is_masked(res)  # just to be on the safe side
-            return res[0, 0]
+            return res[0, 0] if res.ndim == 2 else res[0]
         if ndim == 1:
             return res.reshape(-1)
         elif ndim == 2:

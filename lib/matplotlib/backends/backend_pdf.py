@@ -1788,7 +1788,7 @@ end"""
                 indices = mlxarr.argsort(palette24).astype(mlxarr.uint8)
                 rgb8 = indices[mlxarr.searchsorted(palette24, rgb24, sorter=indices)]
                 img = Image.fromarray(rgb8).convert("P")
-                img.putpalette(palette)
+                img.putpalette(palette.tolist())
                 png_data, bit_depth, palette = self._writePng(img)
                 if bit_depth is None or palette is None:
                     raise RuntimeError("invalid PNG header")

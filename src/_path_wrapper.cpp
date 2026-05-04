@@ -127,7 +127,7 @@ static mx::array evaluated_mlx_array(py::handle obj,
                                     const mx::StreamOrDevice& stream)
 {
     auto array = as_mlx_array(obj);
-    if (has_explicit_stream(stream)) {
+    if (has_explicit_stream(stream) || !array.flags().row_contiguous) {
         array = mx::contiguous(array, false, stream);
     }
     {
@@ -140,11 +140,31 @@ static mx::array evaluated_mlx_array(py::handle obj,
     return array;
 }
 
-static py::memoryview make_memoryview(const void *data,
-                                      py::ssize_t nbytes,
-                                      const char *format,
-                                      py::tuple shape)
+static py::object dtype_from_buffer_format(const char *format)
 {
+    py::object mx_module = py::module_::import("mlx.core");
+    if (std::strcmp(format, "d") == 0) {
+        return mx_module.attr("float64");
+    }
+    if (std::strcmp(format, "i") == 0) {
+        return mx_module.attr("int32");
+    }
+    if (std::strcmp(format, "B") == 0) {
+        return mx_module.attr("uint8");
+    }
+    throw py::value_error("unsupported buffer format");
+}
+
+static py::object make_memoryview(const void *data,
+                                  py::ssize_t nbytes,
+                                  const char *format,
+                                  py::tuple shape)
+{
+    if (nbytes == 0) {
+        py::object mx_module = py::module_::import("mlx.core");
+        return mx_module.attr("zeros")(shape, "dtype"_a = dtype_from_buffer_format(format));
+    }
+
     py::bytearray ba = py::reinterpret_steal<py::bytearray>(
         PyByteArray_FromStringAndSize(nullptr, nbytes));
     if (!ba) {
@@ -154,7 +174,7 @@ static py::memoryview make_memoryview(const void *data,
         std::memcpy(PyByteArray_AsString(ba.ptr()), data, static_cast<size_t>(nbytes));
     }
     py::object mv = py::module_::import("builtins").attr("memoryview")(ba);
-    return mv.attr("cast")(format, shape).cast<py::memoryview>();
+    return mv.attr("cast")(format, shape);
 }
 
 static py::list convert_polygon_vector(std::vector<Polygon> &polygons)
@@ -182,10 +202,10 @@ static bool Py_point_in_path(double x,
     return point_in_path(x, y, r, path, trans);
 }
 
-static py::memoryview Py_points_in_path(const py::buffer &points_obj,
-                                        double r,
-                                        mpl::PathIterator path,
-                                        agg::trans_affine trans)
+static py::object Py_points_in_path(const py::buffer &points_obj,
+                                    double r,
+                                    mpl::PathIterator path,
+                                    agg::trans_affine trans)
 {
     auto points = convert_points(points_obj);
 
@@ -233,15 +253,15 @@ static py::tuple Py_get_path_collection_extents(agg::trans_affine master_transfo
     return py::make_tuple(ext_mv, min_mv);
 }
 
-static py::memoryview Py_point_in_path_collection(double x,
-                                                  double y,
-                                                  double radius,
-                                                  agg::trans_affine master_transform,
-                                                  mpl::PathGenerator paths,
-                                                  const py::buffer &transforms_obj,
-                                                  const py::buffer &offsets_obj,
-                                                  agg::trans_affine offset_trans,
-                                                  bool filled)
+static py::object Py_point_in_path_collection(double x,
+                                              double y,
+                                              double radius,
+                                              agg::trans_affine master_transform,
+                                              mpl::PathGenerator paths,
+                                              const py::buffer &transforms_obj,
+                                              const py::buffer &offsets_obj,
+                                              agg::trans_affine offset_trans,
+                                              bool filled)
 {
     auto transforms = convert_transforms(transforms_obj);
     auto offsets = convert_points(offsets_obj);
@@ -280,9 +300,9 @@ static py::list Py_clip_path_to_rect(mpl::PathIterator path, agg::rect_d rect, b
     return convert_polygon_vector(result);
 }
 
-static py::memoryview Py_affine_transform(py::object vertices_obj,
-                                          py::object transform_obj,
-                                          py::object stream)
+static py::object Py_affine_transform(py::object vertices_obj,
+                                      py::object transform_obj,
+                                      py::object stream)
 {
     agg::trans_affine trans;
     convert_trans_affine_with_stream(transform_obj, trans, stream);

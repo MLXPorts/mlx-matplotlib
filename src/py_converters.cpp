@@ -120,7 +120,7 @@ bool convert_mlx_affine(const py::object& obj,
     }
 
     auto array = as_mlx_array(obj);
-    if (has_explicit_stream(stream)) {
+    if (has_explicit_stream(stream) || !array.flags().row_contiguous) {
         array = mx::contiguous(array, false, stream);
     }
     {

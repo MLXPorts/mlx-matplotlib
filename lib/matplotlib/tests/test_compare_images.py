@@ -107,11 +107,12 @@ def test_calculate_rms_and_diff_accepts_mlx_stream(device_name):
     if not mx.is_available(device_type):
         pytest.skip(f"MLX {device_name} device is not available")
 
-    expected = mlxarr.zeros((2, 2, 3), dtype=mlxarr.uint8)
+    expected = mlxarr.zeros((2, 2, 3), dtype=mlxarr.uint8,
+                            stream=device_type)
     actual = mlxarr.array(
         [[[12, 0, 0], [0, 0, 0]],
          [[0, 0, 0], [0, 0, 0]]],
-        dtype=mlxarr.uint8)
+        dtype=mlxarr.uint8, stream=device_type)
 
     rms, abs_diff = _image.calculate_rms_and_diff(
         expected, actual, stream=device_type)

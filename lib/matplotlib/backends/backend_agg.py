@@ -41,7 +41,10 @@ from matplotlib.backends._backend_agg import RendererAgg as _RendererAgg
 
 class _BufferPath:
     def __init__(self, path):
-        self.vertices = _as_float_memoryview(path.vertices)
+        self.vertices = (
+            mlxarr.zeros((0, 2), dtype=mlxarr.float64)
+            if getattr(path.vertices, "size", 0) == 0
+            else _as_float_memoryview(path.vertices))
         self.codes = (
             None if path.codes is None
             else memoryview(_array("B", [int(code)
@@ -59,6 +62,13 @@ def _transform_to_memoryview(transform):
 
 
 def _plain_float_buffer(values, empty_fallback=None):
+    def shape_of(value):
+        if not isinstance(value, list):
+            return ()
+        if not value:
+            return (0,)
+        return (len(value),) + shape_of(value[0])
+
     values = mlxarr.asarray(values)
     shape = tuple(values.shape)
     data = values.tolist()
@@ -71,6 +81,11 @@ def _plain_float_buffer(values, empty_fallback=None):
         values = mlxarr.asarray(empty_fallback)
         shape = tuple(values.shape)
         data = values.tolist()
+    elif empty_fallback is not None:
+        fallback_shape = shape_of(empty_fallback)
+        if fallback_shape and shape == fallback_shape[1:]:
+            shape = fallback_shape
+            data = [data]
 
     def flatten(value):
         if isinstance(value, list):

@@ -148,6 +148,8 @@ FontName currentdict end definefont pop
     for glyph_id in glyph_ids:
         g = font.load_glyph(glyph_id, LoadFlags.NO_SCALE)
         v, c = font.get_path()
+        v = mlxarr.asarray(v)
+        c = mlxarr.asarray(c)
         entries.append(
             "/%(name)s{%(bbox)s sc\n" % {
                 "name": font.get_glyph_name(glyph_id),

@@ -204,9 +204,11 @@ def _resample(
             interpolation = 'nearest'
         else:
             interpolation = 'hanning'
-    out = mlxarr.zeros(out_shape + data.shape[2:], data.dtype)  # 2D->2D, 3D->3D.
+    out = mlxarr.zeros(out_shape + data.shape[2:], data.dtype,
+                       stream=stream)  # 2D->2D, 3D->3D.
     if resample is None:
         resample = image_obj.get_resample()
+    data = mlxarr.ascontiguousarray(data, stream=stream)
     _image.resample(data, out, transform, _interpd_[interpolation],
                     resample, alpha, image_obj.get_filternorm(),
                     image_obj.get_filterrad(), stream=stream)
