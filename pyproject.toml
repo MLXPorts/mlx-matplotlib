@@ -50,7 +50,7 @@ dev = [
     "meson-python>=0.13.1,!=0.17.*",
     "nanobind>=2.4.0",
     # pybind11 3.x removed APIs we rely on (e.g. memoryview.request()).
-    "pybind11>=2.13.2,<3,!=2.13.3",
+    "pybind11>=2.13.2,!=2.13.3,<4",
     "setuptools_scm>=7",
     # Not required by us but setuptools_scm without a version, cso _if_
     # installed, then setuptools_scm 8 requires at least this version.
@@ -78,7 +78,7 @@ requires = [
     "meson-python>=0.13.1,!=0.17.*",
     "nanobind>=2.4.0",
     # pybind11 3.x removed APIs we rely on (e.g. memoryview.request()).
-    "pybind11>=2.13.2,<3,!=2.13.3",
+    "pybind11>=2.13.2,!=2.13.3,<4",
     "setuptools_scm>=7",
 ]
 
