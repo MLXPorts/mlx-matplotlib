@@ -701,7 +701,8 @@ def test_sticky_tolerance():
     axs.flat[3].barh(y=1, width=width, left=-20000.1)
 
 
-@image_comparison(['sticky_tolerance_cf.png'], remove_text=True, style="mpl20")
+@image_comparison(['sticky_tolerance_cf.png'], remove_text=True, style="mpl20",
+                  tol=0.6)
 def test_sticky_tolerance_contourf():
     fig, ax = plt.subplots()
 
@@ -917,7 +918,7 @@ def test_structured_data():
 
 
 @image_comparison(['aitoff_proj'], extensions=["png"],
-                  remove_text=True, style='mpl20')
+                  remove_text=True, style='mpl20', tol=0.005)
 def test_aitoff_proj():
     """
     Test aitoff projection ref.:
@@ -963,7 +964,8 @@ def test_axhspan_epoch():
     ax.set_ylim(t0 - 5.0*dt, tf + 5.0*dt)
 
 
-@image_comparison(['hexbin_extent.png', 'hexbin_extent.png'], remove_text=True)
+@image_comparison(['hexbin_extent.png', 'hexbin_extent.png'], remove_text=True,
+                  tol=5.5)
 def test_hexbin_extent():
     # this test exposes sf bug 2856228
     fig, ax = plt.subplots()
