@@ -1242,6 +1242,11 @@ class _PythonArray:
     def __ge__(self, other: Any):
         return self._elementwise(other, operator.ge, bool_.mx_dtype)
 
+    def __invert__(self):
+        return _PythonArray(
+            _coerce_nested(self._data, lambda value: not bool(value)),
+            dtype=bool_.mx_dtype)
+
     def __neg__(self):
         return self._elementwise(0, lambda value, _: -value)
 
@@ -2350,11 +2355,19 @@ def ptp(a: Any, axis: int | None = None) -> Any:
 
 
 def all(a: Any, axis: int | None = None) -> Any:
-    return _to_scalar(mx.all(_to_mx(a), axis=axis))
+    arr = _to_mx(a)
+    if isinstance(arr, _PythonArray):
+        if axis is None:
+            return _builtins.all(bool(value) for value in _flatten(arr.tolist()))
+    return _to_scalar(mx.all(arr, axis=axis))
 
 
 def any(a: Any, axis: int | None = None) -> Any:
-    return _to_scalar(mx.any(_to_mx(a), axis=axis))
+    arr = _to_mx(a)
+    if isinstance(arr, _PythonArray):
+        if axis is None:
+            return _builtins.any(bool(value) for value in _flatten(arr.tolist()))
+    return _to_scalar(mx.any(arr, axis=axis))
 
 
 def _python_isfinite(value: Any) -> Any:
@@ -2368,11 +2381,18 @@ def _python_isfinite(value: Any) -> Any:
         return True
 
 
+def _to_bool_result(value: Any) -> mx.array:
+    try:
+        return mx.array(value, dtype=mx.bool_)
+    except ValueError:
+        return _PythonArray(value, dtype=bool_.mx_dtype)
+
+
 def isfinite(a: Any) -> mx.array:
     arr = _to_mx(a)
     if isinstance(arr, _PythonArray):
         result = _python_isfinite(arr.tolist())
-        return mx.array(result, dtype=mx.bool_)
+        return _to_bool_result(result)
     return mx.isfinite(arr)
 
 
@@ -2384,8 +2404,7 @@ def isinf(a: Any) -> mx.array:
                 return math.isinf(_to_scalar(value))
             except TypeError:
                 return False
-        return mx.array(_coerce_nested(arr.tolist(), isinf_one),
-                        dtype=mx.bool_)
+        return _to_bool_result(_coerce_nested(arr.tolist(), isinf_one))
     return mx.isinf(arr)
 
 
@@ -2397,8 +2416,7 @@ def isnan(a: Any) -> mx.array:
                 return math.isnan(_to_scalar(value))
             except TypeError:
                 return False
-        return mx.array(_coerce_nested(arr.tolist(), isnan_one),
-                        dtype=mx.bool_)
+        return _to_bool_result(_coerce_nested(arr.tolist(), isnan_one))
     return mx.isnan(arr)
 
 
@@ -2471,7 +2489,12 @@ def logical_or(a: Any, b: Any) -> mx.array:
 
 
 def logical_not(a: Any) -> mx.array:
-    return mx.logical_not(_to_mx(a))
+    arr = _to_mx(a)
+    if isinstance(arr, _PythonArray):
+        return _PythonArray(
+            _coerce_nested(arr.tolist(), lambda value: not bool(value)),
+            dtype=bool_.mx_dtype)
+    return mx.logical_not(arr)
 
 
 def logical_xor(a: Any, b: Any) -> mx.array:
@@ -4277,7 +4300,7 @@ class _MA:
     def is_masked(self, data: Any) -> bool:
         return (isinstance(data, MaskedArray)
                 and data.mask is not None
-                and bool(mx.any(data.mask).item()))
+                and bool(any(data.mask)))
 
     def getdata(self, data: Any):
         return data.data if isinstance(data, MaskedArray) else data
