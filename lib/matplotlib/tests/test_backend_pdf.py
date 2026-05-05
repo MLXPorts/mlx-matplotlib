@@ -115,7 +115,7 @@ def test_indexed_image():
         pdf_image = pikepdf.PdfImage(image)
         assert pdf_image.indexed
         pil_image = pdf_image.as_pil_image()
-        rgb = mx.asarray(pil_image.convert('RGB'))
+        rgb = mx.array(pil_image.convert('RGB'))
 
     mx.testing.assert_array_equal(data, rgb)
 

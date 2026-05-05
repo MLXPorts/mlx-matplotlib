@@ -11,7 +11,9 @@ from matplotlib import _mlx_overrides as _mx_overrides
 
 # same algorithm as 3.8's math.comb
 def _comb(n, k):
-    if isinstance(n, mx.array) or isinstance(k, mx.array):
+    if (isinstance(n, mx.array) or isinstance(k, mx.array)
+            or (hasattr(n, "shape") and hasattr(n, "dtype"))
+            or (hasattr(k, "shape") and hasattr(k, "dtype"))):
         n_arr, k_arr = mx.broadcast_arrays(mx.array(n), mx.array(k))
         values = [
             math.comb(int(nn), int(kk)) if 0 <= int(kk) <= int(nn) else 0
@@ -56,33 +58,20 @@ def _precise_array(value, *, dtype=None, stream=None):
     return _mx_overrides.mlx_precise_array(value, dtype=dtype, stream=stream)
 
 
-def _float64_array(value, *, stream=mx.cpu):
+def _float64_array(value, *, stream=None):
     return _precise_array(value, dtype=mx.float64, stream=stream)
 
 
-def _float64_scalar(value):
-    return _mx_overrides.float64_scalar(float(value), stream=mx.cpu)
+def _float64_scalar(value, *, stream=None):
+    return _mx_overrides.float64_scalar(float(value), stream=stream)
 
 
 def _take_axis0(value, index):
-    if isinstance(value, mx.array) and value.dtype == mx.float64:
-        if index < 0:
-            index += value.shape[0]
-        slice_size = (1, *value.shape[1:])
-        row = mx.slice(value, mx.array([index], dtype=mx.int32), [0],
-                       slice_size, stream=mx.cpu)
-        return mx.squeeze(row, axis=0, stream=mx.cpu)
     return value[index]
 
 
 def _mx_hypot(x, y):
-    stream = mx.cpu if any(
-        isinstance(v, mx.array) and v.dtype == mx.float64 for v in (x, y)
-    ) else None
-    return mx.sqrt(
-        mx.add(mx.square(x, stream=stream), mx.square(y, stream=stream),
-               stream=stream),
-        stream=stream)
+    return mx.add(mx.multiply(x, x), mx.multiply(y, y))
 
 
 def get_intersection(cx1, cy1, cos_t1, sin_t1,
@@ -144,10 +133,10 @@ def get_normal_points(cx, cy, cos_t, sin_t, length):
 
 
 def _de_casteljau1(beta, t):
-    stream = mx.cpu if beta.dtype == mx.float64 else None
+    stream = None
     if beta.dtype == mx.float64:
-        t = _float64_scalar(t)
-        one = _float64_scalar(1.0)
+        t = _float64_scalar(t, stream=stream)
+        one = _float64_scalar(1.0, stream=stream)
     else:
         t = t if isinstance(t, mx.array) else mx.array(t)
         one = 1
@@ -235,7 +224,7 @@ def find_bezier_t_intersecting_with_closedpath(
         start_x, start_y = _take_axis0(start, 0), _take_axis0(start, 1)
         end_x, end_y = _take_axis0(end, 0), _take_axis0(end, 1)
         if bool((_mx_hypot(start_x - end_x, start_y - end_y)
-                 < tolerance).item()):
+                 < tolerance * tolerance).item()):
             return t0, t1
 
         # calculate the middle point
@@ -255,7 +244,7 @@ def find_bezier_t_intersecting_with_closedpath(
             end = middle
         else:
             t0 = middle_t
-            if start == middle:
+            if bool(mx.all(start == middle).item()):
                 # Edge case where infinite loop is possible
                 # Caused by large numbers relative to tolerance
                 return t0, t1
@@ -280,7 +269,7 @@ class BezierSegment:
         self._cpoints = (control_points if isinstance(control_points, mx.array)
                          else _float64_array(control_points))
         self._N, self._d = self._cpoints.shape
-        stream = mx.cpu if self._cpoints.dtype == mx.float64 else None
+        stream = None
         self._orders = mx.arange(self._N, stream=stream)
         coeff = [math.factorial(self._N - 1)
                  // (math.factorial(i) * math.factorial(self._N - 1 - i))
@@ -306,13 +295,13 @@ class BezierSegment:
         (k, d) array
             Value of the curve for each point in *t*.
         """
-        stream = mx.cpu if self._cpoints.dtype == mx.float64 else None
+        stream = None
         t = t if isinstance(t, mx.array) else (
             _float64_array(t) if self._cpoints.dtype == mx.float64 else mx.array(t))
         t = mx.reshape(t, (-1,), stream=stream)
         t_col = mx.expand_dims(t, axis=-1, stream=stream)
         basis = mx.multiply(
-            mx.power(mx.subtract(_float64_scalar(1.0), t_col, stream=stream),
+            mx.power(mx.subtract(_float64_scalar(1.0, stream=stream), t_col, stream=stream),
                      self._orders[::-1], stream=stream),
             mx.power(t_col, self._orders, stream=stream),
             stream=stream)
@@ -518,7 +507,7 @@ def inside_circle(cx, cy, r):
 
     def _f(xy):
         xy = xy if isinstance(xy, mx.array) else _float64_array(xy)
-        stream = mx.cpu if xy.dtype == mx.float64 else None
+        stream = None
         xy = mx.reshape(xy, (-1,), stream=stream)
         x, y = _take_axis0(xy, 0), _take_axis0(xy, 1)
         return mx.less(
@@ -563,9 +552,9 @@ def check_if_parallel(dx1, dy1, dx2, dy2, tolerance=1.e-5):
     theta1 = mx.arctan2(dx1, dy1)
     theta2 = mx.arctan2(dx2, dy2)
     dtheta = abs(theta1 - theta2)
-    if dtheta < tolerance:
+    if bool((dtheta < tolerance).item()):
         return 1
-    elif abs(dtheta - mx.pi) < tolerance:
+    elif bool((abs(dtheta - mx.pi) < tolerance).item()):
         return -1
     else:
         return False

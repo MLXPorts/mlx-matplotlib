@@ -32,7 +32,7 @@ class TriInterpolator:
         _api.check_isinstance(Triangulation, triangulation=triangulation)
         self._triangulation = triangulation
 
-        self._z = mx.asarray(z)
+        self._z = mx.array(z)
         if self._z.shape != self._triangulation.x.shape:
             raise ValueError("z array must have same length as triangulation x"
                              " and y arrays")
@@ -152,8 +152,8 @@ class TriInterpolator:
         """
         # Flattening and rescaling inputs arrays x, y
         # (initial shape is stored for output)
-        x = mx.asarray(x, dtype=mx.float32)
-        y = mx.asarray(y, dtype=mx.float32)
+        x = mx.array(x, dtype=mx.float32)
+        y = mx.array(y, dtype=mx.float32)
         sh_ret = x.shape
         if x.shape != y.shape:
             raise ValueError("x and y shall have same shapes."
@@ -1220,9 +1220,9 @@ class _Sparse_Matrix_coo:
         *shape*: 2-tuple (n, m) of matrix shape
         """
         self.n, self.m = shape
-        self.vals = mx.asarray(vals, dtype=mx.float32)
-        self.rows = mx.asarray(rows, dtype=mx.int32)
-        self.cols = mx.asarray(cols, dtype=mx.int32)
+        self.vals = mx.array(vals, dtype=mx.float32)
+        self.rows = mx.array(rows, dtype=mx.int32)
+        self.cols = mx.array(cols, dtype=mx.int32)
 
     def dot(self, V):
         """
@@ -1528,17 +1528,17 @@ def _to_matrix_vectorized(M):
     """
     assert isinstance(M, (tuple, list))
     assert all(isinstance(item, (tuple, list)) for item in M)
-    c_vec = mx.asarray([len(item) for item in M])
+    c_vec = mx.array([len(item) for item in M])
     assert mx.all(c_vec-c_vec[0] == 0)
     r = len(M)
     c = c_vec[0]
-    M00 = mx.asarray(M[0][0])
+    M00 = mx.array(M[0][0])
     dt = M00.dtype
     sh = [M00.shape[0], r, c]
     M_ret = mx.zeros(sh, dtype=dt)
     for irow in range(r):
         for icol in range(c):
-            M_ret[:, irow, icol] = mx.asarray(M[irow][icol])
+            M_ret[:, irow, icol] = mx.array(M[irow][icol])
     return M_ret
 
 

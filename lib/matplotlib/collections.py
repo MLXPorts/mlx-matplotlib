@@ -342,13 +342,13 @@ class Collection(mcolorizer.ColorizingArtist):
                 xs = self.convert_xunits(xs)
                 ys = self.convert_yunits(ys)
                 paths.append(mpath.Path(
-                    mx.stack([mx.asarray(xs, dtype=mx.float32),
-                              mx.asarray(ys, dtype=mx.float32)], axis=-1),
+                    mx.stack([mx.array(xs, dtype=mx.float32),
+                              mx.array(ys, dtype=mx.float32)], axis=-1),
                     path.codes))
             xs = self.convert_xunits(offsets[:, 0])
             ys = self.convert_yunits(offsets[:, 1])
-            offsets = mx.stack([mx.asarray(xs, dtype=mx.float32),
-                                mx.asarray(ys, dtype=mx.float32)], axis=-1)
+            offsets = mx.stack([mx.array(xs, dtype=mx.float32),
+                                mx.array(ys, dtype=mx.float32)], axis=-1)
 
         if not transform.is_affine:
             paths = [transform.transform_path_non_affine(path)
@@ -1791,7 +1791,7 @@ class LineCollection(Collection):
                 # threshold so never try.
                 in path.iter_segments(simplify=False)
             ]
-            vertices = mx.asarray(vertices)
+            vertices = mx.array(vertices)
             segments.append(vertices)
 
         return segments
@@ -1978,7 +1978,7 @@ class EventCollection(LineCollection):
                                 len(position) == 0):
             return
         positions = self.get_positions()
-        positions = mx.hstack([positions, mx.asarray(position)])
+        positions = mx.hstack([positions, mx.array(position)])
         self.set_positions(positions)
     extend_positions = append_positions = add_positions
 
@@ -2162,12 +2162,12 @@ class EllipseCollection(Collection):
 
     def set_widths(self, widths):
         """Set the lengths of the first axes (e.g., major axis)."""
-        self._widths = 0.5 * mx.asarray(widths).ravel()
+        self._widths = 0.5 * mx.array(widths).ravel()
         self.stale = True
 
     def set_heights(self, heights):
         """Set the lengths of second axes (e.g., minor axes)."""
-        self._heights = 0.5 * mx.asarray(heights).ravel()
+        self._heights = 0.5 * mx.array(heights).ravel()
         self.stale = True
 
     def set_angles(self, angles):

@@ -39,7 +39,7 @@ class FigureCanvasGTK3Agg(backend_agg.FigureCanvasAgg,
             height = int(bbox.y1) - int(bbox.y0)
 
             buf = cbook._unmultiplied_rgba8888_to_premultiplied_argb32(
-                mx.asarray(self.copy_from_bbox(bbox)))
+                mx.array(self.copy_from_bbox(bbox)))
             image = cairo.ImageSurface.create_for_data(
                 buf.ravel().data, cairo.FORMAT_ARGB32, width, height)
             image.set_device_scale(scale, scale)

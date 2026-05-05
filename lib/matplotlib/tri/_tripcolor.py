@@ -98,7 +98,7 @@ def tripcolor(ax, *args, alpha=1.0, norm=None, cmap=None, vmin=None,
                 "1 required keyword-only argument: 'facecolors'")
         elif len(args) > 1:
             raise TypeError(f"Unexpected positional parameters: {args[1:]!r}")
-        c = mx.asarray(args[0])
+        c = mx.array(args[0])
         if len(c) == len(tri.x):
             # having this before the len(tri.triangles) comparison gives
             # precedence to nodes if there are as many nodes as triangles

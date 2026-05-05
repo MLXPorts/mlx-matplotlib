@@ -22,12 +22,12 @@ Still TODO:
 """
 
 from contextlib import nullcontext
-from array import array as _array
 from math import radians, cos, sin
 import mlx.core as mx
 from PIL import features
 
 import matplotlib as mpl
+from matplotlib import _mlx_overrides as _mx_overrides
 from matplotlib import _api, cbook
 from matplotlib.backend_bases import (
     _Backend, FigureCanvasBase, FigureManagerBase, RendererBase)
@@ -35,17 +35,16 @@ from matplotlib.font_manager import fontManager as _fontManager, get_font
 from matplotlib.ft2font import LoadFlags
 from matplotlib.mathtext import MathTextParser
 from matplotlib.path import Path
-from matplotlib.transforms import Bbox, BboxBase, _as_float_memoryview
+from matplotlib.transforms import Bbox, BboxBase
 from matplotlib.backends._backend_agg import RendererAgg as _RendererAgg
 
 
 class _BufferPath:
     def __init__(self, path):
-        self.vertices = _as_float_memoryview(path.vertices)
+        self.vertices = _float64_memoryview(path.vertices)
         self.codes = (
             None if path.codes is None
-            else memoryview(_array("B", [int(code)
-                                         for code in path.codes.tolist()])))
+            else _uint8_memoryview(path.codes))
         self.should_simplify = path.should_simplify
         self.simplify_threshold = path.simplify_threshold
 
@@ -55,32 +54,33 @@ def _transform_to_memoryview(transform):
         transform = transform.get_matrix()
     elif hasattr(transform, "get_affine"):
         transform = transform.get_affine().get_matrix()
-    return _as_float_memoryview(transform)
+    return _float64_memoryview(transform)
 
 
-def _plain_float_buffer(values, empty_fallback=None):
-    values = values if isinstance(values, mx.array) else mx.array(values)
+def _memoryview_from_mx(values, dtype, format_code, empty_fallback=None):
+    values = mx.array(values, dtype=dtype, stream=mx.cpu)
     shape = tuple(values.shape)
-    data = values.tolist()
     if not shape:
+        values = mx.reshape(values, (1,))
         shape = (1,)
-        data = [data]
     if 0 in shape:
         if empty_fallback is None:
-            empty_fallback = [0.0]
-        values = mx.array(empty_fallback)
+            empty_fallback = mx.zeros((1,), dtype=dtype, stream=mx.cpu)
+        values = mx.array(empty_fallback, dtype=dtype, stream=mx.cpu)
         shape = tuple(values.shape)
-        data = values.tolist()
+    if dtype == mx.float64:
+        raw = _mx_overrides.float64_bytes(values, stream=mx.cpu)
+    else:
+        raw = _mx_overrides.array_bytes(values, stream=mx.cpu)
+    return memoryview(bytearray(raw)).cast(format_code, shape=shape)
 
-    def flatten(value):
-        if isinstance(value, list):
-            for item in value:
-                yield from flatten(item)
-        else:
-            yield float(value)
 
-    buf = _array("d", list(flatten(data)))
-    return memoryview(buf).cast("B").cast("d", shape=shape)
+def _float64_memoryview(values, empty_fallback=None):
+    return _memoryview_from_mx(values, mx.float64, "d", empty_fallback)
+
+
+def _uint8_memoryview(values, empty_fallback=None):
+    return _memoryview_from_mx(values, mx.uint8, "B", empty_fallback)
 
 
 def get_hinting_flag():
@@ -133,8 +133,8 @@ class RendererAgg(RendererBase):
         self.copy_from_bbox = self._renderer.copy_from_bbox
 
     def draw_gouraud_triangles(self, gc, triangles_array, colors_array, transform):
-        triangles_array = _plain_float_buffer(triangles_array)
-        colors_array = _plain_float_buffer(colors_array)
+        triangles_array = _float64_memoryview(triangles_array)
+        colors_array = _float64_memoryview(colors_array)
         transform = _transform_to_memoryview(transform)
         return self._draw_gouraud_triangles(
             gc, triangles_array, colors_array, transform)
@@ -150,17 +150,15 @@ class RendererAgg(RendererBase):
     def draw_path(self, gc, path, transform, rgbFace=None):
         # docstring inherited
         transform = _transform_to_memoryview(transform)
+        source_path = path
         path = _BufferPath(path)
         nmax = mpl.rcParams['agg.path.chunksize']  # here at least for testing
-        vertices = (path.vertices if isinstance(path.vertices, mx.array)
-                    else mx.array(path.vertices))
-        codes = (None if path.codes is None else
-                 path.codes if isinstance(path.codes, mx.array)
-                 else mx.array(path.codes))
-        npts = vertices.shape[0]
+        npts = path.vertices.shape[0]
 
         if (npts > nmax > 100 and path.should_simplify and
                 rgbFace is None and gc.get_hatch() is None):
+            vertices = source_path.vertices
+            codes = source_path.codes
             nch = mx.ceil(npts / nmax)
             chsize = int(mx.ceil(npts / nch))
             i0 = mx.arange(0, npts, chsize)
@@ -241,23 +239,25 @@ class RendererAgg(RendererBase):
                              offset_position, hatchcolors=None):
         master_transform = _transform_to_memoryview(master_transform)
         paths = [_BufferPath(path) for path in paths]
-        transforms = _plain_float_buffer(
-            transforms, [[[1.0, 0.0, 0.0],
-                          [0.0, 1.0, 0.0],
-                          [0.0, 0.0, 1.0]]])
-        offsets = _plain_float_buffer(offsets, [[0.0, 0.0]])
+        transforms = _float64_memoryview(
+            transforms, mx.reshape(
+                mx.eye(3, dtype=mx.float64, stream=mx.cpu), (1, 3, 3),
+                stream=mx.cpu))
+        offsets = _float64_memoryview(
+            offsets, mx.zeros((1, 2), dtype=mx.float64, stream=mx.cpu))
         offset_trans = _transform_to_memoryview(offset_trans)
-        facecolors = _plain_float_buffer(facecolors, [[0.0, 0.0, 0.0, 0.0]])
-        edgecolors = _plain_float_buffer(edgecolors, [[0.0, 0.0, 0.0, 0.0]])
-        linewidths = _plain_float_buffer(linewidths, [1.0])
+        facecolors = _float64_memoryview(
+            facecolors, mx.zeros((1, 4), dtype=mx.float64, stream=mx.cpu))
+        edgecolors = _float64_memoryview(
+            edgecolors, mx.zeros((1, 4), dtype=mx.float64, stream=mx.cpu))
+        linewidths = _float64_memoryview(
+            linewidths, mx.ones((1,), dtype=mx.float64, stream=mx.cpu))
         antialiaseds = (antialiaseds if isinstance(antialiaseds, mx.array)
                         else mx.array(antialiaseds))
-        antialiaseds = memoryview(_array("B", [
-            int(value) for value in antialiaseds.tolist()
-        ]))
+        antialiaseds = _uint8_memoryview(antialiaseds)
         if hatchcolors is not None:
-            hatchcolors = _plain_float_buffer(
-                hatchcolors, [[0.0, 0.0, 0.0, 0.0]])
+            hatchcolors = _float64_memoryview(
+                hatchcolors, mx.zeros((1, 4), dtype=mx.float64, stream=mx.cpu))
         self._renderer.draw_path_collection(
             gc, master_transform, paths, transforms, offsets, offset_trans,
             facecolors, edgecolors, linewidths, linestyles, antialiaseds,
@@ -267,11 +267,14 @@ class RendererAgg(RendererBase):
                        coordinates, offsets, offsetTrans, facecolors,
                        antialiased, edgecolors):
         master_transform = _transform_to_memoryview(master_transform)
-        coordinates = _plain_float_buffer(coordinates)
-        offsets = _plain_float_buffer(offsets, [[0.0, 0.0]])
+        coordinates = _float64_memoryview(coordinates)
+        offsets = _float64_memoryview(
+            offsets, mx.zeros((1, 2), dtype=mx.float64, stream=mx.cpu))
         offsetTrans = _transform_to_memoryview(offsetTrans)
-        facecolors = _plain_float_buffer(facecolors, [[0.0, 0.0, 0.0, 0.0]])
-        edgecolors = _plain_float_buffer(edgecolors, [[0.0, 0.0, 0.0, 0.0]])
+        facecolors = _float64_memoryview(
+            facecolors, mx.zeros((1, 4), dtype=mx.float64, stream=mx.cpu))
+        edgecolors = _float64_memoryview(
+            edgecolors, mx.zeros((1, 4), dtype=mx.float64, stream=mx.cpu))
         self._renderer.draw_quad_mesh(
             gc, master_transform, meshWidth, meshHeight, coordinates, offsets,
             offsetTrans, facecolors, antialiased, edgecolors)
@@ -373,7 +376,7 @@ class RendererAgg(RendererBase):
         return memoryview(self._renderer)
 
     def tostring_argb(self):
-        return mx.asarray(self._renderer).take([3, 0, 1, 2], axis=2).tobytes()
+        return mx.array(self._renderer).take([3, 0, 1, 2], axis=2).tobytes()
 
     def clear(self):
         self._renderer.clear()

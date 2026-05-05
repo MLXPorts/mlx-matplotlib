@@ -2105,7 +2105,8 @@ class MaxNLocator(Locator):
         if not cbook.iterable(steps):
             raise ValueError('steps argument must be an increasing sequence '
                              'of numbers between 1 and 10 inclusive')
-        steps = steps if isinstance(steps, mx.array) else mx.array(steps)
+        steps = (steps.astype(mx.float64) if isinstance(steps, mx.array)
+                 else mx.array(steps, dtype=mx.float64))
         if (mx.any((steps[1:] - steps[:-1]) <= 0)
                 or steps[-1] > 10 or steps[0] < 1):
             raise ValueError('steps argument must be an increasing sequence '
@@ -2122,7 +2123,7 @@ class MaxNLocator(Locator):
         # found.  This is probably much larger than necessary.
         return mx.concatenate([
             0.1 * steps[:-1], steps,
-            mx.array([10 * float(steps[1])], dtype=steps.dtype),
+            mx.array([10 * steps[1].item()], dtype=steps.dtype),
         ])
 
     def set_params(self, **kwargs):
@@ -2159,7 +2160,9 @@ class MaxNLocator(Locator):
         if 'steps' in kwargs:
             steps = kwargs.pop('steps')
             if steps is None:
-                self._steps = mx.array([1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10])
+                self._steps = mx.array(
+                    [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10],
+                    dtype=mx.float64)
             else:
                 self._steps = self._validate_steps(steps)
             self._extended_steps = self._staircase(self._steps)
@@ -2199,11 +2202,15 @@ class MaxNLocator(Locator):
             # adjust the raw step to match the mpl3.8 appearance. The zoom
             # factor of 2/48, gives us the 23/24 modifier.
             raw_step = raw_step * 23/24
+        _vmin_scalar = _vmin.item() if isinstance(_vmin, mx.array) else _vmin
+        _vmax_scalar = _vmax.item() if isinstance(_vmax, mx.array) else _vmax
         large_steps = steps >= raw_step
         if mpl.rcParams['axes.autolimit_mode'] == 'round_numbers':
             # Classic round_numbers mode may require a larger step.
             # Get first multiple of steps that are <= _vmin
-            floored_vmins = (_vmin // steps) * steps
+            floored_vmins = mx.array([
+                math.floor(_vmin_scalar / step.item()) * step.item()
+                for step in steps], dtype=steps.dtype)
             floored_vmaxs = floored_vmins + steps * nbins
             large_steps = large_steps & (floored_vmaxs >= _vmax)
 
@@ -2218,25 +2225,27 @@ class MaxNLocator(Locator):
         # if it provides enough ticks. If not, work backwards through
         # smaller steps until one is found that provides enough ticks.
         for step in steps[:istep+1][::-1]:
+            step_scalar = step.item() if isinstance(step, mx.array) else step
 
             if (self._integer and
                     mx.floor(_vmax) - mx.ceil(_vmin) >= self._min_n_ticks - 1):
-                step = max(1, step)
-            best_vmin = (_vmin // step) * step
+                step_scalar = max(1, step_scalar)
+            best_vmin = math.floor(_vmin_scalar / step_scalar) * step_scalar
 
             # Find tick locations spanning the vmin-vmax range, taking into
             # account degradation of precision when there is a large offset.
             # The edge ticks beyond vmin and/or vmax are needed for the
             # "round_numbers" autolimit mode.
-            edge = _Edge_integer(step, offset)
-            low = edge.le(_vmin - best_vmin)
-            high = edge.ge(_vmax - best_vmin)
+            edge = _Edge_integer(step_scalar, offset)
+            low = edge.le(_vmin_scalar - best_vmin)
+            high = edge.ge(_vmax_scalar - best_vmin)
             low_i = int(low.item()) if isinstance(low, mx.array) else int(low)
             high_i = int(high.item()) if isinstance(high, mx.array) else int(high)
-            ticks = mx.arange(low_i, high_i + 1) * step + best_vmin
+            ticks = (mx.arange(low_i, high_i + 1, dtype=mx.float64)
+                     * step_scalar + best_vmin)
             # Count only the ticks that will be displayed.
             nticks = ((ticks <= _vmax) & (ticks >= _vmin)).sum()
-            if nticks >= self._min_n_ticks:
+            if int(nticks.item()) >= self._min_n_ticks:
                 break
         return ticks + offset
 

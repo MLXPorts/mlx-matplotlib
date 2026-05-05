@@ -1372,7 +1372,7 @@ class PolarAxes(Axes):
         """
         # Make sure we take into account unitized data
         radii = self.convert_xunits(radii)
-        radii = mx.asarray(radii)
+        radii = mx.array(radii)
 
         self.set_yticks(radii)
         if labels is not None:

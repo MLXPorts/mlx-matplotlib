@@ -522,7 +522,7 @@ class _ImageBase(mcolorizer.ColorizingArtist):
                 out_alpha = _resample(self, mask, out_shape, t, resample=True)
                 del mask  # Make sure we don't use mask anymore!
                 out_mask = mx.isnan(out_alpha)
-                out_alpha[out_mask] = 1
+                out_alpha = mx.where(out_mask, mx.ones_like(out_alpha), out_alpha)
                 # Apply the pixel-by-pixel alpha values if present
                 alpha = self.get_alpha()
                 if alpha is not None and _ndim(alpha) > 0:
@@ -1751,7 +1751,7 @@ def pil_to_array(pilImage):
     """
     if pilImage.mode in ['RGBA', 'RGBX', 'RGB', 'L']:
         # return MxNx4 RGBA, MxNx3 RBA, or MxN luminance array
-        return mx.asarray(pilImage)
+        return mx.array(pilImage)
     elif pilImage.mode.startswith('I;16'):
         # return MxN luminance array of uint16
         raw = pilImage.tobytes('raw', pilImage.mode)
@@ -1765,7 +1765,7 @@ def pil_to_array(pilImage):
             pilImage = pilImage.convert('RGBA')
         except ValueError as err:
             raise RuntimeError('Unknown image mode') from err
-        return mx.asarray(pilImage)  # return MxNx4 RGBA array
+        return mx.array(pilImage)  # return MxNx4 RGBA array
 
 
 def _pil_png_to_float_array(pil_png):

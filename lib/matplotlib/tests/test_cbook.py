@@ -611,9 +611,9 @@ def test_to_prestep():
 
     xs, y1s, y2s = cbook.pts_to_prestep(x, y1, y2)
 
-    x_target = mx.asarray([0, 0, 1, 1, 2, 2, 3], dtype=float)
-    y1_target = mx.asarray([0, 1, 1, 2, 2, 3, 3], dtype=float)
-    y2_target = mx.asarray([3, 2, 2, 1, 1, 0, 0], dtype=float)
+    x_target = mx.array([0, 0, 1, 1, 2, 2, 3], dtype=float)
+    y1_target = mx.array([0, 1, 1, 2, 2, 3, 3], dtype=float)
+    y2_target = mx.array([3, 2, 2, 1, 1, 0, 0], dtype=float)
 
     assert_array_equal(x_target, xs)
     assert_array_equal(y1_target, y1s)
@@ -636,9 +636,9 @@ def test_to_poststep():
 
     xs, y1s, y2s = cbook.pts_to_poststep(x, y1, y2)
 
-    x_target = mx.asarray([0, 1, 1, 2, 2, 3, 3], dtype=float)
-    y1_target = mx.asarray([0, 0, 1, 1, 2, 2, 3], dtype=float)
-    y2_target = mx.asarray([3, 3, 2, 2, 1, 1, 0], dtype=float)
+    x_target = mx.array([0, 1, 1, 2, 2, 3, 3], dtype=float)
+    y1_target = mx.array([0, 0, 1, 1, 2, 2, 3], dtype=float)
+    y2_target = mx.array([3, 3, 2, 2, 1, 1, 0], dtype=float)
 
     assert_array_equal(x_target, xs)
     assert_array_equal(y1_target, y1s)
@@ -661,9 +661,9 @@ def test_to_midstep():
 
     xs, y1s, y2s = cbook.pts_to_midstep(x, y1, y2)
 
-    x_target = mx.asarray([0, .5, .5, 1.5, 1.5, 2.5, 2.5, 3], dtype=float)
-    y1_target = mx.asarray([0, 0, 1, 1, 2, 2, 3, 3], dtype=float)
-    y2_target = mx.asarray([3, 3, 2, 2, 1, 1, 0, 0], dtype=float)
+    x_target = mx.array([0, .5, .5, 1.5, 1.5, 2.5, 2.5, 3], dtype=float)
+    y1_target = mx.array([0, 0, 1, 1, 2, 2, 3, 3], dtype=float)
+    y2_target = mx.array([3, 3, 2, 2, 1, 1, 0, 0], dtype=float)
 
     assert_array_equal(x_target, xs)
     assert_array_equal(y1_target, y1s)
@@ -916,7 +916,7 @@ def test_array_patch_perimeters():
                 # +1 ensures we share edges between polygons
                 ps = cbook._array_perimeter(x[rs:rs_next+1, cs:cs_next+1]).T
                 polys.append(ps)
-        polys = mx.asarray(polys)
+        polys = mx.array(polys)
         assert mx.array_equal(polys,
                               cbook._array_patch_perimeters(
                                   x, rstride=rstride, cstride=cstride))

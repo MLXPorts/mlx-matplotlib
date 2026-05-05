@@ -13,7 +13,7 @@ def unstructured_to_structured(a):
     In this fork we represent "structured" inputs as a list of tuples, which
     `MultiNorm` treats equivalently to a structured array for indexing.
     """
-    arr = mx.asarray(a)
+    arr = mx.array(a)
     if arr.ndim != 2:
         raise ValueError("expected a 2D array")
     rows = arr.tolist()

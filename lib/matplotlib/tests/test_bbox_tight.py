@@ -159,7 +159,7 @@ def test_noop_tight_bbox():
     out = BytesIO()
     fig.savefig(out, bbox_inches='tight', pad_inches=0)
     out.seek(0)
-    im = mx.asarray(Image.open(out))
+    im = mx.array(Image.open(out))
     assert (im[:, :, 3] == 255).all()
     assert not (im[:, :, :3] == 255).all()
     assert im.shape == (7, 10, 4)

@@ -21,6 +21,7 @@ import kiwisolver as kiwi
 import logging
 import mlx.core as mx
 import matplotlib as mpl
+import matplotlib.cbook as cbook
 import matplotlib.patches as mpatches
 from matplotlib.transforms import Bbox
 
@@ -60,8 +61,8 @@ class LayoutGrid:
             parent.add_child(self, *parent_pos)
             self.solver = parent.solver
         # keep track of artist associated w/ this layout.  Can be none
-        self.artists = mx.zeros((nrows, ncols), dtype=object)
-        self.children = mx.zeros((nrows, ncols), dtype=object)
+        self.artists = cbook._ReferenceGrid.filled(nrows, ncols)
+        self.children = cbook._ReferenceGrid.filled(nrows, ncols)
 
         self.margins = {}
         self.margin_vals = {}
@@ -82,7 +83,7 @@ class LayoutGrid:
                 sol.addEditVariable(self.margins[todo][i], 'strong')
 
         for todo in ['bottom', 'top', 'bottomcb', 'topcb']:
-            self.margins[todo] = mx.zeros((nrows), dtype=object)
+            self.margins[todo] = [None for _ in range(nrows)]
             self.margin_vals[todo] = mx.zeros(nrows)
 
         self.bottoms = [Variable(f'{sn}bottoms[{i}]') for i in range(nrows)]
@@ -161,8 +162,11 @@ class LayoutGrid:
                 self.solver.addConstraint(c | 'required')
 
     def add_child(self, child, i=0, j=0):
-        # mx.ix_ returns the cross product of i and j indices
-        self.children[mx.ix_(mx.atleast_1d(i), mx.atleast_1d(j))] = child
+        rows = [i] if isinstance(i, int) else list(i)
+        cols = [j] if isinstance(j, int) else list(j)
+        for row in rows:
+            for col in cols:
+                self.children[row][col] = child
 
     def parent_constraints(self, parent):
         # constraints that are due to the parent...
@@ -541,6 +545,7 @@ def plot_children(fig, lg=None, level=0):
                                    edgecolor='none', alpha=0.2,
                                    facecolor=[0.7, 0.2, 0.7],
                                    transform=fig.transFigure, zorder=-2))
-    for ch in lg.children.flat:
-        if ch is not None:
-            plot_children(fig, ch, level=level+1)
+    for row in lg.children:
+        for ch in row:
+            if ch is not None:
+                plot_children(fig, ch, level=level+1)

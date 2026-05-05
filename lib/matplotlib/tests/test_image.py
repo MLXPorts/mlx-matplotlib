@@ -609,7 +609,7 @@ def test_rasterize_dpi():
     # setting.  Instead of high-res rasterization I use low-res.  Therefore
     # the fact that the resolution is non-standard is easily checked by
     # image_comparison.
-    img = mx.asarray([[1, 2], [3, 4]])
+    img = mx.array([[1, 2], [3, 4]])
 
     fig, axs = plt.subplots(1, 3, figsize=(3, 1))
 
@@ -895,7 +895,7 @@ def test_image_preserve_size2():
 
     assert img.shape == (7, 7, 4)
 
-    assert_array_equal(mx.asarray(img[:, :, 0], bool),
+    assert_array_equal(mx.array(img[:, :, 0], bool),
                        mx.identity(n, bool)[::-1])
 
 
@@ -1250,7 +1250,7 @@ def test_image_placement():
 # subclasses.
 class QuantityND(mx.array):
     def __new__(cls, input_array, units):
-        obj = mx.asarray(input_array).view(cls)
+        obj = mx.array(input_array).view(cls)
         obj.units = units
         return obj
 
@@ -1271,7 +1271,7 @@ class QuantityND(mx.array):
         if len(inputs) == 1:
             i0 = inputs[0]
             unit = getattr(i0, "units", "dimensionless")
-            out_arr = func(mx.asarray(i0), **kwargs)
+            out_arr = func(mx.array(i0), **kwargs)
         elif len(inputs) == 2:
             i0 = inputs[0]
             i1 = inputs[1]
@@ -1311,9 +1311,9 @@ class QuantityND(mx.array):
 def test_quantitynd():
     q = QuantityND([1, 2], "m")
     q0, q1 = q[:]
-    assert mx.all(q.v == mx.asarray([1, 2]))
+    assert mx.all(q.v == mx.array([1, 2]))
     assert q.units == "m"
-    assert mx.all((q0 + q1).v == mx.asarray([3]))
+    assert mx.all((q0 + q1).v == mx.array([3]))
     assert (q0 * q1).units == "m*m"
     assert (q1 / q0).units == "m/(m)"
     with pytest.raises(ValueError):

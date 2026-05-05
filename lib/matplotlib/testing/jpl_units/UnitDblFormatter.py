@@ -17,12 +17,15 @@ class UnitDblFormatter(ticker.ScalarFormatter):
         if len(self.locs) == 0:
             return ''
         else:
+            x = x.item() if hasattr(x, "item") else x
             return f'{x:.12}'
 
     def format_data_short(self, value):
         # docstring inherited
+        value = value.item() if hasattr(value, "item") else value
         return f'{value:.12}'
 
     def format_data(self, value):
         # docstring inherited
+        value = value.item() if hasattr(value, "item") else value
         return f'{value:.12}'

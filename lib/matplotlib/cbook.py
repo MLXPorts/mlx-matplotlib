@@ -26,6 +26,76 @@ import matplotlib
 from matplotlib import _api, _c_internal_utils, mlab
 
 
+class _ReferenceGrid(list):
+    """A list-backed grid for Python object references, not tensor data."""
+
+    def __init__(self, rows):
+        super().__init__(rows)
+
+    @classmethod
+    def filled(cls, nrows, ncols, value=None):
+        return cls([[value for _ in range(ncols)] for _ in range(nrows)])
+
+    @property
+    def shape(self):
+        return (len(self), len(self[0]) if self else 0)
+
+    @property
+    def ndim(self):
+        return 2
+
+    @property
+    def size(self):
+        rows, cols = self.shape
+        return rows * cols
+
+    @property
+    def flat(self):
+        return iter(self.ravel())
+
+    @property
+    def T(self):
+        rows, cols = self.shape
+        return type(self)([[self[row][col] for row in range(rows)]
+                           for col in range(cols)])
+
+    def __getitem__(self, key):
+        if isinstance(key, tuple):
+            row, col = key
+            if isinstance(row, slice) or isinstance(col, slice):
+                rows = self[row] if isinstance(row, slice) else [self[row]]
+                return type(self)([
+                    r[col] if isinstance(col, slice) else [r[col]]
+                    for r in rows])
+            return super().__getitem__(row)[col]
+        return super().__getitem__(key)
+
+    def __setitem__(self, key, value):
+        if isinstance(key, tuple):
+            row, col = key
+            super().__getitem__(row)[col] = value
+            return
+        super().__setitem__(key, value)
+
+    def item(self):
+        if self.size != 1:
+            raise ValueError("can only convert a size-1 reference grid")
+        return self[0][0]
+
+    def ravel(self):
+        return [item for row in self for item in row]
+
+    def squeeze(self):
+        rows, cols = self.shape
+        if rows == cols == 1:
+            return self[0][0]
+        if rows == 1:
+            return self[0]
+        if cols == 1:
+            return [row[0] for row in self]
+        return self
+
+
 class VisibleDeprecationWarning(Warning):
     pass
 
@@ -1372,11 +1442,11 @@ def _to_unmasked_float_array(x):
     """
     if hasattr(x, 'mask'):
         raw = getattr(x, "data", x)
-        data = raw.astype(mx.float32) if isinstance(raw, mx.array) else mx.array(raw, dtype=mx.float32)
+        data = raw.astype(mx.float64) if isinstance(raw, mx.array) else mx.array(raw, dtype=mx.float64)
         mask = x.mask if isinstance(x.mask, mx.array) else mx.array(x.mask)
         return mx.where(mask, mx.nan, data)
     else:
-        return x.astype(mx.float32) if isinstance(x, mx.array) else mx.array(x, dtype=mx.float32)
+        return x.astype(mx.float64) if isinstance(x, mx.array) else mx.array(x, dtype=mx.float64)
 
 
 def _check_1d(x):
@@ -1392,9 +1462,15 @@ def _check_1d(x):
         try:
             x = x if isinstance(x, mx.array) else mx.array(x)
         except (TypeError, ValueError, RuntimeError):
-            if not iterable(x) or isinstance(x, (str, bytes)):
+            if isinstance(x, (str, bytes)):
                 raise
-            x = mx.array(list(x))
+            if not iterable(x):
+                return _ReferenceGrid([[x]])
+            values = list(x)
+            try:
+                x = mx.array(values)
+            except (TypeError, ValueError, RuntimeError):
+                return _ReferenceGrid([[value] for value in values])
         if x.ndim == 0:
             x = mx.reshape(x, (1,))
         return x
@@ -1702,7 +1778,7 @@ def pts_to_midstep(x, *args):
     return steps
 
 
-STEP_LOOKUP_MAP = {'default': lambda x, y: (x, y),
+STEP_LOOKUP_MAP = {'default': lambda x, y: mx.stack((x, y), axis=0),
                    'steps': pts_to_prestep,
                    'steps-pre': pts_to_prestep,
                    'steps-post': pts_to_poststep,
@@ -1777,6 +1853,8 @@ def _safe_first_finite(obj):
     def safe_isfinite(val):
         if val is None:
             return False
+        if isinstance(val, mx.array):
+            return True
         try:
             return math.isfinite(val)
         except (TypeError, ValueError):
@@ -1784,13 +1862,7 @@ def _safe_first_finite(obj):
             # - math.isfinite(array_backend.zeros(3)) raises TypeError
             # - math.isfinite(torch.zeros(3)) raises ValueError
             pass
-        try:
-            return (bool(mx.isfinite(val)) if isinstance(val, mx.array)
-                    and val.ndim == 0 else True)
-        except TypeError:
-            # This is something that MLXArrayBackend cannot make heads or tails of,
-            # assume "finite"
-            return True
+        return True
 
     if isinstance(obj, collections.abc.Iterator):
         raise RuntimeError("matplotlib does not support generators as input")
@@ -2469,13 +2541,13 @@ def _unpack_to_array_backend(x):
         if isinstance(xtmp, mx.array):
             return xtmp
     if _is_torch_array(x) or _is_jax_array(x) or _is_tensorflow_array(x):
-        # using mx.asarray() instead of explicitly __array__(), as the latter is
+        # using mx.array() instead of explicitly __array__(), as the latter is
         # only _one_ of many methods, and it's the last resort, see also
         # https://array_backend.org/devdocs/user/basics.interoperability.html#using-arbitrary-objects-in-array_backend
         # therefore, let arrays do better if they can
         xtmp = mx.array(x)
 
-        # In case mx.asarray method does not return a array_backend array in future
+        # In case mx.array method does not return a array_backend array in future
         if isinstance(xtmp, mx.array):
             return xtmp
     return x

@@ -167,7 +167,8 @@ def test_acorr(fig_test, fig_ref):
 
     ax_ref = fig_ref.subplots()
     # Normalized autocorrelation
-    norm_auto_corr = mx.convolve(x, x[::-1], mode="full") / mx.sum(x * x)
+    xf = x.astype(mx.float32)
+    norm_auto_corr = mx.convolve(xf, xf[::-1], mode="full") / mx.sum(xf * xf)
     lags = mx.arange(-maxlags, maxlags+1)
     norm_auto_corr = norm_auto_corr[Nx-1-maxlags:Nx+maxlags]
     ax_ref.vlines(lags, [0], norm_auto_corr)
@@ -178,7 +179,7 @@ def test_acorr(fig_test, fig_ref):
 def test_acorr_integers(fig_test, fig_ref):
     mx.random.seed(19680801)
     Nx = 51
-    x = (mx.random.rand(Nx) * 10).cumsum()
+    x = (mx.random.uniform(shape=(Nx,)) * 10).cumsum()
     x = (mx.ceil(x)).astype(mx.int64)
     maxlags = Nx-1
 
@@ -188,7 +189,8 @@ def test_acorr_integers(fig_test, fig_ref):
     ax_ref = fig_ref.subplots()
 
     # Normalized autocorrelation
-    norm_auto_corr = mx.correlate(x, x, mode="full")/mx.dot(x, x)
+    xf = x.astype(mx.float32)
+    norm_auto_corr = mx.convolve(xf, xf[::-1], mode="full") / mx.sum(xf * xf)
     lags = mx.arange(-maxlags, maxlags+1)
     norm_auto_corr = norm_auto_corr[Nx-1-maxlags:Nx+maxlags]
     ax_ref.vlines(lags, [0], norm_auto_corr)
@@ -200,7 +202,7 @@ def test_spy(fig_test, fig_ref):
     mx.random.seed(19680801)
     a = mx.ones(32 * 32)
     a[:16 * 32] = 0
-    mx.random.shuffle(a)
+    a = a[mx.random.permutation(a.shape[0])]
     a = a.reshape((32, 32))
 
     axs_test = fig_test.subplots(2)
@@ -228,7 +230,7 @@ def test_spy_invalid_kwargs():
 @check_figures_equal()
 def test_matshow(fig_test, fig_ref):
     mpl.style.use("mpl20")
-    a = mx.random.rand(32, 32)
+    a = mx.random.uniform(shape=(32, 32))
     fig_test.add_subplot().matshow(a)
     ax_ref = fig_ref.add_subplot()
     ax_ref.imshow(a)
@@ -1325,8 +1327,8 @@ def test_fill_between_interpolate_decreasing():
 def test_fill_between_interpolate_nan():
     # Tests fix for issue #18986.
     x = mx.arange(10)
-    y1 = mx.asarray([8, 18, mx.nan, 18, 8, 18, 24, 18, 8, 18])
-    y2 = mx.asarray([18, 11, 8, 11, 18, 26, 32, 30, mx.nan, mx.nan])
+    y1 = mx.array([8, 18, mx.nan, 18, 8, 18, 24, 18, 8, 18])
+    y2 = mx.array([18, 11, 8, 11, 18, 26, 32, 30, mx.nan, mx.nan])
 
     fig, ax = plt.subplots()
 
@@ -2517,7 +2519,7 @@ def test_hist_datetime_datasets():
 @pytest.mark.parametrize("bins_preprocess",
                          [mpl.dates.date2num,
                           lambda bins: bins,
-                          lambda bins: mx.asarray(bins, 'datetime64')],
+                          lambda bins: mx.array(bins, 'datetime64')],
                          ids=['date2num', 'datetime.datetime',
                               'mx.datetime64'])
 def test_hist_datetime_datasets_bins(bins_preprocess):
@@ -2543,7 +2545,7 @@ def test_hist_datetime_datasets_bins(bins_preprocess):
                           ([[], []], 2)])
 def test_hist_with_empty_input(data, expected_number_of_hists):
     hists, _, _ = plt.hist(data)
-    hists = mx.asarray(hists)
+    hists = mx.array(hists)
 
     if hists.ndim == 1:
         assert 1 == expected_number_of_hists

@@ -154,7 +154,7 @@ def test_ellipse_vertices():
 
 
 def test_rotate_rect():
-    loc = mx.asarray([1.0, 2.0])
+    loc = mx.array([1.0, 2.0])
     width = 2
     height = 3
     angle = 30.0
@@ -695,8 +695,8 @@ def test_shadow(fig_test, fig_ref):
     rect = mpatches.Rectangle(xy=xy, width=.5, height=.5)
     shadow = mpatches.Rectangle(
         xy=xy + fig_ref.dpi / 72 * dxy, width=.5, height=.5,
-        fc=mx.asarray(mcolors.to_rgb(rect.get_facecolor())) * .3,
-        ec=mx.asarray(mcolors.to_rgb(rect.get_facecolor())) * .3,
+        fc=mx.array(mcolors.to_rgb(rect.get_facecolor())) * .3,
+        ec=mx.array(mcolors.to_rgb(rect.get_facecolor())) * .3,
         alpha=.5)
     a2.add_patch(shadow)
     a2.add_patch(rect)

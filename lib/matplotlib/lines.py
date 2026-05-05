@@ -681,7 +681,7 @@ class Line2D(Artist):
         else:
             y = self._y
 
-        self._xy = mx.stack(mx.broadcast_arrays(x, y), axis=1).astype(mx.float32)
+        self._xy = mx.stack(mx.broadcast_arrays(x, y), axis=1).astype(mx.float64)
         self._x, self._y = self._xy.T  # views
 
         self._subslice = False
@@ -723,7 +723,9 @@ class Line2D(Artist):
         # Masked arrays are now handled by the Path class itself
         if subslice is not None:
             xy = STEP_LOOKUP_MAP[self._drawstyle](*self._xy[subslice, :].T)
-            if not isinstance(xy, mx.array):
+            if isinstance(xy, mx.array):
+                xy = xy.T
+            else:
                 xy = mx.stack(tuple(
                     values if isinstance(values, mx.array) else mx.array(values)
                     for values in xy), axis=1)

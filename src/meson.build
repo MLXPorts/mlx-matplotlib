@@ -45,6 +45,7 @@ mlx_paths = run_command(
 ).stdout().strip().split('\n')
 mlx_include_dir = mlx_paths[0]
 mlx_lib_dir = mlx_paths[1]
+mlx_metal_cpp_include_dir = meson.project_source_root() / 'extern' / 'metal_cpp'
 mlx_dep = cpp.find_library('mlx', dirs: mlx_lib_dir, required: true)
 
 # With Meson >= 1.2.0, use cpp_winlibs instead of manually searching.
@@ -126,6 +127,7 @@ extension_data = {
       '-I' + nanobind_include_dir,
       '-I' + nanobind_robin_map_include_dir,
       '-I' + mlx_include_dir,
+      '-I' + mlx_metal_cpp_include_dir,
       '-DNB_DOMAIN=mlx',
       '-DNB_STATIC',
     ],

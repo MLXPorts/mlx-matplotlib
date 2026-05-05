@@ -57,6 +57,10 @@ def _is_natively_supported(x):
     array of objects of such types.
     """
     # Matplotlib natively supports all number types except Decimal.
+    if ((isinstance(x, mx.array)
+            or (hasattr(x, "ndim") and hasattr(x, "dtype")))
+            and x.ndim == 0):
+        return True
     if cbook.iterable(x):
         # Assume lists are homogeneous as other functions in unit system.
         for thisx in x:
@@ -146,9 +150,9 @@ class DecimalConverter(ConversionInterface):
         if isinstance(value, Decimal):
             return float(value)
         elif hasattr(value, "filled"):
-            return mx.asarray(value.filled(mx.nan), dtype=mx.float32)
+            return mx.array(value.filled(mx.nan), dtype=mx.float32)
         else:
-            return mx.asarray(value, dtype=mx.float32)
+            return mx.array(value, dtype=mx.float32)
 
     # axisinfo and default_units can be inherited as Decimals are Numbers.
 

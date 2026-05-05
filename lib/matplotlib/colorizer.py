@@ -478,9 +478,8 @@ class _ColorizerInterface:
                 cur_idx = mx.argmin(mx.abs(self.norm.boundaries - data))
                 neigh_idx = max(0, cur_idx - 1)
                 # use max diff to prevent delta == 0
-                delta = mx.diff(
-                    self.norm.boundaries[neigh_idx:cur_idx + 2]
-                ).max()
+                neighbors = self.norm.boundaries[neigh_idx:cur_idx + 2]
+                delta = (neighbors[1:] - neighbors[:-1]).max()
             elif self.norm.vmin == self.norm.vmax:
                 # singular norms, use delta of 10% of only value
                 delta = mx.abs(self.norm.vmin * .1)

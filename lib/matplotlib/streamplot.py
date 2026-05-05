@@ -206,7 +206,7 @@ def streamplot(axes, x, y, u, v, density=1, linewidth=None, color=None,
                 if t is not None:
                     trajectories.append(t)
     else:
-        sp2 = mx.asarray(start_points, dtype=float).copy()
+        sp2 = mx.array(start_points, dtype=float).copy()
 
         # Check if start_points are outside the data boundaries
         for xs, ys in sp2:

@@ -228,7 +228,7 @@ class HandlerNpointsYoffsets(HandlerNpoints):
         if self._yoffsets is None:
             ydata = height * legend._scatteryoffsets
         else:
-            ydata = height * mx.asarray(self._yoffsets)
+            ydata = height * mx.array(self._yoffsets)
 
         return ydata
 
@@ -550,8 +550,8 @@ class HandlerErrorbar(HandlerLine2D):
         ydata = mx.full_like(xdata, (height - ydescent) / 2)
         legline = Line2D(xdata, ydata)
 
-        xdata_marker = mx.asarray(xdata_marker)
-        ydata_marker = mx.asarray(ydata[:len(xdata_marker)])
+        xdata_marker = mx.array(xdata_marker)
+        ydata_marker = mx.array(ydata[:len(xdata_marker)])
 
         xerr_size, yerr_size = self.get_err_size(legend, xdescent, ydescent,
                                                  width, height, fontsize)
@@ -653,7 +653,7 @@ class HandlerStem(HandlerNpointsYoffsets):
         if self._yoffsets is None:
             ydata = height * (0.5 * legend._scatteryoffsets + 0.5)
         else:
-            ydata = height * mx.asarray(self._yoffsets)
+            ydata = height * mx.array(self._yoffsets)
 
         return ydata
 

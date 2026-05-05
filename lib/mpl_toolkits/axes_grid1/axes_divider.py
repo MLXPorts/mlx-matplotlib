@@ -163,7 +163,8 @@ class Divider:
     def _calc_offsets(sizes, k):
         # Apply k factors to (n, 2) sizes array of (rel_size, abs_size); return
         # the resulting cumulative offset positions.
-        return mx.cumsum([0, *(sizes @ [k, 1])])
+        steps = sizes @ mx.array([k, 1], dtype=sizes.dtype)
+        return mx.cumsum(mx.concatenate([steps[:1] * 0, steps]))
 
     def new_locator(self, nx, ny, nx1=None, ny1=None):
         """
@@ -500,7 +501,8 @@ def _locate(x, y, w, h, summed_widths, equal_heights, fig_w, fig_h, anchor):
         karray = (max_height - eq_abss) / eq_rels
 
     # Compute the offsets corresponding to these factors.
-    ox = mx.cumsum([0, *(sm_rels * karray + sm_abss)])
+    steps = sm_rels * karray + sm_abss
+    ox = mx.cumsum(mx.concatenate([steps[:1] * 0, steps]))
     ww = (ox[-1] - ox[0]) / fig_w
     h0_rel, h0_abs = equal_heights[0]
     hh = (karray[0]*h0_rel + h0_abs) / fig_h

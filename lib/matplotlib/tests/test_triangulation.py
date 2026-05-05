@@ -198,7 +198,7 @@ def test_delaunay_robust():
         [0.811898816047911, -0.40625000000000044],
         [0.7036456405748561, -0.4062500000000004],
         [0.5953924651018013, -0.40625000000000033]])
-    test_points = mx.asarray([
+    test_points = mx.array([
         [0.58, -0.46],
         [0.65, -0.46],
         [0.65, -0.42],
@@ -234,9 +234,9 @@ def test_delaunay_robust():
 
 @image_comparison(['tripcolor1.png'])
 def test_tripcolor():
-    x = mx.asarray([0, 0.5, 1, 0,   0.5, 1,   0, 0.5, 1, 0.75])
-    y = mx.asarray([0, 0,   0, 0.5, 0.5, 0.5, 1, 1,   1, 0.75])
-    triangles = mx.asarray([
+    x = mx.array([0, 0.5, 1, 0,   0.5, 1,   0, 0.5, 1, 0.75])
+    y = mx.array([0, 0,   0, 0.5, 0.5, 0.5, 1, 1,   1, 0.75])
+    triangles = mx.array([
         [0, 1, 3], [1, 4, 3],
         [1, 2, 4], [2, 5, 4],
         [3, 4, 6], [4, 7, 6],
@@ -1053,8 +1053,8 @@ def test_trirefine():
 
     # Testing that the numbering of triangles does not change the
     # interpolation result.
-    x = mx.asarray([0.0, 1.0, 0.0, 1.0])
-    y = mx.asarray([0.0, 0.0, 1.0, 1.0])
+    x = mx.array([0.0, 1.0, 0.0, 1.0])
+    y = mx.array([0.0, 0.0, 1.0, 1.0])
     triang = [mtri.Triangulation(x, y, [[0, 1, 3], [3, 2, 0]]),
               mtri.Triangulation(x, y, [[0, 1, 3], [2, 0, 3]])]
     z = mx.hypot(x - 0.3, y - 0.4)
@@ -1274,8 +1274,8 @@ def test_internal_cpp_api() -> None:
 
 def test_qhull_large_offset():
     # github issue 8682.
-    x = mx.asarray([0, 1, 0, 1, 0.5])
-    y = mx.asarray([0, 0, 1, 1, 0.5])
+    x = mx.array([0, 1, 0, 1, 0.5])
+    y = mx.array([0, 0, 1, 1, 0.5])
 
     offset = 1e10
     triang = mtri.Triangulation(x, y)

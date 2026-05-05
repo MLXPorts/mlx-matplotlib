@@ -1645,10 +1645,10 @@ default: %(va)s
                       height_ratios=height_ratios,
                       left=0, right=1, bottom=0, top=1)
 
-        sfarr = mx.zeros((nrows, ncols), dtype=object)
+        sfarr = cbook._ReferenceGrid.filled(nrows, ncols)
         for i in range(nrows):
             for j in range(ncols):
-                sfarr[i, j] = self.add_subfigure(gs[i, j], **kwargs)
+                sfarr[i][j] = self.add_subfigure(gs[i, j], **kwargs)
 
         if self.get_layout_engine() is None and (wspace is not None or
                                                  hspace is not None):
@@ -1662,8 +1662,8 @@ default: %(va)s
 
         if squeeze:
             # Discarding unneeded dimensions that equal 1.  If we only have one
-            # subfigure, just return it instead of a 1-element array.
-            return sfarr.item() if sfarr.size == 1 else sfarr.squeeze()
+            # subfigure, just return it instead of a 1-element container.
+            return sfarr.squeeze()
         else:
             # Returned axis array will be always 2-d, even if nrows=ncols=1.
             return sfarr
@@ -2033,15 +2033,14 @@ default: %(va)s
 
         def _make_array(inp):
             """
-            Convert input into 2D array
+            Convert input into a two-dimensional object reference grid.
 
-            We need to have this internal function rather than
-            ``mx.asarray(..., dtype=object)`` so that a list of lists
-            of lists does not get converted to an array of dimension > 2.
+            This is intentionally not an MLX array; mosaic labels and nested
+            mosaic specifications are Python objects, not tensors.
 
             Returns
             -------
-            2D object array
+            list[list[object]]
             """
             r0, *rest = inp
             if isinstance(r0, str):
@@ -2055,11 +2054,7 @@ default: %(va)s
                         f"the first row ({r0!r}) has length {len(r0)} "
                         f"and row {j} ({r!r}) has length {len(r)}."
                     )
-            out = mx.zeros((len(inp), len(r0)), dtype=object)
-            for j, r in enumerate(inp):
-                for k, v in enumerate(r):
-                    out[j, k] = v
-            return out
+            return cbook._ReferenceGrid([[v for v in r] for r in inp])
 
         def _identify_keys_and_nested(mosaic):
             """
@@ -2122,13 +2117,19 @@ default: %(va)s
             # go through the unique keys,
             for name in unique_ids:
                 # sort out where each axes starts/ends
-                index = mx.argwhere(mosaic == name)
-                start_row, start_col = mx.min(index, axis=0)
-                end_row, end_col = mx.max(index, axis=0) + 1
+                locations = [
+                    (j, k) for j, row in enumerate(mosaic)
+                    for k, value in enumerate(row) if value == name]
+                start_row = min(j for j, _ in locations)
+                start_col = min(k for _, k in locations)
+                end_row = max(j for j, _ in locations) + 1
+                end_col = max(k for _, k in locations) + 1
                 # and construct the slice object
                 slc = (slice(start_row, end_row), slice(start_col, end_col))
                 # some light error checking
-                if (mosaic[slc] != name).any():
+                if any(mosaic[j][k] != name
+                       for j in range(start_row, end_row)
+                       for k in range(start_col, end_col)):
                     raise ValueError(
                         f"While trying to layout\n{mosaic!r}\n"
                         f"we found that the label {name!r} specifies a "
@@ -2166,7 +2167,7 @@ default: %(va)s
                     nested_mosaic = arg
                     j, k = key
                     # recursively add the nested mosaic
-                    rows, cols = nested_mosaic.shape
+                    rows, cols = len(nested_mosaic), len(nested_mosaic[0])
                     nested_output = _do_layout(
                         gs[j, k].subgridspec(rows, cols),
                         nested_mosaic,
@@ -2185,7 +2186,7 @@ default: %(va)s
             return output
 
         mosaic = _make_array(mosaic)
-        rows, cols = mosaic.shape
+        rows, cols = len(mosaic), len(mosaic[0])
         gs = self.add_gridspec(rows, cols, **gridspec_kw)
         ret = _do_layout(gs, mosaic, *_identify_keys_and_nested(mosaic))
         ax0 = next(iter(ret.values()))
@@ -2345,10 +2346,14 @@ class SubFigure(FigureBase):
             return
         # need to figure out *where* this subplotspec is.
         gs = self._subplotspec.get_gridspec()
-        wr = mx.asarray(gs.get_width_ratios())
-        hr = mx.asarray(gs.get_height_ratios())
-        dx = wr[self._subplotspec.colspan].sum() / wr.sum()
-        dy = hr[self._subplotspec.rowspan].sum() / hr.sum()
+        wr = mx.array(gs.get_width_ratios())
+        hr = mx.array(gs.get_height_ratios())
+        cols = slice(self._subplotspec.colspan.start,
+                     self._subplotspec.colspan.stop)
+        rows = slice(self._subplotspec.rowspan.start,
+                     self._subplotspec.rowspan.stop)
+        dx = wr[cols].sum() / wr.sum()
+        dy = hr[rows].sum() / hr.sum()
         x0 = wr[:self._subplotspec.colspan.start].sum() / wr.sum()
         y0 = 1 - hr[:self._subplotspec.rowspan.stop].sum() / hr.sum()
         self.bbox_relative.p0 = (x0, y0)

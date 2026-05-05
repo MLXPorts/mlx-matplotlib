@@ -1264,9 +1264,9 @@ class Axes(_AxesBase):
 
         # Create and combine masked_arrays from input
         y, xmin, xmax = cbook._combine_masks(y, xmin, xmax)
-        y = mx.reshape(mx.asarray(y), (-1,))
-        xmin = mx.reshape(mx.asarray(xmin), (-1,))
-        xmax = mx.reshape(mx.asarray(xmax), (-1,))
+        y = mx.reshape(mx.array(y), (-1,))
+        xmin = mx.reshape(mx.array(xmin), (-1,))
+        xmax = mx.reshape(mx.array(xmax), (-1,))
 
         masked_verts = mx.zeros((len(y), 2, 2), dtype=mx.float32)
         masked_verts[:, 0, 0] = xmin
@@ -1356,9 +1356,9 @@ class Axes(_AxesBase):
 
         # Create and combine masked_arrays from input
         x, ymin, ymax = cbook._combine_masks(x, ymin, ymax)
-        x = mx.reshape(mx.asarray(x), (-1,))
-        ymin = mx.reshape(mx.asarray(ymin), (-1,))
-        ymax = mx.reshape(mx.asarray(ymax), (-1,))
+        x = mx.reshape(mx.array(x), (-1,))
+        ymin = mx.reshape(mx.array(ymin), (-1,))
+        ymax = mx.reshape(mx.array(ymax), (-1,))
 
         masked_verts = mx.zeros((len(x), 2, 2), dtype=mx.float32)
         masked_verts[:, 0, 0] = x
@@ -1515,9 +1515,9 @@ class Axes(_AxesBase):
         if not cbook.iterable(positions):
             positions = [positions]
         elif any(cbook.iterable(position) for position in positions):
-            positions = [mx.asarray(position) for position in positions]
+            positions = [mx.array(position) for position in positions]
         else:
-            positions = [mx.asarray(positions)]
+            positions = [mx.array(positions)]
 
         poss = []
         for position in positions:
@@ -1543,9 +1543,9 @@ class Axes(_AxesBase):
         if hasattr(linestyles, 'lower') or not cbook.iterable(linestyles):
             linestyles = [linestyles]
 
-        lineoffsets = mx.asarray(lineoffsets)
-        linelengths = mx.asarray(linelengths)
-        linewidths = mx.asarray(linewidths)
+        lineoffsets = mx.array(lineoffsets)
+        linelengths = mx.array(linelengths)
+        linewidths = mx.array(linewidths)
 
         if len(lineoffsets) == 0:
             raise ValueError('lineoffsets cannot be empty')
@@ -2204,8 +2204,8 @@ class Axes(_AxesBase):
         if Nx != len(y):
             raise ValueError('x and y must be equal length')
 
-        x = detrend(mx.asarray(x)).astype(mx.float32)
-        y = detrend(mx.asarray(y)).astype(mx.float32)
+        x = detrend(mx.array(x)).astype(mx.float32)
+        y = detrend(mx.array(y)).astype(mx.float32)
 
         correls = mx.convolve(x, y[::-1], mode="full")
 
@@ -2317,7 +2317,7 @@ class Axes(_AxesBase):
         """
 
         # x should be an array...
-        assert type(xconv) is mx.array
+        assert isinstance(xconv, mx.array)
 
         if xconv.size == 0:
             # xconv has already been converted, but maybe empty...
@@ -2667,7 +2667,7 @@ class Axes(_AxesBase):
             linewidth = itertools.repeat(None)
         else:
             linewidth = itertools.cycle(
-                mx.reshape(mx.asarray(linewidth), (-1,)).tolist())
+                mx.reshape(mx.array(linewidth), (-1,)).tolist())
         if hatch is None:
             hatch = itertools.repeat(None)
         elif isinstance(hatch, str):
@@ -2998,7 +2998,7 @@ class Axes(_AxesBase):
 
         if cbook.iterable(padding):
             # if padding iterable, check length
-            padding = mx.asarray(padding)
+            padding = mx.array(padding)
             if len(padding) != len(bars):
                 raise ValueError(
                     f"padding must be of length {len(bars)} when passed as a sequence")
@@ -3421,7 +3421,7 @@ or pandas.DataFrame
             group_centers = mx.arange(num_groups)
             group_distance = 1
         else:
-            group_centers = mx.asarray(positions)
+            group_centers = mx.array(positions)
             if len(group_centers) > 1:
                 d = mx.diff(group_centers)
                 if not mx.allclose(d, d.mean()):
@@ -3756,7 +3756,7 @@ or pandas.DataFrame
         self.set_aspect('equal')
         # The use of float32 is "historical", but can't be changed without
         # regenerating the test baselines.
-        x = mx.asarray(x, mx.float32)
+        x = mx.array(x, mx.float32)
         if x.ndim > 1:
             raise ValueError("x must be 1D")
 
@@ -4072,11 +4072,19 @@ or pandas.DataFrame
         kwargs = {k: v for k, v in kwargs.items() if v is not None}
         kwargs.setdefault('zorder', 2)
 
-        # Casting to object arrays preserves units.
-        if not isinstance(x, mx.array):
-            x = mx.asarray(x, dtype=object)
-        if not isinstance(y, mx.array):
-            y = mx.asarray(y, dtype=object)
+        def _unit_preserving_sequence(values):
+            if isinstance(values, mx.array):
+                return values
+            try:
+                arr = mx.array(values)
+            except (TypeError, ValueError):
+                if cbook.iterable(values) and not isinstance(values, (str, bytes)):
+                    return list(values)
+                return [values]
+            return mx.reshape(arr, (1,)) if arr.ndim == 0 else arr
+
+        x = _unit_preserving_sequence(x)
+        y = _unit_preserving_sequence(y)
 
         def _upcast_err(err):
             """
@@ -4108,20 +4116,18 @@ or pandas.DataFrame
                 atype = type(cbook._safe_first_finite(err))
                 # Promote the outer container to match the inner container
                 if atype is mx.array:
-                    # Converts using mx.asarray, because data cannot
-                    # be directly passed to init of mx.array
-                    return mx.asarray(err, dtype=object)
+                    return mx.stack([value for value in err])
                 # If atype is not mx.array, directly pass data to init.
                 # This works for types such as unyts and astropy units
                 return atype(err)
-            # Otherwise wrap it in an object array
-            return mx.asarray(err, dtype=object)
+            return _unit_preserving_sequence(err)
 
         if xerr is not None and not isinstance(xerr, mx.array):
             xerr = _upcast_err(xerr)
         if yerr is not None and not isinstance(yerr, mx.array):
             yerr = _upcast_err(yerr)
-        x, y = mx.atleast_1d(x, y)  # Make sure all the args are iterable.
+        if isinstance(x, mx.array) and isinstance(y, mx.array):
+            x, y = mx.atleast_1d(x, y)  # Make sure all the args are iterable.
         if len(x) != len(y):
             raise ValueError("'x' and 'y' must have the same size")
 
@@ -4227,7 +4233,14 @@ or pandas.DataFrame
                     f"'{dep_axis}err' (shape: {mx.shape(err)}) must be a "
                     f"scalar or a 1D or (2, n) array-like whose shape matches "
                     f"'{dep_axis}' (shape: {mx.shape(dep)})") from None
-            if err.dtype is mx.dtype(object) and mx.any(err == None):  # noqa: E711
+            if isinstance(err, mx.array):
+                contains_none = False
+            elif cbook.iterable(err):
+                contains_none = any(
+                    value is None for value in cbook.flatten(err))
+            else:
+                contains_none = err is None
+            if contains_none:
                 raise ValueError(
                     f"'{dep_axis}err' must not contain None. "
                     "Use NaN if you want to skip a value.")
@@ -5132,8 +5145,8 @@ or pandas.DataFrame
         valid_shape = True  # Unless proven otherwise below.
         if not c_was_none and kwcolor is None and not c_is_string_or_strings:
             try:  # First, does 'c' look suitable for value-mapping?
-                c = mx.asarray(c, dtype=float)
-            except ValueError:
+                c = mx.array(c, dtype=mx.float64)
+            except (TypeError, ValueError):
                 pass  # Failed to convert to float array; must be color specs.
             else:
                 # handle the documented special case of a 2D array with 1
@@ -5647,8 +5660,8 @@ or pandas.DataFrame
             nx = gridsize
             ny = int(nx / math.sqrt(3))
         # Count the number of data in each hexagon
-        x = mx.asarray(x, float)
-        y = mx.asarray(y, float)
+        x = mx.array(x, float)
+        y = mx.array(y, float)
 
         # Will be log()'d if necessary, and then rescaled.
         tx = x
@@ -7057,8 +7070,8 @@ or pandas.DataFrame
             y = [0, nr]
         elif len(args) == 3:
             x, y = args[:2]
-            x = mx.asarray(x)
-            y = mx.asarray(y)
+            x = mx.array(x)
+            y = mx.array(y)
             if x.ndim == 1 and y.ndim == 1:
                 if x.size == 2 and y.size == 2:
                     style = "image"
@@ -7989,7 +8002,7 @@ such objects
             raise TypeError("Cannot pass 'drawstyle' or 'ds' to ecdf()")
         if mx.ma.getmask(x).any():
             raise ValueError("ecdf() does not support masked entries")
-        x = mx.asarray(x)
+        x = mx.array(x)
         if mx.isnan(x).any():
             raise ValueError("ecdf() does not support NaNs")
         argsort = mx.argsort(x)
@@ -8776,7 +8789,7 @@ such objects
             marker = 's'
         _api.check_in_list(["upper", "lower"], origin=origin)
         if marker is None and markersize is None:
-            Z = mx.asarray(Z)
+            Z = mx.array(Z)
             mask = mx.abs(Z) > precision
 
             if 'cmap' not in kwargs:
@@ -8800,7 +8813,7 @@ such objects
                     y = c.row[nonzero]
                     x = c.col[nonzero]
             else:
-                Z = mx.asarray(Z)
+                Z = mx.array(Z)
                 nonzero = mx.abs(Z) > precision
                 y, x = mx.nonzero(nonzero)
             if marker is None:
@@ -8868,7 +8881,7 @@ such objects
         - Ticks are formatted to show integer indices.
 
         """
-        Z = mx.asarray(Z)
+        Z = mx.array(Z)
         kw = {'origin': 'upper',
               'interpolation': 'nearest',
               'aspect': 'equal',          # (already the imshow default)

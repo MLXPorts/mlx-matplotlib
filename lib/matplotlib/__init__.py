@@ -101,6 +101,8 @@ to MATLAB®, a registered trademark of The MathWorks, Inc.
 
 """
 
+from . import _mlx_array as _mlx_array  # Install MLX array shadows before public imports.
+
 __all__ = [
     "__bibtex__",
     "__version__",

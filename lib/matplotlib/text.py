@@ -57,7 +57,7 @@ def _get_textbox(text, renderer):
 
     x_box, y_box = Affine2D().rotate(theta).transform((xt_box, yt_box))
 
-    return x_box, y_box, w_box, h_box
+    return float(x_box), float(y_box), float(w_box), float(h_box)
 
 
 def _get_text_metrics_with_cache(renderer, text, fontprop, ismath, dpi):
@@ -274,7 +274,9 @@ class Text(Artist):
         self.set_text(text)
         bb = self.get_window_extent()
 
-        size_accum = mx.cumsum([0] + [charsize_cache[x] for x in text])
+        size_accum = mx.cumsum(
+            mx.array([0] + [charsize_cache[x] for x in text],
+                     dtype=mx.float64))
         std_x = x - bb.x0
         return (mx.abs(size_accum - std_x)).argmin()
 

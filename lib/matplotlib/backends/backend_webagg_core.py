@@ -252,7 +252,7 @@ class FigureCanvasWebAggCore(backend_agg.FigureCanvasAgg):
         if self._png_is_old:
             renderer = self.get_renderer()
 
-            pixels = mx.asarray(renderer.buffer_rgba())
+            pixels = mx.array(renderer.buffer_rgba())
             # The buffer is created as type uint32 so that entire
             # pixels can be compared in one array_backend call, rather than
             # needing to compare each plane separately.

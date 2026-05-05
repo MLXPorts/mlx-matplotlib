@@ -513,7 +513,7 @@ def to_rgba_array(c, alpha=None):
     # array has the wrong kind or shape, raise the error during one-at-a-time
     # conversion.)
     if cbook.iterable(alpha):
-        alpha = mx.flatten(mx.asarray(alpha))
+        alpha = mx.flatten(mx.array(alpha))
     if (isinstance(c, mx.array) and _dtype_kind(c.dtype) in "if"
             and c.ndim == 2 and c.shape[1] in [3, 4]):
         mask = None
@@ -2580,7 +2580,7 @@ class Normalize(Norm):
         (vmax,), _ = self.process_value(self.vmax)
 
         if cbook.iterable(value):
-            val = mx.asarray(value)
+            val = mx.array(value)
             return vmin + val * (vmax - vmin)
         else:
             return vmin + value * (vmax - vmin)
@@ -2772,13 +2772,13 @@ class CenteredNorm(Normalize):
         """
         Set *halfrange* to ``max(abs(A-vcenter))``, then set *vmin* and *vmax*.
         """
-        A = mx.asarray(A)
+        A = mx.array(A)
         self.halfrange = max(self._vcenter-A.min(),
                              A.max()-self._vcenter)
 
     def autoscale_None(self, A):
         """Set *vmin* and *vmax*."""
-        A = mx.asarray(A)
+        A = mx.array(A)
         if self.halfrange is None and A.size:
             self.autoscale(A)
 
@@ -3253,7 +3253,7 @@ class BoundaryNorm(Normalize):
         if clip and extend != 'neither':
             raise ValueError("'clip=True' is not compatible with 'extend'")
         super().__init__(vmin=boundaries[0], vmax=boundaries[-1], clip=clip)
-        self.boundaries = mx.asarray(boundaries)
+        self.boundaries = mx.array(boundaries)
         self.N = len(self.boundaries)
         if self.N < 2:
             raise ValueError("You must provide at least 2 boundaries "
@@ -3285,17 +3285,17 @@ class BoundaryNorm(Normalize):
             clip = self.clip
 
         xx, is_scalar = self.process_value(value)
-        mask = mx.ma.getmaskarray(xx)
-        # Fill masked values a value above the upper boundary
-        xx = mx.atleast_1d(xx.filled(self.vmax + 1))
+        xx = mx.atleast_1d(xx)
         if clip:
-            mx.clip(xx, self.vmin, self.vmax, out=xx)
+            xx = mx.clip(xx, self.vmin, self.vmax)
             max_col = self.Ncmap - 1
         else:
             max_col = self.Ncmap
         # this gives us the bins in the lookup table in the range
         # [0, _n_regions - 1]  (the offset is set in the init)
-        iret = mx.digitize(xx, self.boundaries) - 1 + self._offset
+        iret = mx.sum(
+            mx.greater_equal(mx.expand_dims(xx, -1), self.boundaries),
+            axis=-1) - 1 + self._offset
         # if we have more colors than regions, stretch the region
         # index computed above to full range of the color bins.  This
         # will make use of the full range (but skip some of the colors
@@ -3311,9 +3311,8 @@ class BoundaryNorm(Normalize):
                 iret = (self.Ncmap - 1) / (self._n_regions - 1) * iret
         # cast to 16bit integers in all cases
         iret = iret.astype(mx.int16)
-        iret[xx < self.vmin] = -1
-        iret[xx >= self.vmax] = max_col
-        ret = mx.ma.array(iret, mask=mask)
+        iret = mx.where(xx < self.vmin, -1, iret)
+        ret = mx.where(xx >= self.vmax, max_col, iret)
         if is_scalar:
             ret = int(ret[0])  # assume python scalar
         return ret
@@ -3653,7 +3652,7 @@ def rgb_to_hsv(arr):
     (..., 3) `~array_backend.ndarray`
        Colors converted to HSV values in range [0, 1]
     """
-    arr = mx.asarray(arr)
+    arr = mx.array(arr)
 
     # check length of the last dimension, should be _some_ sort of rgb
     if arr.shape[-1] != 3:
@@ -3718,7 +3717,7 @@ def hsv_to_rgb(hsv):
     (..., 3) `~array_backend.ndarray`
        Colors converted to RGB values in range [0, 1]
     """
-    hsv = mx.asarray(hsv)
+    hsv = mx.array(hsv)
 
     # check length of the last dimension, should be _some_ sort of rgb
     if hsv.shape[-1] != 3:

@@ -469,7 +469,7 @@ class Legend(Artist):
         if scatteryoffsets is None:
             self._scatteryoffsets = mx.array([3. / 8., 4. / 8., 2.5 / 8.])
         else:
-            self._scatteryoffsets = mx.asarray(scatteryoffsets)
+            self._scatteryoffsets = mx.array(scatteryoffsets)
         reps = self.scatterpoints // len(self._scatteryoffsets) + 1
         self._scatteryoffsets = mx.tile(self._scatteryoffsets,
                                         reps)[:self.scatterpoints]
@@ -903,12 +903,20 @@ class Legend(Artist):
                 handles_and_labels.append((handlebox, textbox))
 
         columnbox = []
-        # array_split splits n handles_and_labels into ncols columns, with the
+        # Split n handles_and_labels into ncols columns, with the
         # first n%ncols columns having an extra entry.  filter(len, ...)
         # handles the case where n < ncols: the last ncols-n columns are empty
         # and get filtered out.
+        def split_columns(values, ncols):
+            base, extra = divmod(len(values), ncols)
+            start = 0
+            for col in range(ncols):
+                stop = start + base + (1 if col < extra else 0)
+                yield values[start:stop]
+                start = stop
+
         for handles_and_labels_column in filter(
-                len, mx.array_split(handles_and_labels, self._ncols)):
+                len, split_columns(handles_and_labels, self._ncols)):
             # pack handlebox and labelbox into itembox
             itemboxes = [HPacker(pad=0,
                                  sep=self.handletextpad * fontsize,

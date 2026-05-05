@@ -49,7 +49,7 @@ def _append_path(ctx, path, transform, clip=None):
         elif code == Path.LINETO:
             ctx.line_to(*points)
         elif code == Path.CURVE3:
-            cur = mx.asarray(ctx.get_current_point())
+            cur = mx.array(ctx.get_current_point())
             a = points[:2]
             b = points[-2:]
             ctx.curve_to(*(cur / 3 + a * 2 / 3), *(a * 2 / 3 + b / 3), *b)
@@ -369,7 +369,7 @@ class GraphicsContextCairo(GraphicsContextBase):
             self.ctx.set_dash([], 0)  # switch dashes off
         else:
             self.ctx.set_dash(
-                list(self.renderer.points_to_pixels(mx.asarray(dashes))),
+                list(self.renderer.points_to_pixels(mx.array(dashes))),
                 offset)
 
     def set_foreground(self, fg, isRGBA=None):
@@ -451,7 +451,7 @@ class FigureCanvasCairo(FigureCanvasBase):
         width, height = self.get_width_height()
         buf = self._get_printed_image_surface().get_data()
         fobj.write(cbook._premultiplied_argb32_to_unmultiplied_rgba8888(
-            mx.asarray(buf).reshape((width, height, 4))))
+            mx.array(buf).reshape((width, height, 4))))
 
     print_raw = print_rgba
 

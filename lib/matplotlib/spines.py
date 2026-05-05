@@ -295,11 +295,15 @@ class Spine(mpatches.Patch):
             v1 = self._path.vertices
             assert v1.shape == (2, 2), 'unexpected vertices shape'
             if self.spine_type in ['left', 'right']:
-                v1[0, 1] = low
-                v1[1, 1] = high
+                self._path._vertices = mx.stack([
+                    mx.stack([v1[0, 0], mx.array(low, dtype=v1.dtype)]),
+                    mx.stack([v1[1, 0], mx.array(high, dtype=v1.dtype)]),
+                ])
             elif self.spine_type in ['bottom', 'top']:
-                v1[0, 0] = low
-                v1[1, 0] = high
+                self._path._vertices = mx.stack([
+                    mx.stack([mx.array(low, dtype=v1.dtype), v1[0, 1]]),
+                    mx.stack([mx.array(high, dtype=v1.dtype), v1[1, 1]]),
+                ])
             else:
                 raise ValueError('unable to set bounds for spine "%s"' %
                                  self.spine_type)

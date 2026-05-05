@@ -42,7 +42,7 @@ class Quantity:
             return Quantity(self.magnitude, self.units)
 
     def __array__(self):
-        return mx.asarray(self.magnitude)
+        return mx.array(self.magnitude)
 
 
 @pytest.fixture
@@ -316,7 +316,7 @@ def test_empty_default_limits(quantity_converter):
 # test array-like objects...
 class Kernel:
     def __init__(self, array):
-        self._array = mx.asarray(array)
+        self._array = mx.array(array)
 
     def __array__(self, dtype=None, copy=None):
         if dtype is not None and dtype != self._array.dtype:
@@ -326,7 +326,7 @@ class Kernel:
                     f"{dtype} requires a copy"
                 )
 
-        arr = mx.asarray(self._array, dtype=dtype)
+        arr = mx.array(self._array, dtype=dtype)
         return (arr if not copy else mx.copy(arr))
 
     @property

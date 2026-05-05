@@ -311,7 +311,7 @@ class SliderBase(AxesWidget):
             val = (self.valmin
                    + round((val - self.valmin) / self.valstep) * self.valstep)
         elif self.valstep is not None:
-            valstep = mx.asarray(self.valstep)
+            valstep = mx.array(self.valstep)
             if valstep.ndim != 1:
                 raise ValueError(
                     f"valstep must have 1 dimension but has {valstep.ndim}"

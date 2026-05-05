@@ -57,6 +57,7 @@ def inv(mtx):
     ])
 
 from matplotlib import _api
+from matplotlib import _mlx_overrides as _mx_overrides
 from matplotlib._path import (
     affine_transform as _path_affine_transform,
     count_bboxes_overlapping_bbox,
@@ -93,16 +94,29 @@ def _mx_plot_array(values, dtype=None, *, stream=None):
     if isinstance(values, mx.array):
         return (values if dtype is None or values.dtype == dtype
                 else values.astype(dtype, stream=stream))
-    return mx.array(values, dtype=dtype)
+    return mx.array(values, dtype=dtype or mx.float64)
+
+
+def _affine_matrix_from_values(anchor, rows):
+    zero = anchor[0, 0] * 0
+    dtype = anchor.dtype
+
+    def coerce(value):
+        if isinstance(value, mx.array):
+            return _mx_plot_array(value, dtype=dtype)
+        return zero + value
+
+    return mx.stack([mx.stack([coerce(value) for value in row])
+                     for row in rows])
 
 
 def affine_transform(values, mtx, *, stream=None):
     values = _mx_plot_array(values)
     if values.dtype not in (mx.float32, mx.float64):
         values = values.astype(mx.float32)
-    if values.dtype == mx.float64 and stream is None:
-        stream = mx.cpu
     mtx = _mx_plot_array(mtx, dtype=values.dtype, stream=stream)
+    if values.dtype == mx.float64:
+        return _mx_overrides.affine_transform_precise(values, mtx, stream=stream)
     return _path_affine_transform(values, mtx, stream=stream)
 
 
@@ -280,7 +294,7 @@ class BboxBase(TransformNode):
     if DEBUG:
         @staticmethod
         def _check(points):
-            points = mx.asarray(points)
+            points = mx.array(points)
             if any((points[1, :] - points[0, :]) == 0):
                 _api.warn_external("Singular Bbox.")
 
@@ -631,7 +645,7 @@ class BboxBase(TransformNode):
         """
         if len(vertices) == 0:
             return 0
-        vertices = mx.asarray(vertices)
+        vertices = mx.array(vertices)
         with mx.errstate(invalid='ignore'):
             return (((self.min < vertices) &
                      (vertices < self.max)).all(axis=1).sum())
@@ -822,12 +836,12 @@ class Bbox(BboxBase):
             A (2, 2) array of the form ``[[x0, y0], [x1, y1]]``.
         """
         super().__init__(**kwargs)
-        points = _mx_plot_array(points, dtype=mx.float32)
+        points = _mx_plot_array(points, dtype=mx.float64)
         if points.shape != (2, 2):
             raise ValueError('Bbox points must be of the form '
                              '"[[x0, y0], [x1, y1]]".')
         self._points = points
-        self._minpos = mx.array(_default_minpos)
+        self._minpos = mx.array(_default_minpos, dtype=points.dtype)
         self._ignore = True
         # it is helpful in some contexts to know if the bbox is a
         # default or has been mutated; we store the orig points to
@@ -885,7 +899,8 @@ class Bbox(BboxBase):
             set. This is useful when dealing with logarithmic scales and other
             scales where negative bounds result in floating point errors.
         """
-        bbox = Bbox(mx.reshape(mx.array(args), (2, 2)))
+        bbox = Bbox(mx.reshape(mx.stack([
+            _mx_plot_array(value, dtype=mx.float64) for value in args]), (2, 2)))
         if minpos is not None:
             bbox._minpos[:] = minpos
         return bbox
@@ -946,31 +961,37 @@ class Bbox(BboxBase):
         valid_points = (mx.isfinite(path.vertices[..., 0])
                         & mx.isfinite(path.vertices[..., 1]))
 
+        x0, y0 = points[0, 0], points[0, 1]
+        x1, y1 = points[1, 0], points[1, 1]
+        minposx, minposy = minpos[0], minpos[1]
         if updatex:
             x = path.vertices[..., 0]
             x_min = mx.where(valid_points, x, mx.inf)
             x_max = mx.where(valid_points, x, -mx.inf)
             x_minpos = mx.where(valid_points & (x > 0), x, mx.inf)
-            points[0, 0] = min(points[0, 0], mx.min(x_min))
-            points[1, 0] = max(points[1, 0], mx.max(x_max))
-            minpos[0] = min(minpos[0], mx.min(x_minpos))
+            x0 = mx.minimum(x0, mx.min(x_min))
+            x1 = mx.maximum(x1, mx.max(x_max))
+            minposx = mx.minimum(minposx, mx.min(x_minpos))
+        else:
+            x0, x1, minposx = self._points[0, 0], self._points[1, 0], self._minpos[0]
         if updatey:
             y = path.vertices[..., 1]
             y_min = mx.where(valid_points, y, mx.inf)
             y_max = mx.where(valid_points, y, -mx.inf)
             y_minpos = mx.where(valid_points & (y > 0), y, mx.inf)
-            points[0, 1] = min(points[0, 1], mx.min(y_min))
-            points[1, 1] = max(points[1, 1], mx.max(y_max))
-            minpos[1] = min(minpos[1], mx.min(y_minpos))
+            y0 = mx.minimum(y0, mx.min(y_min))
+            y1 = mx.maximum(y1, mx.max(y_max))
+            minposy = mx.minimum(minposy, mx.min(y_minpos))
+        else:
+            y0, y1, minposy = self._points[0, 1], self._points[1, 1], self._minpos[1]
+
+        points = mx.stack([mx.stack([x0, y0]), mx.stack([x1, y1])])
+        minpos = mx.stack([minposx, minposy])
 
         if mx.any(points != self._points) or mx.any(minpos != self._minpos):
             self.invalidate()
-            if updatex:
-                self._points[:, 0] = points[:, 0]
-                self._minpos[0] = minpos[0]
-            if updatey:
-                self._points[:, 1] = points[:, 1]
-                self._minpos[1] = minpos[1]
+            self._points = points
+            self._minpos = minpos
 
     def update_from_data_x(self, x, ignore=None):
         """
@@ -1041,48 +1062,78 @@ class Bbox(BboxBase):
 
     @BboxBase.x0.setter
     def x0(self, val):
-        self._points[0, 0] = val
+        val = _mx_plot_array(val, dtype=self._points.dtype)
+        self._points = mx.stack([
+            mx.stack([val, self._points[0, 1]]),
+            self._points[1],
+        ])
         self.invalidate()
 
     @BboxBase.y0.setter
     def y0(self, val):
-        self._points[0, 1] = val
+        val = _mx_plot_array(val, dtype=self._points.dtype)
+        self._points = mx.stack([
+            mx.stack([self._points[0, 0], val]),
+            self._points[1],
+        ])
         self.invalidate()
 
     @BboxBase.x1.setter
     def x1(self, val):
-        self._points[1, 0] = val
+        val = _mx_plot_array(val, dtype=self._points.dtype)
+        self._points = mx.stack([
+            self._points[0],
+            mx.stack([val, self._points[1, 1]]),
+        ])
         self.invalidate()
 
     @BboxBase.y1.setter
     def y1(self, val):
-        self._points[1, 1] = val
+        val = _mx_plot_array(val, dtype=self._points.dtype)
+        self._points = mx.stack([
+            self._points[0],
+            mx.stack([self._points[1, 0], val]),
+        ])
         self.invalidate()
 
     @BboxBase.p0.setter
     def p0(self, val):
-        self._points[0] = _mx_plot_array(val, dtype=self._points.dtype)
+        self._points = mx.stack([
+            _mx_plot_array(val, dtype=self._points.dtype),
+            self._points[1],
+        ])
         self.invalidate()
 
     @BboxBase.p1.setter
     def p1(self, val):
-        self._points[1] = _mx_plot_array(val, dtype=self._points.dtype)
+        self._points = mx.stack([
+            self._points[0],
+            _mx_plot_array(val, dtype=self._points.dtype),
+        ])
         self.invalidate()
 
     @BboxBase.intervalx.setter
     def intervalx(self, interval):
-        self._points[:, 0] = _mx_plot_array(interval, dtype=self._points.dtype)
+        interval = _mx_plot_array(interval, dtype=self._points.dtype)
+        self._points = mx.stack([
+            mx.stack([interval[0], self._points[0, 1]]),
+            mx.stack([interval[1], self._points[1, 1]]),
+        ])
         self.invalidate()
 
     @BboxBase.intervaly.setter
     def intervaly(self, interval):
-        self._points[:, 1] = _mx_plot_array(interval, dtype=self._points.dtype)
+        interval = _mx_plot_array(interval, dtype=self._points.dtype)
+        self._points = mx.stack([
+            mx.stack([self._points[0, 0], interval[0]]),
+            mx.stack([self._points[1, 0], interval[1]]),
+        ])
         self.invalidate()
 
     @BboxBase.bounds.setter
     def bounds(self, bounds):
         l, b, w, h = bounds
-        points = mx.array([[l, b], [l + w, b + h]], mx.float32)
+        points = mx.array([[l, b], [l + w, b + h]], mx.float64)
         if mx.any(self._points != points):
             self._points = points
             self.invalidate()
@@ -1593,7 +1644,7 @@ class Transform(TransformNode):
         # we started with a 1d or 2d array).
         values = _mx_plot_array(values)
         ndim = values.ndim
-        stream = mx.cpu if values.dtype == mx.float64 else None
+        stream = None
         values = mx.reshape(values, (-1, self.input_dims), stream=stream)
 
         # Transform the values
@@ -2098,11 +2149,8 @@ class Affine2D(Affine2DBase):
         zero = mx.array(0.0, dtype=self._mtx.dtype)
         a = mx.where(mx.abs(a) < tol, zero, a)
         b = mx.where(mx.abs(b) < tol, zero, b)
-        rot = mx.identity(3, dtype=self._mtx.dtype)
-        rot[0, 0] = a
-        rot[0, 1] = -b
-        rot[1, 0] = b
-        rot[1, 1] = a
+        rot = _affine_matrix_from_values(
+            self._mtx, ((a, -b, 0), (b, a, 0), (0, 0, 1)))
         # Left-multiply: rot @ mtx
         self._mtx = rot @ self._mtx
         self.invalidate()
@@ -2151,9 +2199,8 @@ class Affine2D(Affine2DBase):
         calls to :meth:`rotate`, :meth:`rotate_deg`, :meth:`translate`
         and :meth:`scale`.
         """
-        t = mx.identity(3, dtype=self._mtx.dtype)
-        t[0, 2] = tx
-        t[1, 2] = ty
+        t = _affine_matrix_from_values(
+            self._mtx, ((1, 0, tx), (0, 1, ty), (0, 0, 1)))
         self._mtx = t @ self._mtx
         self.invalidate()
         return self
@@ -2171,9 +2218,8 @@ class Affine2D(Affine2DBase):
         """
         if sy is None:
             sy = sx
-        s = mx.identity(3, dtype=self._mtx.dtype)
-        s[0, 0] = sx
-        s[1, 1] = sy
+        s = _affine_matrix_from_values(
+            self._mtx, ((sx, 0, 0), (0, sy, 0), (0, 0, 1)))
         self._mtx = s @ self._mtx
         self.invalidate()
         return self
@@ -2193,9 +2239,8 @@ class Affine2D(Affine2DBase):
         yShear = _mx_plot_array(yShear, dtype=self._mtx.dtype)
         rx = mx.tan(xShear)
         ry = mx.tan(yShear)
-        sh = mx.identity(3, dtype=self._mtx.dtype)
-        sh[0, 1] = rx
-        sh[1, 0] = ry
+        sh = _affine_matrix_from_values(
+            self._mtx, ((1, rx, 0), (ry, 1, 0), (0, 0, 1)))
         self._mtx = sh @ self._mtx
         self.invalidate()
         return self
@@ -2771,8 +2816,13 @@ class ScaledTranslation(Affine2DBase):
         # docstring inherited
         if self._invalid:
             # A bit faster than mx.identity(3).
-            self._mtx = mx.array(IdentityTransform._mtx)
-            self._mtx[:2, 2] = self._scale_trans.transform(self._t)
+            base = mx.array(IdentityTransform._mtx)
+            tx, ty = self._scale_trans.transform(self._t)
+            self._mtx = _affine_matrix_from_values(
+                base,
+                [[base[0, 0], base[0, 1], tx],
+                 [base[1, 0], base[1, 1], ty],
+                 [base[2, 0], base[2, 1], base[2, 2]]])
             self._invalid = 0
             self._inverted = None
         return self._mtx
@@ -2966,7 +3016,7 @@ def nonsingular(vmin, vmax, expander=0.001, tiny=1e-15, increasing=True):
 
     # Expand vmin, vmax to float: if they were integer types, they can wrap
     # around in abs (abs(mx.int8(-128)) == -128) and vmax - vmin can overflow.
-    vmin, vmax = map(float, [vmin, vmax])
+    vmin, vmax = map(float, map(_maybe_scalar, [vmin, vmax]))
 
     maxabsvalue = max(abs(vmin), abs(vmax))
     if maxabsvalue < (1e6 / tiny) * sys.float_info.min:

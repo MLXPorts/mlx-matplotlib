@@ -198,7 +198,7 @@ class UniformTriRefiner(TriRefiner):
         npts = mx.shape(x)[0]
         ntri = mx.shape(triangles)[0]
         if ancestors is not None:
-            ancestors = mx.asarray(ancestors)
+            ancestors = mx.array(ancestors)
             if mx.shape(ancestors) != (ntri,):
                 raise ValueError(
                     "Incompatible shapes provide for "

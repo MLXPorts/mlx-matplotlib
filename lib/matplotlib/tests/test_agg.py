@@ -42,7 +42,7 @@ def test_repeated_save_with_alpha():
     # Check the first pixel has the desired color & alpha
     # (approx: 0, 1.0, 0.4, 0.25)
     buf.seek(0)
-    assert_array_almost_equal(tuple(imread(buf)[0, 0]),
+    assert_array_almost_equal(imread(buf)[0, 0],
                               (0.0, 1.0, 0.4, 0.250),
                               decimal=3)
 

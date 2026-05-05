@@ -562,12 +562,9 @@ class Colorbar:
         self.update_ticks()
 
         if self._filled:
-            ind = mx.arange(len(self._values))
-            if self._extend_lower():
-                ind = ind[1:]
-            if self._extend_upper():
-                ind = ind[:-1]
-            self._add_solids(X, Y, self._values[ind, mx.newaxis])
+            start = 1 if self._extend_lower() else 0
+            stop = len(self._values) - (1 if self._extend_upper() else 0)
+            self._add_solids(X, Y, self._values[start:stop, mx.newaxis])
 
     def _add_solids(self, X, Y, C):
         """Draw the colors; optionally add separators."""
@@ -776,9 +773,9 @@ class Colorbar:
         igood = (y < self._y[-1] + rtol) & (y > self._y[0] - rtol)
         y = y[igood]
         if cbook.iterable(colors):
-            colors = mx.asarray(colors)[igood]
+            colors = mx.array(colors)[igood]
         if cbook.iterable(linewidths):
-            linewidths = mx.asarray(linewidths)[igood]
+            linewidths = mx.array(linewidths)[igood]
         X, Y = mx.meshgrid([0, 1], y)
         if self.orientation == 'vertical':
             xy = mx.stack([X, Y], axis=-1)
@@ -1102,7 +1099,7 @@ class Colorbar:
                 (self.boundaries is None)):
             b = self.norm.inverse(b)
 
-        self._boundaries = mx.asarray(b, dtype=float)
+        self._boundaries = mx.array(b, dtype=mx.float64)
         self._values = 0.5 * (self._boundaries[:-1] + self._boundaries[1:])
         if isinstance(self.norm, colors.NoNorm):
             self._values = (self._values + 0.00001).astype(mx.int16)
@@ -1131,7 +1128,9 @@ class Colorbar:
                   cbook._setattr_cm(self.norm, vmin=self.vmin, vmax=self.vmax)):
                 y = self.norm.inverse(y)
         self._y = y
-        X, Y = mx.meshgrid([0., 1.], y)
+        x = mx.array([0., 1.], dtype=y.dtype)
+        X = mx.stack([x for _ in range(len(y))], axis=0)
+        Y = mx.transpose(mx.stack([y, y], axis=0))
         if self.orientation == 'vertical':
             return (X, Y)
         else:
@@ -1240,16 +1239,18 @@ class Colorbar:
                 yscaled = y
         else:
             y = self.norm(self._boundaries.copy())
-            y = mx.ma.filled(y, mx.nan)
+            y = y.filled(mx.nan) if hasattr(y, "filled") else y
             # the norm and the scale should be the same...
             yscaled = y
         y = y[self._inside]
         yscaled = yscaled[self._inside]
         # normalize from 0..1:
         norm = colors.Normalize(y[0], y[-1])
-        y = mx.ma.filled(norm(y), mx.nan)
+        y = norm(y)
+        y = y.filled(mx.nan) if hasattr(y, "filled") else y
         norm = colors.Normalize(yscaled[0], yscaled[-1])
-        yscaled = mx.ma.filled(norm(yscaled), mx.nan)
+        yscaled = norm(yscaled)
+        yscaled = yscaled.filled(mx.nan) if hasattr(yscaled, "filled") else yscaled
         # make the lower and upper extend lengths proportional to the lengths
         # of the first and last boundary spacing (if extendfrac='auto'):
         automin = yscaled[1] - yscaled[0]

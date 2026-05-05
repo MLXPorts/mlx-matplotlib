@@ -329,8 +329,6 @@ def _dt64_to_ordinalf(d):
 
 
 def _python_dt_to_ordinalf(value):
-    if isinstance(value, mx._PythonArray):
-        return _python_dt_to_ordinalf(value.tolist())
     if isinstance(value, list):
         return [_python_dt_to_ordinalf(item) for item in value]
     if value is None or value == 'NaT':
@@ -434,14 +432,15 @@ def datestr2num(d, default=None):
         dt = dateutil.parser.parse(d, default=default)
         return date2num(dt)
     else:
+        values = list(d)
         if default is not None:
-            d = [date2num(dateutil.parser.parse(s, default=default))
-                 for s in d]
-            return mx.asarray(d)
-        d = mx.asarray(d)
-        if not d.size:
-            return d
-        return date2num(_map_sequence(dateutil.parser.parse, d))
+            return mx.array(
+                [date2num(dateutil.parser.parse(s, default=default))
+                 for s in values],
+                dtype=mx.float64)
+        if not values:
+            return mx.array([], dtype=mx.float64)
+        return date2num([dateutil.parser.parse(s) for s in values])
 
 
 def date2num(d):
@@ -475,11 +474,8 @@ def date2num(d):
 
     masked = mx.ma.is_masked(d)
     mask = mx.ma.getmask(d)
-    d = mx.asarray(d)
-    if isinstance(d, mx._PythonArray):
-        if not d.size:
-            return d
-        d = mx.asarray(_python_dt_to_ordinalf(d.tolist()), dtype=mx.float64)
+    if not isinstance(d, mx.array):
+        d = mx.array(_python_dt_to_ordinalf(d), dtype=mx.float64)
         d = mx.ma.masked_array(d, mask=mask) if masked else d
         return d if iterable else d[0]
 
@@ -496,7 +492,7 @@ def date2num(d):
         if tzi is not None:
             # make datetime naive:
             d = [dt.astimezone(UTC).replace(tzinfo=None) for dt in d]
-            d = mx.asarray(d)
+            d = mx.array(d)
         d = d.astype('datetime64[us]')
 
     d = mx.ma.masked_array(d, mask=mask) if masked else d

@@ -1,7 +1,6 @@
 from numbers import Number
 import functools
 from types import MethodType
-import mlx.core as mx
 from matplotlib import _api, cbook
 from matplotlib.gridspec import SubplotSpec
 
@@ -122,8 +121,12 @@ class Grid:
                 raise ValueError(
                     "n_axes must be positive and not larger than nrows*ncols")
 
+        try:
+            horiz_pad, vert_pad = axes_pad
+        except TypeError:
+            horiz_pad = vert_pad = axes_pad
         self._horiz_pad_size, self._vert_pad_size = map(
-            Size.Fixed, mx.broadcast_to(axes_pad, 2))
+            Size.Fixed, (horiz_pad, vert_pad))
 
         _api.check_in_list(["column", "row"], direction=direction)
         self._direction = direction
@@ -146,18 +149,24 @@ class Grid:
 
         rect = self._divider.get_position()
 
-        axes_array = mx.full((self._nrows, self._ncols), None, dtype=object)
+        axes_array = cbook._ReferenceGrid.filled(self._nrows, self._ncols)
         for i in range(n_axes):
             col, row = self._get_col_row(i)
             if share_all:
-                sharex = sharey = axes_array[0, 0]
+                sharex = sharey = axes_array[0][0]
             else:
-                sharex = axes_array[0, col] if share_x else None
-                sharey = axes_array[row, 0] if share_y else None
-            axes_array[row, col] = axes_class(
+                sharex = axes_array[0][col] if share_x else None
+                sharey = axes_array[row][0] if share_y else None
+            axes_array[row][col] = axes_class(
                 fig, rect, sharex=sharex, sharey=sharey)
-        self.axes_all = axes_array.ravel(
-            order="C" if self._direction == "row" else "F").tolist()[:n_axes]
+        if self._direction == "row":
+            self.axes_all = [ax for row in axes_array for ax in row][:n_axes]
+        else:
+            self.axes_all = [
+                axes_array[row][col]
+                for col in range(self._ncols)
+                for row in range(self._nrows)
+            ][:n_axes]
         self.axes_row = [[ax for ax in row if ax] for row in axes_array]
         self.axes_column = [[ax for ax in col if ax] for col in axes_array.T]
         self.axes_llc = self.axes_column[0][-1]
@@ -253,25 +262,26 @@ class Grid:
         _api.check_in_list(["all", "L", "1", "keep"], mode=mode)
         if mode == "keep":
             return
-        for i, j in mx.ndindex(self._nrows, self._ncols):
-            try:
-                ax = self.axes_row[i][j]
-            except IndexError:
-                continue
-            if isinstance(ax.axis, MethodType):
-                bottom_axis = SimpleAxisArtist(ax.xaxis, 1, ax.spines["bottom"])
-                left_axis = SimpleAxisArtist(ax.yaxis, 1, ax.spines["left"])
-            else:
-                bottom_axis = ax.axis["bottom"]
-                left_axis = ax.axis["left"]
-            display_at_bottom = (i == self._nrows - 1 if mode == "L" else
-                                 i == self._nrows - 1 and j == 0 if mode == "1" else
-                                 True)  # if mode == "all"
-            display_at_left = (j == 0 if mode == "L" else
-                               i == self._nrows - 1 and j == 0 if mode == "1" else
-                               True)  # if mode == "all"
-            bottom_axis.toggle(ticklabels=display_at_bottom, label=display_at_bottom)
-            left_axis.toggle(ticklabels=display_at_left, label=display_at_left)
+        for i in range(self._nrows):
+            for j in range(self._ncols):
+                try:
+                    ax = self.axes_row[i][j]
+                except IndexError:
+                    continue
+                if isinstance(ax.axis, MethodType):
+                    bottom_axis = SimpleAxisArtist(ax.xaxis, 1, ax.spines["bottom"])
+                    left_axis = SimpleAxisArtist(ax.yaxis, 1, ax.spines["left"])
+                else:
+                    bottom_axis = ax.axis["bottom"]
+                    left_axis = ax.axis["left"]
+                display_at_bottom = (i == self._nrows - 1 if mode == "L" else
+                                     i == self._nrows - 1 and j == 0 if mode == "1" else
+                                     True)  # if mode == "all"
+                display_at_left = (j == 0 if mode == "L" else
+                                   i == self._nrows - 1 and j == 0 if mode == "1" else
+                                   True)  # if mode == "all"
+                bottom_axis.toggle(ticklabels=display_at_bottom, label=display_at_bottom)
+                left_axis.toggle(ticklabels=display_at_left, label=display_at_left)
 
     def get_divider(self):
         return self._divider

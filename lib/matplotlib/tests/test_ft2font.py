@@ -20,7 +20,7 @@ def test_ft2image_draw_rect_filled():
         with pytest.warns(mpl.MatplotlibDeprecationWarning):
             im = ft2font.FT2Image(width, height)
         im.draw_rect_filled(x0, y0, x1, y1)
-        a = mx.asarray(im)
+        a = mx.array(im)
         assert a.dtype == mx.uint8
         assert a.shape == (height, width)
         if x0 == 100 or y0 == 200:

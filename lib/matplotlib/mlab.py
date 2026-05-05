@@ -160,7 +160,7 @@ def detrend(x, key=None, axis=None):
     elif key == 'none':
         return detrend(x, key=detrend_none, axis=axis)
     elif callable(key):
-        x = mx.asarray(x)
+        x = mx.array(x)
         if axis is not None and axis + 1 > x.ndim:
             raise ValueError(f'axis(={axis}) out of bounds')
         if (axis is None and x.ndim == 0) or (not axis and x.ndim == 1):
@@ -197,7 +197,7 @@ def detrend_mean(x, axis=None):
     detrend_none : Another detrend algorithm.
     detrend : A wrapper around all the detrend algorithms.
     """
-    x = mx.asarray(x)
+    x = mx.array(x)
 
     if axis is not None and axis+1 > x.ndim:
         raise ValueError('axis(=%s) out of bounds' % axis)
@@ -243,7 +243,7 @@ def detrend_linear(y):
     detrend : A wrapper around all the detrend algorithms.
     """
     # This is faster than an algorithm based on linalg.lstsq.
-    y = mx.asarray(y)
+    y = mx.array(y)
 
     if y.ndim > 1:
         raise ValueError('y cannot have ndim > 1')
@@ -263,7 +263,7 @@ def detrend_linear(y):
 
 def _stride_windows(x, n, noverlap=0):
     _api.check_isinstance(Integral, n=n, noverlap=noverlap)
-    x = mx.asarray(x)
+    x = mx.array(x)
     step = n - noverlap
     shape = (n, (x.shape[-1]-noverlap)//step)
     strides = (x.strides[0], step*x.strides[0])
@@ -313,9 +313,9 @@ def _spectral_helper(x, y=None, NFFT=None, Fs=None, detrend_func=None,
 
     # Make sure we're dealing with a array_backend array. If y and x were the same
     # object to start with, keep them that way
-    x = mx.asarray(x)
+    x = mx.array(x)
     if not same_data:
-        y = mx.asarray(y)
+        y = mx.array(y)
 
     if sides is None or sides == 'default':
         if mx.iscomplexobj(x):

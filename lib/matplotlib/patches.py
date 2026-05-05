@@ -749,7 +749,7 @@ class Shadow(Patch):
         self.update_from(self.patch)
         if not 0 <= shade <= 1:
             raise ValueError("shade must be between 0 and 1.")
-        color = (1 - shade) * mx.asarray(colors.to_rgb(self.patch.get_facecolor()))
+        color = (1 - shade) * mx.array(colors.to_rgb(self.patch.get_facecolor()))
         self.update({'facecolor': color, 'edgecolor': color, 'alpha': 0.5,
                      # Place shadow patch directly behind the inherited patch.
                      'zorder': mx.nextafter(self.patch.zorder, -mx.inf),
@@ -1104,9 +1104,9 @@ class StepPatch(PathPatch):
             %(Patch:kwdoc)s
         """
         self.orientation = orientation
-        self._edges = mx.asarray(edges)
-        self._values = mx.asarray(values)
-        self._baseline = mx.asarray(baseline) if baseline is not None else None
+        self._edges = mx.array(edges)
+        self._values = mx.array(values)
+        self._baseline = mx.array(baseline) if baseline is not None else None
         self._update_path()
         super().__init__(self._path, **kwargs)
 
@@ -1165,11 +1165,11 @@ class StepPatch(PathPatch):
         if values is None and edges is None and baseline is None:
             raise ValueError("Must set *values*, *edges* or *baseline*.")
         if values is not None:
-            self._values = mx.asarray(values)
+            self._values = mx.array(values)
         if edges is not None:
-            self._edges = mx.asarray(edges)
+            self._edges = mx.array(edges)
         if baseline is not None:
-            self._baseline = mx.asarray(baseline)
+            self._baseline = mx.array(baseline)
         self._update_path()
         self.stale = True
 
@@ -1567,8 +1567,8 @@ class FancyArrow(Polygon):
         else:
             head_length = self._head_length
 
-        dx = mx.asarray(self._dx)
-        dy = mx.asarray(self._dy)
+        dx = mx.array(self._dx)
+        dy = mx.array(self._dy)
         distance = mx.sqrt(dx * dx + dy * dy)
 
         if self._length_includes_head:

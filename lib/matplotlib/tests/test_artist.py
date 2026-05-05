@@ -142,8 +142,9 @@ def test_clipping_zoom(fig_test, fig_ref):
 
 
 def test_cull_markers():
-    x = mx.random.random(20000)
-    y = mx.random.random(20000)
+    x_key, y_key = mx.random.split(mx.random.key(19680801), num=2)
+    x = mx.random.uniform(shape=(20000,), key=x_key)
+    y = mx.random.uniform(shape=(20000,), key=y_key)
 
     fig, ax = plt.subplots()
     ax.plot(x, y, 'k.')
@@ -483,7 +484,7 @@ def test_format_cursor_data_BoundaryNorm():
     fig, ax = plt.subplots()
     fig.suptitle("noclip, neither")
     norm = mcolors.BoundaryNorm(
-        mx.linspace(0, 1, 4, endpoint=True), 256, clip=False, extend='neither')
+        mx.linspace(0, 1, 4), 256, clip=False, extend='neither')
     img = ax.imshow(X, cmap='RdBu_r', norm=norm)
     for v, label in zip(X.flat, labels_list):
         # label = "[{:-#.{}g}]".format(v, cbook._g_sig_digits(v, 0.33))
@@ -494,7 +495,7 @@ def test_format_cursor_data_BoundaryNorm():
     fig, ax = plt.subplots()
     fig.suptitle("noclip, min")
     norm = mcolors.BoundaryNorm(
-        mx.linspace(0, 1, 4, endpoint=True), 256, clip=False, extend='min')
+        mx.linspace(0, 1, 4), 256, clip=False, extend='min')
     img = ax.imshow(X, cmap='RdBu_r', norm=norm)
     for v, label in zip(X.flat, labels_list):
         # label = "[{:-#.{}g}]".format(v, cbook._g_sig_digits(v, 0.33))
@@ -505,7 +506,7 @@ def test_format_cursor_data_BoundaryNorm():
     fig, ax = plt.subplots()
     fig.suptitle("noclip, max")
     norm = mcolors.BoundaryNorm(
-        mx.linspace(0, 1, 4, endpoint=True), 256, clip=False, extend='max')
+        mx.linspace(0, 1, 4), 256, clip=False, extend='max')
     img = ax.imshow(X, cmap='RdBu_r', norm=norm)
     for v, label in zip(X.flat, labels_list):
         # label = "[{:-#.{}g}]".format(v, cbook._g_sig_digits(v, 0.33))
@@ -516,7 +517,7 @@ def test_format_cursor_data_BoundaryNorm():
     fig, ax = plt.subplots()
     fig.suptitle("noclip, both")
     norm = mcolors.BoundaryNorm(
-        mx.linspace(0, 1, 4, endpoint=True), 256, clip=False, extend='both')
+        mx.linspace(0, 1, 4), 256, clip=False, extend='both')
     img = ax.imshow(X, cmap='RdBu_r', norm=norm)
     for v, label in zip(X.flat, labels_list):
         # label = "[{:-#.{}g}]".format(v, cbook._g_sig_digits(v, 0.33))
@@ -527,7 +528,7 @@ def test_format_cursor_data_BoundaryNorm():
     fig, ax = plt.subplots()
     fig.suptitle("clip, neither")
     norm = mcolors.BoundaryNorm(
-        mx.linspace(0, 1, 4, endpoint=True), 256, clip=True, extend='neither')
+        mx.linspace(0, 1, 4), 256, clip=True, extend='neither')
     img = ax.imshow(X, cmap='RdBu_r', norm=norm)
     for v, label in zip(X.flat, labels_list):
         # label = "[{:-#.{}g}]".format(v, cbook._g_sig_digits(v, 0.33))

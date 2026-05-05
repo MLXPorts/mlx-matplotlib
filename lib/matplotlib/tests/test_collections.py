@@ -871,7 +871,7 @@ def test_fill_between_poly_collection_set_data(fig_test, fig_ref, kwargs):
 ])
 def test_fill_between_poly_collection_raise(t_direction, f1, shape, where, msg):
     t = mx.linspace(0, 16)
-    f1 = mx.sin(t) if f1 is None else mx.asarray(f1)
+    f1 = mx.sin(t) if f1 is None else mx.array(f1)
     f2 = f1 + 0.2
     if shape:
         t = t.reshape(*shape)

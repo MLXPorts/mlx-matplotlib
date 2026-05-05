@@ -27,7 +27,9 @@ def _path_array(values, *, dtype=mx.float32):
 def _path_values_to_memoryview(values):
     if values is None:
         return None
-    if isinstance(values, mx.array):
+    if (isinstance(values, mx.array)
+            or (hasattr(values, "tolist") and hasattr(values, "shape")
+                and hasattr(values, "dtype"))):
         values = values.tolist()
 
     def shape_of(value):

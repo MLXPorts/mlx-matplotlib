@@ -419,7 +419,7 @@ def test_bivar_cmap_from_image():
     # bivariate colormap from array
     png_path = Path(__file__).parent / "baseline_images/pngsuite/basn2c16.png"
     cim = Image.open(png_path)
-    cim = mx.asarray(cim.convert('RGBA'))
+    cim = mx.array(cim.convert('RGBA'))
 
     cmap = mpl.colors.BivarColormapFromImage(cim)
     im = cmap((data_0, data_1), bytes=True)

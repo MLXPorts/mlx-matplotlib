@@ -2780,7 +2780,7 @@ def matshow(A: ArrayLike, fignum: None | int = None, **kwargs) -> AxesImage:
     **kwargs : `~matplotlib.axes.Axes.imshow` arguments
 
     """
-    A = mx.asarray(A)
+    A = mx.array(A)
     if fignum == 0:
         ax = gca()
     else:

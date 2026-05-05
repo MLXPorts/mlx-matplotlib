@@ -114,7 +114,8 @@ def _get_packed_offsets(widths, total, sep, mode="fixed"):
     _api.check_in_list(["fixed", "expand", "equal"], mode=mode)
 
     if mode == "fixed":
-        offsets_ = mx.cumsum([0] + [w + sep for w in widths])
+        offsets_ = mx.cumsum(
+            mx.array([0] + [w + sep for w in widths], dtype=mx.float64))
         offsets = offsets_[:-1]
         if total is None:
             total = offsets_[-1] - sep
@@ -129,7 +130,8 @@ def _get_packed_offsets(widths, total, sep, mode="fixed"):
             sep = (total - sum(widths)) / (len(widths) - 1)
         else:
             sep = 0
-        offsets_ = mx.cumsum([0] + [w + sep for w in widths])
+        offsets_ = mx.cumsum(
+            mx.array([0] + [w + sep for w in widths], dtype=mx.float64))
         offsets = offsets_[:-1]
         return total, offsets
 
@@ -461,7 +463,9 @@ class VPacker(PackerBase):
         height, yoffsets = _get_packed_offsets(
             [bbox.height for bbox in bboxes], self.height, sep, self.mode)
 
-        yoffsets = height - (yoffsets + [bbox.y1 for bbox in bboxes])
+        yoffsets = height - (
+            yoffsets + mx.array([bbox.y1 for bbox in bboxes],
+                                dtype=yoffsets.dtype))
         ydescent = yoffsets[0]
         yoffsets = yoffsets - ydescent
 
@@ -498,7 +502,8 @@ class HPacker(PackerBase):
             [bbox.width for bbox in bboxes], self.width, sep, self.mode)
 
         x0 = bboxes[0].x0
-        xoffsets -= ([bbox.x0 for bbox in bboxes] - x0)
+        xoffsets -= (
+            mx.array([bbox.x0 for bbox in bboxes], dtype=xoffsets.dtype) - x0)
 
         return (Bbox.from_bounds(x0, y0, width, y1 - y0).padded(pad),
                 [*zip(xoffsets, yoffsets)])
@@ -1187,7 +1192,7 @@ class OffsetImage(OffsetBox):
         self.set_data(arr)
 
     def set_data(self, arr):
-        self._data = mx.asarray(arr)
+        self._data = mx.array(arr)
         self.image.set_data(self._data)
         self.stale = True
 

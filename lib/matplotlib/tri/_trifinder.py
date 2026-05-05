@@ -54,13 +54,13 @@ class TrapezoidMapTriFinder(TriFinder):
 
         Returns integer array with the same shape and *x* and *y*.
         """
-        x = mx.asarray(x, dtype=mx.float64)
-        y = mx.asarray(y, dtype=mx.float64)
+        x = mx.array(x, dtype=mx.float64)
+        y = mx.array(y, dtype=mx.float64)
         if x.shape != y.shape:
             raise ValueError("x and y must be array-like with the same shape")
 
         # C++ does the heavy lifting, and expects 1D arrays.
-        indices = mx.asarray(
+        indices = mx.array(
             self._cpp_trifinder.find_many(x.ravel(), y.ravel()),
             dtype=mx.int32,
         ).reshape(x.shape)

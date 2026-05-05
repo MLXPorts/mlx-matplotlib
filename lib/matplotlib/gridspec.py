@@ -11,11 +11,12 @@ methods like `~.pyplot.subplots`, `~.pyplot.subplot_mosaic` and
 """
 
 import copy
+import itertools
 import logging
 from numbers import Integral
 import mlx.core as mx
-import numpy as np
 import matplotlib as mpl
+import matplotlib.cbook as cbook
 from matplotlib import _api, _pylab_helpers, _tight_layout
 from matplotlib._api import UNSET as _UNSET
 from matplotlib.transforms import Bbox
@@ -278,28 +279,28 @@ class GridSpecBase:
         subplot_kw = subplot_kw.copy()
 
         # Create array to hold all Axes.
-        axarr = np.empty((self._nrows, self._ncols), dtype=object)
+        axarr = cbook._ReferenceGrid.filled(self._nrows, self._ncols)
         for row in range(self._nrows):
             for col in range(self._ncols):
-                shared_with = {"none": None, "all": axarr[0, 0],
-                               "row": axarr[row, 0], "col": axarr[0, col]}
+                shared_with = {"none": None, "all": axarr[0][0],
+                               "row": axarr[row][0], "col": axarr[0][col]}
                 subplot_kw["sharex"] = shared_with[sharex]
                 subplot_kw["sharey"] = shared_with[sharey]
-                axarr[row, col] = figure.add_subplot(
+                axarr[row][col] = figure.add_subplot(
                     self[row, col], **subplot_kw)
 
         # turn off redundant tick labeling
         if sharex in ["col", "all"]:
-            for ax in axarr.flat:
+            for ax in itertools.chain.from_iterable(axarr):
                 ax._label_outer_xaxis(skip_non_rectangular_axes=True)
         if sharey in ["row", "all"]:
-            for ax in axarr.flat:
+            for ax in itertools.chain.from_iterable(axarr):
                 ax._label_outer_yaxis(skip_non_rectangular_axes=True)
 
         if squeeze:
             # Discarding unneeded dimensions that equal 1.  If we only have one
-            # subplot, just return it instead of a 1-element array.
-            return axarr.item() if axarr.size == 1 else axarr.squeeze()
+            # subplot, just return it instead of a 1-element container.
+            return axarr.squeeze()
         else:
             # Returned axis array will be always 2-d, even if nrows=ncols=1.
             return axarr

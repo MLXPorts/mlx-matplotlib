@@ -25,7 +25,8 @@ import mlx.core as mx
 from PIL import Image
 
 import matplotlib as mpl
-from matplotlib import _api, _text_helpers, _type1font, cbook, dviread
+from matplotlib import (
+    _api, _mlx_overrides, _text_helpers, _type1font, cbook, dviread)
 from matplotlib._pylab_helpers import Gcf
 from matplotlib.backend_bases import (
     _Backend, FigureCanvasBase, FigureManagerBase, GraphicsContextBase,
@@ -61,7 +62,9 @@ def _pdf_indices_where(mask):
 
 
 def _pdf_image_from_mx(data, mode, width, height):
-    return Image.frombytes(mode, (width, height), bytes(mx.contiguous(data)))
+    return Image.frombytes(
+        mode, (width, height),
+        _mlx_overrides.array_bytes(mx.contiguous(data), stream=mx.cpu))
 
 # Overview
 #
@@ -322,7 +325,9 @@ def pdfRepr(obj):
     if hasattr(obj, 'pdfRepr'):
         return obj.pdfRepr()
 
-    elif isinstance(obj, mx.array):
+    elif (isinstance(obj, mx.array)
+          or (hasattr(obj, "ndim") and hasattr(obj, "dtype")
+              and hasattr(obj, "item"))):
         if obj.ndim == 0:
             return pdfRepr(obj.item())
         return _fill([b"[", *[pdfRepr(obj[i]) for i in range(len(obj))], b"]"])
@@ -1739,6 +1744,8 @@ end"""
         alpha), except that alpha is None if the image is fully opaque.
         """
         im = im[::-1]
+        if im.dtype != mx.uint8:
+            im = mx.clip(im, 0, 255).astype(mx.uint8)
         if im.ndim == 2:
             return im, None
         else:
@@ -1746,7 +1753,7 @@ end"""
             rgb = mx.contiguous(rgb)
             # PDF needs a separate alpha image
             if im.shape[2] == 4:
-                alpha = im[:, :, 3][..., None]
+                alpha = mx.expand_dims(im[:, :, 3], axis=-1)
                 if bool(mx.all(alpha == 255).item()):
                     alpha = None
                 else:
@@ -1806,7 +1813,7 @@ end"""
             png = {'Predictor': 10, 'Colors': color_channels, 'Columns': width}
             img = _pdf_image_from_mx(
                 data, 'L' if color_channels == 1 else 'RGB', width, height)
-            img_colors = img.getcolors(maxcolors=256)
+            img_colors = None
             if color_channels == 3 and img_colors is not None:
                 # Convert to indexed color if there are 256 colors or fewer. This can
                 # significantly reduce the file size.
@@ -1815,17 +1822,19 @@ end"""
                                    dtype=mx.uint8)
                 palette24 = ((palette[0::3].astype(mx.uint32) << 16) |
                              (palette[1::3].astype(mx.uint32) << 8) |
-                             palette[2::3])
+                             palette[2::3].astype(mx.uint32))
                 rgb24 = ((data[:, :, 0].astype(mx.uint32) << 16) |
                          (data[:, :, 1].astype(mx.uint32) << 8) |
-                         data[:, :, 2])
+                         data[:, :, 2].astype(mx.uint32))
                 palette_matches = (
                     mx.expand_dims(rgb24, -1)
                     == mx.reshape(palette24, (1, 1, palette24.shape[0])))
                 rgb8 = mx.argmax(palette_matches.astype(mx.uint8), axis=-1
                                   ).astype(mx.uint8)
                 img = _pdf_image_from_mx(rgb8, 'L', width, height).convert("P")
-                img.putpalette(bytes(mx.contiguous(palette)))
+                img.putpalette(
+                    _mlx_overrides.array_bytes(
+                        mx.contiguous(palette), stream=mx.cpu))
                 png_data, bit_depth, palette = self._writePng(img)
                 if bit_depth is None or palette is None:
                     raise RuntimeError("invalid PNG header")
@@ -1848,7 +1857,8 @@ end"""
         if png:
             self.currentstream.write(png_data)
         else:
-            self.currentstream.write(bytes(mx.contiguous(data)))
+            self.currentstream.write(
+                _mlx_overrides.array_bytes(mx.contiguous(data), stream=mx.cpu))
         self.endStream()
 
     def writeImages(self):

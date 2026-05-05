@@ -10,7 +10,7 @@ def _asarray(value):
 
 
 def _stream_for(*arrays):
-    return mx.cpu if any(a.dtype == mx.float64 for a in arrays) else None
+    return mx.cpu
 
 
 def assert_allclose(actual, desired, rtol=1e-7, atol=0, **kwargs):

@@ -1056,7 +1056,7 @@ class Artist:
         if not cbook.iterable(alpha):
             Artist.set_alpha(self, alpha)
             return
-        alpha = mx.asarray(alpha)
+        alpha = mx.array(alpha)
         if not (0 <= alpha.min() and alpha.max() <= 1):
             raise ValueError('alpha must be between 0 and 1, inclusive, '
                              f'but min is {alpha.min()}, max is {alpha.max()}')
@@ -1357,7 +1357,9 @@ class Artist:
         --------
         get_cursor_data
         """
-        if mx.ndim(data) == 0 and hasattr(self, "_format_cursor_data_override"):
+        data_ndim = (data.ndim if isinstance(data, mx.array)
+                     else 1 if cbook.iterable(data) else 0)
+        if data_ndim == 0 and hasattr(self, "_format_cursor_data_override"):
             # workaround for ScalarMappable to be able to define its own
             # format_cursor_data(). See ScalarMappable._format_cursor_data_override
             # for details.

@@ -110,7 +110,7 @@ def blit(photoimage, aggimage, offsets, bbox=None):
 
     Tcl events must be dispatched to trigger a blit from a non-Tcl thread.
     """
-    data = mx.asarray(aggimage)
+    data = mx.array(aggimage)
     height, width = data.shape[:2]
     if bbox is not None:
         (x1, y1), (x2, y2) = bbox.__array__()
@@ -800,7 +800,7 @@ class NavigationToolbar2Tk(NavigationToolbar2, tk.Frame):
             return max(color) < 65535 / 2
 
         def _recolor_icon(image, color):
-            image_data = mx.asarray(image).copy()
+            image_data = mx.array(image).copy()
             black_mask = (image_data[..., :3] == 0).all(axis=-1)
             image_data[black_mask, :3] = color
             return Image.fromarray(image_data)

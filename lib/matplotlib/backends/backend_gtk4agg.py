@@ -24,7 +24,7 @@ class FigureCanvasGTK4Agg(backend_agg.FigureCanvasAgg,
             allocation.width, allocation.height)
 
         buf = cbook._unmultiplied_rgba8888_to_premultiplied_argb32(
-            mx.asarray(self.get_renderer().buffer_rgba()))
+            mx.array(self.get_renderer().buffer_rgba()))
         height, width, _ = buf.shape
         image = cairo.ImageSurface.create_for_data(
             buf.ravel().data, cairo.FORMAT_ARGB32, width, height)
