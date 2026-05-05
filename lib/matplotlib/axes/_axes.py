@@ -1161,6 +1161,25 @@ class Axes(_AxesBase):
         y = mlxarr.ravel(y)
         xmin = mlxarr.ravel(xmin)
         xmax = mlxarr.ravel(xmax)
+        keep = mlxarr.ones(len(y), bool)
+        found_masked = False
+        for array in [y, xmin, xmax]:
+            if isinstance(array, mlxarr.ma.MaskedArray) and array.mask is not None:
+                keep = keep & ~mlxarr.ravel(array.mask)
+                found_masked = True
+        if found_masked:
+            n = len(keep)
+            y, xmin, xmax = [
+                array[keep] if len(array) == n else array
+                for array in [y, xmin, xmax]]
+            if not mcolors.is_color_like(colors):
+                try:
+                    if len(colors) == n:
+                        colors = [
+                            color for color, keep_color
+                            in zip(colors, keep.tolist()) if keep_color]
+                except TypeError:
+                    pass
 
         masked_verts = mlxarr.ma.empty((len(y), 2, 2))
         masked_verts[:, 0, 0] = xmin
@@ -1253,6 +1272,25 @@ class Axes(_AxesBase):
         x = mlxarr.ravel(x)
         ymin = mlxarr.ravel(ymin)
         ymax = mlxarr.ravel(ymax)
+        keep = mlxarr.ones(len(x), bool)
+        found_masked = False
+        for array in [x, ymin, ymax]:
+            if isinstance(array, mlxarr.ma.MaskedArray) and array.mask is not None:
+                keep = keep & ~mlxarr.ravel(array.mask)
+                found_masked = True
+        if found_masked:
+            n = len(keep)
+            x, ymin, ymax = [
+                array[keep] if len(array) == n else array
+                for array in [x, ymin, ymax]]
+            if not mcolors.is_color_like(colors):
+                try:
+                    if len(colors) == n:
+                        colors = [
+                            color for color, keep_color
+                            in zip(colors, keep.tolist()) if keep_color]
+                except TypeError:
+                    pass
 
         masked_verts = mlxarr.ma.empty((len(x), 2, 2))
         masked_verts[:, 0, 0] = x
@@ -3275,7 +3313,8 @@ or pandas.DataFrame
                 labels = heights.columns.tolist()
             if tick_labels is None:
                 tick_labels = heights.index.tolist()
-            heights = heights.to_array_backend().T
+            heights = mlxarr.asarray(
+                [heights[col].tolist() for col in heights.columns])
         elif hasattr(heights, 'keys'):  # dict
             if labels is not None:
                 raise ValueError("'labels' cannot be used if 'heights' is a mapping")
@@ -3775,6 +3814,7 @@ or pandas.DataFrame
 
         This function is split out to be usable both by 2D and 3D errorbars.
         """
+        is_fancy_index = False
         if isinstance(errorevery, Integral):
             errorevery = (0, errorevery)
         if isinstance(errorevery, tuple):
@@ -3788,6 +3828,7 @@ or pandas.DataFrame
         elif isinstance(errorevery, slice):
             pass
         elif not isinstance(errorevery, str) and mlxarr.iterable(errorevery):
+            is_fancy_index = True
             try:
                 x[errorevery]  # fancy indexing
             except (ValueError, IndexError) as err:
@@ -3797,7 +3838,14 @@ or pandas.DataFrame
         else:
             raise ValueError(f"{errorevery=!r} is not a recognized value")
         everymask = mlxarr.zeros(len(x), bool)
-        everymask[errorevery] = True
+        try:
+            everymask[errorevery] = True
+        except (ValueError, IndexError) as err:
+            if is_fancy_index:
+                raise ValueError(
+                    f"{errorevery=!r} is iterable but not a valid MLXArrayBackend fancy "
+                    "index to match 'xerr'/'yerr'") from err
+            raise
         return everymask
 
     @_api.make_keyword_only("3.10", "ecolor")
@@ -3954,9 +4002,9 @@ or pandas.DataFrame
         kwargs.setdefault('zorder', 2)
 
         # Casting to object arrays preserves units.
-        if not isinstance(x, mlxarr.ndarray):
+        if not isinstance(x, (mlxarr.ndarray, mlxarr.ma.MaskedArray)):
             x = mlxarr.asarray(x, dtype=object)
-        if not isinstance(y, mlxarr.ndarray):
+        if not isinstance(y, (mlxarr.ndarray, mlxarr.ma.MaskedArray)):
             y = mlxarr.asarray(y, dtype=object)
 
         def _upcast_err(err):
@@ -3973,6 +4021,14 @@ or pandas.DataFrame
 
             Otherwise, fallback to casting to an object array.
             """
+
+            def _as_mlx_or_object_array(err):
+                if isinstance(err, mlxarr.ma.MaskedArray):
+                    return err
+                try:
+                    return mlxarr.asarray(err)
+                except (TypeError, ValueError):
+                    return mlxarr.asarray(err, dtype=object)
 
             if (
                     # make sure it is not a scalar
@@ -3991,16 +4047,18 @@ or pandas.DataFrame
                 if atype is mlxarr.ndarray:
                     # Converts using mlxarr.asarray, because data cannot
                     # be directly passed to init of mlxarr.ndarray
-                    return mlxarr.asarray(err, dtype=object)
+                    return _as_mlx_or_object_array(err)
                 # If atype is not mlxarr.ndarray, directly pass data to init.
                 # This works for types such as unyts and astropy units
                 return atype(err)
             # Otherwise wrap it in an object array
-            return mlxarr.asarray(err, dtype=object)
+            return _as_mlx_or_object_array(err)
 
-        if xerr is not None and not isinstance(xerr, mlxarr.ndarray):
+        if xerr is not None and not isinstance(
+                xerr, (mlxarr.ndarray, mlxarr.ma.MaskedArray)):
             xerr = _upcast_err(xerr)
-        if yerr is not None and not isinstance(yerr, mlxarr.ndarray):
+        if yerr is not None and not isinstance(
+                yerr, (mlxarr.ndarray, mlxarr.ma.MaskedArray)):
             yerr = _upcast_err(yerr)
         x, y = mlxarr.atleast_1d(x, y)  # Make sure all the args are iterable.
         if len(x) != len(y):
@@ -4015,8 +4073,13 @@ or pandas.DataFrame
         # We avoid calling self.plot() directly, or self._get_lines(), because
         # that would call self._process_unit_info again, and do other indirect
         # data processing.
+        line_x = (cbook._to_unmasked_float_array(x)
+                  if isinstance(x, mlxarr.ma.MaskedArray) else x)
+        line_y = (cbook._to_unmasked_float_array(y)
+                  if isinstance(y, mlxarr.ma.MaskedArray) else y)
         (data_line, base_style), = self._get_lines._plot_args(
-            self, (x, y) if fmt == '' else (x, y, fmt), kwargs, return_kwargs=True)
+            self, (line_x, line_y) if fmt == '' else (line_x, line_y, fmt),
+            kwargs, return_kwargs=True)
 
         # Do this after creating `data_line` to avoid modifying `base_style`.
         if barsabove:
@@ -4089,6 +4152,16 @@ or pandas.DataFrame
         def apply_mask(arrays, mask):
             return [array[mask] for array in arrays]
 
+        def keep_unmasked(mask, array):
+            if isinstance(array, mlxarr.ma.MaskedArray) and array.mask is not None:
+                array_mask = array.mask
+                if tuple(array_mask.shape) == tuple(mask.shape):
+                    return mask & ~array_mask
+                if (len(array_mask.shape) == 2
+                        and array_mask.shape[1:] == tuple(mask.shape)):
+                    return mask & ~mlxarr.logical_or.reduce(array_mask, axis=0)
+            return mask
+
         # dep: dependent dataset, indep: independent dataset
         for (dep_axis, dep, err, lolims, uplims, indep, lines_func,
              marker, lomarker, himarker) in [
@@ -4125,9 +4198,13 @@ or pandas.DataFrame
             #     elow, ehigh = mlxarr.broadcast_to(...)
             #     return dep - elow * ~lolims, dep + ehigh * ~uplims
             # except that broadcast_to would strip units.
-            low, high = dep + mlxarr.vstack([-(1 - lolims), 1 - uplims]) * err
+            lowhigh = dep + mlxarr.vstack([-(1 - lolims), 1 - uplims]) * err
+            low, high = lowhigh[0], lowhigh[1]
+            validmask = everymask
+            for masked_array in [indep, dep, err, low, high]:
+                validmask = keep_unmasked(validmask, masked_array)
             barcols.append(lines_func(
-                *apply_mask([indep, low, high], everymask), **eb_lines_style))
+                *apply_mask([indep, low, high], validmask), **eb_lines_style))
             if self.name == "polar" and dep_axis == "x":
                 for b in barcols:
                     for p in b.get_paths():
@@ -4136,7 +4213,7 @@ or pandas.DataFrame
             nolims = ~(lolims | uplims)
             if nolims.any() and capsize > 0:
                 indep_masked, lo_masked, hi_masked = apply_mask(
-                    [indep, low, high], nolims & everymask)
+                    [indep, low, high], nolims & validmask)
                 for lh_masked in [lo_masked, hi_masked]:
                     # Since this has to work for x and y as dependent data, we
                     # first set both x and y to the independent variable and
@@ -4153,7 +4230,7 @@ or pandas.DataFrame
                     if self._axis_map[dep_axis].get_inverted() ^ idx
                     else lomarker)
                 x_masked, y_masked, hl_masked = apply_mask(
-                    [x, y, hl], lims & everymask)
+                    [x, y, hl], lims & validmask)
                 # As above, we set the dependent data in a second step.
                 line = mlines.Line2D(x_masked, y_masked,
                                      marker=hlmarker, **eb_cap_style)
@@ -4767,30 +4844,38 @@ or pandas.DataFrame
         elif len(positions) != N:
             raise ValueError(datashape_message.format("positions"))
 
-        positions = mlxarr.array(positions)
-        if len(positions) > 0 and not all(isinstance(p, Real) for p in positions):
+        position_labels = list(positions)
+        if len(position_labels) > 0 and not all(isinstance(p, Real) for p in position_labels):
             raise TypeError("positions should be an iterable of numbers")
+        positions = [float(pos) for pos in position_labels]
 
         # width
         if widths is None:
-            widths = [mlxarr.clip(0.15 * mlxarr.ptp(positions), 0.15, 0.5)] * N
+            distance = max(positions) - min(positions) if positions else 0
+            width = min(max(0.15 * distance, 0.15), 0.5)
+            widths = [width] * N
         elif mlxarr.isscalar(widths):
-            widths = [widths] * N
+            widths = [float(widths)] * N
         elif len(widths) != N:
             raise ValueError(datashape_message.format("widths"))
+        else:
+            widths = [float(width) for width in widths]
 
         # capwidth
         if capwidths is None:
-            capwidths = 0.5 * mlxarr.array(widths)
+            capwidths = [0.5 * width for width in widths]
         elif mlxarr.isscalar(capwidths):
-            capwidths = [capwidths] * N
+            capwidths = [float(capwidths)] * N
         elif len(capwidths) != N:
             raise ValueError(datashape_message.format("capwidths"))
+        else:
+            capwidths = [float(capwidth) for capwidth in capwidths]
 
-        for pos, width, stats, capwidth in zip(positions, widths, bxpstats,
+        for pos, position_label, width, stats, capwidth in zip(
+                positions, position_labels, widths, bxpstats,
                                                capwidths):
             # try to find a new label
-            datalabels.append(stats.get('label', pos))
+            datalabels.append(stats.get('label', position_label))
 
             # whisker coords
             whis_x = [pos, pos]
@@ -4880,8 +4965,9 @@ or pandas.DataFrame
             # when separate calls to boxplot() would completely reset the axis
             # limits regardless of what was drawn before).  The sticky edges
             # are attached to the median lines, as they are always present.
-            interval[:] = (min(interval[0], min(positions) - .5),
-                           max(interval[1], max(positions) + .5))
+            setattr(self.dataLim, f"interval{axis_name}",
+                    (min(interval[0], min(positions) - .5),
+                     max(interval[1], max(positions) + .5)))
             for median, position in zip(medians, positions):
                 getattr(median.sticky_edges, axis_name).extend(
                     [position - .5, position + .5])

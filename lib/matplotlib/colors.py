@@ -416,7 +416,8 @@ def _to_rgba_no_colorcycle(c, alpha=None):
     if isinstance(c, mlxarr.ndarray):
         if c.ndim == 2 and c.shape[0] == 1:
             c = c.reshape(-1)
-        c = c.tolist()
+        c = [x.item() if hasattr(x, "item") and getattr(x, "size", 0) == 1
+             else x for x in c]
     # tuple color.
     if not mlxarr.iterable(c):
         raise ValueError(f"Invalid RGBA argument: {orig_c!r}")

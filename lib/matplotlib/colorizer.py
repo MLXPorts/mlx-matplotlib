@@ -147,7 +147,8 @@ class Colorizer:
 
         """
         # First check for special case, image input:
-        if isinstance(x, mlxarr.ndarray) and x.ndim == 3:
+        if ((isinstance(x, mlxarr.ndarray) or mlxarr.ma.isMaskedArray(x))
+                and x.ndim == 3):
             return self._pass_image_data(x, alpha, bytes, norm)
 
         # Otherwise run norm -> colormap pipeline
@@ -163,23 +164,24 @@ class Colorizer:
         Helper function to pass ndarray of shape (...,3) or (..., 4)
         through `to_rgba()`, see `to_rgba()` for docstring.
         """
-        if x.shape[2] == 3:
+        x_data = mlxarr.ma.getdata(x)
+        if x_data.shape[2] == 3:
             if alpha is None:
                 alpha = 1
-            if x.dtype == mlxarr.uint8:
+            if x_data.dtype == mlxarr.uint8:
                 alpha = mlxarr.uint8(alpha * 255)
-            m, n = x.shape[:2]
-            xx = mlxarr.empty(shape=(m, n, 4), dtype=x.dtype)
-            xx[:, :, :3] = x
+            m, n = x_data.shape[:2]
+            xx = mlxarr.empty(shape=(m, n, 4), dtype=x_data.dtype)
+            xx[:, :, :3] = x_data
             xx[:, :, 3] = alpha
-        elif x.shape[2] == 4:
-            xx = x
+        elif x_data.shape[2] == 4:
+            xx = x_data
         else:
             raise ValueError("Third dimension must be 3 or 4")
         if xx.dtype.kind == 'f':
             # If any of R, G, B, or A is nan, set to 0
-            if mlxarr.any(nans := mlxarr.isnan(x)):
-                if x.shape[2] == 4:
+            if mlxarr.any(nans := mlxarr.isnan(x_data)):
+                if x_data.shape[2] == 4:
                     xx = xx.copy()
                 xx[mlxarr.any(nans, axis=2), :] = 0
 

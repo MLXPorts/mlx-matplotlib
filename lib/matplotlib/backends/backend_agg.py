@@ -62,6 +62,13 @@ def _transform_to_memoryview(transform):
 
 
 def _plain_float_buffer(values, empty_fallback=None):
+    def mlx_to_nested(value):
+        if value.ndim == 0:
+            return float(value.item())
+        if value.ndim == 1:
+            return [float(item) for item in value]
+        return [mlx_to_nested(value[row]) for row in range(value.shape[0])]
+
     def shape_of(value):
         if not isinstance(value, list):
             return ()
@@ -71,7 +78,7 @@ def _plain_float_buffer(values, empty_fallback=None):
 
     values = mlxarr.asarray(values)
     shape = tuple(values.shape)
-    data = values.tolist()
+    data = mlx_to_nested(values)
     if not shape:
         shape = (1,)
         data = [data]
@@ -80,7 +87,7 @@ def _plain_float_buffer(values, empty_fallback=None):
             empty_fallback = [0.0]
         values = mlxarr.asarray(empty_fallback)
         shape = tuple(values.shape)
-        data = values.tolist()
+        data = mlx_to_nested(values)
     elif empty_fallback is not None:
         fallback_shape = shape_of(empty_fallback)
         if fallback_shape and shape == fallback_shape[1:]:

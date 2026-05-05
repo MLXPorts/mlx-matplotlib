@@ -190,7 +190,8 @@ class Registry(dict):
         else:
             # ... and avoid infinite recursion for pathological iterables for
             # which indexing returns instances of the same iterable class.
-            if type(first) is not type(x):
+            if (type(first) is not type(x)
+                    or getattr(first, "ndim", None) != getattr(x, "ndim", None)):
                 return self.get_converter(first)
         return None
 

@@ -39,7 +39,6 @@ import functools
 import itertools
 import textwrap
 import weakref
-import math
 from array import array as _array
 from matplotlib import _mlx_array as mlxarr
 inv = mlxarr.linalg.inv
@@ -56,6 +55,12 @@ DEBUG = False
 
 def _plain_float_data(values):
     if isinstance(values, mlxarr.ndarray):
+        if values.ndim == 0:
+            return float(values.item())
+        if values.ndim == 1:
+            return [float(value) for value in values]
+        return [_plain_float_data(values[row]) for row in range(values.shape[0])]
+    if hasattr(values, "tolist"):
         values = values.tolist()
     if isinstance(values, (list, tuple)):
         return [_plain_float_data(value) for value in values]
@@ -85,9 +90,13 @@ def _as_float_memoryview(values):
 
 
 def affine_transform(values, mtx):
-    result = _path_affine_transform(
-        mlxarr.asarray(values, dtype=float), mlxarr.asarray(mtx, dtype=float))
-    return mlxarr.array(result.tolist(), dtype=float)
+    if mlxarr._in_forked_child():
+        result = _path_affine_transform(
+            _as_float_memoryview(values), _as_float_memoryview(mtx))
+        return mlxarr.asarray(result, dtype=mlxarr.float64)
+    values = mlxarr.asarray(values, dtype=mlxarr.float64)
+    mtx = mlxarr.asarray(mtx, dtype=values.dtype)
+    return _path_affine_transform(values, mtx)
 
 
 def _maybe_scalar(value):
@@ -808,7 +817,9 @@ class Bbox(BboxBase):
             raise ValueError('Bbox points must be of the form '
                              '"[[x0, y0], [x1, y1]]".')
         self._points = points
-        self._minpos = _default_minpos.copy()
+        self._minpos = (mlxarr.array([mlxarr.inf, mlxarr.inf])
+                        if mlxarr._in_forked_child()
+                        else _default_minpos.copy())
         self._ignore = True
         # it is helpful in some contexts to know if the bbox is a
         # default or has been mutated; we store the orig points to
@@ -1972,8 +1983,7 @@ class Affine2D(Affine2DBase):
         """
         super().__init__(**kwargs)
         if matrix is None:
-            # A bit faster than mlxarr.identity(3).
-            matrix = IdentityTransform._mtx
+            matrix = mlxarr.identity(3, dtype=mlxarr.float64)
         self._mtx = matrix.copy()
         self._invalid = 0
 
@@ -2041,8 +2051,7 @@ class Affine2D(Affine2DBase):
         """
         Reset the underlying matrix to the identity transform.
         """
-        # A bit faster than mlxarr.identity(3).
-        self._mtx = IdentityTransform._mtx.copy()
+        self._mtx = mlxarr.identity(3, dtype=mlxarr.float64)
         self.invalidate()
         return self
 
@@ -2054,8 +2063,9 @@ class Affine2D(Affine2DBase):
         calls to :meth:`rotate`, :meth:`rotate_deg`, :meth:`translate`
         and :meth:`scale`.
         """
-        a = math.cos(theta)
-        b = math.sin(theta)
+        theta = mlxarr.asarray(theta, dtype=self._mtx.dtype)
+        a = mlxarr.cos(theta)
+        b = mlxarr.sin(theta)
         rot = mlxarr.identity(3, dtype=self._mtx.dtype)
         rot[0, 0] = a
         rot[0, 1] = -b
@@ -2074,7 +2084,10 @@ class Affine2D(Affine2DBase):
         calls to :meth:`rotate`, :meth:`rotate_deg`, :meth:`translate`
         and :meth:`scale`.
         """
-        return self.rotate(math.radians(degrees))
+        degrees = mlxarr.asarray(degrees, dtype=self._mtx.dtype)
+        radians_per_degree = mlxarr.asarray(0.017453292519943295,
+                                            dtype=self._mtx.dtype)
+        return self.rotate(degrees * radians_per_degree)
 
     def rotate_around(self, x, y, theta):
         """
@@ -2145,8 +2158,10 @@ class Affine2D(Affine2DBase):
         calls to :meth:`rotate`, :meth:`rotate_deg`, :meth:`translate`
         and :meth:`scale`.
         """
-        rx = math.tan(xShear)
-        ry = math.tan(yShear)
+        xShear = mlxarr.asarray(xShear, dtype=self._mtx.dtype)
+        yShear = mlxarr.asarray(yShear, dtype=self._mtx.dtype)
+        rx = mlxarr.tan(xShear)
+        ry = mlxarr.tan(yShear)
         sh = mlxarr.identity(3, dtype=self._mtx.dtype)
         sh[0, 1] = rx
         sh[1, 0] = ry
@@ -2165,7 +2180,12 @@ class Affine2D(Affine2DBase):
         calls to :meth:`rotate`, :meth:`rotate_deg`, :meth:`translate`
         and :meth:`scale`.
         """
-        return self.skew(math.radians(xShear), math.radians(yShear))
+        xShear = mlxarr.asarray(xShear, dtype=self._mtx.dtype)
+        yShear = mlxarr.asarray(yShear, dtype=self._mtx.dtype)
+        radians_per_degree = mlxarr.asarray(0.017453292519943295,
+                                            dtype=self._mtx.dtype)
+        return self.skew(xShear * radians_per_degree,
+                         yShear * radians_per_degree)
 
 
 class IdentityTransform(Affine2DBase):
@@ -2183,6 +2203,8 @@ class IdentityTransform(Affine2DBase):
 
     def get_matrix(self):
         # docstring inherited
+        if mlxarr._in_forked_child():
+            return mlxarr.identity(3, dtype=mlxarr.float64)
         return self._mtx
 
     def transform(self, values):

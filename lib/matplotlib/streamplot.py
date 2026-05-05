@@ -689,7 +689,7 @@ def interpgrid(a, xi, yi):
     """Fast 2D, linear interpolation on an integer grid"""
 
     Ny, Nx = mlxarr.shape(a)
-    if isinstance(xi, mlxarr.ndarray):
+    if isinstance(xi, (mlxarr.ndarray, mlxarr._PythonArray)):
         x = xi.astype(int)
         y = yi.astype(int)
         # Check that xn, yn don't exceed max index

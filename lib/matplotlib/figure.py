@@ -31,6 +31,7 @@ import inspect
 import itertools
 import functools
 import logging
+import math
 from numbers import Integral
 import threading
 from matplotlib import _mlx_array as mlxarr
@@ -2619,7 +2620,8 @@ None}, default: None
 
         figsize = _parse_figsize(figsize, dpi)
 
-        if not mlxarr.isfinite(figsize).all() or (mlxarr.array(figsize) < 0).any():
+        if (not all(math.isfinite(v) for v in figsize)
+                or any(v < 0 for v in figsize)):
             raise ValueError('figure size must be positive finite not '
                              f'{figsize}')
         self.bbox_inches = Bbox.from_bounds(0, 0, *figsize)

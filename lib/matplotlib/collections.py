@@ -1552,11 +1552,13 @@ class FillBetweenPolyCollection(PolyCollection):
             # the way down to 0 even if none of the dep1 sample points do.
             start = t_slice[0], f2_slice[0]
             end = t_slice[-1], f2_slice[-1]
+        start = mlxarr.stack(start)
+        end = mlxarr.stack(end)
 
         pts = mlxarr.concatenate((
-            mlxarr.asarray([start]),
+            mlxarr.expand_dims(start, 0),
             mlxarr.stack((t_slice, f1_slice), axis=-1),
-            mlxarr.asarray([end]),
+            mlxarr.expand_dims(end, 0),
             mlxarr.stack((t_slice, f2_slice), axis=-1)[::-1]))
 
         return self._fix_pts_xy_order(pts)

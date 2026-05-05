@@ -44,12 +44,14 @@ class LayoutGrid:
             self.name = f'{parent.name}.{self.name}'
         self.nrows = nrows
         self.ncols = ncols
-        self.height_ratios = mlxarr.atleast_1d(height_ratios)
         if height_ratios is None:
-            self.height_ratios = mlxarr.ones(nrows)
-        self.width_ratios = mlxarr.atleast_1d(width_ratios)
+            self.height_ratios = [1] * nrows
+        else:
+            self.height_ratios = mlxarr.atleast_1d(height_ratios).tolist()
         if width_ratios is None:
-            self.width_ratios = mlxarr.ones(ncols)
+            self.width_ratios = [1] * ncols
+        else:
+            self.width_ratios = mlxarr.atleast_1d(width_ratios).tolist()
 
         sn = self.name + '_'
         if not isinstance(parent, LayoutGrid):
@@ -69,7 +71,7 @@ class LayoutGrid:
         for todo in ['left', 'right', 'leftcb', 'rightcb']:
             # track the value so we can change only if a margin is larger
             # than the current value
-            self.margin_vals[todo] = mlxarr.zeros(ncols)
+            self.margin_vals[todo] = [0.0] * ncols
 
         sol = self.solver
 
@@ -83,7 +85,7 @@ class LayoutGrid:
 
         for todo in ['bottom', 'top', 'bottomcb', 'topcb']:
             self.margins[todo] = mlxarr.empty((nrows), dtype=object)
-            self.margin_vals[todo] = mlxarr.zeros(nrows)
+            self.margin_vals[todo] = [0.0] * nrows
 
         self.bottoms = [Variable(f'{sn}bottoms[{i}]') for i in range(nrows)]
         self.tops = [Variable(f'{sn}tops[{i}]') for i in range(nrows)]

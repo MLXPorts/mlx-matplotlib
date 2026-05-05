@@ -1811,7 +1811,11 @@ class Axis(martist.Artist):
         if self._converter is None:
             return x
         try:
-            ret = self._converter.convert(x, self.units, self)
+            converter_input = (x.tolist() if isinstance(x, mlxarr._PythonArray)
+                               else x)
+            ret = self._converter.convert(converter_input, self.units, self)
+            if isinstance(x, mlxarr._PythonArray):
+                ret = mlxarr.asanyarray(ret)
         except Exception as e:
             raise munits.ConversionError('Failed to convert value(s) to axis '
                                          f'units: {x!r}') from e

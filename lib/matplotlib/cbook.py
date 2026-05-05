@@ -1431,9 +1431,14 @@ def _check_1d(x):
     if (not hasattr(x, 'shape') or
             not hasattr(x, 'ndim') or
             len(x.shape) < 1):
-        return mlxarr.atleast_1d(x)
-    else:
-        return x
+        x = mlxarr.atleast_1d(x)
+    if (getattr(x, "ndim", None) == 1
+            and getattr(getattr(x, "dtype", None), "name", None) == "object"):
+        data = x.tolist() if hasattr(x, "tolist") else x
+        if isinstance(data, (list, tuple)) and any(
+                isinstance(item, (list, tuple)) for item in data):
+            raise ValueError("Input could not be cast to a 1D MLX array")
+    return x
 
 
 def _reshape_2D(X, name):
@@ -1450,6 +1455,15 @@ def _reshape_2D(X, name):
 
     # Unpack in case of e.g. Pandas or xarray object
     X = _unpack_to_array_backend(X)
+
+    if mlxarr.ma.isMaskedArray(X):
+        if len(X) == 0:
+            return [[]]
+        if X.ndim == 1:
+            return [X]
+        if X.ndim == 2:
+            return [X[:, j].reshape(-1) for j in range(X.shape[1])]
+        raise ValueError(f'{name} must have 2 or fewer dimensions')
 
     # Iterate over columns for ndarrays.
     if isinstance(X, mlxarr.ndarray):
@@ -1594,6 +1608,9 @@ def violin_stats(X, method=("GaussianKDE", "scott"), points=100, quantiles=None)
     if len(X) != len(quantiles):
         raise ValueError("List of violinplot statistics and quantiles values"
                          " must have the same length")
+    if any(len(q) and (mlxarr.any(q < 0) or mlxarr.any(q > 1))
+           for q in quantiles):
+        raise ValueError("Quantiles must be in the range [0, 1]")
 
     # Zip x and quantiles
     for (x, q) in zip(X, quantiles):

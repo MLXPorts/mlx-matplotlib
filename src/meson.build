@@ -120,9 +120,18 @@ extension_data = {
     'subdir': 'matplotlib',
     'sources': files(
       '_mlx_overrides.cpp',
-    ),
-    'dependencies': [pybind11_dep],
+    ) + [nanobind_combined_cpp],
+    'dependencies': [mlx_dep],
+    'cpp_args': [
+      '-I' + nanobind_include_dir,
+      '-I' + nanobind_robin_map_include_dir,
+      '-I' + mlx_include_dir,
+      '-DNB_DOMAIN=mlx',
+      '-DNB_STATIC',
+    ],
     'override_options': ['cpp_std=c++20'],
+    'build_rpath': mlx_lib_dir,
+    'install_rpath': mlx_lib_dir,
   },
   '_path': {
     'subdir': 'matplotlib',

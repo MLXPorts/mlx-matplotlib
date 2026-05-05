@@ -140,6 +140,87 @@ static mx::array evaluated_mlx_array(py::handle obj,
     return array;
 }
 
+static py::object py_from_mlx_array(const mx::array& array)
+{
+    nb::object nb_array = nb::cast(array);
+    Py_INCREF(nb_array.ptr());
+    return py::reinterpret_steal<py::object>(nb_array.ptr());
+}
+
+static bool is_supported_mlx_path_float(mx::Dtype dtype)
+{
+    return dtype == mx::float32 || dtype == mx::float64;
+}
+
+static mx::array mlx_affine_transform_2d(const mx::array& vertices,
+                                         const mx::array& matrix,
+                                         const mx::StreamOrDevice& stream)
+{
+    auto n = static_cast<mx::ShapeElem>(vertices.shape(0));
+    auto x = mx::slice(vertices, {0, 0}, {n, 1}, {1, 1}, stream);
+    auto y = mx::slice(vertices, {0, 1}, {n, 2}, {1, 1}, stream);
+
+    auto sx = mx::slice(matrix, {0, 0}, {1, 1}, {1, 1}, stream);
+    auto shx = mx::slice(matrix, {0, 1}, {1, 2}, {1, 1}, stream);
+    auto tx = mx::slice(matrix, {0, 2}, {1, 3}, {1, 1}, stream);
+    auto shy = mx::slice(matrix, {1, 0}, {2, 1}, {1, 1}, stream);
+    auto sy = mx::slice(matrix, {1, 1}, {2, 2}, {1, 1}, stream);
+    auto ty = mx::slice(matrix, {1, 2}, {2, 3}, {1, 1}, stream);
+
+    auto out_x = mx::add(
+        mx::add(mx::multiply(sx, x, stream),
+                mx::multiply(shx, y, stream),
+                stream),
+        tx,
+        stream);
+    auto out_y = mx::add(
+        mx::add(mx::multiply(shy, x, stream),
+                mx::multiply(sy, y, stream),
+                stream),
+        ty,
+        stream);
+
+    std::vector<mx::array> columns;
+    columns.reserve(2);
+    columns.push_back(out_x);
+    columns.push_back(out_y);
+    return mx::concatenate(std::move(columns), 1, stream);
+}
+
+static py::object Py_mlx_affine_transform(py::handle vertices_obj,
+                                          py::handle transform_obj,
+                                          const mx::StreamOrDevice& stream)
+{
+    auto vertices = as_mlx_array(vertices_obj);
+    auto matrix = as_mlx_array(transform_obj);
+
+    if (!is_supported_mlx_path_float(vertices.dtype())) {
+        throw py::value_error("vertices must be float32 or float64");
+    }
+    if (matrix.dtype() != vertices.dtype()) {
+        throw py::value_error("affine matrix dtype must match vertices dtype");
+    }
+    if (matrix.ndim() != 2 || matrix.shape(0) != 3 || matrix.shape(1) != 3) {
+        throw py::value_error("Invalid affine transformation matrix");
+    }
+    if (vertices.ndim() == 2) {
+        if (vertices.shape(1) != 2) {
+            throw py::value_error("vertices must have shape (N, 2)");
+        }
+        return py_from_mlx_array(mlx_affine_transform_2d(vertices, matrix, stream));
+    }
+    if (vertices.ndim() == 1) {
+        if (vertices.shape(0) != 2) {
+            throw std::runtime_error("Invalid vertices array.");
+        }
+        auto row = mx::reshape(vertices, {1, 2}, stream);
+        auto transformed = mlx_affine_transform_2d(row, matrix, stream);
+        return py_from_mlx_array(mx::reshape(transformed, {2}, stream));
+    }
+
+    throw py::value_error("vertices must be 1D or 2D");
+}
+
 static py::object dtype_from_buffer_format(const char *format)
 {
     py::object mx_module = py::module_::import("mlx.core");
@@ -304,9 +385,13 @@ static py::object Py_affine_transform(py::object vertices_obj,
                                       py::object transform_obj,
                                       py::object stream)
 {
+    auto stream_or_device = as_stream_or_device(stream);
+    if (is_mlx_array_like(vertices_obj) && is_mlx_array_like(transform_obj)) {
+        return Py_mlx_affine_transform(vertices_obj, transform_obj, stream_or_device);
+    }
+
     agg::trans_affine trans;
     convert_trans_affine_with_stream(transform_obj, trans, stream);
-    auto stream_or_device = as_stream_or_device(stream);
 
     if (is_mlx_array_like(vertices_obj)) {
         auto vertices = evaluated_mlx_array(vertices_obj, stream_or_device);

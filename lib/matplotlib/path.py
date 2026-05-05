@@ -23,8 +23,16 @@ from .bezier import BezierSegment
 def _path_values_to_memoryview(values):
     if values is None:
         return None
+
+    def mlx_to_nested(value):
+        if value.ndim == 0:
+            return float(value.item())
+        if value.ndim == 1:
+            return [float(item) for item in value]
+        return [mlx_to_nested(value[row]) for row in range(value.shape[0])]
+
     if isinstance(values, mlxarr.ndarray):
-        values = values.tolist()
+        values = mlx_to_nested(values)
 
     def shape_of(value):
         if isinstance(value, mlxarr.ndarray):
@@ -37,7 +45,7 @@ def _path_values_to_memoryview(values):
 
     def flatten(value):
         if isinstance(value, mlxarr.ndarray):
-            value = value.tolist()
+            value = mlx_to_nested(value)
         if isinstance(value, (list, tuple)):
             for item in value:
                 yield from flatten(item)

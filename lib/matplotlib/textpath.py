@@ -116,16 +116,20 @@ class TextToPath:
             verts1, codes1 = glyph_map[glyph_id]
             verts1 = mlxarr.asarray(verts1)
             codes1 = mlxarr.asarray(codes1)
-            verts.extend((verts1 * scale + [xposition, yposition]).tolist())
-            codes.extend(codes1.tolist())
+            verts.append(verts1 * scale + mlxarr.asarray([xposition, yposition]))
+            codes.append(codes1)
         for verts1, codes1 in rects:
-            verts.extend(mlxarr.asarray(verts1).tolist())
-            codes.extend(mlxarr.asarray(codes1).tolist())
+            verts.append(mlxarr.asarray(verts1))
+            codes.append(mlxarr.asarray(codes1))
 
         # Make sure an empty string or one with nothing to print
         # (e.g. only spaces & newlines) will be valid/empty path
         if not verts:
             verts = mlxarr.empty((0, 2))
+            codes = mlxarr.empty((0,), dtype=mlxarr.uint8)
+        else:
+            verts = mlxarr.concatenate(verts)
+            codes = mlxarr.concatenate(codes).astype(mlxarr.uint8)
 
         return verts, codes
 

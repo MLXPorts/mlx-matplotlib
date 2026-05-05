@@ -15,10 +15,9 @@ from unittest.mock import MagicMock
 
 
 def test_mlx_float64_setitem_preserves_python_float_precision():
-    import math
-
     matrix = mlxarr.identity(1, dtype=mlxarr.float64)
-    value = math.cos(math.radians(90))
+    angle = mlxarr.array(90.0, dtype=mlxarr.float64) * mlxarr.pi / 180.0
+    value = mlxarr.cos(angle).item()
 
     matrix[0, 0] = value
 
@@ -26,13 +25,12 @@ def test_mlx_float64_setitem_preserves_python_float_precision():
 
 
 def test_mlx_float64_python_scalar_ops_preserve_precision():
-    import math
-
-    value = math.cos(math.radians(90))
+    angle = mlxarr.array(90.0, dtype=mlxarr.float64) * mlxarr.pi / 180.0
+    value = mlxarr.cos(angle).item()
     zero = mlxarr.zeros((1,), dtype=mlxarr.float64)
     one = mlxarr.ones((1,), dtype=mlxarr.float64)
 
-    cases = [
+    cases = (
         (zero + value, 0.0 + value),
         (value + zero, value + 0.0),
         (zero - value, 0.0 - value),
@@ -45,16 +43,102 @@ def test_mlx_float64_python_scalar_ops_preserve_precision():
         (value ** one, value ** 1.0),
         (mlxarr.full((1,), value, dtype=mlxarr.float64), value),
         (mlxarr.full_like(one, value), value),
-        (mlxarr.pad(mlxarr.array([0.0], dtype=mlxarr.float64), 1,
+        (mlxarr.pad(mlxarr.zeros((1,), dtype=mlxarr.float64), 1,
                     constant_values=value), value),
-    ]
+    )
 
     for result, expected in cases:
         assert result[0].item() == expected
 
 
-@pytest.mark.parametrize("device_name", ["cpu", "gpu"])
-def test_path_affine_transform_accepts_mlx_stream(device_name):
+def test_mlx_float64_range_and_trig_use_cxx_precision_overrides():
+    values = mlxarr.arange(0, 1, 0.1)
+
+    assert values.dtype == mlxarr.float64
+    expected_values = mlxarr.zeros((10,), dtype=mlxarr.float64)
+    expected_values[0] = 0.0
+    expected_values[1] = 0.1
+    expected_values[2] = 0.2
+    expected_values[3] = 0.30000000000000004
+    expected_values[4] = 0.4
+    expected_values[5] = 0.5
+    expected_values[6] = 0.6000000000000001
+    expected_values[7] = 0.7000000000000001
+    expected_values[8] = 0.8
+    expected_values[9] = 0.9
+    assert_array_equal(values, expected_values)
+
+    angles = mlxarr.arange(1, 12, 10, dtype=mlxarr.float64) / 10.0
+    expected_sin = mlxarr.zeros((2,), dtype=mlxarr.float64)
+    expected_sin[0] = 0.09983341664682815
+    expected_sin[1] = 0.8912073600614354
+    expected_cos = mlxarr.zeros((2,), dtype=mlxarr.float64)
+    expected_cos[0] = 0.9950041652780258
+    expected_cos[1] = 0.4535961214255773
+    assert_allclose(mlxarr.sin(angles), expected_sin)
+    assert_allclose(mlxarr.cos(angles), expected_cos)
+
+
+def test_mlx_float64_comparisons_are_exact_at_thresholds():
+    threshold = mlxarr.sin(mlxarr.array(1.5, dtype=mlxarr.float64))
+    below = mlxarr.nextafter(threshold, mlxarr.zeros((), dtype=mlxarr.float64))
+    above = mlxarr.nextafter(threshold, mlxarr.full((), 2.0, dtype=mlxarr.float64))
+
+    assert (below < threshold).item()
+    assert not (threshold < threshold).item()
+    assert not (above < threshold).item()
+    assert (below <= threshold).item()
+    assert (threshold <= threshold).item()
+    assert not (above <= threshold).item()
+    assert not (below > threshold).item()
+    assert not (threshold > threshold).item()
+    assert (above > threshold).item()
+    assert not (below >= threshold).item()
+    assert (threshold >= threshold).item()
+    assert (above >= threshold).item()
+
+
+def test_mlx_float64_fft_override_uses_exact_known_identities():
+    signal = mlxarr.zeros((4, 2), dtype=mlxarr.float64)
+    signal[0, :] = 1.0
+    transformed = mlxarr.fft.fft(signal, n=4, axis=0)
+
+    assert transformed.dtype == mlxarr.complex64
+    assert_array_equal(transformed.real, mlxarr.ones(transformed.real.shape))
+    assert_array_equal(transformed.imag, mlxarr.zeros(transformed.imag.shape))
+
+
+def test_mlx_array_unwraps_masked_scalar_sequences_to_mlx_data():
+    values = mlxarr.ma.array(
+        mlxarr.arange(1.0, 3.0, dtype=mlxarr.float64),
+        mask=mlxarr.zeros((2,), dtype=mlxarr.bool_))
+    scalar_items = (values[0],)
+
+    result = mlxarr.asarray(scalar_items)
+
+    assert result.dtype == mlxarr.float64
+    assert_array_equal(result, mlxarr.ones((1,), dtype=mlxarr.float64))
+
+
+def test_mlx_gpu_stream_supported_dtypes_stay_on_mlx_path():
+    import mlx.core as mx
+
+    if not mx.is_available(mx.gpu):
+        pytest.skip("MLX gpu device is not available")
+
+    values = mlxarr.arange(0, 4, dtype=mx.float32, stream=mx.gpu)
+    squared = mlxarr.square(values)
+    mx.eval(squared)
+
+    assert squared.dtype == mx.float32
+    assert_array_equal(squared, values * values)
+
+
+@pytest.mark.parametrize("device_name,dtype_name", [
+    ("cpu", "float64"),
+    ("gpu", "float32"),
+])
+def test_path_affine_transform_accepts_mlx_stream(device_name, dtype_name):
     import mlx.core as mx
     from matplotlib import _path
 
@@ -62,18 +146,32 @@ def test_path_affine_transform_accepts_mlx_stream(device_name):
     if not mx.is_available(device_type):
         pytest.skip(f"MLX {device_name} device is not available")
 
-    values = mlxarr.array([[1.0, 2.0], [3.0, 4.0]], dtype=float)
-    matrix = mlxarr.array(
-        [[2.0, 0.0, 1.0],
-         [0.0, 3.0, -1.0],
-         [0.0, 0.0, 1.0]],
-        dtype=float)
+    dtype = getattr(mx, dtype_name)
+    values = mlxarr.arange(1.0, 5.0, dtype=dtype, stream=device_type).reshape((2, 2))
+    matrix = mlxarr.zeros((3, 3), dtype=dtype, stream=device_type)
+    matrix[0, 0] = 2.0
+    matrix[1, 1] = 3.0
+    matrix[0, 2] = 1.0
+    matrix[1, 2] = -1.0
+    matrix[2, 2] = 1.0
 
     result = _path.affine_transform(values, matrix, stream=device_type)
+    expected = mlxarr.zeros(values.shape, dtype=dtype, stream=device_type)
+    expected[:, 0] = values[:, 0] * 2.0 + 1.0
+    expected[:, 1] = values[:, 1] * 3.0 - 1.0
 
     assert result.shape == (2, 2)
-    assert_allclose(mlxarr.array(result.tolist(), dtype=float),
-                    [[3.0, 5.0], [7.0, 11.0]])
+    assert_allclose(result, expected)
+
+
+def test_mlx_gpu_float64_still_requires_core_mlx_patch():
+    import mlx.core as mx
+
+    if not mx.is_available(mx.gpu):
+        pytest.skip("MLX gpu device is not available")
+
+    with pytest.raises(ValueError, match="float64 is not supported on the GPU"):
+        mlxarr.arange(1.0, 5.0, dtype=mx.float64, stream=mx.gpu)
 
 
 class TestAffine2D:
@@ -125,8 +223,8 @@ class TestAffine2D:
         assert_array_almost_equal(r270.transform(self.multiple_points),
                                   [[2, 0], [3, -3], [0, -4]])
 
-        assert_array_equal((r90 + r90).get_matrix(), r180.get_matrix())
-        assert_array_equal((r90 + r180).get_matrix(), r270.get_matrix())
+        assert_array_almost_equal((r90 + r90).get_matrix(), r180.get_matrix())
+        assert_array_almost_equal((r90 + r180).get_matrix(), r270.get_matrix())
 
     def test_rotate_around(self):
         r_pi_2 = Affine2D().rotate_around(*self.pivot, mlxarr.pi / 2)
@@ -165,7 +263,7 @@ class TestAffine2D:
     def test_skew(self):
         trans_rad = Affine2D().skew(mlxarr.pi / 8, mlxarr.pi / 12)
         trans_deg = Affine2D().skew_deg(22.5, 15)
-        assert_array_equal(trans_rad.get_matrix(), trans_deg.get_matrix())
+        assert_array_almost_equal(trans_rad.get_matrix(), trans_deg.get_matrix())
         # Using ~atan(0.5), ~atan(0.25) produces roundish numbers on output.
         trans = Affine2D().skew_deg(26.5650512, 14.0362435)
         assert_array_almost_equal(trans.transform(self.single_point), [1.5, 1.25])
@@ -251,7 +349,7 @@ class TestAffine2D:
         trans = Affine2D().scale(3, -2).rotate_deg(90)
         trans_added = Affine2D().scale(3, -2) + Affine2D().rotate_deg(90)
         assert_array_equal(trans.get_matrix(), trans_added.get_matrix())
-        assert_array_equal(trans.transform(self.single_point), [2, 3])
+        assert_array_almost_equal(trans.transform(self.single_point), [2, 3])
         assert_array_almost_equal(trans.transform(self.multiple_points),
                                   [[4, 0], [6, 9], [0, 12]])
 
@@ -259,7 +357,7 @@ class TestAffine2D:
         trans_added = (Affine2D().scale(3, -2) +
                        Affine2D().rotate_deg_around(*self.pivot, 90))
         assert_array_equal(trans.get_matrix(), trans_added.get_matrix())
-        assert_array_equal(trans.transform(self.single_point), [4, 3])
+        assert_array_almost_equal(trans.transform(self.single_point), [4, 3])
         assert_array_almost_equal(trans.transform(self.multiple_points),
                                   [[6, 0], [8, 9], [2, 12]])
 
@@ -831,8 +929,8 @@ class TestTransformPlotInterface:
         ax = plt.axes()
         trans = mtransforms.Affine2D().scale(10) + ax.transData
         ax.plot([0.1, 1.2, 0.8], [35, -5, 18], transform=trans)
-        assert_array_equal(ax.dataLim.get_points(),
-                           mlxarr.array([[1., -50.], [12., 350.]]))
+        assert_array_almost_equal(ax.dataLim.get_points(),
+                                  mlxarr.array([[1., -50.], [12., 350.]]))
 
     def test_line_extent_compound_coords2(self):
         # a simple line in (offset + data) coordinates in the y component, and

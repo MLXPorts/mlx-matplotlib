@@ -67,7 +67,7 @@ def subset_font_raw(font_in, font_out, unicodes, opts):
     else:
         name = None
     if '--script' in opts:
-        pe_fn = "/tmp/script.pe"
+        pe_fn = f"{font_out}.pe"
         pe = open(pe_fn, 'w')
     else:
         pe = None

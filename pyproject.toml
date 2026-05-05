@@ -48,7 +48,7 @@ requires-python = ">=3.11"
 # Should be a copy of the build dependencies below.
 dev = [
     "meson-python>=0.13.1,!=0.17.*",
-    "nanobind>=2.4.0",
+    "nanobind==2.4.0",
     # pybind11 3.x removed APIs we rely on (e.g. memoryview.request()).
     "pybind11>=2.13.2,!=2.13.3,<4",
     "setuptools_scm>=7",
@@ -76,7 +76,7 @@ requires = [
     # meson-python 0.17.x breaks symlinks in sdists. You can remove this pin if
     # you really need it and aren't using an sdist.
     "meson-python>=0.13.1,!=0.17.*",
-    "nanobind>=2.4.0",
+    "nanobind==2.4.0",
     # pybind11 3.x removed APIs we rely on (e.g. memoryview.request()).
     "pybind11>=2.13.2,!=2.13.3,<4",
     "setuptools_scm>=7",

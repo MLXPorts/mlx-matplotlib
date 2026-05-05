@@ -494,77 +494,146 @@ std::string shape_to_string(const ArrayInfo &info)
     return result;
 }
 
+mx::Dtype dtype_from_array_info(const ArrayInfo &info)
+{
+    if (buffer_is<std::uint8_t>(info)) {
+        return mx::uint8;
+    }
+    if (buffer_is<std::int8_t>(info)) {
+        return mx::int8;
+    }
+    if (buffer_is<std::uint16_t>(info)) {
+        return mx::uint16;
+    }
+    if (buffer_is<std::int16_t>(info)) {
+        return mx::int16;
+    }
+    if (buffer_is<float>(info)) {
+        return mx::float32;
+    }
+    if (buffer_is<double>(info)) {
+        return mx::float64;
+    }
+    throw std::invalid_argument("unsupported array dtype");
+}
+
+mx::Shape shape_from_array_info(const ArrayInfo &info)
+{
+    mx::Shape shape;
+    shape.reserve(info.shape.size());
+    for (auto extent : info.shape) {
+        shape.push_back(static_cast<mx::ShapeElem>(extent));
+    }
+    return shape;
+}
+
+std::vector<std::uint8_t> copy_uint8_buffer(const ArrayInfo &info)
+{
+    size_t size = 1;
+    for (auto extent : info.shape) {
+        size *= static_cast<size_t>(extent);
+    }
+
+    std::vector<std::uint8_t> data(size);
+    auto *base = static_cast<const std::uint8_t *>(info.ptr);
+    for (size_t linear = 0; linear < size; ++linear) {
+        auto remaining = linear;
+        py::ssize_t offset = 0;
+        for (py::ssize_t axis = info.ndim - 1; axis >= 0; --axis) {
+            auto extent = static_cast<size_t>(info.shape[axis]);
+            auto index = extent == 0 ? 0 : remaining % extent;
+            remaining = extent == 0 ? 0 : remaining / extent;
+            offset += static_cast<py::ssize_t>(index) * info.strides[axis];
+        }
+        data[linear] = *(base + offset);
+    }
+    return data;
+}
+
+mx::array mlx_array_from_info(const ArrayInfo &info)
+{
+    auto dtype = dtype_from_array_info(info);
+    if (dtype != mx::uint8) {
+        throw std::invalid_argument("image comparison arrays must be uint8");
+    }
+    auto data = copy_uint8_buffer(info);
+    return mx::array(data.begin(), shape_from_array_info(info), mx::uint8);
+}
+
 static py::tuple calculate_rms_and_diff(py::object expected_image,
                                        py::object actual_image,
                                        py::object stream)
 {
     auto stream_or_device = as_stream_or_device(stream);
-    auto expected = get_array_info(expected_image, false, stream_or_device);
-    auto actual = get_array_info(actual_image, false, stream_or_device);
+    auto expected_info = get_array_info(expected_image, false, stream_or_device);
+    auto actual_info = get_array_info(actual_image, false, stream_or_device);
 
-    if (expected.ndim != 3) {
+    if (expected_info.ndim != 3) {
         throw_image_comparison_failure("Expected image must be 3-dimensional, but is "
-                                       + dimensionality(expected.ndim));
+                                       + dimensionality(expected_info.ndim));
     }
-    if (actual.ndim != 3) {
+    if (actual_info.ndim != 3) {
         throw_image_comparison_failure("Actual image must be 3-dimensional, but is "
-                                       + dimensionality(actual.ndim));
+                                       + dimensionality(actual_info.ndim));
     }
-    if (!buffer_is<std::uint8_t>(expected)) {
+    if (!buffer_is<std::uint8_t>(expected_info)) {
         throw_image_comparison_failure("Expected image must be uint8");
     }
-    if (!buffer_is<std::uint8_t>(actual)) {
+    if (!buffer_is<std::uint8_t>(actual_info)) {
         throw_image_comparison_failure("Actual image must be uint8");
     }
 
-    if (expected.shape[2] != 3 && expected.shape[2] != 4) {
+    if (expected_info.shape[2] != 3 && expected_info.shape[2] != 4) {
         throw_image_comparison_failure("Expected image must be RGB or RGBA but has depth "
-                                       + std::to_string(expected.shape[2]));
+                                       + std::to_string(expected_info.shape[2]));
     }
-    if (actual.shape[2] != expected.shape[2]
-        || actual.shape[0] != expected.shape[0]
-        || actual.shape[1] != expected.shape[1]) {
+    if (actual_info.shape[2] != expected_info.shape[2]
+        || actual_info.shape[0] != expected_info.shape[0]
+        || actual_info.shape[1] != expected_info.shape[1]) {
         throw_image_comparison_failure("Image sizes do not match expected size: "
-                                       + shape_to_string(expected)
+                                       + shape_to_string(expected_info)
                                        + " actual size "
-                                       + shape_to_string(actual));
+                                       + shape_to_string(actual_info));
     }
 
-    auto height = expected.shape[0];
-    auto width = expected.shape[1];
-    auto depth = expected.shape[2];
+    auto expected = expected_info.mlx_array
+        ? *expected_info.mlx_array
+        : mlx_array_from_info(expected_info);
+    auto actual = actual_info.mlx_array
+        ? *actual_info.mlx_array
+        : mlx_array_from_info(actual_info);
 
-    std::vector<unsigned char> diff;
-    diff.resize(static_cast<size_t>(height * width * depth));
+    auto expected_i32 = mx::astype(expected, mx::int32, stream_or_device);
+    auto actual_i32 = mx::astype(actual, mx::int32, stream_or_device);
+    auto diff_i32 = mx::abs(mx::subtract(expected_i32, actual_i32, stream_or_device),
+                            stream_or_device);
+    auto diff_float = mx::astype(diff_i32, mx::float32, stream_or_device);
+    auto rms_array = mx::sqrt(mx::mean(mx::square(diff_float, stream_or_device),
+                                       stream_or_device),
+                              stream_or_device);
+    auto diff_uint8 = mx::astype(diff_i32, mx::uint8, stream_or_device);
 
-    auto at = [](const ArrayInfo &info, py::ssize_t y, py::ssize_t x, py::ssize_t c) {
-        auto base = static_cast<const unsigned char *>(info.ptr);
-        auto offset = y * info.strides[0] + x * info.strides[1] + c * info.strides[2];
-        return *(base + offset);
-    };
-
-    double sum_sq = 0.0;
-    for (py::ssize_t y = 0; y < height; ++y) {
-        for (py::ssize_t x = 0; x < width; ++x) {
-            for (py::ssize_t c = 0; c < depth; ++c) {
-                auto e = at(expected, y, x, c);
-                auto a = at(actual, y, x, c);
-                auto d = static_cast<int>(e) - static_cast<int>(a);
-                sum_sq += static_cast<double>(d * d);
-                diff[static_cast<size_t>((y * width + x) * depth + c)] = static_cast<unsigned char>(std::abs(d));
-            }
+    double rms = 0.0;
+    {
+        py::gil_scoped_release release;
+        rms_array.eval();
+        diff_uint8.eval();
+        if (has_explicit_stream(stream_or_device)) {
+            mx::synchronize(mx::to_stream(stream_or_device));
         }
+        rms = static_cast<double>(rms_array.item<float>());
     }
 
-    double rms = std::sqrt(sum_sq / static_cast<double>(height * width * depth));
-
-    // Return diff as a shaped memoryview so callers can wrap it into an MLX array.
+    auto height = expected_info.shape[0];
+    auto width = expected_info.shape[1];
+    auto depth = expected_info.shape[2];
+    auto nbytes = static_cast<py::ssize_t>(height * width * depth);
     py::bytearray ba = py::reinterpret_steal<py::bytearray>(
-        PyByteArray_FromStringAndSize(nullptr, static_cast<py::ssize_t>(diff.size())));
+        PyByteArray_FromStringAndSize(
+            reinterpret_cast<const char *>(diff_uint8.data<std::uint8_t>()), nbytes));
     if (!ba) {
         throw py::error_already_set();
     }
-    std::memcpy(PyByteArray_AsString(ba.ptr()), diff.data(), diff.size());
     py::object mv = py::module_::import("builtins").attr("memoryview")(ba);
     mv = mv.attr("cast")("B", py::make_tuple(height, width, depth));
 

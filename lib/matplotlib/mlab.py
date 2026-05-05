@@ -314,7 +314,7 @@ def _spectral_helper(x, y=None, NFFT=None, Fs=None, detrend_func=None,
 
     if sys.maxsize > 2**32:
         result = mlxarr.lib.stride_tricks.sliding_window_view(
-            x, NFFT, axis=0)[::NFFT - noverlap].T
+            x, NFFT, axis=0, step=NFFT - noverlap).T
     else:
         # The MLXArrayBackend version on 32-bit will OOM, so use old implementation.
         result = _stride_windows(x, NFFT, noverlap=noverlap)
@@ -327,7 +327,7 @@ def _spectral_helper(x, y=None, NFFT=None, Fs=None, detrend_func=None,
         # if same_data is False, mode must be 'psd'
         if sys.maxsize > 2**32:
             resultY = mlxarr.lib.stride_tricks.sliding_window_view(
-                y, NFFT, axis=0)[::NFFT - noverlap].T
+                y, NFFT, axis=0, step=NFFT - noverlap).T
         else:
             # The MLXArrayBackend version on 32-bit will OOM, so use old implementation.
             resultY = _stride_windows(y, NFFT, noverlap=noverlap)

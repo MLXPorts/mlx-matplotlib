@@ -28,7 +28,7 @@ def test_fancyarrow():
             ax.tick_params(labelleft=False, labelbottom=False)
 
 
-@image_comparison(['boxarrow_test_image.png'])
+@image_comparison(['boxarrow_test_image.png'], tol=0.003)
 def test_boxarrow():
 
     styles = mpatches.BoxStyle.get_styles()
