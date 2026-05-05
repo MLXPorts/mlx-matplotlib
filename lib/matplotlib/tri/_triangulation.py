@@ -1,5 +1,5 @@
 import sys
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib import _api
 
 
@@ -40,8 +40,8 @@ class Triangulation:
     def __init__(self, x, y, triangles=None, mask=None):
         from matplotlib import _qhull
 
-        self.x = mlxarr.asarray(x, dtype=mlxarr.float64)
-        self.y = mlxarr.asarray(y, dtype=mlxarr.float64)
+        self.x = mx.asarray(x, dtype=mx.float64)
+        self.y = mx.asarray(y, dtype=mx.float64)
         if self.x.shape != self.y.shape or self.x.ndim != 1:
             raise ValueError("x and y must be equal-length 1D arrays, but "
                              f"found shapes {self.x.shape!r} and "
@@ -61,7 +61,7 @@ class Triangulation:
             # Triangulation specified. Copy, since we may correct triangle
             # orientation.
             try:
-                self.triangles = mlxarr.array(triangles, dtype=mlxarr.int32, order='C')
+                self.triangles = mx.array(triangles, dtype=mx.int32, order='C')
             except ValueError as e:
                 raise ValueError('triangles must be a (N, 3) int array, not '
                                  f'{triangles!r}') from e
@@ -97,8 +97,8 @@ class Triangulation:
         ``z = array[tri, 0] * x  + array[tri, 1] * y + array[tri, 2]``.
         """
         # C++ returns a shaped memoryview; convert to an MLX array for downstream ops.
-        return mlxarr.asarray(self.get_cpp_triangulation().calculate_plane_coefficients(z),
-                          dtype=mlxarr.float64)
+        return mx.asarray(self.get_cpp_triangulation().calculate_plane_coefficients(z),
+                          dtype=mx.float64)
 
     @property
     def edges(self):
@@ -113,8 +113,8 @@ class Triangulation:
         if self._edges is None:
             # C++ returns a shaped memoryview; convert to an MLX array so it can
             # be used for advanced indexing (e.g. x[edges]).
-            self._edges = mlxarr.asarray(self.get_cpp_triangulation().get_edges(),
-                                     dtype=mlxarr.int32)
+            self._edges = mx.asarray(self.get_cpp_triangulation().get_edges(),
+                                     dtype=mx.int32)
         return self._edges
 
     def get_cpp_triangulation(self):
@@ -181,7 +181,7 @@ class Triangulation:
             from_args = True
         if triangles is not None:
             try:
-                triangles = mlxarr.asarray(triangles, dtype=mlxarr.int32)
+                triangles = mx.asarray(triangles, dtype=mx.int32)
             except ValueError:
                 triangles = None
         if triangles is not None and (triangles.ndim != 2 or
@@ -218,8 +218,8 @@ class Triangulation:
         """
         if self._neighbors is None:
             # C++ returns a shaped memoryview; convert to an MLX array for consistency.
-            self._neighbors = mlxarr.asarray(self.get_cpp_triangulation().get_neighbors(),
-                                         dtype=mlxarr.int32)
+            self._neighbors = mx.asarray(self.get_cpp_triangulation().get_neighbors(),
+                                         dtype=mx.int32)
         return self._neighbors
 
     def set_mask(self, mask):
@@ -233,7 +233,7 @@ class Triangulation:
         if mask is None:
             self.mask = None
         else:
-            self.mask = mlxarr.asarray(mask, dtype=bool)
+            self.mask = mx.asarray(mask, dtype=bool)
             if self.mask.shape != (self.triangles.shape[0],):
                 raise ValueError('mask array must have same length as '
                                  'triangles array')

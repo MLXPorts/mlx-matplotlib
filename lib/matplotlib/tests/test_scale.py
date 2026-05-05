@@ -12,7 +12,7 @@ from matplotlib.ticker import (
 )
 from matplotlib.testing.decorators import check_figures_equal, image_comparison
 from matplotlib.transforms import IdentityTransform
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.mlx_testing import assert_allclose
 import io
 import pytest
@@ -37,22 +37,22 @@ def test_symlog_mask_nan():
     slt = SymmetricalLogTransform(10, 2, 1)
     slti = slt.inverted()
 
-    x = mlxarr.arange(-1.5, 5, 0.5)
+    x = mx.arange(-1.5, 5, 0.5)
     out = slti.transform_non_affine(slt.transform_non_affine(x))
     assert_allclose(out, x)
     assert type(out) is type(x)
 
-    x[4] = mlxarr.nan
+    x[4] = mx.nan
     out = slti.transform_non_affine(slt.transform_non_affine(x))
     assert_allclose(out, x)
     assert type(out) is type(x)
 
-    x = mlxarr.ma.array(x)
+    x = mx.ma.array(x)
     out = slti.transform_non_affine(slt.transform_non_affine(x))
     assert_allclose(out, x)
     assert type(out) is type(x)
 
-    x[3] = mlxarr.ma.masked
+    x[3] = mx.ma.masked
     out = slti.transform_non_affine(slt.transform_non_affine(x))
     assert_allclose(out, x)
     assert type(out) is type(x)
@@ -63,7 +63,7 @@ def test_logit_scales():
     fig, ax = plt.subplots()
 
     # Typical extinction curve for logit
-    x = mlxarr.array([0.001, 0.003, 0.01, 0.03, 0.1, 0.2, 0.3, 0.4, 0.5,
+    x = mx.array([0.001, 0.003, 0.01, 0.03, 0.1, 0.2, 0.3, 0.4, 0.5,
                   0.6, 0.7, 0.8, 0.9, 0.97, 0.99, 0.997, 0.999])
     y = 1.0 / x
 
@@ -71,16 +71,16 @@ def test_logit_scales():
     ax.set_xscale('logit')
     ax.grid(True)
     bbox = ax.get_tightbbox(fig.canvas.get_renderer())
-    assert mlxarr.isfinite(bbox.x0)
-    assert mlxarr.isfinite(bbox.y0)
+    assert mx.isfinite(bbox.x0)
+    assert mx.isfinite(bbox.y0)
 
 
 def test_log_scatter():
     """Issue #1799"""
     fig, ax = plt.subplots(1)
 
-    x = mlxarr.arange(10)
-    y = mlxarr.arange(10) - 1
+    x = mx.arange(10)
+    y = mx.arange(10) - 1
 
     ax.scatter(x, y)
 
@@ -96,7 +96,7 @@ def test_log_scatter():
 
 def test_logscale_subs():
     fig, ax = plt.subplots()
-    ax.set_yscale('log', subs=mlxarr.array([2, 3, 4]))
+    ax.set_yscale('log', subs=mx.array([2, 3, 4]))
     # force draw
     fig.canvas.draw()
 
@@ -105,13 +105,13 @@ def test_logscale_subs():
 def test_logscale_mask():
     # Check that zero values are masked correctly on log scales.
     # See github issue 8045
-    xs = mlxarr.linspace(0, 50, 1001)
+    xs = mx.linspace(0, 50, 1001)
 
     fig, ax = plt.subplots()
-    ax.plot(mlxarr.exp(-xs**2))
+    ax.plot(mx.exp(-xs**2))
     fig.canvas.draw()
     ax.set(yscale="log",
-           yticks=10.**mlxarr.arange(-300, 0, 24))  # Backcompat tick selection.
+           yticks=10.**mx.arange(-300, 0, 24))  # Backcompat tick selection.
 
 
 def test_extra_kwargs_raise():
@@ -144,22 +144,22 @@ def test_logscale_transform_repr():
 @image_comparison(['logscale_nonpos_values.png'],
                   remove_text=True, tol=0.02, style='mpl20')
 def test_logscale_nonpos_values():
-    mlxarr.random.seed(19680801)
-    xs = mlxarr.random.normal(size=int(1e3))
+    mx.random.seed(19680801)
+    xs = mx.random.normal(size=int(1e3))
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
     ax1.hist(xs, range=(-5, 5), bins=10)
     ax1.set_yscale('log')
     ax2.hist(xs, range=(-5, 5), bins=10)
     ax2.set_yscale('log', nonpositive='mask')
 
-    xdata = mlxarr.arange(0, 10, 0.01)
-    ydata = mlxarr.exp(-xdata)
-    edata = 0.2*(10-xdata)*mlxarr.cos(5*xdata)*mlxarr.exp(-xdata)
+    xdata = mx.arange(0, 10, 0.01)
+    ydata = mx.exp(-xdata)
+    edata = 0.2*(10-xdata)*mx.cos(5*xdata)*mx.exp(-xdata)
 
     ax3.fill_between(xdata, ydata - edata, ydata + edata)
     ax3.set_yscale('log')
 
-    x = mlxarr.logspace(-1, 1)
+    x = mx.logspace(-1, 1)
     y = x ** 3
     yerr = x**2
     ax4.errorbar(x, y, yerr=yerr)
@@ -203,7 +203,7 @@ def test_function_scale():
 
     fig, ax = plt.subplots()
 
-    x = mlxarr.arange(1, 1000)
+    x = mx.arange(1, 1000)
 
     ax.plot(x, x)
     ax.set_xscale('function', functions=(forward, inverse))
@@ -231,7 +231,7 @@ def test_scale_deepcopy():
 class TestAsinhScale:
     def test_transforms(self):
         a0 = 17.0
-        a = mlxarr.linspace(-50, 50, 100)
+        a = mx.linspace(-50, 50, 100)
 
         forward = AsinhTransform(a0)
         inverse = forward.inverted()
@@ -242,7 +242,7 @@ class TestAsinhScale:
         assert_allclose(a_inverted, a)
 
         a_invinv = invinv.transform_non_affine(a)
-        assert_allclose(a_invinv, a0 * mlxarr.arcsinh(a / a0))
+        assert_allclose(a_invinv, a0 * mx.arcsinh(a / a0))
 
     def test_init(self):
         fig, ax = plt.subplots()

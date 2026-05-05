@@ -5,15 +5,15 @@ Anchored Direction Arrow
 
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.font_manager as fm
 from mpl_toolkits.axes_grid1.anchored_artists import AnchoredDirectionArrows
 
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 fig, ax = plt.subplots()
-ax.imshow(mlxarr.random.random((10, 10)))
+ax.imshow(mx.random.random((10, 10)))
 
 # Simple example
 simple_arrow = AnchoredDirectionArrows(ax.transAxes, 'X', 'Y')

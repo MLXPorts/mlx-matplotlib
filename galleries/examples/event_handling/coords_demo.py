@@ -16,11 +16,11 @@ and click events.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.backend_bases import MouseButton
 
-t = mlxarr.arange(0.0, 1.0, 0.01)
-s = mlxarr.sin(2 * mlxarr.pi * t)
+t = mx.arange(0.0, 1.0, 0.01)
+s = mx.sin(2 * mx.pi * t)
 fig, ax = plt.subplots()
 ax.plot(t, s)
 

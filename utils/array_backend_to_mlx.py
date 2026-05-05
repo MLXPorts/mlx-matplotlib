@@ -15,7 +15,7 @@ Usage:
 Examples:
     python array_backend_to_mlx.py                  # List all available functions
     python array_backend_to_mlx.py array            # Search for functions containing "array"
-    python array_backend_to_mlx.py "mlxarr.sin"         # Look up the exact function
+    python array_backend_to_mlx.py "mx.sin"         # Look up the exact function
     python array_backend_to_mlx.py --category math  # List functions in the math category
     python array_backend_to_mlx.py --example slice  # Show detailed example for slice
 """
@@ -559,8 +559,8 @@ class MLXArrayBackendToMLXConverter:
         if not function_name:
             return "other"
             
-        # Remove mlxarr. or mx. prefix for matching
-        clean_name = function_name.replace("mlxarr.", "").replace("mx.", "")
+        # Remove mx. or mx. prefix for matching
+        clean_name = function_name.replace("mx.", "").replace("mx.", "")
         
         # Check each category's keywords
         for category, keywords in CATEGORIES.items():
@@ -624,8 +624,8 @@ class MLXArrayBackendToMLXConverter:
         """
         # Clean up function name
         clean_name = function_name.strip()
-        if clean_name.startswith("mlxarr."):
-            # Convert mlxarr.function to mx.function
+        if clean_name.startswith("mx."):
+            # Convert mx.function to mx.function
             clean_name = "mx." + clean_name[3:]
             
         # Look for exact match
@@ -769,7 +769,7 @@ Usage:
 Examples:
     python array_backend_to_mlx.py                  # List all available functions
     python array_backend_to_mlx.py array            # Search for functions containing "array"
-    python array_backend_to_mlx.py "mlxarr.sin"         # Look up the exact function
+    python array_backend_to_mlx.py "mx.sin"         # Look up the exact function
     python array_backend_to_mlx.py --category math  # List functions in the math category
     python array_backend_to_mlx.py --example slice  # Show detailed example for slice
     

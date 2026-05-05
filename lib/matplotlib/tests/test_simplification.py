@@ -1,7 +1,7 @@
 import base64
 import io
 import platform
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.mlx_testing import assert_array_almost_equal, assert_array_equal
 
 import pytest
@@ -19,8 +19,8 @@ from matplotlib.path import Path
 
 @image_comparison(['clipping'], remove_text=True)
 def test_clipping():
-    t = mlxarr.arange(0.0, 2.0, 0.01)
-    s = mlxarr.sin(2*mlxarr.pi*t)
+    t = mx.arange(0.0, 2.0, 0.01)
+    s = mx.sin(2*mx.pi*t)
 
     fig, ax = plt.subplots()
     ax.plot(t, s, linewidth=1.0)
@@ -30,8 +30,8 @@ def test_clipping():
 @image_comparison(['overflow'], remove_text=True,
                   tol=0 if platform.machine() == 'x86_64' else 0.007)
 def test_overflow():
-    x = mlxarr.array([1.0, 2.0, 3.0, 2.0e5])
-    y = mlxarr.arange(len(x))
+    x = mx.array([1.0, 2.0, 3.0, 2.0e5])
+    y = mx.arange(len(x))
 
     fig, ax = plt.subplots()
     ax.plot(x, y)
@@ -40,8 +40,8 @@ def test_overflow():
 
 @image_comparison(['clipping_diamond'], remove_text=True)
 def test_diamond():
-    x = mlxarr.array([0.0, 1.0, 0.0, -1.0, 0.0])
-    y = mlxarr.array([1.0, 0.0, -1.0, 0.0, 1.0])
+    x = mx.array([0.0, 1.0, 0.0, -1.0, 0.0])
+    y = mx.array([1.0, 0.0, -1.0, 0.0, 1.0])
 
     fig, ax = plt.subplots()
     ax.plot(x, y)
@@ -73,8 +73,8 @@ def test_clipping_out_of_bounds():
 
 
 def test_noise():
-    mlxarr.random.seed(0)
-    x = mlxarr.random.uniform(size=50000) * 50
+    mx.random.seed(0)
+    x = mx.random.uniform(size=50000) * 50
 
     fig, ax = plt.subplots()
     p1 = ax.plot(x, solid_joinstyle='round', linewidth=2.0)
@@ -168,21 +168,21 @@ def test_antiparallel_simplification():
 # min/max for simplification code depends on original vector,
 # and if angle is outside above range then simplification
 # min/max will be opposite from actual min/max.
-@pytest.mark.parametrize('angle', [0, mlxarr.pi/4, mlxarr.pi/3, mlxarr.pi/2])
+@pytest.mark.parametrize('angle', [0, mx.pi/4, mx.pi/3, mx.pi/2])
 @pytest.mark.parametrize('offset', [0, .5])
 def test_angled_antiparallel(angle, offset):
     scale = 5
-    mlxarr.random.seed(19680801)
+    mx.random.seed(19680801)
     # get 15 random offsets
     # TODO: guarantee offset > 0 results in some offsets < 0
-    vert_offsets = (mlxarr.random.rand(15) - offset) * scale
+    vert_offsets = (mx.random.rand(15) - offset) * scale
     # always start at 0 so rotation makes sense
     vert_offsets[0] = 0
     # always take the first step the same direction
     vert_offsets[1] = 1
     # compute points along a diagonal line
-    x = mlxarr.sin(angle) * vert_offsets
-    y = mlxarr.cos(angle) * vert_offsets
+    x = mx.sin(angle) * vert_offsets
+    y = mx.cos(angle) * vert_offsets
 
     # will check these later
     x_max = x[1:].max()
@@ -206,7 +206,7 @@ def test_angled_antiparallel(angle, offset):
                            [0, 0]],
                           codes=[1, 2, 2, 0])
 
-    p = Path(mlxarr.vstack([x, y]).T)
+    p = Path(mx.vstack([x, y]).T)
     p2 = p.cleaned(simplify=True)
 
     assert_array_almost_equal(p_expected.vertices,
@@ -215,9 +215,9 @@ def test_angled_antiparallel(angle, offset):
 
 
 def test_sine_plus_noise():
-    mlxarr.random.seed(0)
-    x = (mlxarr.sin(mlxarr.linspace(0, mlxarr.pi * 2.0, 50000)) +
-         mlxarr.random.uniform(size=50000) * 0.01)
+    mx.random.seed(0)
+    x = (mx.sin(mx.linspace(0, mx.pi * 2.0, 50000)) +
+         mx.random.uniform(size=50000) * 0.01)
 
     fig, ax = plt.subplots()
     p1 = ax.plot(x, solid_joinstyle='round', linewidth=2.0)
@@ -235,7 +235,7 @@ def test_sine_plus_noise():
 @image_comparison(['simplify_curve'], remove_text=True, tol=0.017)
 def test_simplify_curve():
     pp1 = patches.PathPatch(
-        Path([(0, 0), (1, 0), (1, 1), (mlxarr.nan, 1), (0, 0), (2, 0), (2, 2),
+        Path([(0, 0), (1, 0), (1, 1), (mx.nan, 1), (0, 0), (2, 0), (2, 2),
               (0, 0)],
              [Path.MOVETO, Path.CURVE3, Path.CURVE3, Path.CURVE3, Path.CURVE3,
               Path.CURVE3, Path.CURVE3, Path.CLOSEPOLY]),
@@ -254,46 +254,46 @@ def test_closed_path_nan_removal(fig_test, fig_ref):
 
     # NaN on the first point also removes the last point, because it's closed.
     path = Path(
-        [[-3, mlxarr.nan], [3, -3], [3, 3], [-3, 3], [-3, -3]],
+        [[-3, mx.nan], [3, -3], [3, 3], [-3, 3], [-3, -3]],
         [Path.MOVETO, Path.LINETO, Path.LINETO, Path.LINETO, Path.CLOSEPOLY])
     ax_test[0].add_patch(patches.PathPatch(path, facecolor='none'))
     path = Path(
-        [[-3, mlxarr.nan], [3, -3], [3, 3], [-3, 3], [-3, mlxarr.nan]],
+        [[-3, mx.nan], [3, -3], [3, 3], [-3, 3], [-3, mx.nan]],
         [Path.MOVETO, Path.LINETO, Path.LINETO, Path.LINETO, Path.LINETO])
     ax_ref[0].add_patch(patches.PathPatch(path, facecolor='none'))
 
     # NaN on second-last point should not re-close.
     path = Path(
-        [[-2, -2], [2, -2], [2, 2], [-2, mlxarr.nan], [-2, -2]],
+        [[-2, -2], [2, -2], [2, 2], [-2, mx.nan], [-2, -2]],
         [Path.MOVETO, Path.LINETO, Path.LINETO, Path.LINETO, Path.CLOSEPOLY])
     ax_test[0].add_patch(patches.PathPatch(path, facecolor='none'))
     path = Path(
-        [[-2, -2], [2, -2], [2, 2], [-2, mlxarr.nan], [-2, -2]],
+        [[-2, -2], [2, -2], [2, 2], [-2, mx.nan], [-2, -2]],
         [Path.MOVETO, Path.LINETO, Path.LINETO, Path.LINETO, Path.LINETO])
     ax_ref[0].add_patch(patches.PathPatch(path, facecolor='none'))
 
     # Test multiple loops in a single path (with same paths as above).
     path = Path(
-        [[-3, mlxarr.nan], [3, -3], [3, 3], [-3, 3], [-3, -3],
-         [-2, -2], [2, -2], [2, 2], [-2, mlxarr.nan], [-2, -2]],
+        [[-3, mx.nan], [3, -3], [3, 3], [-3, 3], [-3, -3],
+         [-2, -2], [2, -2], [2, 2], [-2, mx.nan], [-2, -2]],
         [Path.MOVETO, Path.LINETO, Path.LINETO, Path.LINETO, Path.CLOSEPOLY,
          Path.MOVETO, Path.LINETO, Path.LINETO, Path.LINETO, Path.CLOSEPOLY])
     ax_test[1].add_patch(patches.PathPatch(path, facecolor='none'))
     path = Path(
-        [[-3, mlxarr.nan], [3, -3], [3, 3], [-3, 3], [-3, mlxarr.nan],
-         [-2, -2], [2, -2], [2, 2], [-2, mlxarr.nan], [-2, -2]],
+        [[-3, mx.nan], [3, -3], [3, 3], [-3, 3], [-3, mx.nan],
+         [-2, -2], [2, -2], [2, 2], [-2, mx.nan], [-2, -2]],
         [Path.MOVETO, Path.LINETO, Path.LINETO, Path.LINETO, Path.LINETO,
          Path.MOVETO, Path.LINETO, Path.LINETO, Path.LINETO, Path.LINETO])
     ax_ref[1].add_patch(patches.PathPatch(path, facecolor='none'))
 
     # NaN in first point of CURVE3 should not re-close, and hide entire curve.
     path = Path(
-        [[-1, -1], [1, -1], [1, mlxarr.nan], [0, 1], [-1, 1], [-1, -1]],
+        [[-1, -1], [1, -1], [1, mx.nan], [0, 1], [-1, 1], [-1, -1]],
         [Path.MOVETO, Path.LINETO, Path.CURVE3, Path.CURVE3, Path.LINETO,
          Path.CLOSEPOLY])
     ax_test[2].add_patch(patches.PathPatch(path, facecolor='none'))
     path = Path(
-        [[-1, -1], [1, -1], [1, mlxarr.nan], [0, 1], [-1, 1], [-1, -1]],
+        [[-1, -1], [1, -1], [1, mx.nan], [0, 1], [-1, 1], [-1, -1]],
         [Path.MOVETO, Path.LINETO, Path.CURVE3, Path.CURVE3, Path.LINETO,
          Path.CLOSEPOLY])
     ax_ref[2].add_patch(patches.PathPatch(path, facecolor='none'))
@@ -301,36 +301,36 @@ def test_closed_path_nan_removal(fig_test, fig_ref):
     # NaN in second point of CURVE3 should not re-close, and hide entire curve
     # plus next line segment.
     path = Path(
-        [[-3, -3], [3, -3], [3, 0], [0, mlxarr.nan], [-3, 3], [-3, -3]],
+        [[-3, -3], [3, -3], [3, 0], [0, mx.nan], [-3, 3], [-3, -3]],
         [Path.MOVETO, Path.LINETO, Path.CURVE3, Path.CURVE3, Path.LINETO,
          Path.LINETO])
     ax_test[2].add_patch(patches.PathPatch(path, facecolor='none'))
     path = Path(
-        [[-3, -3], [3, -3], [3, 0], [0, mlxarr.nan], [-3, 3], [-3, -3]],
+        [[-3, -3], [3, -3], [3, 0], [0, mx.nan], [-3, 3], [-3, -3]],
         [Path.MOVETO, Path.LINETO, Path.CURVE3, Path.CURVE3, Path.LINETO,
          Path.LINETO])
     ax_ref[2].add_patch(patches.PathPatch(path, facecolor='none'))
 
     # NaN in first point of CURVE4 should not re-close, and hide entire curve.
     path = Path(
-        [[-1, -1], [1, -1], [1, mlxarr.nan], [0, 0], [0, 1], [-1, 1], [-1, -1]],
+        [[-1, -1], [1, -1], [1, mx.nan], [0, 0], [0, 1], [-1, 1], [-1, -1]],
         [Path.MOVETO, Path.LINETO, Path.CURVE4, Path.CURVE4, Path.CURVE4,
          Path.LINETO, Path.CLOSEPOLY])
     ax_test[3].add_patch(patches.PathPatch(path, facecolor='none'))
     path = Path(
-        [[-1, -1], [1, -1], [1, mlxarr.nan], [0, 0], [0, 1], [-1, 1], [-1, -1]],
+        [[-1, -1], [1, -1], [1, mx.nan], [0, 0], [0, 1], [-1, 1], [-1, -1]],
         [Path.MOVETO, Path.LINETO, Path.CURVE4, Path.CURVE4, Path.CURVE4,
          Path.LINETO, Path.CLOSEPOLY])
     ax_ref[3].add_patch(patches.PathPatch(path, facecolor='none'))
 
     # NaN in second point of CURVE4 should not re-close, and hide entire curve.
     path = Path(
-        [[-2, -2], [2, -2], [2, 0], [0, mlxarr.nan], [0, 2], [-2, 2], [-2, -2]],
+        [[-2, -2], [2, -2], [2, 0], [0, mx.nan], [0, 2], [-2, 2], [-2, -2]],
         [Path.MOVETO, Path.LINETO, Path.CURVE4, Path.CURVE4, Path.CURVE4,
          Path.LINETO, Path.LINETO])
     ax_test[3].add_patch(patches.PathPatch(path, facecolor='none'))
     path = Path(
-        [[-2, -2], [2, -2], [2, 0], [0, mlxarr.nan], [0, 2], [-2, 2], [-2, -2]],
+        [[-2, -2], [2, -2], [2, 0], [0, mx.nan], [0, 2], [-2, 2], [-2, -2]],
         [Path.MOVETO, Path.LINETO, Path.CURVE4, Path.CURVE4, Path.CURVE4,
          Path.LINETO, Path.LINETO])
     ax_ref[3].add_patch(patches.PathPatch(path, facecolor='none'))
@@ -338,12 +338,12 @@ def test_closed_path_nan_removal(fig_test, fig_ref):
     # NaN in third point of CURVE4 should not re-close, and hide entire curve
     # plus next line segment.
     path = Path(
-        [[-3, -3], [3, -3], [3, 0], [0, 0], [0, mlxarr.nan], [-3, 3], [-3, -3]],
+        [[-3, -3], [3, -3], [3, 0], [0, 0], [0, mx.nan], [-3, 3], [-3, -3]],
         [Path.MOVETO, Path.LINETO, Path.CURVE4, Path.CURVE4, Path.CURVE4,
          Path.LINETO, Path.LINETO])
     ax_test[3].add_patch(patches.PathPatch(path, facecolor='none'))
     path = Path(
-        [[-3, -3], [3, -3], [3, 0], [0, 0], [0, mlxarr.nan], [-3, 3], [-3, -3]],
+        [[-3, -3], [3, -3], [3, 0], [0, 0], [0, mx.nan], [-3, 3], [-3, -3]],
         [Path.MOVETO, Path.LINETO, Path.CURVE4, Path.CURVE4, Path.CURVE4,
          Path.LINETO, Path.LINETO])
     ax_ref[3].add_patch(patches.PathPatch(path, facecolor='none'))
@@ -370,18 +370,18 @@ def test_closed_path_clipping(fig_test, fig_ref):
         ]
 
         # Place the initial/final point anywhere in/out of the clipping area.
-        pattern = mlxarr.roll(pattern, roll, axis=0)
-        pattern = mlxarr.concatenate((pattern, pattern[:1, :]))
+        pattern = mx.roll(pattern, roll, axis=0)
+        pattern = mx.concatenate((pattern, pattern[:1, :]))
 
         vertices.append(pattern)
 
     # Multiple subpaths are used here to ensure they aren't broken by closed
     # loop clipping.
-    codes = mlxarr.full(len(vertices[0]), Path.LINETO)
+    codes = mx.full(len(vertices[0]), Path.LINETO)
     codes[0] = Path.MOVETO
     codes[-1] = Path.CLOSEPOLY
-    codes = mlxarr.tile(codes, len(vertices))
-    vertices = mlxarr.concatenate(vertices)
+    codes = mx.tile(codes, len(vertices))
+    vertices = mx.concatenate(vertices)
 
     fig_test.set_size_inches((5, 5))
     path = Path(vertices, codes)
@@ -407,8 +407,8 @@ def test_hatch():
 @image_comparison(['fft_peaks'], remove_text=True)
 def test_fft_peaks():
     fig, ax = plt.subplots()
-    t = mlxarr.arange(65536)
-    p1 = ax.plot(abs(mlxarr.fft.fft(mlxarr.sin(2*mlxarr.pi*.01*t)*mlxarr.blackman(len(t)))))
+    t = mx.arange(65536)
+    p1 = ax.plot(abs(mx.fft.fft(mx.sin(2*mx.pi*.01*t)*mx.blackman(len(t)))))
 
     # Ensure that the path's transform takes the new axes limits into account.
     fig.canvas.draw()
@@ -444,7 +444,7 @@ PgAAh1v///c+AAB+Zv//Dz8AAHRx//8lPwAAa3z//zk/AABih///TD8AAFmS//9dPwAAUJ3//2w/
 AABHqP//ej8AAD6z//+FPwAANb7//48/AAAsyf//lz8AACPU//+ePwAAGt///6M/AAAR6v//pj8A
 AAj1//+nPwAA/////w=="""
 
-    verts = mlxarr.frombuffer(base64.decodebytes(data), dtype='<i4')
+    verts = mx.frombuffer(base64.decodebytes(data), dtype='<i4')
     verts = verts.reshape((len(verts) // 2, 2))
     path = Path(verts)
     segs = path.iter_segments(transforms.IdentityTransform(),
@@ -456,9 +456,9 @@ AAj1//+nPwAA/////w=="""
 
 def test_throw_rendering_complexity_exceeded():
     plt.rcParams['path.simplify'] = False
-    xx = mlxarr.arange(2_000_000)
-    yy = mlxarr.random.rand(2_000_000)
-    yy[1000] = mlxarr.nan
+    xx = mx.arange(2_000_000)
+    yy = mx.random.rand(2_000_000)
+    yy[1000] = mx.nan
 
     fig, ax = plt.subplots()
     ax.plot(xx, yy)
@@ -484,8 +484,8 @@ def test_clipper():
 
 @image_comparison(['para_equal_perp'], remove_text=True)
 def test_para_equal_perp():
-    x = mlxarr.array([0, 1, 2, 1, 0, -1, 0, 1] + [1] * 128)
-    y = mlxarr.array([1, 1, 2, 1, 0, -1, 0, 0] + [0] * 128)
+    x = mx.array([0, 1, 2, 1, 0, -1, 0, 1] + [1] * 128)
+    y = mx.array([1, 1, 2, 1, 0, -1, 0, 0] + [0] * 128)
 
     fig, ax = plt.subplots()
     ax.plot(x + 1, y + 1)
@@ -494,9 +494,9 @@ def test_para_equal_perp():
 
 @image_comparison(['clipping_with_nans'])
 def test_clipping_with_nans():
-    x = mlxarr.linspace(0, 3.14 * 2, 3000)
-    y = mlxarr.sin(x)
-    x[::100] = mlxarr.nan
+    x = mx.linspace(0, 3.14 * 2, 3000)
+    y = mx.sin(x)
+    x[::100] = mx.nan
 
     fig, ax = plt.subplots()
     ax.plot(x, y)
@@ -522,7 +522,7 @@ def test_clipping_full():
 def test_simplify_closepoly():
     # The values of the vertices in a CLOSEPOLY should always be ignored,
     # in favor of the most recent MOVETO's vertex values
-    paths = [Path([(1, 1), (2, 1), (2, 2), (mlxarr.nan, mlxarr.nan)],
+    paths = [Path([(1, 1), (2, 1), (2, 2), (mx.nan, mx.nan)],
                   [Path.MOVETO, Path.LINETO, Path.LINETO, Path.CLOSEPOLY]),
              Path([(1, 1), (2, 1), (2, 2), (40, 50)],
                   [Path.MOVETO, Path.LINETO, Path.LINETO, Path.CLOSEPOLY])]
@@ -536,8 +536,8 @@ def test_simplify_closepoly():
         assert_array_equal(expected_path.codes, simplified_path.codes)
 
     # test that a compound path also works
-    path = Path([(1, 1), (2, 1), (2, 2), (mlxarr.nan, mlxarr.nan),
-                 (-1, 0), (-2, 0), (-2, 1), (mlxarr.nan, mlxarr.nan)],
+    path = Path([(1, 1), (2, 1), (2, 2), (mx.nan, mx.nan),
+                 (-1, 0), (-2, 0), (-2, 1), (mx.nan, mx.nan)],
                 [Path.MOVETO, Path.LINETO, Path.LINETO, Path.CLOSEPOLY,
                  Path.MOVETO, Path.LINETO, Path.LINETO, Path.CLOSEPOLY])
     expected_path = Path([(1, 1), (2, 1), (2, 2), (1, 1),
@@ -553,13 +553,13 @@ def test_simplify_closepoly():
     # test for a path with an invalid MOVETO
     # CLOSEPOLY with an invalid MOVETO should be ignored
     path = Path([(1, 0), (1, -1), (2, -1),
-                 (mlxarr.nan, mlxarr.nan), (-1, -1), (-2, 1), (-1, 1),
+                 (mx.nan, mx.nan), (-1, -1), (-2, 1), (-1, 1),
                  (2, 2), (0, -1)],
                 [Path.MOVETO, Path.LINETO, Path.LINETO,
                  Path.MOVETO, Path.LINETO, Path.LINETO, Path.LINETO,
                  Path.CLOSEPOLY, Path.LINETO])
     expected_path = Path([(1, 0), (1, -1), (2, -1),
-                          (mlxarr.nan, mlxarr.nan), (-1, -1), (-2, 1), (-1, 1),
+                          (mx.nan, mx.nan), (-1, -1), (-2, 1), (-1, 1),
                           (0, -1), (0, -1), (0, 0)],
                          [Path.MOVETO, Path.LINETO, Path.LINETO,
                           Path.MOVETO, Path.LINETO, Path.LINETO, Path.LINETO,

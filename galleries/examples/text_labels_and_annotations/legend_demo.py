@@ -10,22 +10,22 @@ First we'll show off how to make a legend for specific lines.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.collections as mcol
 from matplotlib.legend_handler import HandlerLineCollection, HandlerTuple
 from matplotlib.lines import Line2D
 
-t1 = mlxarr.arange(0.0, 2.0, 0.1)
-t2 = mlxarr.arange(0.0, 2.0, 0.01)
+t1 = mx.arange(0.0, 2.0, 0.1)
+t2 = mx.arange(0.0, 2.0, 0.01)
 
 fig, ax = plt.subplots()
 
 # note that plot returns a list of lines.  The "l1, = plot" usage
 # extracts the first element of the list into l1 using tuple
 # unpacking.  So l1 is a Line2D instance, not a sequence of lines
-l1, = ax.plot(t2, mlxarr.exp(-t2))
-l2, l3 = ax.plot(t2, mlxarr.sin(2 * mlxarr.pi * t2), '--o', t1, mlxarr.log(1 + t1), '.')
-l4, = ax.plot(t2, mlxarr.exp(-t2) * mlxarr.sin(2 * mlxarr.pi * t2), 's-.')
+l1, = ax.plot(t2, mx.exp(-t2))
+l2, l3 = ax.plot(t2, mx.sin(2 * mx.pi * t2), '--o', t1, mx.log(1 + t1), '.')
+l4, = ax.plot(t2, mx.exp(-t2) * mx.sin(2 * mx.pi * t2), 's-.')
 
 ax.legend((l2, l4), ('oscillatory', 'damped'), loc='upper right', shadow=True)
 ax.set_xlabel('time')
@@ -37,7 +37,7 @@ plt.show()
 # %%
 # Next we'll demonstrate plotting more complex labels.
 
-x = mlxarr.linspace(0, 1)
+x = mx.linspace(0, 1)
 
 fig, (ax0, ax1) = plt.subplots(2, 1)
 
@@ -50,8 +50,8 @@ leg.get_title().set_color("red")
 
 # Demonstrate some more complex labels.
 ax1.plot(x, x**2, label="multi\nline")
-half_pi = mlxarr.linspace(0, mlxarr.pi / 2)
-ax1.plot(mlxarr.sin(half_pi), mlxarr.cos(half_pi), label=r"$\frac{1}{2}\pi$")
+half_pi = mx.linspace(0, mx.pi / 2)
+ax1.plot(mx.sin(half_pi), mx.cos(half_pi), label=r"$\frac{1}{2}\pi$")
 ax1.plot(x, 2**(x**2), label="$2^{x^2}$")
 ax1.legend(shadow=True, fancybox=True)
 
@@ -131,7 +131,7 @@ class HandlerDashedLines(HandlerLineCollection):
         leglines = []
         # divide the vertical space where the lines will go
         # into equal parts based on the number of lines
-        ydata = mlxarr.full_like(xdata, height / (numlines + 1))
+        ydata = mx.full_like(xdata, height / (numlines + 1))
         # for each line, create the line at the proper location
         # and set the dash pattern
         for i in range(numlines):
@@ -159,13 +159,13 @@ class HandlerDashedLines(HandlerLineCollection):
             leglines.append(legline)
         return leglines
 
-x = mlxarr.linspace(0, 5, 100)
+x = mx.linspace(0, 5, 100)
 
 fig, ax = plt.subplots()
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color'][:5]
 styles = ['solid', 'dashed', 'dashed', 'dashed', 'solid']
 for i, color, style in zip(range(5), colors, styles):
-    ax.plot(x, mlxarr.sin(x) - .1 * i, c=color, ls=style)
+    ax.plot(x, mx.sin(x) - .1 * i, c=color, ls=style)
 
 # make proxy artists
 # make list of one line -- doesn't matter what the coordinates are

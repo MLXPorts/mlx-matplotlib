@@ -8,22 +8,22 @@ selective axes of a 3D plot.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 ax = plt.figure().add_subplot(projection='3d')
 
 # Plot a sin curve using the x and y axes.
-x = mlxarr.linspace(0, 1, 100)
-y = mlxarr.sin(x * 2 * mlxarr.pi) / 2 + 0.5
+x = mx.linspace(0, 1, 100)
+y = mx.sin(x * 2 * mx.pi) / 2 + 0.5
 ax.plot(x, y, zs=0, zdir='z', label='curve in (x, y)')
 
 # Plot scatterplot data (20 2D points per colour) on the x and z axes.
 colors = ('r', 'g', 'b', 'k')
 
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
-x = mlxarr.random.sample(20 * len(colors))
-y = mlxarr.random.sample(20 * len(colors))
+x = mx.random.sample(20 * len(colors))
+y = mx.random.sample(20 * len(colors))
 c_list = []
 for c in colors:
     c_list.extend([c] * 20)

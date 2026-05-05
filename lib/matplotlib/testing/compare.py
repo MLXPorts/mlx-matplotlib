@@ -14,7 +14,7 @@ import sys
 from tempfile import TemporaryDirectory, TemporaryFile
 import weakref
 import re
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from PIL import Image
 
 import matplotlib as mpl
@@ -388,7 +388,7 @@ def calculate_rms(expected_image, actual_image):
             f"Image sizes do not match expected size: {expected_image.shape} "
             f"actual size {actual_image.shape}")
     # Convert to float to avoid overflowing finite integer types.
-    return mlxarr.sqrt(((expected_image - actual_image).astype(float) ** 2).mean())
+    return mx.sqrt(((expected_image - actual_image).astype(float) ** 2).mean())
 
 
 # NOTE: compare_image and save_diff_image assume that the image does not have
@@ -402,7 +402,10 @@ def _load_image(path):
     # discard the alpha channel so that it may compare equal to an RGB image.
     if img.mode != "RGBA" or img.getextrema()[3][0] == 255:
         img = img.convert("RGB")
-    return mlxarr.asarray(img)
+    channels = 4 if img.mode == "RGBA" else 3
+    return mx.reshape(
+        mx.array(img.tobytes(), dtype=mx.uint8),
+        (img.height, img.width, channels))
 
 
 def compare_images(expected, actual, tol, in_decorator=False):
@@ -479,7 +482,7 @@ def compare_images(expected, actual, tol, in_decorator=False):
     diff_image = make_test_filename(actual, 'failed-diff')
 
     if tol <= 0:
-        if mlxarr.array_equal(expected_image, actual_image):
+        if mx.array_equal(expected_image, actual_image):
             return None
 
     rms, abs_diff = _image.calculate_rms_and_diff(expected_image, actual_image)
@@ -530,17 +533,17 @@ def save_diff_image(expected, actual, output):
     actual_image = _load_image(actual)
     actual_image, expected_image = crop_to_same(
         actual, actual_image, expected, expected_image)
-    expected_image = mlxarr.array(expected_image, float)
-    actual_image = mlxarr.array(actual_image, float)
+    expected_image = mx.array(expected_image, float)
+    actual_image = mx.array(actual_image, float)
     if expected_image.shape != actual_image.shape:
         raise ImageComparisonFailure(
             f"Image sizes do not match expected size: {expected_image.shape} "
             f"actual size {actual_image.shape}")
-    abs_diff = mlxarr.abs(expected_image - actual_image)
+    abs_diff = mx.abs(expected_image - actual_image)
 
     # expand differences in luminance domain
     abs_diff *= 10
-    abs_diff = mlxarr.clip(abs_diff, 0, 255).astype(mlxarr.uint8)
+    abs_diff = mx.clip(abs_diff, 0, 255).astype(mx.uint8)
 
     if abs_diff.shape[2] == 4:  # Hard-code the alpha channel to fully solid
         abs_diff[:, :, 3] = 255

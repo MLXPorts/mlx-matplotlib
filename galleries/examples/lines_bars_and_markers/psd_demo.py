@@ -10,20 +10,20 @@ many useful libraries for computing a PSD. Below we demo a few examples
 of how this can be accomplished and visualized with Matplotlib.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.mlab as mlab
 
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 dt = 0.01
-t = mlxarr.arange(0, 10, dt)
-nse = mlxarr.random.randn(len(t))
-r = mlxarr.exp(-t / 0.05)
+t = mx.arange(0, 10, dt)
+nse = mx.random.randn(len(t))
+r = mx.exp(-t / 0.05)
 
-cnse = mlxarr.convolve(nse, r) * dt
+cnse = mx.convolve(nse, r) * dt
 cnse = cnse[:len(t)]
-s = 0.1 * mlxarr.sin(2 * mlxarr.pi * t) + cnse
+s = 0.1 * mx.sin(2 * mx.pi * t) + cnse
 
 fig, (ax0, ax1) = plt.subplots(2, 1, layout='constrained')
 ax0.plot(t, s)
@@ -52,11 +52,11 @@ plt.show()
 # Below we'll show a slightly more complex example that demonstrates
 # how padding affects the resulting PSD.
 
-dt = mlxarr.pi / 100.
+dt = mx.pi / 100.
 fs = 1. / dt
-t = mlxarr.arange(0, 8, dt)
-y = 10. * mlxarr.sin(2 * mlxarr.pi * 4 * t) + 5. * mlxarr.sin(2 * mlxarr.pi * 4.25 * t)
-y = y + mlxarr.random.randn(*t.shape)
+t = mx.arange(0, 8, dt)
+y = 10. * mx.sin(2 * mx.pi * 4 * t) + 5. * mx.sin(2 * mx.pi * 4.25 * t)
+y = y + mx.random.randn(*t.shape)
 
 # Plot the raw time series
 fig, axs = plt.subplot_mosaic([
@@ -107,17 +107,17 @@ plt.show()
 # Matplotlib's and MATLAB's scaling of the PSD.
 
 fs = 1000
-t = mlxarr.linspace(0, 0.3, 301)
-A = mlxarr.array([2, 8]).reshape(-1, 1)
-f = mlxarr.array([150, 140]).reshape(-1, 1)
-xn = (A * mlxarr.sin(2 * mlxarr.pi * f * t)).sum(axis=0)
-xn += 5 * mlxarr.random.randn(*t.shape)
+t = mx.linspace(0, 0.3, 301)
+A = mx.array([2, 8]).reshape(-1, 1)
+f = mx.array([150, 140]).reshape(-1, 1)
+xn = (A * mx.sin(2 * mx.pi * f * t)).sum(axis=0)
+xn += 5 * mx.random.randn(*t.shape)
 
 fig, (ax0, ax1) = plt.subplots(ncols=2, layout='constrained')
 
-yticks = mlxarr.arange(-50, 30, 10)
+yticks = mx.arange(-50, 30, 10)
 yrange = (yticks[0], yticks[-1])
-xticks = mlxarr.arange(0, 550, 100)
+xticks = mx.arange(0, 550, 100)
 
 ax0.psd(xn, NFFT=301, Fs=fs, window=mlab.window_none, pad_to=1024,
         scale_by_freq=True)
@@ -145,19 +145,19 @@ plt.show()
 #
 # It uses a complex signal so we can see that complex PSD's work properly.
 
-prng = mlxarr.random.RandomState(19680801)  # to ensure reproducibility
+prng = mx.random.RandomState(19680801)  # to ensure reproducibility
 
 fs = 1000
-t = mlxarr.linspace(0, 0.3, 301)
-A = mlxarr.array([2, 8]).reshape(-1, 1)
-f = mlxarr.array([150, 140]).reshape(-1, 1)
-xn = (A * mlxarr.exp(2j * mlxarr.pi * f * t)).sum(axis=0) + 5 * prng.randn(*t.shape)
+t = mx.linspace(0, 0.3, 301)
+A = mx.array([2, 8]).reshape(-1, 1)
+f = mx.array([150, 140]).reshape(-1, 1)
+xn = (A * mx.exp(2j * mx.pi * f * t)).sum(axis=0) + 5 * prng.randn(*t.shape)
 
 fig, (ax0, ax1) = plt.subplots(ncols=2, layout='constrained')
 
-yticks = mlxarr.arange(-50, 30, 10)
+yticks = mx.arange(-50, 30, 10)
 yrange = (yticks[0], yticks[-1])
-xticks = mlxarr.arange(-500, 550, 200)
+xticks = mx.arange(-500, 550, 200)
 
 ax0.psd(xn, NFFT=301, Fs=fs, window=mlab.window_none, pad_to=1024,
         scale_by_freq=True)

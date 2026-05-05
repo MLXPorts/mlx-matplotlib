@@ -14,9 +14,9 @@ You can use TeX-like mathematical typesetting in all texts; see also
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
-t = mlxarr.arange(0.0, 2.0, 0.01)
-s = mlxarr.sin(2*mlxarr.pi*t)
+import mlx.core as mx
+t = mx.arange(0.0, 2.0, 0.01)
+s = mx.sin(2*mx.pi*t)
 
 plt.plot(t, s)
 plt.text(0, -1, r'Hello, world!', fontsize=15)

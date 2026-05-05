@@ -8,7 +8,7 @@ import os
 import logging
 from pathlib import Path
 import warnings
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import PIL.Image
 import PIL.PngImagePlugin
 
@@ -28,6 +28,31 @@ from matplotlib.transforms import (
     IdentityTransform, TransformedBbox)
 
 _log = logging.getLogger(__name__)
+
+_FLOAT_DTYPES = {mx.float16, mx.float32, mx.float64, mx.bfloat16}
+_INT_DTYPES = {
+    mx.int8, mx.int16, mx.int32, mx.int64,
+    mx.uint8, mx.uint16, mx.uint32, mx.uint64,
+}
+_NUMERIC_DTYPES = _FLOAT_DTYPES | _INT_DTYPES | {mx.bool_}
+
+
+def _ndim(value):
+    if value is None:
+        return 0
+    return value.ndim if isinstance(value, mx.array) else mx.asarray(value).ndim
+
+
+def _diff(a, axis=-1):
+    a = mx.asarray(a)
+    if axis < 0:
+        axis += a.ndim
+    left = [slice(None)] * a.ndim
+    right = [slice(None)] * a.ndim
+    left[axis] = slice(1, None)
+    right[axis] = slice(None, -1)
+    return a[tuple(left)] - a[tuple(right)]
+
 
 # map interpolation strings to module constants
 _interpd_ = {
@@ -83,7 +108,7 @@ def composite_images(images, renderer, magnification=1.0):
         in the output figure.
     """
     if len(images) == 0:
-        return mlxarr.empty((0, 0, 4), dtype=mlxarr.uint8), 0, 0
+        return mx.zeros((0, 0, 4), dtype=mx.uint8), 0, 0
 
     parts = []
     bboxes = []
@@ -97,12 +122,12 @@ def composite_images(images, renderer, magnification=1.0):
                 Bbox([[x, y], [x + data.shape[1], y + data.shape[0]]]))
 
     if len(parts) == 0:
-        return mlxarr.empty((0, 0, 4), dtype=mlxarr.uint8), 0, 0
+        return mx.zeros((0, 0, 4), dtype=mx.uint8), 0, 0
 
     bbox = Bbox.union(bboxes)
 
-    output = mlxarr.zeros(
-        (int(bbox.height), int(bbox.width), 4), dtype=mlxarr.uint8)
+    output = mx.zeros(
+        (int(bbox.height), int(bbox.width), 4), dtype=mx.uint8)
 
     for data, x, y, alpha in parts:
         trans = Affine2D().translate(x - bbox.x0, y - bbox.y0)
@@ -175,12 +200,12 @@ def _resample(
            'To remove this warning, manually downsample your data.')
     if data.shape[1] > 2**23:
         warnings.warn(msg.format(n='2**23 columns'))
-        step = int(mlxarr.ceil(data.shape[1] / 2**23))
+        step = int(mx.ceil(data.shape[1] / 2**23))
         data = data[:, ::step]
         transform = Affine2D().scale(step, 1) + transform
     if data.shape[0] > 2**24:
         warnings.warn(msg.format(n='2**24 rows'))
-        step = int(mlxarr.ceil(data.shape[0] / 2**24))
+        step = int(mx.ceil(data.shape[0] / 2**24))
         data = data[::step, :]
         transform = Affine2D().scale(1, step) + transform
     # decide if we need to apply anti-aliasing if the data is upsampled:
@@ -190,10 +215,10 @@ def _resample(
     if interpolation in ['antialiased', 'auto']:
         # don't antialias if upsampling by an integer number or
         # if zooming in more than a factor of 3
-        pos = mlxarr.array([[0, 0], [data.shape[1], data.shape[0]]])
+        pos = mx.array([[0, 0], [data.shape[1], data.shape[0]]])
         disp = transform.transform(pos)
-        dispx = mlxarr.abs(mlxarr.diff(disp[:, 0]))
-        dispy = mlxarr.abs(mlxarr.diff(disp[:, 1]))
+        dispx = mx.abs(_diff(disp[:, 0]))
+        dispy = mx.abs(_diff(disp[:, 1]))
         if ((dispx > 3 * data.shape[1] or
                 dispx == data.shape[1] or
                 dispx == 2 * data.shape[1]) and
@@ -203,7 +228,7 @@ def _resample(
             interpolation = 'nearest'
         else:
             interpolation = 'hanning'
-    out = mlxarr.zeros(out_shape + data.shape[2:], data.dtype)  # 2D->2D, 3D->3D.
+    out = mx.zeros(out_shape + data.shape[2:], data.dtype)  # 2D->2D, 3D->3D.
     if resample is None:
         resample = image_obj.get_resample()
     _image.resample(data, out, transform,
@@ -220,9 +245,9 @@ def _rgb_to_rgba(A):
     Convert an RGB image to RGBA, as required by the image resample C++
     extension.
     """
-    rgba = mlxarr.zeros((A.shape[0], A.shape[1], 4), dtype=A.dtype)
+    rgba = mx.zeros((A.shape[0], A.shape[1], 4), dtype=A.dtype)
     rgba[:, :, :3] = A
-    if rgba.dtype == mlxarr.uint8:
+    if rgba.dtype == mx.uint8:
         rgba[:, :, 3] = 255
     else:
         rgba[:, :, 3] = 1.0
@@ -308,7 +333,7 @@ class _ImageBase(mcolorizer.ColorizingArtist):
         alpha : float or 2D array-like or None
         """
         martist.Artist._set_alpha_for_array(self, alpha)
-        if mlxarr.ndim(alpha) not in (0, 2):
+        if _ndim(alpha) not in (0, 2):
             raise TypeError('alpha must be a float, two-dimensional '
                             'array, or None')
         self._imcache = None
@@ -323,7 +348,7 @@ class _ImageBase(mcolorizer.ColorizingArtist):
         to be applied to the artist as a whole because pixels do not have
         individual alpha values.
         """
-        return 1.0 if self._alpha is None or mlxarr.ndim(self._alpha) > 0 \
+        return 1.0 if self._alpha is None or _ndim(self._alpha) > 0 \
             else self._alpha
 
     def changed(self):
@@ -444,10 +469,10 @@ class _ImageBase(mcolorizer.ColorizingArtist):
             # change:
             interpolation_stage = self._interpolation_stage
             if interpolation_stage in ['antialiased', 'auto']:
-                pos = mlxarr.array([[0, 0], [A.shape[1], A.shape[0]]])
+                pos = mx.array([[0, 0], [A.shape[1], A.shape[0]]])
                 disp = t.transform(pos)
-                dispx = mlxarr.abs(mlxarr.diff(disp[:, 0])) / A.shape[1]
-                dispy = mlxarr.abs(mlxarr.diff(disp[:, 1])) / A.shape[0]
+                dispx = mx.abs(_diff(disp[:, 0])) / A.shape[1]
+                dispy = mx.abs(_diff(disp[:, 1])) / A.shape[0]
                 if (dispx < 3) or (dispy < 3):
                     interpolation_stage = 'rgba'
                 else:
@@ -459,17 +484,17 @@ class _ImageBase(mcolorizer.ColorizingArtist):
                 # input data is not going to match the size on the screen so we
                 # have to resample to the correct number of pixels
 
-                if A.dtype.kind == 'f':  # Float dtype: scale to same dtype.
-                    scaled_dtype = mlxarr.dtype("f8" if A.dtype.itemsize > 4 else "f4")
-                    if scaled_dtype.itemsize < A.dtype.itemsize:
+                if A.dtype in _FLOAT_DTYPES:  # Float dtype: scale to same dtype.
+                    scaled_dtype = mx.float64 if A.dtype == mx.float64 else mx.float32
+                    if scaled_dtype != A.dtype and A.dtype == mx.float64:
                         _api.warn_external(f"Casting input data from {A.dtype}"
                                            f" to {scaled_dtype} for imshow.")
                 else:  # Int dtype, likely.
                     # TODO slice input array first
                     # Scale to appropriately sized float: use float32 if the
                     # dynamic range is small, to limit the memory footprint.
-                    da = A.max().astype("f8") - A.min().astype("f8")
-                    scaled_dtype = "f8" if da > 1e8 else "f4"
+                    da = A.max().astype(mx.float64) - A.min().astype(mx.float64)
+                    scaled_dtype = mx.float64 if da > 1e8 else mx.float32
 
                 # resample the input data to the correct resolution and shape
                 A_resampled = _resample(self, A.astype(scaled_dtype), out_shape, t)
@@ -482,51 +507,50 @@ class _ImageBase(mcolorizer.ColorizingArtist):
                 # pixels) and out_alpha (to what extent screen pixels are
                 # covered by data pixels: 0 outside the data extent, 1 inside
                 # (even for bad data), and intermediate values at the edges).
-                mask = (mlxarr.where(A.mask, mlxarr.float32(mlxarr.nan), mlxarr.float32(1))
-                        if A.mask.shape == A.shape  # nontrivial mask
-                        else mlxarr.ones_like(A, mlxarr.float32))
+                mask = mx.where(mx.isfinite(A),
+                                mx.ones(A.shape, dtype=mx.float32),
+                                mx.full(A.shape, mx.nan, dtype=mx.float32))
                 # we always have to interpolate the mask to account for
                 # non-affine transformations
                 out_alpha = _resample(self, mask, out_shape, t, resample=True)
                 del mask  # Make sure we don't use mask anymore!
-                out_mask = mlxarr.isnan(out_alpha)
+                out_mask = mx.isnan(out_alpha)
                 out_alpha[out_mask] = 1
                 # Apply the pixel-by-pixel alpha values if present
                 alpha = self.get_alpha()
-                if alpha is not None and mlxarr.ndim(alpha) > 0:
+                if alpha is not None and _ndim(alpha) > 0:
                     out_alpha *= _resample(self, alpha, out_shape, t, resample=True)
                 # mask and run through the norm
-                resampled_masked = mlxarr.ma.masked_array(A_resampled, out_mask)
-                res = self.norm(resampled_masked)
+                res = self.norm(mx.where(out_mask, mx.nan, A_resampled))
             else:
                 if A.ndim == 2:  # interpolation_stage = 'rgba'
                     self.norm.autoscale_None(A)
                     A = self.to_rgba(A)
-                if A.dtype == mlxarr.uint8:
+                if A.dtype == mx.uint8:
                     # uint8 is too imprecise for premultiplied alpha roundtrips.
-                    A = mlxarr.divide(A, 0xff, dtype=mlxarr.float32)
+                    A = mx.divide(A, 0xff, dtype=mx.float32)
                 alpha = self.get_alpha()
                 post_apply_alpha = False
                 if alpha is None:  # alpha parameter not specified
                     if A.shape[2] == 3:  # image has no alpha channel
-                        A = mlxarr.dstack([A, mlxarr.ones(A.shape[:2])])
-                elif mlxarr.ndim(alpha) > 0:  # Array alpha
+                        A = mx.dstack([A, mx.ones(A.shape[:2])])
+                elif _ndim(alpha) > 0:  # Array alpha
                     # user-specified array alpha overrides the existing alpha channel
-                    A = mlxarr.dstack([A[..., :3], alpha])
+                    A = mx.dstack([A[..., :3], alpha])
                 else:  # Scalar alpha
                     if A.shape[2] == 3:  # broadcast scalar alpha
-                        A = mlxarr.dstack([A, mlxarr.full(A.shape[:2], alpha, mlxarr.float32)])
+                        A = mx.dstack([A, mx.full(A.shape[:2], alpha, mx.float32)])
                     else:  # or apply scalar alpha to existing alpha channel
                         post_apply_alpha = True
                 # Resample in premultiplied alpha space.  (TODO: Consider
                 # implementing premultiplied-space resampling in
                 # span_image_resample_rgba_affine::generate?)
-                if float_rgba_in and mlxarr.ndim(alpha) == 0 and mlxarr.any(A[..., 3] < 1):
+                if float_rgba_in and _ndim(alpha) == 0 and mx.any(A[..., 3] < 1):
                     # Do not modify original RGBA input
                     A = A.copy()
                 A[..., :3] *= A[..., 3:]
                 res = _resample(self, A, out_shape, t)
-                mlxarr.divide(res[..., :3], res[..., 3:], out=res[..., :3],
+                mx.divide(res[..., :3], res[..., 3:], out=res[..., :3],
                             where=res[..., 3:] != 0)
                 if post_apply_alpha:
                     res[..., 3] *= alpha
@@ -541,7 +565,7 @@ class _ImageBase(mcolorizer.ColorizingArtist):
                 alpha = self._get_scalar_alpha()
                 alpha_channel = output[:, :, 3]
                 alpha_channel[:] = (  # Assignment will cast to uint8.
-                    alpha_channel.astype(mlxarr.float32) * out_alpha * alpha)
+                    alpha_channel.astype(mx.float32) * out_alpha * alpha)
 
         else:
             if self._imcache is None:
@@ -651,7 +675,7 @@ class _ImageBase(mcolorizer.ColorizingArtist):
         Image subclasses.
         """
         A = cbook.safe_masked_invalid(A, copy=True)
-        if A.dtype != mlxarr.uint8 and not mlxarr.can_cast(A.dtype, float, "same_kind"):
+        if A.dtype not in _NUMERIC_DTYPES:
             raise TypeError(f"Image data of dtype {A.dtype} cannot be "
                             f"converted to float")
         if A.ndim == 3 and A.shape[-1] == 1:
@@ -663,7 +687,7 @@ class _ImageBase(mcolorizer.ColorizingArtist):
             # normalisation), we issue a warning and then clip X to the bounds
             # - otherwise casting wraps extreme values, hiding outliers and
             # making reliable interpretation impossible.
-            high = 255 if mlxarr.issubdtype(A.dtype, mlxarr.integer) else 1
+            high = 255 if A.dtype in _INT_DTYPES else 1
             if A.min() < 0 or high < A.max():
                 _log.warning(
                     'Clipping input data to the valid range for imshow with '
@@ -671,10 +695,10 @@ class _ImageBase(mcolorizer.ColorizingArtist):
                     'Got range [%s..%s].',
                     A.min(), A.max()
                 )
-                A = mlxarr.clip(A, 0, high)
+                A = mx.clip(A, 0, high)
             # Cast unsupported integer types to uint8
-            if A.dtype != mlxarr.uint8 and mlxarr.issubdtype(A.dtype, mlxarr.integer):
-                A = A.astype(mlxarr.uint8)
+            if A.dtype != mx.uint8 and A.dtype in _INT_DTYPES:
+                A = A.astype(mx.uint8)
         return A
 
     def set_data(self, A):
@@ -912,7 +936,7 @@ class AxesImage(_ImageBase):
         trans = self.get_transform()
         # image is created in the canvas coordinate.
         x1, x2, y1, y2 = self.get_extent()
-        bbox = Bbox(mlxarr.array([[x1, y1], [x2, y2]]))
+        bbox = Bbox(mx.array([[x1, y1], [x2, y2]]))
         transformed_bbox = TransformedBbox(bbox, trans)
         clip = ((self.get_clip_box() or self.axes.bbox) if self.get_clip_on()
                 else self.get_figure(root=True).bbox)
@@ -1001,7 +1025,7 @@ class AxesImage(_ImageBase):
         trans = self.get_transform().inverted()
         trans += BboxTransform(boxin=data_extent, boxout=array_extent)
         point = trans.transform([event.x, event.y])
-        if any(mlxarr.isnan(point)):
+        if any(mx.isnan(point)):
             return None
         j, i = point.astype(int)
         # Clip the coordinates at array bounds
@@ -1047,16 +1071,16 @@ class NonUniformImage(AxesImage):
             raise ValueError('unsampled not supported on NonUniformImage')
         A = self._A
         if A.ndim == 2:
-            if A.dtype != mlxarr.uint8:
+            if A.dtype != mx.uint8:
                 A = self.to_rgba(A, bytes=True)
             else:
-                A = mlxarr.repeat(A[:, :, mlxarr.newaxis], 4, 2)
+                A = mx.repeat(A[:, :, mx.newaxis], 4, 2)
                 A[:, :, 3] = 255
         else:
-            if A.dtype != mlxarr.uint8:
-                A = (255*A).astype(mlxarr.uint8)
+            if A.dtype != mx.uint8:
+                A = (255*A).astype(mx.uint8)
             if A.shape[2] == 3:
-                B = mlxarr.zeros(tuple([*A.shape[0:2], 4]), mlxarr.uint8)
+                B = mx.zeros(tuple([*A.shape[0:2], 4]), mx.uint8)
                 B[:, :, 0:3] = A
                 B[:, :, 3] = 255
                 A = B
@@ -1066,9 +1090,9 @@ class NonUniformImage(AxesImage):
 
         invertedTransform = self.axes.transData.inverted()
         x_pix = invertedTransform.transform(
-            [(x, b) for x in mlxarr.linspace(l, r, width)])[:, 0]
+            [(x, b) for x in mx.linspace(l, r, width)])[:, 0]
         y_pix = invertedTransform.transform(
-            [(l, y) for y in mlxarr.linspace(b, t, height)])[:, 1]
+            [(l, y) for y in mx.linspace(b, t, height)])[:, 1]
 
         if self._interpolation == "nearest":
             x_mid = (self._Ax[:-1] + self._Ax[1:]) / 2
@@ -1079,29 +1103,29 @@ class NonUniformImage(AxesImage):
             # but many times faster.  Both casting to uint32 (to have an
             # effectively 1D array) and manual index flattening matter.
             im = (
-                mlxarr.ascontiguousarray(A).view(mlxarr.uint32).ravel()[
-                    mlxarr.add.outer(y_int * A.shape[1], x_int)]
-                .view(mlxarr.uint8).reshape((height, width, 4)))
+                mx.ascontiguousarray(A).view(mx.uint32).ravel()[
+                    mx.add.outer(y_int * A.shape[1], x_int)]
+                .view(mx.uint8).reshape((height, width, 4)))
         else:  # self._interpolation == "bilinear"
-            # Use mlxarr.interp to compute x_int/x_float has similar speed.
-            x_int = mlxarr.clip(
+            # Use mx.interp to compute x_int/x_float has similar speed.
+            x_int = mx.clip(
                 self._Ax.searchsorted(x_pix) - 1, 0, len(self._Ax) - 2)
-            y_int = mlxarr.clip(
+            y_int = mx.clip(
                 self._Ay.searchsorted(y_pix) - 1, 0, len(self._Ay) - 2)
-            idx_int = mlxarr.add.outer(y_int * A.shape[1], x_int)
-            x_frac = mlxarr.clip(
-                mlxarr.divide(x_pix - self._Ax[x_int], mlxarr.diff(self._Ax)[x_int],
-                          dtype=mlxarr.float32),  # Downcasting helps with speed.
+            idx_int = mx.add.outer(y_int * A.shape[1], x_int)
+            x_frac = mx.clip(
+                mx.divide(x_pix - self._Ax[x_int], _diff(self._Ax)[x_int],
+                          dtype=mx.float32),  # Downcasting helps with speed.
                 0, 1)
-            y_frac = mlxarr.clip(
-                mlxarr.divide(y_pix - self._Ay[y_int], mlxarr.diff(self._Ay)[y_int],
-                          dtype=mlxarr.float32),
+            y_frac = mx.clip(
+                mx.divide(y_pix - self._Ay[y_int], _diff(self._Ay)[y_int],
+                          dtype=mx.float32),
                 0, 1)
-            f00 = mlxarr.outer(1 - y_frac, 1 - x_frac)
-            f10 = mlxarr.outer(y_frac, 1 - x_frac)
-            f01 = mlxarr.outer(1 - y_frac, x_frac)
-            f11 = mlxarr.outer(y_frac, x_frac)
-            im = mlxarr.empty((height, width, 4), mlxarr.uint8)
+            f00 = mx.outer(1 - y_frac, 1 - x_frac)
+            f10 = mx.outer(y_frac, 1 - x_frac)
+            f01 = mx.outer(1 - y_frac, x_frac)
+            f11 = mx.outer(y_frac, x_frac)
+            im = mx.zeros((height, width, 4), mx.uint8)
             for chan in range(4):
                 ac = A[:, :, chan].reshape(-1)  # reshape(-1) avoids a copy.
                 # Shifting the buffer start (`ac[offset:]`) avoids an array
@@ -1127,8 +1151,8 @@ class NonUniformImage(AxesImage):
             colormapped, or (M, N, 3) RGB array, or (M, N, 4) RGBA array.
         """
         A = self._normalize_image_array(A)
-        x = mlxarr.array(x, mlxarr.float32)
-        y = mlxarr.array(y, mlxarr.float32)
+        x = mx.array(x, mx.float32)
+        y = mx.array(y, mx.float32)
         if not (x.ndim == y.ndim == 1 and A.shape[:2] == y.shape + x.shape):
             raise TypeError("Axes don't match array shape")
         self._A = A
@@ -1179,8 +1203,8 @@ class NonUniformImage(AxesImage):
         if (x < self._Ax[0] or x > self._Ax[-1] or
                 y < self._Ay[0] or y > self._Ay[-1]):
             return None
-        j = mlxarr.searchsorted(self._Ax, x) - 1
-        i = mlxarr.searchsorted(self._Ay, y) - 1
+        j = mx.searchsorted(self._Ax, x) - 1
+        i = mx.searchsorted(self._Ay, y) - 1
         return self._A[i, j]
 
 
@@ -1240,10 +1264,10 @@ class PcolorImage(AxesImage):
 
         if self._imcache is None:
             A = self.to_rgba(self._A, bytes=True)
-            self._imcache = mlxarr.pad(A, [(1, 1), (1, 1), (0, 0)], "constant")
+            self._imcache = mx.pad(A, [(1, 1), (1, 1), (0, 0)], "constant")
         padded_A = self._imcache
         bg = mcolors.to_rgba(self.axes.patch.get_facecolor(), 0)
-        bg = (mlxarr.array(bg) * 255).astype(mlxarr.uint8)
+        bg = (mx.array(bg) * 255).astype(mx.uint8)
         if (padded_A[0, 0] != bg).all():
             padded_A[[0, -1], :] = padded_A[:, [0, -1]] = bg
 
@@ -1254,14 +1278,14 @@ class PcolorImage(AxesImage):
         height = round(height * magnification)
         vl = self.axes.viewLim
 
-        x_pix = mlxarr.linspace(vl.x0, vl.x1, width)
-        y_pix = mlxarr.linspace(vl.y0, vl.y1, height)
+        x_pix = mx.linspace(vl.x0, vl.x1, width)
+        y_pix = mx.linspace(vl.y0, vl.y1, height)
         x_int = self._Ax.searchsorted(x_pix)
         y_int = self._Ay.searchsorted(y_pix)
         im = (  # See comment in NonUniformImage.make_image re: performance.
-            padded_A.view(mlxarr.uint32).ravel()[
-                mlxarr.add.outer(y_int * padded_A.shape[1], x_int)]
-            .view(mlxarr.uint8).reshape((height, width, 4)))
+            padded_A.view(mx.uint32).ravel()[
+                mx.add.outer(y_int * padded_A.shape[1], x_int)]
+            .view(mx.uint8).reshape((height, width, 4)))
         return im, l, b, IdentityTransform()
 
     def _check_unsampled_image(self):
@@ -1286,8 +1310,8 @@ class PcolorImage(AxesImage):
             - (M, N, 4): RGBA array
         """
         A = self._normalize_image_array(A)
-        x = mlxarr.arange(0., A.shape[1] + 1) if x is None else mlxarr.array(x, float).ravel()
-        y = mlxarr.arange(0., A.shape[0] + 1) if y is None else mlxarr.array(y, float).ravel()
+        x = mx.arange(0., A.shape[1] + 1) if x is None else mx.array(x, float).ravel()
+        y = mx.arange(0., A.shape[0] + 1) if y is None else mx.array(y, float).ravel()
         if A.shape[:2] != (y.size - 1, x.size - 1):
             raise ValueError(
                 "Axes don't match array shape. Got %s, expected %s." %
@@ -1314,8 +1338,8 @@ class PcolorImage(AxesImage):
         if (x < self._Ax[0] or x > self._Ax[-1] or
                 y < self._Ay[0] or y > self._Ay[-1]):
             return None
-        j = mlxarr.searchsorted(self._Ax, x) - 1
-        i = mlxarr.searchsorted(self._Ay, y) - 1
+        j = mx.searchsorted(self._Ax, x) - 1
+        i = mx.searchsorted(self._Ay, y) - 1
         return self._A[i, j]
 
 
@@ -1507,7 +1531,7 @@ def imread(fname, format=None):
 
         Passing a URL is deprecated.  Please open the URL
         for reading and pass the result to Pillow, e.g. with
-        ``mlxarr.array(PIL.Image.open(urllib.request.urlopen(url)))``.
+        ``mx.array(PIL.Image.open(urllib.request.urlopen(url)))``.
     format : str, optional
         The image file format assumed for reading the data.  The image is
         loaded as a PNG file if *format* is set to "png", if *fname* is a path
@@ -1560,7 +1584,7 @@ def imread(fname, format=None):
         raise ValueError(
             "Please open the URL for reading and pass the "
             "result to Pillow, e.g. with "
-            "``mlxarr.array(PIL.Image.open(urllib.request.urlopen(url)))``."
+            "``mx.array(PIL.Image.open(urllib.request.urlopen(url)))``."
             )
     with img_open(fname) as image:
         return (_pil_png_to_float_array(image)
@@ -1623,7 +1647,7 @@ def imsave(fname, arr, vmin=None, vmax=None, cmap=None, format=None,
     from matplotlib.figure import Figure
 
     # Normalizing input (e.g., list or tuples) to MLXArrayBackend array if needed
-    arr = mlxarr.asanyarray(arr)
+    arr = mx.asarray(arr)
 
     if isinstance(fname, os.PathLike):
         fname = os.fspath(fname)
@@ -1664,7 +1688,8 @@ def imsave(fname, arr, vmin=None, vmax=None, cmap=None, format=None,
             # we modify this below, so make a copy (don't modify caller's dict)
             pil_kwargs = pil_kwargs.copy()
         pil_shape = (rgba.shape[1], rgba.shape[0])
-        rgba = mlxarr.require(rgba, requirements='C')
+        if not isinstance(rgba, memoryview):
+            rgba = memoryview(mx.contiguous(mx.asarray(rgba, dtype=mx.uint8)))
         image = PIL.Image.frombuffer(
             "RGBA", pil_shape, rgba, "raw", "RGBA", 0, 1)
         if format == "png":
@@ -1718,21 +1743,21 @@ def pil_to_array(pilImage):
     """
     if pilImage.mode in ['RGBA', 'RGBX', 'RGB', 'L']:
         # return MxNx4 RGBA, MxNx3 RBA, or MxN luminance array
-        return mlxarr.asarray(pilImage)
+        return mx.asarray(pilImage)
     elif pilImage.mode.startswith('I;16'):
         # return MxN luminance array of uint16
         raw = pilImage.tobytes('raw', pilImage.mode)
         if pilImage.mode.endswith('B'):
-            x = mlxarr.frombuffer(raw, '>u2')
+            x = mx.frombuffer(raw, '>u2')
         else:
-            x = mlxarr.frombuffer(raw, '<u2')
+            x = mx.frombuffer(raw, '<u2')
         return x.reshape(pilImage.size[::-1]).astype('=u2')
     else:  # try to convert to an rgba image
         try:
             pilImage = pilImage.convert('RGBA')
         except ValueError as err:
             raise RuntimeError('Unknown image mode') from err
-        return mlxarr.asarray(pilImage)  # return MxNx4 RGBA array
+        return mx.asarray(pilImage)  # return MxNx4 RGBA array
 
 
 def _pil_png_to_float_array(pil_png):
@@ -1745,23 +1770,23 @@ def _pil_png_to_float_array(pil_png):
     mode = pil_png.mode
     rawmode = pil_png.png.im_rawmode
     if rawmode == "1":  # Grayscale.
-        return mlxarr.asarray(pil_png, mlxarr.float32)
+        return mx.asarray(pil_png, mx.float32)
     if rawmode == "L;2":  # Grayscale.
-        return mlxarr.divide(pil_png, 2**2 - 1, dtype=mlxarr.float32)
+        return mx.divide(pil_png, 2**2 - 1, dtype=mx.float32)
     if rawmode == "L;4":  # Grayscale.
-        return mlxarr.divide(pil_png, 2**4 - 1, dtype=mlxarr.float32)
+        return mx.divide(pil_png, 2**4 - 1, dtype=mx.float32)
     if rawmode == "L":  # Grayscale.
-        return mlxarr.divide(pil_png, 2**8 - 1, dtype=mlxarr.float32)
+        return mx.divide(pil_png, 2**8 - 1, dtype=mx.float32)
     if rawmode == "I;16B":  # Grayscale.
-        return mlxarr.divide(pil_png, 2**16 - 1, dtype=mlxarr.float32)
+        return mx.divide(pil_png, 2**16 - 1, dtype=mx.float32)
     if mode == "RGB":  # RGB.
-        return mlxarr.divide(pil_png, 2**8 - 1, dtype=mlxarr.float32)
+        return mx.divide(pil_png, 2**8 - 1, dtype=mx.float32)
     if mode == "P":  # Palette.
-        return mlxarr.divide(pil_png.convert("RGBA"), 2**8 - 1, dtype=mlxarr.float32)
+        return mx.divide(pil_png.convert("RGBA"), 2**8 - 1, dtype=mx.float32)
     if mode == "LA":  # Grayscale + alpha.
-        return mlxarr.divide(pil_png.convert("RGBA"), 2**8 - 1, dtype=mlxarr.float32)
+        return mx.divide(pil_png.convert("RGBA"), 2**8 - 1, dtype=mx.float32)
     if mode == "RGBA":  # RGBA.
-        return mlxarr.divide(pil_png, 2**8 - 1, dtype=mlxarr.float32)
+        return mx.divide(pil_png, 2**8 - 1, dtype=mx.float32)
     raise ValueError(f"Unknown PIL rawmode: {rawmode}")
 
 

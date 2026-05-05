@@ -127,15 +127,15 @@ format_axes(ax)
 # Any `~.path.Path` can be used as a marker. The following example shows two
 # simple paths *star* and *circle*, and a more elaborate path of a circle with
 # a cut-out star.
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.path as mpath
 
 star = mpath.Path.unit_regular_star(6)
 circle = mpath.Path.unit_circle()
 # concatenate the circle with an internal cutout of the star
 cut_star = mpath.Path(
-    vertices=mlxarr.concatenate([circle.vertices, star.vertices[::-1, ...]]),
-    codes=mlxarr.concatenate([circle.codes, star.codes]))
+    vertices=mx.concatenate([circle.vertices, star.vertices[::-1, ...]]),
+    codes=mx.concatenate([circle.codes, star.codes]))
 
 fig, ax = plt.subplots()
 fig.suptitle('Path markers', fontsize=14)

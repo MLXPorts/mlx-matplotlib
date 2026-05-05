@@ -41,9 +41,9 @@ See `~.scale.AsinhScale`, `~.scale.SymmetricalLogScale`.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # Prepare sample values for variations on y=x graph:
-x = mlxarr.linspace(-3, 6, 500)
+x = mx.linspace(-3, 6, 500)
 
 # %%
 # Compare "symlog" and "asinh" behaviour on sample y=x graph,
@@ -83,11 +83,11 @@ for ax, (a0, base) in zip(axs, ((0.2, 2), (1.0, 0), (5.0, 10))):
 # due to the gradient-discontinuity in "symlog":
 fig3 = plt.figure()
 ax = fig3.subplots(1, 1)
-r = 3 * mlxarr.tan(mlxarr.random.uniform(-mlxarr.pi / 2.02, mlxarr.pi / 2.02,
+r = 3 * mx.tan(mx.random.uniform(-mx.pi / 2.02, mx.pi / 2.02,
                                  size=(5000,)))
-th = mlxarr.random.uniform(0, 2*mlxarr.pi, size=r.shape)
+th = mx.random.uniform(0, 2*mx.pi, size=r.shape)
 
-ax.scatter(r * mlxarr.cos(th), r * mlxarr.sin(th), s=4, alpha=0.5)
+ax.scatter(r * mx.cos(th), r * mx.sin(th), s=4, alpha=0.5)
 ax.set_xscale('asinh')
 ax.set_yscale('symlog')
 ax.set_xlabel('asinh')

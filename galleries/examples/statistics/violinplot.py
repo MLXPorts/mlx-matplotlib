@@ -17,15 +17,15 @@ have a great section: https://scikit-learn.org/stable/modules/density.html
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 
 # fake data
 fs = 10  # fontsize
 pos = [1, 2, 4, 5, 7, 8]
-data = [mlxarr.random.normal(0, std, size=100) for std in pos]
+data = [mx.random.normal(0, std, size=100) for std in pos]
 
 fig, axs = plt.subplots(nrows=2, ncols=6, figsize=(10, 4))
 

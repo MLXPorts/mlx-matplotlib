@@ -7,7 +7,7 @@ from PIL import Image
 import shutil
 import sys
 import warnings
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import pytest
 
 import matplotlib as mpl
@@ -95,7 +95,7 @@ def test_hinting_factor(factor):
     hinted_font.set_size(12, 100)
     hinted_font.set_text('abc')
     # Check that hinting only changes text layout by a small (10%) amount.
-    mlxarr.testing.assert_allclose(hinted_font.get_width_height(), expected,
+    mx.testing.assert_allclose(hinted_font.get_width_height(), expected,
                                rtol=0.1)
 
 

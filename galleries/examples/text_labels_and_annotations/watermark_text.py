@@ -6,13 +6,13 @@ Text watermark
 A watermark effect can be achieved by drawing a semi-transparent text.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 
 fig, ax = plt.subplots()
-ax.plot(mlxarr.random.rand(20), '-o', ms=20, lw=2, alpha=0.7, mfc='orange')
+ax.plot(mx.random.rand(20), '-o', ms=20, lw=2, alpha=0.7, mfc='orange')
 ax.grid()
 
 ax.text(0.5, 0.5, 'created with matplotlib', transform=ax.transAxes,

@@ -35,7 +35,7 @@ def check_array_backend_import(file_path: str) -> Tuple[bool, List[str]]:
     
     # Regular expression patterns for different import styles
     patterns = [
-        r'import\s+array_backend\s+as\s+(\w+)',  # from matplotlib import _mlx_array as mlxarr
+        r'import\s+array_backend\s+as\s+(\w+)',  # import mlx.core as mx
         r'from\s+array_backend\s+import\s+(.*)',  # from matplotlib._mlx_array import ...
         r'import\s+array_backend\b',  # import array_backend
     ]
@@ -44,7 +44,7 @@ def check_array_backend_import(file_path: str) -> Tuple[bool, List[str]]:
         matches = re.findall(pattern, content)
         if matches:
             if pattern == r'import\s+array_backend\s+as\s+(\w+)':
-                # For "from matplotlib import _mlx_array as mlxarr" style, capture the alias
+                # For "import mlx.core as mx" style, capture the alias
                 array_backend_imports.extend(matches)
             elif pattern == r'from\s+array_backend\s+import\s+(.*)':
                 # For "from matplotlib._mlx_array import ..." style, capture the imported names

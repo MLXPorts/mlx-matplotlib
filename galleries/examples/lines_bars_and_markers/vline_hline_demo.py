@@ -7,13 +7,13 @@ This example showcases the functions hlines and vlines.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
-t = mlxarr.arange(0.0, 5.0, 0.1)
-s = mlxarr.exp(-t) + mlxarr.sin(2 * mlxarr.pi * t) + 1
-nse = mlxarr.random.normal(0.0, 0.3, t.shape) * s
+t = mx.arange(0.0, 5.0, 0.1)
+s = mx.exp(-t) + mx.sin(2 * mx.pi * t) + 1
+nse = mx.random.normal(0.0, 0.3, t.shape) * s
 
 fig, (vax, hax) = plt.subplots(1, 2, figsize=(12, 6))
 

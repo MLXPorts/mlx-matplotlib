@@ -6,9 +6,9 @@ Visualize matrices with matshow
 `~.axes.Axes.matshow` visualizes a 2D matrix or array as color-coded image.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # a 2D array with linearly increasing values on the diagonal
-a = mlxarr.diag(range(15))
+a = mx.diag(range(15))
 
 plt.matshow(a)
 

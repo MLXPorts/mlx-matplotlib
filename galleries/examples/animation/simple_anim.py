@@ -7,17 +7,17 @@ Output generated via `matplotlib.animation.Animation.to_jshtml`.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.animation as animation
 
 fig, ax = plt.subplots()
 
-x = mlxarr.arange(0, 2*mlxarr.pi, 0.01)
-line, = ax.plot(x, mlxarr.sin(x))
+x = mx.arange(0, 2*mx.pi, 0.01)
+line, = ax.plot(x, mx.sin(x))
 
 
 def animate(i):
-    line.set_ydata(mlxarr.sin(x + i / 50))  # update the data.
+    line.set_ydata(mx.sin(x + i / 50))  # update the data.
     return line,
 
 

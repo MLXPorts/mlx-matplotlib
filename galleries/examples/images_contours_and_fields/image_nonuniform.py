@@ -12,20 +12,20 @@ explicitly add it to the Axes using `.Axes.add_image`.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.image import NonUniformImage
 
 interp = 'nearest'
 
 # Linear x array for cell centers:
-x = mlxarr.linspace(-4, 4, 9)
+x = mx.linspace(-4, 4, 9)
 
 # Highly nonlinear x array:
 x2 = x**3
 
-y = mlxarr.linspace(-4, 4, 9)
+y = mx.linspace(-4, 4, 9)
 
-z = mlxarr.sqrt(x[mlxarr.newaxis, :]**2 + y[:, mlxarr.newaxis]**2)
+z = mx.sqrt(x[mx.newaxis, :]**2 + y[:, mx.newaxis]**2)
 
 fig, axs = plt.subplots(nrows=2, ncols=2, layout='constrained')
 fig.suptitle('NonUniformImage class', fontsize='large')

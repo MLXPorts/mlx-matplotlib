@@ -17,19 +17,19 @@ in a 2D grid. One blob will be positive, and the other negative.
 
 import matplotlib.pyplot as plt
 # sphinx_gallery_thumbnail_number = 3
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.colors import Normalize
 
 
 def normal_pdf(x, mean, var):
-    return mlxarr.exp(-(x - mean)**2 / (2*var))
+    return mx.exp(-(x - mean)**2 / (2*var))
 
 
 # Generate the space in which the blobs will live
 xmin, xmax, ymin, ymax = (0, 100, 0, 100)
 n_bins = 100
-xx = mlxarr.linspace(xmin, xmax, n_bins)
-yy = mlxarr.linspace(ymin, ymax, n_bins)
+xx = mx.linspace(xmin, xmax, n_bins)
+yy = mx.linspace(ymin, ymax, n_bins)
 
 # Generate the blobs. The range of the values is roughly -.0002 to .0002
 means_high = [20, 50]
@@ -42,14 +42,14 @@ gauss_y_high = normal_pdf(yy, means_high[1], var[0])
 gauss_x_low = normal_pdf(xx, means_low[0], var[1])
 gauss_y_low = normal_pdf(yy, means_low[1], var[1])
 
-weights = (mlxarr.outer(gauss_y_high, gauss_x_high)
-           - mlxarr.outer(gauss_y_low, gauss_x_low))
+weights = (mx.outer(gauss_y_high, gauss_x_high)
+           - mx.outer(gauss_y_low, gauss_x_low))
 
 # We'll also create a grey background into which the pixels will fade
-greys = mlxarr.full((*weights.shape, 3), 70, dtype=mlxarr.uint8)
+greys = mx.full((*weights.shape, 3), 70, dtype=mx.uint8)
 
 # First we'll plot these blobs using ``imshow`` without transparency.
-vmax = mlxarr.abs(weights).max()
+vmax = mx.abs(weights).max()
 imshow_kwargs = {
     'vmax': vmax,
     'vmin': -vmax,
@@ -72,8 +72,8 @@ ax.set_axis_off()
 # moving from left to right below.
 
 # Create an alpha channel of linearly increasing values moving to the right.
-alphas = mlxarr.ones(weights.shape)
-alphas[:, 30:] = mlxarr.linspace(1, 0, 70)
+alphas = mx.ones(weights.shape)
+alphas[:, 30:] = mx.linspace(1, 0, 70)
 
 # Create the figure and image
 # Note that the absolute values may be slightly different
@@ -93,8 +93,8 @@ ax.set_axis_off()
 
 # Create an alpha channel based on weight values
 # Any value whose absolute value is > .0001 will have zero transparency
-alphas = Normalize(0, .3, clip=True)(mlxarr.abs(weights))
-alphas = mlxarr.clip(alphas, .4, 1)  # alpha value clipped at the bottom at .4
+alphas = Normalize(0, .3, clip=True)(mx.abs(weights))
+alphas = mx.clip(alphas, .4, 1)  # alpha value clipped at the bottom at .4
 
 # Create the figure and image
 # Note that the absolute values may be slightly different

@@ -8,15 +8,15 @@ by creating a dictionary of options passed across several functions.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 font = {'family': 'serif',
         'color':  'darkred',
         'weight': 'normal',
         'size': 16,
         }
 
-x = mlxarr.linspace(0.0, 5.0, 100)
-y = mlxarr.cos(2*mlxarr.pi*x) * mlxarr.exp(-x)
+x = mx.linspace(0.0, 5.0, 100)
+y = mx.cos(2*mx.pi*x) * mx.exp(-x)
 
 plt.plot(x, y, 'k')
 plt.title('Damped exponential decay', fontdict=font)

@@ -14,12 +14,13 @@ root source directory.
 """
 
 import ast
+from datetime import datetime
 from functools import lru_cache, reduce
 from numbers import Real
 import operator
 import os
 import re
-from . import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib as mpl
 from matplotlib import _api, cbook
 from matplotlib.backends import backend_registry
@@ -30,6 +31,14 @@ from matplotlib._enums import JoinStyle, CapStyle
 
 # Don't let the original cycler collide with our validating cycler
 from cycler import Cycler, cycler as ccycler
+
+
+def _iterable(obj):
+    try:
+        iter(obj)
+        return True
+    except TypeError:
+        return False
 
 
 class ValidateInStrings:
@@ -99,9 +108,9 @@ def _listify_validator(scalar_validator, allow_stringlist=False, *,
                     val = _single_string_color_list(s, scalar_validator)
                 else:
                     raise
-        # Allow any ordered sequence type -- generators, mlxarr.ndarray, pd.Series
+        # Allow any ordered sequence type -- generators, mx.array, pd.Series
         # -- but not sets, whose iteration order is non-deterministic.
-        elif mlxarr.iterable(s) and not isinstance(s, (set, frozenset)):
+        elif _iterable(s) and not isinstance(s, (set, frozenset)):
             # The condition on this list comprehension will preserve the
             # behavior of filtering out any empty strings (behavior was
             # from the original validate_stringlist()), while allowing
@@ -132,11 +141,11 @@ validate_anylist = _listify_validator(validate_any)
 
 def _validate_date(s):
     try:
-        mlxarr.datetime64(s)
+        datetime.fromisoformat(s)
         return s
     except ValueError:
         raise ValueError(
-            f'{s!r} should be a string that can be parsed by array_backend.datetime64')
+            f'{s!r} should be an ISO date string')
 
 
 def validate_bool(b):
@@ -500,7 +509,7 @@ def _validate_linestyle(ls):
     def _is_iterable_not_string_like(x):
         # Explicitly exclude bytes/bytearrays so that they are not
         # nonsensically interpreted as sequences of numbers (codepoints).
-        return mlxarr.iterable(x) and not isinstance(x, (str, bytes, bytearray))
+        return cbook.iterable(x) and not isinstance(x, (str, bytes, bytearray))
 
     if _is_iterable_not_string_like(ls):
         if len(ls) == 2 and _is_iterable_not_string_like(ls[1]):

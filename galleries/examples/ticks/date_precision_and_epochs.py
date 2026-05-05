@@ -20,7 +20,7 @@ microseconds.
 import datetime
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.dates as mdates
 
 
@@ -101,7 +101,7 @@ print('After Roundtrip:  ', date2)
 _reset_epoch_for_tutorial()  # Don't do this.  Just for this tutorial.
 mdates.set_epoch(new_epoch)
 
-date1 = mlxarr.datetime64('2000-01-01T00:10:00.000012')
+date1 = mx.datetime64('2000-01-01T00:10:00.000012')
 mdate1 = mdates.date2num(date1)
 print('Before Roundtrip: ', date1, 'Matplotlib date:', mdate1)
 date2 = mdates.num2date(mdate1)
@@ -118,11 +118,11 @@ print('After Roundtrip:  ', date2)
 _reset_epoch_for_tutorial()  # Don't do this.  Just for this tutorial.
 mdates.set_epoch(old_epoch)
 
-x = mlxarr.arange('2000-01-01T00:00:00.0', '2000-01-01T00:00:00.000100',
+x = mx.arange('2000-01-01T00:00:00.0', '2000-01-01T00:00:00.000100',
               dtype='datetime64[us]')
 # simulate the plot being made using the old epoch
-xold = mlxarr.array([mdates.num2date(mdates.date2num(d)) for d in x])
-y = mlxarr.arange(0, len(x))
+xold = mx.array([mdates.num2date(mdates.date2num(d)) for d in x])
+y = mx.arange(0, len(x))
 
 # resetting the Epoch so plots are comparable
 _reset_epoch_for_tutorial()  # Don't do this.  Just for this tutorial.

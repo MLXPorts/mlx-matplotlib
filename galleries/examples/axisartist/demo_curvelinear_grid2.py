@@ -11,7 +11,7 @@ As showcase on the plot, a 5x5 matrix is displayed on the Axes.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from mpl_toolkits.axisartist.axislines import Axes
 from mpl_toolkits.axisartist.grid_finder import ExtremeFinderSimple, MaxNLocator
 from mpl_toolkits.axisartist.grid_helper_curvelinear import GridHelperCurveLinear
@@ -21,10 +21,10 @@ def curvelinear_test1(fig):
     """Grid for custom transform."""
 
     def tr(x, y):
-        return mlxarr.sign(x)*abs(x)**.5, y
+        return mx.sign(x)*abs(x)**.5, y
 
     def inv_tr(x, y):
-        return mlxarr.sign(x)*x**2, y
+        return mx.sign(x)*x**2, y
 
     grid_helper = GridHelperCurveLinear(
         (tr, inv_tr),
@@ -37,7 +37,7 @@ def curvelinear_test1(fig):
     # transform (+ transData of the Axes). Note that the transform of the Axes
     # itself (i.e., transData) is not affected by the given transform.
 
-    ax1.imshow(mlxarr.arange(25).reshape(5, 5),
+    ax1.imshow(mx.arange(25).reshape(5, 5),
                vmax=50, cmap="gray_r", origin="lower")
 
 

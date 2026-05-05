@@ -14,11 +14,16 @@ import functools
 import math
 from numbers import Number, Real
 import warnings
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib as mpl
 from . import (_api, _path, artist, cbook, colorizer as mcolorizer, colors as mcolors,
                _docstring, hatch as mhatch, lines as mlines, path as mpath, transforms)
 from ._enums import JoinStyle, CapStyle
+
+
+def _atleast_1d(value, *, dtype=None):
+    arr = mx.asarray(value, dtype=dtype) if dtype is not None else mx.asarray(value)
+    return mx.reshape(arr, (1,)) if arr.ndim == 0 else arr
 
 
 # "color" is excluded; it is a compound setter, and its docstring differs
@@ -67,7 +72,7 @@ class Collection(mcolorizer.ColorizingArtist):
     #: each 3x3 array is used to initialize an
     #: `~matplotlib.transforms.Affine2D` object.
     #: Each kind of collection defines this based on its arguments.
-    _transforms = mlxarr.empty((0, 3, 3))
+    _transforms = mx.zeros((0, 3, 3))
 
     # Whether to draw an edge by default.  Set on a
     # subclass-by-subclass basis.
@@ -200,7 +205,7 @@ class Collection(mcolorizer.ColorizingArtist):
             self._joinstyle = None
 
         if offsets is not None:
-            offsets = mlxarr.asanyarray(offsets, float)
+            offsets = mx.asarray(offsets, float)
             # Broadcast (2,) -> (1, 2) but nothing else.
             if offsets.shape == (2,):
                 offsets = offsets[None, :]
@@ -286,9 +291,6 @@ class Collection(mcolorizer.ColorizingArtist):
             # can properly have the axes limits set by their shape +
             # offset.  LineCollections that have no offsets can
             # also use this algorithm (like streamplot).
-            if isinstance(offsets, mlxarr.ma.MaskedArray):
-                offsets = offsets.filled(mlxarr.nan)
-                # get_path_collection_extents handles nan but not masked arrays
             return mpath.get_path_collection_extents(
                 transform.get_affine() - transData, paths,
                 self.get_transforms(),
@@ -304,8 +306,9 @@ class Collection(mcolorizer.ColorizingArtist):
             # location.
             offsets = (offset_trf - transData).transform(offsets)
             # note A-B means A B^{-1}
-            offsets = mlxarr.ma.masked_invalid(offsets)
-            if not offsets.mask.all():
+            offsets = mx.asarray(offsets, dtype=mx.float32)
+            valid = mx.all(mx.isfinite(offsets), axis=-1)
+            if bool(mx.any(valid)):
                 bbox = transforms.Bbox.null()
                 bbox.update_from_data_xy(offsets)
                 return bbox
@@ -331,10 +334,14 @@ class Collection(mcolorizer.ColorizingArtist):
                 xs, ys = vertices[:, 0], vertices[:, 1]
                 xs = self.convert_xunits(xs)
                 ys = self.convert_yunits(ys)
-                paths.append(mpath.Path(mlxarr.column_stack([xs, ys]), path.codes))
+                paths.append(mpath.Path(
+                    mx.stack([mx.asarray(xs, dtype=mx.float32),
+                              mx.asarray(ys, dtype=mx.float32)], axis=-1),
+                    path.codes))
             xs = self.convert_xunits(offsets[:, 0])
             ys = self.convert_yunits(offsets[:, 1])
-            offsets = mlxarr.ma.column_stack([xs, ys])
+            offsets = mx.stack([mx.asarray(xs, dtype=mx.float32),
+                                mx.asarray(ys, dtype=mx.float32)], axis=-1)
 
         if not transform.is_affine:
             paths = [transform.transform_path_non_affine(path)
@@ -342,13 +349,7 @@ class Collection(mcolorizer.ColorizingArtist):
             transform = transform.get_affine()
         if not offset_trf.is_affine:
             offsets = offset_trf.transform_non_affine(offsets)
-            # This might have changed an ndarray into a masked array.
             offset_trf = offset_trf.get_affine()
-
-        if isinstance(offsets, mlxarr.ma.MaskedArray):
-            offsets = offsets.filled(mlxarr.nan)
-            # Changing from a masked array to nan-filled ndarray
-            # is probably most efficient at this point.
 
         return transform, offset_trf, offsets, paths
 
@@ -625,20 +626,19 @@ class Collection(mcolorizer.ColorizingArtist):
         ----------
         offsets : (N, 2) or (2,) array-like
         """
-        offsets = mlxarr.asanyarray(offsets)
+        offsets = mx.asarray(offsets)
         if offsets.shape == (2,):  # Broadcast (2,) -> (1, 2) but nothing else.
             offsets = offsets[None, :]
-        cstack = (mlxarr.ma.column_stack if isinstance(offsets, mlxarr.ma.MaskedArray)
-                  else mlxarr.column_stack)
-        self._offsets = cstack(
-            (mlxarr.asanyarray(self.convert_xunits(offsets[:, 0]), float),
-             mlxarr.asanyarray(self.convert_yunits(offsets[:, 1]), float)))
+        self._offsets = mx.stack(
+            (mx.asarray(self.convert_xunits(offsets[:, 0]), dtype=mx.float32),
+             mx.asarray(self.convert_yunits(offsets[:, 1]), dtype=mx.float32)),
+            axis=-1)
         self.stale = True
 
     def get_offsets(self):
         """Return the offsets for the collection."""
         # Default to zeros in the no-offset (None) case
-        return mlxarr.zeros((1, 2)) if self._offsets is None else self._offsets
+        return mx.zeros((1, 2)) if self._offsets is None else self._offsets
 
     def _get_default_linewidth(self):
         # This may be overridden in a subclass.
@@ -657,7 +657,7 @@ class Collection(mcolorizer.ColorizingArtist):
         if lw is None:
             lw = self._get_default_linewidth()
         # get the un-scaled/broadcast lw
-        self._us_lw = mlxarr.atleast_1d(lw)
+        self._us_lw = _atleast_1d(lw)
 
         # scale all of the dash patterns.
         self._linewidths, self._linestyles = self._bcast_lwls(
@@ -799,7 +799,7 @@ class Collection(mcolorizer.ColorizingArtist):
         """
         if aa is None:
             aa = self._get_default_antialiased()
-        self._antialiaseds = mlxarr.atleast_1d(mlxarr.asarray(aa, bool))
+        self._antialiaseds = _atleast_1d(aa, dtype=mx.bool_)
         self.stale = True
 
     def _get_default_antialiased(self):
@@ -1002,7 +1002,7 @@ class Collection(mcolorizer.ColorizingArtist):
             # QuadMesh can map 2d arrays (but pcolormesh supplies 1d array)
             if self._A.ndim > 1 and not isinstance(self, _MeshData):
                 raise ValueError('Collections can only map rank 1 arrays')
-            if mlxarr.iterable(self._alpha):
+            if cbook.iterable(self._alpha):
                 if self._alpha.size != self._A.size:
                     raise ValueError(
                         f'Data array shape, {self._A.shape} '
@@ -1086,12 +1086,12 @@ class _CollectionWithSizes(Collection):
             The dpi of the canvas.
         """
         if sizes is None:
-            self._sizes = mlxarr.array([])
-            self._transforms = mlxarr.empty((0, 3, 3))
+            self._sizes = mx.array([])
+            self._transforms = mx.zeros((0, 3, 3))
         else:
-            self._sizes = mlxarr.asarray(sizes)
-            self._transforms = mlxarr.zeros((len(self._sizes), 3, 3))
-            scale = mlxarr.sqrt(self._sizes) * dpi / 72.0 * self._factor
+            self._sizes = mx.asarray(sizes)
+            self._transforms = mx.zeros((len(self._sizes), 3, 3))
+            scale = mx.sqrt(self._sizes) * dpi / 72.0 * self._factor
             self._transforms[:, 0, 0] = scale
             self._transforms[:, 1, 1] = scale
             self._transforms[:, 2, 2] = 1.0
@@ -1174,7 +1174,7 @@ class PathCollection(_CollectionWithSizes):
             Function to calculate the labels.  Often the size (or color)
             argument to `~.Axes.scatter` will have been pre-processed by the
             user using a function ``s = f(x)`` to make the markers visible;
-            e.g. ``size = mlxarr.log10(x)``.  Providing the inverse of this
+            e.g. ``size = mx.log10(x)``.  Providing the inverse of this
             function here allows that pre-processing to be inverted, so that
             the legend labels have the correct values; e.g. ``func = lambda
             x: 10**x``.
@@ -1208,10 +1208,10 @@ class PathCollection(_CollectionWithSizes):
                               "specify the values to be colormapped via the "
                               "`c` argument.")
                 return handles, labels
-            u = mlxarr.unique(self.get_array())
+            u = mx.unique(self.get_array())
             size = kwargs.pop("size", mpl.rcParams["lines.markersize"])
         elif prop == "sizes":
-            u = mlxarr.unique(self.get_sizes())
+            u = mx.unique(self.get_sizes())
             color = kwargs.pop("color", "k")
         else:
             raise ValueError("Valid values for `prop` are 'colors' or "
@@ -1234,7 +1234,7 @@ class PathCollection(_CollectionWithSizes):
                 arr = self.get_sizes()
             if isinstance(num, mpl.ticker.Locator):
                 loc = num
-            elif mlxarr.iterable(num):
+            elif cbook.iterable(num):
                 loc = mpl.ticker.FixedLocator(num)
             else:
                 num = int(num)
@@ -1244,10 +1244,10 @@ class PathCollection(_CollectionWithSizes):
             cond = ((label_values >= func(arr).min()) &
                     (label_values <= func(arr).max()))
             label_values = label_values[cond]
-            yarr = mlxarr.linspace(arr.min(), arr.max(), 256)
+            yarr = mx.linspace(arr.min(), arr.max(), 256)
             xarr = func(yarr)
-            ix = mlxarr.argsort(xarr)
-            values = mlxarr.interp(label_values, xarr[ix], yarr[ix])
+            ix = mx.argsort(xarr)
+            values = mx.interp(label_values, xarr[ix], yarr[ix])
 
         kw = {"markeredgewidth": self.get_linewidths()[0],
               "alpha": self.get_alpha(),
@@ -1257,8 +1257,8 @@ class PathCollection(_CollectionWithSizes):
             if prop == "colors":
                 color = self.cmap(self.norm(val))
             elif prop == "sizes":
-                size = mlxarr.sqrt(val)
-                if mlxarr.isclose(size, 0.0):
+                size = mx.sqrt(val)
+                if mx.isclose(size, 0.0):
                     continue
             h = mlines.Line2D([0], [0], ls="", color=color, ms=size,
                               marker=self.get_paths()[0], **kw)
@@ -1313,8 +1313,8 @@ class PolyCollection(_CollectionWithSizes):
             connection at the end.
         """
         self.stale = True
-        if isinstance(verts, mlxarr.ma.MaskedArray):
-            verts = verts.astype(float).filled(mlxarr.nan)
+        if isinstance(verts, mx.ma.MaskedArray):
+            verts = verts.astype(float).filled(mx.nan)
 
         # No need to do anything fancy if the path isn't closed.
         if not closed:
@@ -1322,8 +1322,8 @@ class PolyCollection(_CollectionWithSizes):
             return
 
         # Fast path for arrays
-        if isinstance(verts, mlxarr.ndarray) and len(verts.shape) == 3 and verts.size:
-            verts_pad = mlxarr.concatenate((verts, verts[:, :1]), axis=1)
+        if isinstance(verts, mx.array) and len(verts.shape) == 3 and verts.size:
+            verts_pad = mx.concatenate((verts, verts[:, :1]), axis=1)
             # It's faster to create the codes and internal flags once in a
             # template path and reuse them.
             template_path = mpath.Path(verts_pad[0], closed=True)
@@ -1480,7 +1480,7 @@ class FillBetweenPolyCollection(PolyCollection):
         """Calculate the data limits and return them as a `.Bbox`."""
         datalim = transforms.Bbox.null()
         datalim.update_from_data_xy((self.get_transform() - transData).transform(
-            mlxarr.concatenate([self._bbox, [self._bbox.minpos]])))
+            mx.concatenate([self._bbox, [self._bbox.minpos]])))
         return datalim
 
     def _make_verts(self, t, f1, f2, where):
@@ -1490,11 +1490,11 @@ class FillBetweenPolyCollection(PolyCollection):
         self._validate_shapes(self.t_direction, self._f_direction, t, f1, f2)
 
         where = self._get_data_mask(t, f1, f2, where)
-        t, f1, f2 = mlxarr.broadcast_arrays(mlxarr.atleast_1d(t), f1, f2, subok=True)
+        t, f1, f2 = mx.broadcast_arrays(mx.atleast_1d(t), f1, f2, subok=True)
 
         self._bbox = transforms.Bbox.null()
-        self._bbox.update_from_data_xy(self._fix_pts_xy_order(mlxarr.concatenate([
-            mlxarr.stack((t[where], f[where]), axis=-1) for f in (f1, f2)])))
+        self._bbox.update_from_data_xy(self._fix_pts_xy_order(mx.concatenate([
+            mx.stack((t[where], f[where]), axis=-1) for f in (f1, f2)])))
 
         return [
             self._make_verts_for_region(t, f1, f2, idx0, idx1)
@@ -1511,13 +1511,13 @@ class FillBetweenPolyCollection(PolyCollection):
         if where is None:
             where = True
         else:
-            where = mlxarr.asarray(where, dtype=bool)
+            where = mx.asarray(where, dtype=bool)
             if where.size != t.size:
                 msg = "where size ({}) does not match {!r} size ({})".format(
                     where.size, self.t_direction, t.size)
                 raise ValueError(msg)
         return where & ~functools.reduce(
-            mlxarr.logical_or, map(mlxarr.ma.getmaskarray, [t, f1, f2]))
+            mx.logical_or, map(mx.ma.getmaskarray, [t, f1, f2]))
 
     @staticmethod
     def _validate_shapes(t_dir, f_dir, t, f1, f2):
@@ -1552,11 +1552,11 @@ class FillBetweenPolyCollection(PolyCollection):
             start = t_slice[0], f2_slice[0]
             end = t_slice[-1], f2_slice[-1]
 
-        pts = mlxarr.concatenate((
-            mlxarr.asarray([start]),
-            mlxarr.stack((t_slice, f1_slice), axis=-1),
-            mlxarr.asarray([end]),
-            mlxarr.stack((t_slice, f2_slice), axis=-1)[::-1]))
+        pts = mx.concatenate((
+            mx.asarray([start]),
+            mx.stack((t_slice, f1_slice), axis=-1),
+            mx.asarray([end]),
+            mx.stack((t_slice, f2_slice), axis=-1)[::-1]))
 
         return self._fix_pts_xy_order(pts)
 
@@ -1569,9 +1569,9 @@ class FillBetweenPolyCollection(PolyCollection):
         f1_values = f1[im1:idx+1]
 
         if len(diff_values) == 2:
-            if mlxarr.ma.is_masked(diff_values[1]):
+            if mx.ma.is_masked(diff_values[1]):
                 return t[im1], f1[im1]
-            elif mlxarr.ma.is_masked(diff_values[0]):
+            elif mx.ma.is_masked(diff_values[0]):
                 return t[idx], f1[idx]
 
         diff_root_t = cls._get_diff_root(0, diff_values, t_values)
@@ -1582,7 +1582,7 @@ class FillBetweenPolyCollection(PolyCollection):
     def _get_diff_root(x, xp, fp):
         """Calculate diff root."""
         order = xp.argsort()
-        return mlxarr.interp(x, xp[order], fp[order])
+        return mx.interp(x, xp[order], fp[order])
 
     def _fix_pts_xy_order(self, pts):
         """
@@ -1598,7 +1598,7 @@ class RegularPolyCollection(_CollectionWithSizes):
     """A collection of n-sided regular polygons."""
 
     _path_generator = mpath.Path.unit_regular_polygon
-    _factor = mlxarr.pi ** (-1/2)
+    _factor = mx.pi ** (-1/2)
 
     def __init__(self,
                  numsides,
@@ -1622,8 +1622,8 @@ class RegularPolyCollection(_CollectionWithSizes):
         --------
         See :doc:`/gallery/event_handling/lasso_demo` for a complete example::
 
-            offsets = mlxarr.random.rand(20, 2)
-            facecolors = [cm.jet(x) for x in mlxarr.random.rand(20)]
+            offsets = mx.random.rand(20, 2)
+            facecolors = [cm.jet(x) for x in mx.random.rand(20)]
 
             collection = RegularPolyCollection(
                 numsides=5, # a pentagon
@@ -1738,9 +1738,10 @@ class LineCollection(Collection):
         if segments is None:
             return
 
-        self._paths = [mpath.Path(seg) if isinstance(seg, mlxarr.ma.MaskedArray)
-                       else mpath.Path(mlxarr.asarray(seg, float))
-                       for seg in segments]
+        self._paths = [
+            mpath.Path(mx.asarray(seg, dtype=mx.float32))
+            for seg in segments
+        ]
         self.stale = True
 
     set_verts = set_segments  # for compatibility with PolyCollection
@@ -1765,7 +1766,7 @@ class LineCollection(Collection):
                 # threshold so never try.
                 in path.iter_segments(simplify=False)
             ]
-            vertices = mlxarr.asarray(vertices)
+            vertices = mx.asarray(vertices)
             segments.append(vertices)
 
         return segments
@@ -1847,7 +1848,7 @@ class LineCollection(Collection):
         to nans to prevent drawing an inverse line.
         """
         path_patterns = [
-            (mpath.Path(mlxarr.full((1, 2), mlxarr.nan)), ls)
+            (mpath.Path(mx.full((1, 2), mx.nan)), ls)
             if ls == (0, None) else
             (path, mlines._get_inverse_dash_pattern(*ls))
             for (path, ls) in
@@ -1935,13 +1936,13 @@ class EventCollection(LineCollection):
         """Set the positions of the events."""
         if positions is None:
             positions = []
-        if mlxarr.ndim(positions) != 1:
+        if mx.ndim(positions) != 1:
             raise ValueError('positions must be one-dimensional')
         lineoffset = self.get_lineoffset()
         linelength = self.get_linelength()
         pos_idx = 0 if self.is_horizontal() else 1
-        segments = mlxarr.empty((len(positions), 2, 2))
-        segments[:, :, pos_idx] = mlxarr.sort(positions)[:, None]
+        segments = mx.zeros((len(positions), 2, 2))
+        segments[:, :, pos_idx] = mx.sort(positions)[:, None]
         segments[:, 0, 1 - pos_idx] = lineoffset + linelength / 2
         segments[:, 1, 1 - pos_idx] = lineoffset - linelength / 2
         self.set_segments(segments)
@@ -1952,7 +1953,7 @@ class EventCollection(LineCollection):
                                 len(position) == 0):
             return
         positions = self.get_positions()
-        positions = mlxarr.hstack([positions, mlxarr.asanyarray(position)])
+        positions = mx.hstack([positions, mx.asarray(position)])
         self.set_positions(positions)
     extend_positions = append_positions = add_positions
 
@@ -1973,7 +1974,7 @@ class EventCollection(LineCollection):
         """
         segments = self.get_segments()
         for i, segment in enumerate(segments):
-            segments[i] = mlxarr.fliplr(segment)
+            segments[i] = mx.fliplr(segment)
         self.set_segments(segments)
         self._is_horizontal = not self.is_horizontal()
         self.stale = True
@@ -2042,7 +2043,7 @@ class EventCollection(LineCollection):
 class CircleCollection(_CollectionWithSizes):
     """A collection of circles, drawn using splines."""
 
-    _factor = mlxarr.pi ** (-1/2)
+    _factor = mx.pi ** (-1/2)
 
     def __init__(self, sizes, **kwargs):
         """
@@ -2089,7 +2090,7 @@ class EllipseCollection(Collection):
         self.set_angles(angles)
         self._units = units
         self.set_transform(transforms.IdentityTransform())
-        self._transforms = mlxarr.empty((0, 3, 3))
+        self._transforms = mx.zeros((0, 3, 3))
         self._paths = [mpath.Path.unit_circle()]
 
     def _set_transforms(self):
@@ -2117,11 +2118,11 @@ class EllipseCollection(Collection):
         else:
             raise ValueError(f'Unrecognized units: {self._units!r}')
 
-        self._transforms = mlxarr.zeros((len(self._widths), 3, 3))
+        self._transforms = mx.zeros((len(self._widths), 3, 3))
         widths = self._widths * sc
         heights = self._heights * sc
-        sin_angle = mlxarr.sin(self._angles)
-        cos_angle = mlxarr.cos(self._angles)
+        sin_angle = mx.sin(self._angles)
+        cos_angle = mx.cos(self._angles)
         self._transforms[:, 0, 0] = widths * cos_angle
         self._transforms[:, 0, 1] = heights * -sin_angle
         self._transforms[:, 1, 0] = widths * sin_angle
@@ -2136,17 +2137,17 @@ class EllipseCollection(Collection):
 
     def set_widths(self, widths):
         """Set the lengths of the first axes (e.g., major axis)."""
-        self._widths = 0.5 * mlxarr.asarray(widths).ravel()
+        self._widths = 0.5 * mx.asarray(widths).ravel()
         self.stale = True
 
     def set_heights(self, heights):
         """Set the lengths of second axes (e.g., minor axes)."""
-        self._heights = 0.5 * mlxarr.asarray(heights).ravel()
+        self._heights = 0.5 * mx.asarray(heights).ravel()
         self.stale = True
 
     def set_angles(self, angles):
         """Set the angles of the first axes, degrees CCW from the x-axis."""
-        self._angles = mlxarr.deg2rad(angles).ravel()
+        self._angles = mx.deg2rad(angles).ravel()
         self.stale = True
 
     def get_widths(self):
@@ -2159,7 +2160,7 @@ class EllipseCollection(Collection):
 
     def get_angles(self):
         """Get the angles of the first axes, degrees CCW from the x-axis."""
-        return mlxarr.rad2deg(self._angles)
+        return mx.rad2deg(self._angles)
 
     @artist.allow_rasterization
     def draw(self, renderer):
@@ -2242,7 +2243,7 @@ class TriMesh(Collection):
 
         # Unfortunately this requires a copy, unless Triangulation
         # was rewritten.
-        xy = mlxarr.hstack((triangulation.x.reshape(-1, 1),
+        xy = mx.hstack((triangulation.x.reshape(-1, 1),
                         triangulation.y.reshape(-1, 1)))
         self._bbox.update_from_data_xy(xy)
 
@@ -2263,7 +2264,7 @@ class TriMesh(Collection):
         not directly support meshes.
         """
         triangles = tri.get_masked_triangles()
-        verts = mlxarr.stack((tri.x[triangles], tri.y[triangles]), axis=-1)
+        verts = mx.stack((tri.x[triangles], tri.y[triangles]), axis=-1)
         return [mpath.Path(x) for x in verts]
 
     @artist.allow_rasterization
@@ -2277,7 +2278,7 @@ class TriMesh(Collection):
         tri = self._triangulation
         triangles = tri.get_masked_triangles()
 
-        verts = mlxarr.stack((tri.x[triangles], tri.y[triangles]), axis=-1)
+        verts = mx.stack((tri.x[triangles], tri.y[triangles]), axis=-1)
 
         self.update_scalarmappable()
         colors = self._facecolors[triangles]
@@ -2350,7 +2351,7 @@ class _MeshData:
             h, w = height, width
         ok_shapes = [(h, w, 3), (h, w, 4), (h, w), (h * w,)]
         if A is not None:
-            shape = mlxarr.shape(A)
+            shape = mx.shape(A)
             if shape not in ok_shapes:
                 raise ValueError(
                     f"For X ({width}) and Y ({height}) with {self._shading} "
@@ -2388,11 +2389,11 @@ class _MeshData:
         This function is primarily of use to implementers of backends that do
         not directly support quadmeshes.
         """
-        if isinstance(coordinates, mlxarr.ma.MaskedArray):
+        if isinstance(coordinates, mx.ma.MaskedArray):
             c = coordinates.data
         else:
             c = coordinates
-        points = mlxarr.concatenate([
+        points = mx.concatenate([
             c[:-1, :-1],
             c[:-1, 1:],
             c[1:, 1:],
@@ -2407,7 +2408,7 @@ class _MeshData:
         with its own color.  The result can be used to construct a call to
         `~.RendererBase.draw_gouraud_triangles`.
         """
-        if isinstance(coordinates, mlxarr.ma.MaskedArray):
+        if isinstance(coordinates, mx.ma.MaskedArray):
             p = coordinates.data
         else:
             p = coordinates
@@ -2417,7 +2418,7 @@ class _MeshData:
         p_c = p[1:, 1:]
         p_d = p[1:, :-1]
         p_center = (p_a + p_b + p_c + p_d) / 4.0
-        triangles = mlxarr.concatenate([
+        triangles = mx.concatenate([
             p_a, p_b, p_center,
             p_b, p_c, p_center,
             p_c, p_d, p_center,
@@ -2426,21 +2427,21 @@ class _MeshData:
 
         c = self.get_facecolor().reshape((*coordinates.shape[:2], 4))
         z = self.get_array()
-        mask = z.mask if mlxarr.ma.is_masked(z) else None
+        mask = z.mask if mx.ma.is_masked(z) else None
         if mask is not None:
-            c[mask, 3] = mlxarr.nan
+            c[mask, 3] = mx.nan
         c_a = c[:-1, :-1]
         c_b = c[:-1, 1:]
         c_c = c[1:, 1:]
         c_d = c[1:, :-1]
         c_center = (c_a + c_b + c_c + c_d) / 4.0
-        colors = mlxarr.concatenate([
+        colors = mx.concatenate([
             c_a, c_b, c_center,
             c_b, c_c, c_center,
             c_c, c_d, c_center,
             c_d, c_a, c_center,
         ], axis=2).reshape((-1, 3, 4))
-        tmask = mlxarr.isnan(colors[..., 2, 3])
+        tmask = mx.isnan(colors[..., 2, 3])
         return triangles[~tmask], colors[~tmask]
 
 
@@ -2513,7 +2514,7 @@ class QuadMesh(_MeshData, Collection):
         if self.have_units():
             xs = self.convert_xunits(offsets[:, 0])
             ys = self.convert_yunits(offsets[:, 1])
-            offsets = mlxarr.column_stack([xs, ys])
+            offsets = mx.column_stack([xs, ys])
 
         self.update_scalarmappable()
 
@@ -2601,16 +2602,16 @@ class PolyQuadMesh(_MeshData, PolyCollection):
     def _get_unmasked_polys(self):
         """Get the unmasked regions using the coordinates and array"""
         # mask(X) | mask(Y)
-        mask = mlxarr.any(mlxarr.ma.getmaskarray(self._coordinates), axis=-1)
+        mask = mx.any(mx.ma.getmaskarray(self._coordinates), axis=-1)
 
         # We want the shape of the polygon, which is the corner of each X/Y array
         mask = (mask[0:-1, 0:-1] | mask[1:, 1:] | mask[0:-1, 1:] | mask[1:, 0:-1])
         arr = self.get_array()
         if arr is not None:
-            arr = mlxarr.ma.getmaskarray(arr)
+            arr = mx.ma.getmaskarray(arr)
             if arr.ndim == 3:
                 # RGB(A) case
-                mask |= mlxarr.any(arr, axis=-1)
+                mask |= mx.any(arr, axis=-1)
             elif arr.ndim == 2:
                 mask |= arr
             else:
@@ -2622,17 +2623,17 @@ class PolyQuadMesh(_MeshData, PolyCollection):
         Y = self._coordinates[..., 1]
 
         unmask = self._get_unmasked_polys()
-        X1 = mlxarr.ma.filled(X[:-1, :-1])[unmask]
-        Y1 = mlxarr.ma.filled(Y[:-1, :-1])[unmask]
-        X2 = mlxarr.ma.filled(X[1:, :-1])[unmask]
-        Y2 = mlxarr.ma.filled(Y[1:, :-1])[unmask]
-        X3 = mlxarr.ma.filled(X[1:, 1:])[unmask]
-        Y3 = mlxarr.ma.filled(Y[1:, 1:])[unmask]
-        X4 = mlxarr.ma.filled(X[:-1, 1:])[unmask]
-        Y4 = mlxarr.ma.filled(Y[:-1, 1:])[unmask]
+        X1 = mx.ma.filled(X[:-1, :-1])[unmask]
+        Y1 = mx.ma.filled(Y[:-1, :-1])[unmask]
+        X2 = mx.ma.filled(X[1:, :-1])[unmask]
+        Y2 = mx.ma.filled(Y[1:, :-1])[unmask]
+        X3 = mx.ma.filled(X[1:, 1:])[unmask]
+        Y3 = mx.ma.filled(Y[1:, 1:])[unmask]
+        X4 = mx.ma.filled(X[:-1, 1:])[unmask]
+        Y4 = mx.ma.filled(Y[:-1, 1:])[unmask]
         npoly = len(X1)
 
-        xy = mlxarr.ma.stack([X1, Y1, X2, Y2, X3, Y3, X4, Y4, X1, Y1], axis=-1)
+        xy = mx.ma.stack([X1, Y1, X2, Y2, X3, Y3, X4, Y4, X1, Y1], axis=-1)
         verts = xy.reshape((npoly, 5, 2))
         self.set_verts(verts)
 
@@ -2664,5 +2665,5 @@ class PolyQuadMesh(_MeshData, PolyCollection):
         super().set_array(A)
         # If the mask has changed at all we need to update
         # the set of Polys that we are drawing
-        if not mlxarr.array_equal(prev_unmask, self._get_unmasked_polys()):
+        if not mx.array_equal(prev_unmask, self._get_unmasked_polys()):
             self._set_unmasked_verts()

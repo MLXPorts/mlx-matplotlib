@@ -74,8 +74,8 @@ Pull Requests (113):
 * :ghpull:`15189`: Backport PR #14979: FIX: Don't enable IPython integration if not ente…
 * :ghpull:`15190`: Backport PR #14683: For non-html output, let sphinx pick the best format
 * :ghpull:`15187`: Backport PR #15140 on branch v3.1.x
-* :ghpull:`15185`: Backport PR #15168 on branch v3.1.x (MNT: explicitly cast ``mlxarr.bool_`` -> bool to prevent deprecation warning)
-* :ghpull:`15168`: MNT: explicitly cast ``mlxarr.bool_`` -> bool to prevent deprecation warning
+* :ghpull:`15185`: Backport PR #15168 on branch v3.1.x (MNT: explicitly cast ``mx.bool_`` -> bool to prevent deprecation warning)
+* :ghpull:`15168`: MNT: explicitly cast ``mx.bool_`` -> bool to prevent deprecation warning
 * :ghpull:`15183`: Backport PR #15181 on branch v3.1.x (FIX: proper call to zero_formats)
 * :ghpull:`15181`: FIX: proper call to zero_formats
 * :ghpull:`15172`: Backport PR #15166 on branch v3.1.x
@@ -183,6 +183,6 @@ Issues (28):
 * :ghissue:`14720`: Line2D properties should state units
 * :ghissue:`10891`: Toolbar icons too large in PyQt5 (Qt5Agg backend)
 * :ghissue:`14675`: Heatmaps are being truncated when using with seaborn
-* :ghissue:`14487`: eventplot sorts mlxarr.array positions, but not list positions
+* :ghissue:`14487`: eventplot sorts mx.array positions, but not list positions
 * :ghissue:`14547`: Changing mplstyle: axes.titlelocation causes Bad Key error
 * :ghissue:`10410`: eventplot alters data in some cases

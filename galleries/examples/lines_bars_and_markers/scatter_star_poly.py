@@ -14,13 +14,13 @@ on configuring markers.
 .. redirect-from:: /gallery/lines_bars_and_markers/scatter_piecharts
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
-x = mlxarr.random.rand(10)
-y = mlxarr.random.rand(10)
-z = mlxarr.sqrt(x**2 + y**2)
+x = mx.random.rand(10)
+y = mx.random.rand(10)
+z = mx.sqrt(x**2 + y**2)
 
 fig, axs = plt.subplots(2, 3, sharex=True, sharey=True, layout="constrained")
 

@@ -12,7 +12,7 @@ example.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from mpl_toolkits.axisartist.axislines import AxesZero
 
 fig = plt.figure()
@@ -29,7 +29,7 @@ for direction in ["left", "right", "bottom", "top"]:
     # hides borders
     ax.axis[direction].set_visible(False)
 
-x = mlxarr.linspace(-0.5, 1., 100)
-ax.plot(x, mlxarr.sin(x*mlxarr.pi))
+x = mx.linspace(-0.5, 1., 100)
+ax.plot(x, mx.sin(x*mx.pi))
 
 plt.show()

@@ -15,7 +15,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from PIL import Image
 
 from matplotlib import _api, backend_bases, backend_tools
@@ -168,7 +168,7 @@ class FigureCanvasWebAggCore(backend_agg.FigureCanvasAgg):
         # sent to the clients will be a full frame.
         self._force_full = True
         # The last buffer, for diff mode.
-        self._last_buff = mlxarr.empty((0, 0))
+        self._last_buff = mx.zeros((0, 0))
         # Store the current image mode so that at any point, clients can
         # request the information. This should be changed by calling
         # self.set_image_mode(mode) so that the notification can be given
@@ -252,11 +252,11 @@ class FigureCanvasWebAggCore(backend_agg.FigureCanvasAgg):
         if self._png_is_old:
             renderer = self.get_renderer()
 
-            pixels = mlxarr.asarray(renderer.buffer_rgba())
+            pixels = mx.asarray(renderer.buffer_rgba())
             # The buffer is created as type uint32 so that entire
             # pixels can be compared in one array_backend call, rather than
             # needing to compare each plane separately.
-            buff = pixels.view(mlxarr.uint32).squeeze(2)
+            buff = pixels.view(mx.uint32).squeeze(2)
 
             if (self._force_full
                     # If the buffer has changed size we need to do a full draw.
@@ -269,14 +269,14 @@ class FigureCanvasWebAggCore(backend_agg.FigureCanvasAgg):
             else:
                 self.set_image_mode('diff')
                 diff = buff != self._last_buff
-                output = mlxarr.where(diff, buff, 0)
+                output = mx.where(diff, buff, 0)
 
             # Store the current buffer so we can compute the next diff.
             self._last_buff = buff.copy()
             self._force_full = False
             self._png_is_old = False
 
-            data = output.view(dtype=mlxarr.uint8).reshape((*output.shape, 4))
+            data = output.view(dtype=mx.uint8).reshape((*output.shape, 4))
             with BytesIO() as png:
                 Image.fromarray(data).save(png, format="png")
                 return png.getvalue()

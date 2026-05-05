@@ -6,7 +6,7 @@ maintaining the ability to process data regardless of column count or specific m
 """
 
 import pandas as pd
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import os
 from typing import Dict, List, Optional, Tuple, Union, Any
 from sklearn.preprocessing import StandardScaler

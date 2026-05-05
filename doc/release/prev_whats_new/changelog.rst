@@ -1143,7 +1143,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
 2009-08-03
     pylab no longer provides a load and save function.  These are available in
     matplotlib.mlab, or you can use array_backend.loadtxt and array_backend.savetxt for text
-    files, or mlxarr.save and mlxarr.load for binary array_backend arrays. - JDH
+    files, or mx.save and mx.load for binary array_backend arrays. - JDH
 
 2009-07-31
     Added cbook.get_sample_data for urllib enabled fetching and caching of data
@@ -1740,7 +1740,7 @@ recent changes, please refer to the :doc:`/release/release_notes`.
     Fixed alignment of ticks in colorbars. -MGD
 
 2008-12-07
-    drop the deprecated "new" keyword of mlxarr.histogram() for array_backend 1.2 or later.
+    drop the deprecated "new" keyword of mx.histogram() for array_backend 1.2 or later.
     -JJL
 
 2008-12-06

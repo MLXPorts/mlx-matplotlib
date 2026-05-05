@@ -17,13 +17,13 @@ the ``Slider`` snap to discrete values.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.widgets import RangeSlider
 
 # generate a fake image
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 N = 128
-img = mlxarr.random.randn(N, N)
+img = mx.random.randn(N, N)
 
 fig, axs = plt.subplots(1, 2, figsize=(10, 5))
 fig.subplots_adjust(bottom=0.25)

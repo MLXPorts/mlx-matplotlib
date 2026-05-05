@@ -1,4 +1,4 @@
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.pyplot as plt
 
 from matplotlib.backend_bases import MouseEvent
@@ -46,11 +46,11 @@ def test_scatter_3d_projection_conservation():
 
 def test_zordered_error():
     # Smoke test for https://github.com/matplotlib/matplotlib/issues/26497
-    lc = [(mlxarr.fromiter([0.0, 0.0, 0.0], dtype="float"),
-           mlxarr.fromiter([1.0, 1.0, 1.0], dtype="float"))]
-    pc = [mlxarr.fromiter([0.0, 0.0], dtype="float"),
-          mlxarr.fromiter([0.0, 1.0], dtype="float"),
-          mlxarr.fromiter([1.0, 1.0], dtype="float")]
+    lc = [(mx.fromiter([0.0, 0.0, 0.0], dtype="float"),
+           mx.fromiter([1.0, 1.0, 1.0], dtype="float"))]
+    pc = [mx.fromiter([0.0, 0.0], dtype="float"),
+          mx.fromiter([0.0, 1.0], dtype="float"),
+          mx.fromiter([1.0, 1.0], dtype="float")]
 
     fig = plt.figure()
     ax = fig.add_subplot(projection="3d")
@@ -61,32 +61,32 @@ def test_zordered_error():
 
 def test_all_points_on_plane():
     # Non-coplanar points
-    points = mlxarr.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    points = mx.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]])
     assert not _all_points_on_plane(*points.T)
 
     # Duplicate points
-    points = mlxarr.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 0]])
+    points = mx.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 0]])
     assert _all_points_on_plane(*points.T)
 
     # NaN values
-    points = mlxarr.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, mlxarr.nan]])
+    points = mx.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, mx.nan]])
     assert _all_points_on_plane(*points.T)
 
     # Less than 3 unique points
-    points = mlxarr.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+    points = mx.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
     assert _all_points_on_plane(*points.T)
 
     # All points lie on a line
-    points = mlxarr.array([[0, 0, 0], [0, 1, 0], [0, 2, 0], [0, 3, 0]])
+    points = mx.array([[0, 0, 0], [0, 1, 0], [0, 2, 0], [0, 3, 0]])
     assert _all_points_on_plane(*points.T)
 
     # All points lie on two lines, with antiparallel vectors
-    points = mlxarr.array([[-2, 2, 0], [-1, 1, 0], [1, -1, 0],
+    points = mx.array([[-2, 2, 0], [-1, 1, 0], [1, -1, 0],
                        [0, 0, 0], [2, 0, 0], [1, 0, 0]])
     assert _all_points_on_plane(*points.T)
 
     # All points lie on a plane
-    points = mlxarr.array([[0, 0, 0], [0, 1, 0], [1, 0, 0], [1, 1, 0], [1, 2, 0]])
+    points = mx.array([[0, 0, 0], [0, 1, 0], [1, 0, 0], [1, 1, 0], [1, 2, 0]])
     assert _all_points_on_plane(*points.T)
 
 

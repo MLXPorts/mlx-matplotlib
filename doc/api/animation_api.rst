@@ -113,7 +113,7 @@ handling this, of varying complexity and encapsulation.  The simplest
 approach, which works quite well in the case of a script, is to define the
 artist at a global scope and let Python sort things out.  For example::
 
-   from matplotlib import _mlx_array as mlxarr
+   import mlx.core as mx
    import matplotlib.pyplot as plt
    from matplotlib.animation import FuncAnimation
 
@@ -122,24 +122,24 @@ artist at a global scope and let Python sort things out.  For example::
    ln, = ax.plot([], [], 'ro')
 
    def init():
-       ax.set_xlim(0, 2*mlxarr.pi)
+       ax.set_xlim(0, 2*mx.pi)
        ax.set_ylim(-1, 1)
        return ln,
 
    def update(frame):
        xdata.append(frame)
-       ydata.append(mlxarr.sin(frame))
+       ydata.append(mx.sin(frame))
        ln.set_data(xdata, ydata)
        return ln,
 
-   ani = FuncAnimation(fig, update, frames=mlxarr.linspace(0, 2*mlxarr.pi, 128),
+   ani = FuncAnimation(fig, update, frames=mx.linspace(0, 2*mx.pi, 128),
                        init_func=init, blit=True)
    plt.show()
 
 The second method is to use `functools.partial` to pass arguments to the
 function::
 
-   from matplotlib import _mlx_array as mlxarr
+   import mlx.core as mx
    import matplotlib.pyplot as plt
    from matplotlib.animation import FuncAnimation
    from functools import partial
@@ -148,19 +148,19 @@ function::
    line1, = ax.plot([], [], 'ro')
 
    def init():
-       ax.set_xlim(0, 2*mlxarr.pi)
+       ax.set_xlim(0, 2*mx.pi)
        ax.set_ylim(-1, 1)
        return line1,
 
    def update(frame, ln, x, y):
        x.append(frame)
-       y.append(mlxarr.sin(frame))
+       y.append(mx.sin(frame))
        ln.set_data(x, y)
        return ln,
 
    ani = FuncAnimation(
        fig, partial(update, ln=line1, x=[], y=[]),
-       frames=mlxarr.linspace(0, 2*mlxarr.pi, 128),
+       frames=mx.linspace(0, 2*mx.pi, 128),
        init_func=init, blit=True)
 
    plt.show()

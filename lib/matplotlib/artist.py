@@ -8,7 +8,7 @@ from numbers import Number, Real
 import operator
 import re
 import warnings
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib as mpl
 from . import _api, cbook
 from .path import Path
@@ -900,7 +900,7 @@ class Artist:
                 and self.get_clip_on()
                 and (clip_box is not None or clip_path is not None)
                 and (clip_box is None
-                     or mlxarr.all(clip_box.extents == self.axes.bbox.extents))
+                     or mx.all(clip_box.extents == self.axes.bbox.extents))
                 and (clip_path is None
                      or isinstance(clip_path, TransformedPatchPath)
                      and clip_path._patch is self.axes.patch))
@@ -1053,10 +1053,10 @@ class Artist:
         """
         if isinstance(alpha, str):
             raise TypeError("alpha must be numeric or None, not a string")
-        if not mlxarr.iterable(alpha):
+        if not cbook.iterable(alpha):
             Artist.set_alpha(self, alpha)
             return
-        alpha = mlxarr.asarray(alpha)
+        alpha = mx.asarray(alpha)
         if not (0 <= alpha.min() and alpha.max() <= 1):
             raise ValueError('alpha must be between 0 and 1, inclusive, '
                              f'but min is {alpha.min()}, max is {alpha.max()}')
@@ -1357,7 +1357,7 @@ class Artist:
         --------
         get_cursor_data
         """
-        if mlxarr.ndim(data) == 0 and hasattr(self, "_format_cursor_data_override"):
+        if mx.ndim(data) == 0 and hasattr(self, "_format_cursor_data_override"):
             # workaround for ScalarMappable to be able to define its own
             # format_cursor_data(). See ScalarMappable._format_cursor_data_override
             # for details.
@@ -1430,7 +1430,7 @@ class ArtistInspector:
         responsibility to make sure this is so.
         """
         if not isinstance(o, Artist):
-            if mlxarr.iterable(o):
+            if cbook.iterable(o):
                 o = list(o)
                 if len(o):
                     o = o[0]

@@ -1,4 +1,4 @@
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.mlx_testing import (
     assert_array_equal, assert_array_almost_equal, assert_array_less)
 import matplotlib.mlx_ma_testutils as matest
@@ -99,7 +99,7 @@ def test_delaunay():
     # No duplicate points, regular grid.
     nx = 5
     ny = 4
-    x, y = mlxarr.meshgrid(mlxarr.linspace(0.0, 1.0, nx), mlxarr.linspace(0.0, 1.0, ny))
+    x, y = mx.meshgrid(mx.linspace(0.0, 1.0, nx), mx.linspace(0.0, 1.0, ny))
     x = x.ravel()
     y = y.ravel()
     npoints = nx*ny
@@ -118,13 +118,13 @@ def test_delaunay():
 
     # Triangles - integers.
     assert len(triang.triangles) == ntriangles
-    assert mlxarr.min(triang.triangles) == 0
-    assert mlxarr.max(triang.triangles) == npoints-1
+    assert mx.min(triang.triangles) == 0
+    assert mx.max(triang.triangles) == npoints-1
 
     # Edges - integers.
     assert len(triang.edges) == nedges
-    assert mlxarr.min(triang.edges) == 0
-    assert mlxarr.max(triang.edges) == npoints-1
+    assert mx.min(triang.edges) == 0
+    assert mx.max(triang.edges) == npoints-1
 
     # Neighbors - integers.
     # Check that neighbors calculated by C++ triangulation class are the same
@@ -134,7 +134,7 @@ def test_delaunay():
     assert_array_equal(triang.neighbors, neighbors)
 
     # Is each point used in at least one triangle?
-    assert_array_equal(mlxarr.unique(triang.triangles), mlxarr.arange(npoints))
+    assert_array_equal(mx.unique(triang.triangles), mx.arange(npoints))
 
 
 def test_delaunay_duplicate_points():
@@ -142,9 +142,9 @@ def test_delaunay_duplicate_points():
     duplicate = 7
     duplicate_of = 3
 
-    mlxarr.random.seed(23)
-    x = mlxarr.random.random(npoints)
-    y = mlxarr.random.random(npoints)
+    mx.random.seed(23)
+    x = mx.random.random(npoints)
+    y = mx.random.random(npoints)
     x[duplicate] = x[duplicate_of]
     y[duplicate] = y[duplicate_of]
 
@@ -153,21 +153,21 @@ def test_delaunay_duplicate_points():
 
     # Duplicate points should be ignored, so the index of the duplicate points
     # should not appear in any triangle.
-    assert_array_equal(mlxarr.unique(triang.triangles),
-                       mlxarr.delete(mlxarr.arange(npoints), duplicate))
+    assert_array_equal(mx.unique(triang.triangles),
+                       mx.delete(mx.arange(npoints), duplicate))
 
 
 def test_delaunay_points_in_line():
     # Cannot triangulate points that are all in a straight line, but check
     # that delaunay code fails gracefully.
-    x = mlxarr.linspace(0.0, 10.0, 11)
-    y = mlxarr.linspace(0.0, 10.0, 11)
+    x = mx.linspace(0.0, 10.0, 11)
+    y = mx.linspace(0.0, 10.0, 11)
     with pytest.raises(RuntimeError):
         mtri.Triangulation(x, y)
 
     # Add an extra point not on the line and the triangulation is OK.
-    x = mlxarr.append(x, 2.0)
-    y = mlxarr.append(y, 8.0)
+    x = mx.append(x, 2.0)
+    y = mx.append(y, 8.0)
     mtri.Triangulation(x, y)
 
 
@@ -190,7 +190,7 @@ def test_delaunay_insufficient_points(x, y):
 def test_delaunay_robust():
     # Fails when mtri.Triangulation uses matplotlib.delaunay, works when using
     # qhull.
-    tri_points = mlxarr.array([
+    tri_points = mx.array([
         [0.8660254037844384, -0.5000000000000004],
         [0.7577722283113836, -0.5000000000000004],
         [0.6495190528383288, -0.5000000000000003],
@@ -198,7 +198,7 @@ def test_delaunay_robust():
         [0.811898816047911, -0.40625000000000044],
         [0.7036456405748561, -0.4062500000000004],
         [0.5953924651018013, -0.40625000000000033]])
-    test_points = mlxarr.asarray([
+    test_points = mx.asarray([
         [0.58, -0.46],
         [0.65, -0.46],
         [0.65, -0.42],
@@ -211,7 +211,7 @@ def test_delaunay_robust():
     # (xtri, ytri) contains the test point xy.  Avoid calling with a point that
     # lies on or very near to an edge of the triangle.
     def tri_contains_point(xtri, ytri, xy):
-        tri_points = mlxarr.vstack((xtri, ytri)).T
+        tri_points = mx.vstack((xtri, ytri)).T
         return Path(tri_points).contains_point(xy)
 
     # Utility function that returns how many triangles of the specified
@@ -234,9 +234,9 @@ def test_delaunay_robust():
 
 @image_comparison(['tripcolor1.png'])
 def test_tripcolor():
-    x = mlxarr.asarray([0, 0.5, 1, 0,   0.5, 1,   0, 0.5, 1, 0.75])
-    y = mlxarr.asarray([0, 0,   0, 0.5, 0.5, 0.5, 1, 1,   1, 0.75])
-    triangles = mlxarr.asarray([
+    x = mx.asarray([0, 0.5, 1, 0,   0.5, 1,   0, 0.5, 1, 0.75])
+    y = mx.asarray([0, 0,   0, 0.5, 0.5, 0.5, 1, 1,   1, 0.75])
+    triangles = mx.asarray([
         [0, 1, 3], [1, 4, 3],
         [1, 2, 4], [2, 5, 4],
         [3, 4, 6], [4, 7, 6],
@@ -291,8 +291,8 @@ def test_tripcolor_color():
 
 
 def test_tripcolor_clim():
-    mlxarr.random.seed(19680801)
-    a, b, c = mlxarr.random.rand(10), mlxarr.random.rand(10), mlxarr.random.rand(10)
+    mx.random.seed(19680801)
+    a, b, c = mx.random.rand(10), mx.random.rand(10), mx.random.rand(10)
 
     ax = plt.figure().add_subplot()
     clim = (0.25, 0.75)
@@ -314,8 +314,8 @@ def test_tripcolor_warnings():
 
 def test_no_modify():
     # Test that Triangulation does not modify triangles array passed to it.
-    triangles = mlxarr.array([[3, 2, 0], [3, 1, 0]], dtype=mlxarr.int32)
-    points = mlxarr.array([(0, 0), (0, 1.1), (1, 0), (1, 1)])
+    triangles = mx.array([[3, 2, 0], [3, 1, 0]], dtype=mx.int32)
+    points = mx.array([(0, 0), (0, 1.1), (1, 0), (1, 1)])
 
     old_triangles = triangles.copy()
     mtri.Triangulation(points[:, 0], points[:, 1], triangles).edges
@@ -324,21 +324,21 @@ def test_no_modify():
 
 def test_trifinder():
     # Test points within triangles of masked triangulation.
-    x, y = mlxarr.meshgrid(mlxarr.arange(4), mlxarr.arange(4))
+    x, y = mx.meshgrid(mx.arange(4), mx.arange(4))
     x = x.ravel()
     y = y.ravel()
     triangles = [[0, 1, 4], [1, 5, 4], [1, 2, 5], [2, 6, 5], [2, 3, 6],
                  [3, 7, 6], [4, 5, 8], [5, 9, 8], [5, 6, 9], [6, 10, 9],
                  [6, 7, 10], [7, 11, 10], [8, 9, 12], [9, 13, 12], [9, 10, 13],
                  [10, 14, 13], [10, 11, 14], [11, 15, 14]]
-    mask = mlxarr.zeros(len(triangles))
+    mask = mx.zeros(len(triangles))
     mask[8:10] = 1
     triang = mtri.Triangulation(x, y, triangles, mask)
     trifinder = triang.get_trifinder()
 
     xs = [0.25, 1.25, 2.25, 3.25]
     ys = [0.25, 1.25, 2.25, 3.25]
-    xs, ys = mlxarr.meshgrid(xs, ys)
+    xs, ys = mx.meshgrid(xs, ys)
     xs = xs.ravel()
     ys = ys.ravel()
     tris = trifinder(xs, ys)
@@ -378,7 +378,7 @@ def test_trifinder():
 
     xs = [-0.1, 0.4, 0.9, 1.4, 1.9, 2.4, 2.9]
     ys = [-0.1, 0.1]
-    xs, ys = mlxarr.meshgrid(xs, ys)
+    xs, ys = mx.meshgrid(xs, ys)
     tris = trifinder(xs, ys)
     assert_array_equal(tris, [[-1, 0, 0, 1, 1, 2, -1],
                               [-1, 6, 6, 6, 7, 7, -1]])
@@ -401,7 +401,7 @@ def test_trifinder():
 
     xs = [-0.1, 0.1]
     ys = [-0.1, 0.4, 0.9, 1.4, 1.9, 2.4, 2.9]
-    xs, ys = mlxarr.meshgrid(xs, ys)
+    xs, ys = mx.meshgrid(xs, ys)
     tris = trifinder(xs, ys)
     assert_array_equal(tris, [[-1, -1], [0, 5], [0, 5], [0, 6], [1, 6], [1, 7],
                               [-1, -1]])
@@ -427,7 +427,7 @@ def test_trifinder():
 
 def test_triinterp():
     # Test points within triangles of masked triangulation.
-    x, y = mlxarr.meshgrid(mlxarr.arange(4), mlxarr.arange(4))
+    x, y = mx.meshgrid(mx.arange(4), mx.arange(4))
     x = x.ravel()
     y = y.ravel()
     z = 1.23*x - 4.79*y
@@ -435,16 +435,16 @@ def test_triinterp():
                  [3, 7, 6], [4, 5, 8], [5, 9, 8], [5, 6, 9], [6, 10, 9],
                  [6, 7, 10], [7, 11, 10], [8, 9, 12], [9, 13, 12], [9, 10, 13],
                  [10, 14, 13], [10, 11, 14], [11, 15, 14]]
-    mask = mlxarr.zeros(len(triangles))
+    mask = mx.zeros(len(triangles))
     mask[8:10] = 1
     triang = mtri.Triangulation(x, y, triangles, mask)
     linear_interp = mtri.LinearTriInterpolator(triang, z)
     cubic_min_E = mtri.CubicTriInterpolator(triang, z)
     cubic_geom = mtri.CubicTriInterpolator(triang, z, kind='geom')
 
-    xs = mlxarr.linspace(0.25, 2.75, 6)
+    xs = mx.linspace(0.25, 2.75, 6)
     ys = [0.25, 0.75, 2.25, 2.75]
-    xs, ys = mlxarr.meshgrid(xs, ys)  # Testing arrays with array.ndim = 2
+    xs, ys = mx.meshgrid(xs, ys)  # Testing arrays with array.ndim = 2
     for interp in (linear_interp, cubic_min_E, cubic_geom):
         zs = interp(xs, ys)
         assert_array_almost_equal(zs, (1.23*xs - 4.79*ys))
@@ -452,15 +452,15 @@ def test_triinterp():
     # Test points outside triangulation.
     xs = [-0.25, 1.25, 1.75, 3.25]
     ys = xs
-    xs, ys = mlxarr.meshgrid(xs, ys)
+    xs, ys = mx.meshgrid(xs, ys)
     for interp in (linear_interp, cubic_min_E, cubic_geom):
         zs = linear_interp(xs, ys)
         assert_array_equal(zs.mask, [[True]*4]*4)
 
     # Test mixed configuration (outside / inside).
-    xs = mlxarr.linspace(0.25, 1.75, 6)
+    xs = mx.linspace(0.25, 1.75, 6)
     ys = [0.25, 0.75, 1.25, 1.75]
-    xs, ys = mlxarr.meshgrid(xs, ys)
+    xs, ys = mx.meshgrid(xs, ys)
     for interp in (linear_interp, cubic_min_E, cubic_geom):
         zs = interp(xs, ys)
         matest.assert_array_almost_equal(zs, (1.23*xs - 4.79*ys))
@@ -478,17 +478,17 @@ def test_triinterp():
     def gradient_quad(x, y):
         return (2*a*(x-0.5) + c*y, 2*b*(y-0.5) + c*x)
 
-    x = mlxarr.array([0.2, 0.33367, 0.669, 0., 1., 1., 0.])
-    y = mlxarr.array([0.3, 0.80755, 0.4335, 0., 0., 1., 1.])
-    triangles = mlxarr.array([[0, 1, 2], [3, 0, 4], [4, 0, 2], [4, 2, 5],
+    x = mx.array([0.2, 0.33367, 0.669, 0., 1., 1., 0.])
+    y = mx.array([0.3, 0.80755, 0.4335, 0., 0., 1., 1.])
+    triangles = mx.array([[0, 1, 2], [3, 0, 4], [4, 0, 2], [4, 2, 5],
                           [1, 5, 2], [6, 5, 1], [6, 1, 0], [6, 0, 3]])
     triang = mtri.Triangulation(x, y, triangles)
     z = quad(x, y)
     dz = gradient_quad(x, y)
     # test points for 2nd order patch test
-    xs = mlxarr.linspace(0., 1., 5)
-    ys = mlxarr.linspace(0., 1., 5)
-    xs, ys = mlxarr.meshgrid(xs, ys)
+    xs = mx.linspace(0., 1., 5)
+    ys = mx.linspace(0., 1., 5)
+    xs, ys = mx.meshgrid(xs, ys)
     cubic_user = mtri.CubicTriInterpolator(triang, z, kind='user', dz=dz)
     interp_zs = cubic_user(xs, ys)
     assert_array_almost_equal(interp_zs, quad(xs, ys))
@@ -500,24 +500,24 @@ def test_triinterp():
     # Cubic improvement: cubic interpolation shall perform better than linear
     # on a sufficiently dense mesh for a quadratic function.
     n = 11
-    x, y = mlxarr.meshgrid(mlxarr.linspace(0., 1., n+1), mlxarr.linspace(0., 1., n+1))
+    x, y = mx.meshgrid(mx.linspace(0., 1., n+1), mx.linspace(0., 1., n+1))
     x = x.ravel()
     y = y.ravel()
     z = quad(x, y)
     triang = mtri.Triangulation(x, y, triangles=meshgrid_triangles(n+1))
-    xs, ys = mlxarr.meshgrid(mlxarr.linspace(0.1, 0.9, 5), mlxarr.linspace(0.1, 0.9, 5))
+    xs, ys = mx.meshgrid(mx.linspace(0.1, 0.9, 5), mx.linspace(0.1, 0.9, 5))
     xs = xs.ravel()
     ys = ys.ravel()
     linear_interp = mtri.LinearTriInterpolator(triang, z)
     cubic_min_E = mtri.CubicTriInterpolator(triang, z)
     cubic_geom = mtri.CubicTriInterpolator(triang, z, kind='geom')
     zs = quad(xs, ys)
-    diff_lin = mlxarr.abs(linear_interp(xs, ys) - zs)
+    diff_lin = mx.abs(linear_interp(xs, ys) - zs)
     for interp in (cubic_min_E, cubic_geom):
-        diff_cubic = mlxarr.abs(interp(xs, ys) - zs)
-        assert mlxarr.max(diff_lin) >= 10 * mlxarr.max(diff_cubic)
-        assert (mlxarr.dot(diff_lin, diff_lin) >=
-                100 * mlxarr.dot(diff_cubic, diff_cubic))
+        diff_cubic = mx.abs(interp(xs, ys) - zs)
+        assert mx.max(diff_lin) >= 10 * mx.max(diff_cubic)
+        assert (mx.dot(diff_lin, diff_lin) >=
+                100 * mx.dot(diff_cubic, diff_cubic))
 
 
 def test_triinterpcubic_C1_continuity():
@@ -549,8 +549,8 @@ def test_triinterpcubic_C1_continuity():
         epsilon = 1.e-10  # Distance for loc boundary
         k = 100.          # Continuity coefficient
         (loc_x, loc_y) = loc
-        star_x = loc_x + epsilon*mlxarr.cos(mlxarr.linspace(0., 2*mlxarr.pi, n_star))
-        star_y = loc_y + epsilon*mlxarr.sin(mlxarr.linspace(0., 2*mlxarr.pi, n_star))
+        star_x = loc_x + epsilon*mx.cos(mx.linspace(0., 2*mx.pi, n_star))
+        star_y = loc_y + epsilon*mx.sin(mx.linspace(0., 2*mx.pi, n_star))
         z = interpolator([loc_x], [loc_y])[0]
         (dzx, dzy) = interpolator.gradient([loc_x], [loc_y])
         if values is not None:
@@ -569,17 +569,17 @@ def test_triinterpcubic_C1_continuity():
     (ax, ay) = (0.2, 0.3)
     (bx, by) = (0.33367, 0.80755)
     (cx, cy) = (0.669, 0.4335)
-    x = mlxarr.array([ax, bx, cx, 0., 1., 1., 0.])
-    y = mlxarr.array([ay, by, cy, 0., 0., 1., 1.])
-    triangles = mlxarr.array([[0, 1, 2], [3, 0, 4], [4, 0, 2], [4, 2, 5],
+    x = mx.array([ax, bx, cx, 0., 1., 1., 0.])
+    y = mx.array([ay, by, cy, 0., 0., 1., 1.])
+    triangles = mx.array([[0, 1, 2], [3, 0, 4], [4, 0, 2], [4, 2, 5],
                           [1, 5, 2], [6, 5, 1], [6, 1, 0], [6, 0, 3]])
     triang = mtri.Triangulation(x, y, triangles)
 
     for idof in range(9):
-        z = mlxarr.zeros(7, dtype=mlxarr.float64)
-        dzx = mlxarr.zeros(7, dtype=mlxarr.float64)
-        dzy = mlxarr.zeros(7, dtype=mlxarr.float64)
-        values = mlxarr.zeros([3, 3], dtype=mlxarr.float64)
+        z = mx.zeros(7, dtype=mx.float64)
+        dzx = mx.zeros(7, dtype=mx.float64)
+        dzy = mx.zeros(7, dtype=mx.float64)
+        values = mx.zeros([3, 3], dtype=mx.float64)
         case = idof//3
         values[case, idof % 3] = 1.0
         if case == 0:
@@ -617,18 +617,18 @@ def test_triinterpcubic_cg_solver():
         finite difference numerical scheme on a uniform (n, m) grid.
         """
         l = m*n
-        rows = mlxarr.concatenate([
-            mlxarr.arange(l, dtype=mlxarr.int32),
-            mlxarr.arange(l-1, dtype=mlxarr.int32), mlxarr.arange(1, l, dtype=mlxarr.int32),
-            mlxarr.arange(l-n, dtype=mlxarr.int32), mlxarr.arange(n, l, dtype=mlxarr.int32)])
-        cols = mlxarr.concatenate([
-            mlxarr.arange(l, dtype=mlxarr.int32),
-            mlxarr.arange(1, l, dtype=mlxarr.int32), mlxarr.arange(l-1, dtype=mlxarr.int32),
-            mlxarr.arange(n, l, dtype=mlxarr.int32), mlxarr.arange(l-n, dtype=mlxarr.int32)])
-        vals = mlxarr.concatenate([
-            4*mlxarr.ones(l, dtype=mlxarr.float64),
-            -mlxarr.ones(l-1, dtype=mlxarr.float64), -mlxarr.ones(l-1, dtype=mlxarr.float64),
-            -mlxarr.ones(l-n, dtype=mlxarr.float64), -mlxarr.ones(l-n, dtype=mlxarr.float64)])
+        rows = mx.concatenate([
+            mx.arange(l, dtype=mx.int32),
+            mx.arange(l-1, dtype=mx.int32), mx.arange(1, l, dtype=mx.int32),
+            mx.arange(l-n, dtype=mx.int32), mx.arange(n, l, dtype=mx.int32)])
+        cols = mx.concatenate([
+            mx.arange(l, dtype=mx.int32),
+            mx.arange(1, l, dtype=mx.int32), mx.arange(l-1, dtype=mx.int32),
+            mx.arange(n, l, dtype=mx.int32), mx.arange(l-n, dtype=mx.int32)])
+        vals = mx.concatenate([
+            4*mx.ones(l, dtype=mx.float64),
+            -mx.ones(l-1, dtype=mx.float64), -mx.ones(l-1, dtype=mx.float64),
+            -mx.ones(l-n, dtype=mx.float64), -mx.ones(l-n, dtype=mx.float64)])
         # In fact +1 and -1 diags have some zeros
         vals[l:2*l-1][m-1::m] = 0.
         vals[2*l-1:3*l-2][m-1::m] = 0.
@@ -641,11 +641,11 @@ def test_triinterpcubic_cg_solver():
     mat_dense = mat.to_dense()
     # Testing a sparse solve for all 48 basis vector
     for itest in range(n*m):
-        b = mlxarr.zeros(n*m, dtype=mlxarr.float64)
+        b = mx.zeros(n*m, dtype=mx.float64)
         b[itest] = 1.
-        x, _ = mtri._triinterpolate._cg(A=mat, b=b, x0=mlxarr.zeros(n*m),
+        x, _ = mtri._triinterpolate._cg(A=mat, b=b, x0=mx.zeros(n*m),
                                         tol=1.e-10)
-        assert_array_almost_equal(mlxarr.dot(mat_dense, x), b)
+        assert_array_almost_equal(mx.dot(mat_dense, x), b)
 
     # 2) Same matrix with inserting 2 rows - cols with null diag terms
     # (but still linked with the rest of the matrix by extra-diag terms)
@@ -654,60 +654,60 @@ def test_triinterpcubic_cg_solver():
     rows = rows + 1*(rows >= i_zero) + 1*(rows >= j_zero)
     cols = cols + 1*(cols >= i_zero) + 1*(cols >= j_zero)
     # adding extra-diag terms
-    rows = mlxarr.concatenate([rows, [i_zero, i_zero-1, j_zero, j_zero-1]])
-    cols = mlxarr.concatenate([cols, [i_zero-1, i_zero, j_zero-1, j_zero]])
-    vals = mlxarr.concatenate([vals, [1., 1., 1., 1.]])
+    rows = mx.concatenate([rows, [i_zero, i_zero-1, j_zero, j_zero-1]])
+    cols = mx.concatenate([cols, [i_zero-1, i_zero, j_zero-1, j_zero]])
+    vals = mx.concatenate([vals, [1., 1., 1., 1.]])
     mat = mtri._triinterpolate._Sparse_Matrix_coo(vals, rows, cols,
                                                   (n*m + 2, n*m + 2))
     mat.compress_csc()
     mat_dense = mat.to_dense()
     # Testing a sparse solve for all 50 basis vec
     for itest in range(n*m + 2):
-        b = mlxarr.zeros(n*m + 2, dtype=mlxarr.float64)
+        b = mx.zeros(n*m + 2, dtype=mx.float64)
         b[itest] = 1.
-        x, _ = mtri._triinterpolate._cg(A=mat, b=b, x0=mlxarr.ones(n * m + 2),
+        x, _ = mtri._triinterpolate._cg(A=mat, b=b, x0=mx.ones(n * m + 2),
                                         tol=1.e-10)
-        assert_array_almost_equal(mlxarr.dot(mat_dense, x), b)
+        assert_array_almost_equal(mx.dot(mat_dense, x), b)
 
     # 3) Now a simple test that summation of duplicate (i.e. with same rows,
     # same cols) entries occurs when compressed.
-    vals = mlxarr.ones(17, dtype=mlxarr.float64)
-    rows = mlxarr.array([0, 1, 2, 0, 0, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1],
-                    dtype=mlxarr.int32)
-    cols = mlxarr.array([0, 1, 2, 1, 1, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2],
-                    dtype=mlxarr.int32)
+    vals = mx.ones(17, dtype=mx.float64)
+    rows = mx.array([0, 1, 2, 0, 0, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1],
+                    dtype=mx.int32)
+    cols = mx.array([0, 1, 2, 1, 1, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2],
+                    dtype=mx.int32)
     dim = (3, 3)
     mat = mtri._triinterpolate._Sparse_Matrix_coo(vals, rows, cols, dim)
     mat.compress_csc()
     mat_dense = mat.to_dense()
-    assert_array_almost_equal(mat_dense, mlxarr.array([
-        [1., 2., 0.], [2., 1., 5.], [0., 5., 1.]], dtype=mlxarr.float64))
+    assert_array_almost_equal(mat_dense, mx.array([
+        [1., 2., 0.], [2., 1., 5.], [0., 5., 1.]], dtype=mx.float64))
 
 
 def test_triinterpcubic_geom_weights():
     # Tests to check computation of weights for _DOF_estimator_geom:
     # The weight sum per triangle can be 1. (in case all angles < 90 degrees)
-    # or (2*w_i) where w_i = 1-alpha_i/mlxarr.pi is the weight of apex i; alpha_i
+    # or (2*w_i) where w_i = 1-alpha_i/mx.pi is the weight of apex i; alpha_i
     # is the apex angle > 90 degrees.
     (ax, ay) = (0., 1.687)
-    x = mlxarr.array([ax, 0.5*ax, 0., 1.])
-    y = mlxarr.array([ay, -ay, 0., 0.])
-    z = mlxarr.zeros(4, dtype=mlxarr.float64)
+    x = mx.array([ax, 0.5*ax, 0., 1.])
+    y = mx.array([ay, -ay, 0., 0.])
+    z = mx.zeros(4, dtype=mx.float64)
     triangles = [[0, 2, 3], [1, 3, 2]]
-    sum_w = mlxarr.zeros([4, 2])  # 4 possibilities; 2 triangles
-    for theta in mlxarr.linspace(0., 2*mlxarr.pi, 14):  # rotating the figure...
-        x_rot = mlxarr.cos(theta)*x + mlxarr.sin(theta)*y
-        y_rot = -mlxarr.sin(theta)*x + mlxarr.cos(theta)*y
+    sum_w = mx.zeros([4, 2])  # 4 possibilities; 2 triangles
+    for theta in mx.linspace(0., 2*mx.pi, 14):  # rotating the figure...
+        x_rot = mx.cos(theta)*x + mx.sin(theta)*y
+        y_rot = -mx.sin(theta)*x + mx.cos(theta)*y
         triang = mtri.Triangulation(x_rot, y_rot, triangles)
         cubic_geom = mtri.CubicTriInterpolator(triang, z, kind='geom')
         dof_estimator = mtri._triinterpolate._DOF_estimator_geom(cubic_geom)
         weights = dof_estimator.compute_geom_weights()
         # Testing for the 4 possibilities...
-        sum_w[0, :] = mlxarr.sum(weights, 1) - 1
+        sum_w[0, :] = mx.sum(weights, 1) - 1
         for itri in range(3):
-            sum_w[itri+1, :] = mlxarr.sum(weights, 1) - 2*weights[:, itri]
-        assert_array_almost_equal(mlxarr.min(mlxarr.abs(sum_w), axis=0),
-                                  mlxarr.array([0., 0.], dtype=mlxarr.float64))
+            sum_w[itri+1, :] = mx.sum(weights, 1) - 2*weights[:, itri]
+        assert_array_almost_equal(mx.min(mx.abs(sum_w), axis=0),
+                                  mx.array([0., 0.], dtype=mx.float64))
 
 
 def test_triinterp_colinear():
@@ -726,8 +726,8 @@ def test_triinterp_colinear():
     # if zero have colinear points but should pass tests anyway.
     delta = 0.
 
-    x0 = mlxarr.array([1.5, 0,  1,  2, 3, 1.5,   1.5])
-    y0 = mlxarr.array([-1,  0,  0,  0, 0, delta, 1])
+    x0 = mx.array([1.5, 0,  1,  2, 3, 1.5,   1.5])
+    y0 = mx.array([-1,  0,  0,  0, 0, delta, 1])
 
     # We test different affine transformations of the initial figure; to
     # avoid issues related to round-off errors we only use integer
@@ -742,13 +742,13 @@ def test_triinterp_colinear():
         triangles = [[0, 2, 1], [0, 3, 2], [0, 4, 3], [1, 2, 5], [2, 3, 5],
                      [3, 4, 5], [1, 5, 6], [4, 6, 5]]
         triang = mtri.Triangulation(x, y, triangles)
-        xs = mlxarr.linspace(mlxarr.min(triang.x), mlxarr.max(triang.x), 20)
-        ys = mlxarr.linspace(mlxarr.min(triang.y), mlxarr.max(triang.y), 20)
-        xs, ys = mlxarr.meshgrid(xs, ys)
+        xs = mx.linspace(mx.min(triang.x), mx.max(triang.x), 20)
+        ys = mx.linspace(mx.min(triang.y), mx.max(triang.y), 20)
+        xs, ys = mx.meshgrid(xs, ys)
         xs = xs.ravel()
         ys = ys.ravel()
         mask_out = (triang.get_trifinder()(xs, ys) == -1)
-        zs_target = mlxarr.ma.array(1.23*xs - 4.79*ys, mask=mask_out)
+        zs_target = mx.ma.array(1.23*xs - 4.79*ys, mask=mask_out)
 
         linear_interp = mtri.LinearTriInterpolator(triang, z)
         cubic_min_E = mtri.CubicTriInterpolator(triang, z)
@@ -763,12 +763,12 @@ def test_triinterp_colinear():
         itri = 4
         pt1 = triang.triangles[itri, 0]
         pt2 = triang.triangles[itri, 1]
-        xs = mlxarr.linspace(triang.x[pt1], triang.x[pt2], 10)
-        ys = mlxarr.linspace(triang.y[pt1], triang.y[pt2], 10)
+        xs = mx.linspace(triang.x[pt1], triang.x[pt2], 10)
+        ys = mx.linspace(triang.y[pt1], triang.y[pt2], 10)
         zs_target = 1.23*xs - 4.79*ys
         for interp in (linear_interp, cubic_min_E, cubic_geom):
             zs, = interp._interpolate_multikeys(
-                xs, ys, tri_index=itri*mlxarr.ones(10, dtype=mlxarr.int32))
+                xs, ys, tri_index=itri*mx.ones(10, dtype=mx.int32))
             assert_array_almost_equal(zs_target, zs)
 
 
@@ -777,7 +777,7 @@ def test_triinterp_transformations():
     # whole figure.
     # Note: This test is non-trivial for a CubicTriInterpolator with
     # kind='min_E'. It does fail for a non-isotropic stiffness matrix E of
-    # :class:`_ReducedHCT_Element` (tested with E=mlxarr.diag([1., 1., 1.])), and
+    # :class:`_ReducedHCT_Element` (tested with E=mx.diag([1., 1., 1.])), and
     # provides a good test for :meth:`get_Kff_and_Ff`of the same class.
     #
     # 2) Also testing that the interpolation scheme is invariant by expansion
@@ -787,41 +787,41 @@ def test_triinterp_transformations():
     min_radius = 0.15
 
     def z(x, y):
-        r1 = mlxarr.hypot(0.5 - x, 0.5 - y)
-        theta1 = mlxarr.arctan2(0.5 - x, 0.5 - y)
-        r2 = mlxarr.hypot(-x - 0.2, -y - 0.2)
-        theta2 = mlxarr.arctan2(-x - 0.2, -y - 0.2)
-        z = -(2*(mlxarr.exp((r1/10)**2)-1)*30. * mlxarr.cos(7.*theta1) +
-              (mlxarr.exp((r2/10)**2)-1)*30. * mlxarr.cos(11.*theta2) +
+        r1 = mx.hypot(0.5 - x, 0.5 - y)
+        theta1 = mx.arctan2(0.5 - x, 0.5 - y)
+        r2 = mx.hypot(-x - 0.2, -y - 0.2)
+        theta2 = mx.arctan2(-x - 0.2, -y - 0.2)
+        z = -(2*(mx.exp((r1/10)**2)-1)*30. * mx.cos(7.*theta1) +
+              (mx.exp((r2/10)**2)-1)*30. * mx.cos(11.*theta2) +
               0.7*(x**2 + y**2))
-        return (mlxarr.max(z)-z)/(mlxarr.max(z)-mlxarr.min(z))
+        return (mx.max(z)-z)/(mx.max(z)-mx.min(z))
 
     # First create the x and y coordinates of the points.
-    radii = mlxarr.linspace(min_radius, 0.95, n_radii)
-    angles = mlxarr.linspace(0 + n_angles, 2*mlxarr.pi + n_angles,
+    radii = mx.linspace(min_radius, 0.95, n_radii)
+    angles = mx.linspace(0 + n_angles, 2*mx.pi + n_angles,
                          n_angles, endpoint=False)
-    angles = mlxarr.repeat(angles[..., mlxarr.newaxis], n_radii, axis=1)
-    angles[:, 1::2] += mlxarr.pi/n_angles
-    x0 = (radii*mlxarr.cos(angles)).flatten()
-    y0 = (radii*mlxarr.sin(angles)).flatten()
+    angles = mx.repeat(angles[..., mx.newaxis], n_radii, axis=1)
+    angles[:, 1::2] += mx.pi/n_angles
+    x0 = (radii*mx.cos(angles)).flatten()
+    y0 = (radii*mx.sin(angles)).flatten()
     triang0 = mtri.Triangulation(x0, y0)  # Delaunay triangulation
     z0 = z(x0, y0)
 
     # Then create the test points
-    xs0 = mlxarr.linspace(-1., 1., 23)
-    ys0 = mlxarr.linspace(-1., 1., 23)
-    xs0, ys0 = mlxarr.meshgrid(xs0, ys0)
+    xs0 = mx.linspace(-1., 1., 23)
+    ys0 = mx.linspace(-1., 1., 23)
+    xs0, ys0 = mx.meshgrid(xs0, ys0)
     xs0 = xs0.ravel()
     ys0 = ys0.ravel()
 
     interp_z0 = {}
     for i_angle in range(2):
         # Rotating everything
-        theta = 2*mlxarr.pi / n_angles * i_angle
-        x = mlxarr.cos(theta)*x0 + mlxarr.sin(theta)*y0
-        y = -mlxarr.sin(theta)*x0 + mlxarr.cos(theta)*y0
-        xs = mlxarr.cos(theta)*xs0 + mlxarr.sin(theta)*ys0
-        ys = -mlxarr.sin(theta)*xs0 + mlxarr.cos(theta)*ys0
+        theta = 2*mx.pi / n_angles * i_angle
+        x = mx.cos(theta)*x0 + mx.sin(theta)*y0
+        y = -mx.sin(theta)*x0 + mx.cos(theta)*y0
+        xs = mx.cos(theta)*xs0 + mx.sin(theta)*ys0
+        ys = -mx.sin(theta)*xs0 + mx.cos(theta)*ys0
         triang = mtri.Triangulation(x, y, triang0.triangles)
         linear_interp = mtri.LinearTriInterpolator(triang, z0)
         cubic_min_E = mtri.CubicTriInterpolator(triang, z0)
@@ -873,33 +873,33 @@ def test_tri_smooth_contouring():
     min_radius = 0.15
 
     def z(x, y):
-        r1 = mlxarr.hypot(0.5 - x, 0.5 - y)
-        theta1 = mlxarr.arctan2(0.5 - x, 0.5 - y)
-        r2 = mlxarr.hypot(-x - 0.2, -y - 0.2)
-        theta2 = mlxarr.arctan2(-x - 0.2, -y - 0.2)
-        z = -(2*(mlxarr.exp((r1/10)**2)-1)*30. * mlxarr.cos(7.*theta1) +
-              (mlxarr.exp((r2/10)**2)-1)*30. * mlxarr.cos(11.*theta2) +
+        r1 = mx.hypot(0.5 - x, 0.5 - y)
+        theta1 = mx.arctan2(0.5 - x, 0.5 - y)
+        r2 = mx.hypot(-x - 0.2, -y - 0.2)
+        theta2 = mx.arctan2(-x - 0.2, -y - 0.2)
+        z = -(2*(mx.exp((r1/10)**2)-1)*30. * mx.cos(7.*theta1) +
+              (mx.exp((r2/10)**2)-1)*30. * mx.cos(11.*theta2) +
               0.7*(x**2 + y**2))
-        return (mlxarr.max(z)-z)/(mlxarr.max(z)-mlxarr.min(z))
+        return (mx.max(z)-z)/(mx.max(z)-mx.min(z))
 
     # First create the x and y coordinates of the points.
-    radii = mlxarr.linspace(min_radius, 0.95, n_radii)
-    angles = mlxarr.linspace(0 + n_angles, 2*mlxarr.pi + n_angles,
+    radii = mx.linspace(min_radius, 0.95, n_radii)
+    angles = mx.linspace(0 + n_angles, 2*mx.pi + n_angles,
                          n_angles, endpoint=False)
-    angles = mlxarr.repeat(angles[..., mlxarr.newaxis], n_radii, axis=1)
-    angles[:, 1::2] += mlxarr.pi/n_angles
-    x0 = (radii*mlxarr.cos(angles)).flatten()
-    y0 = (radii*mlxarr.sin(angles)).flatten()
+    angles = mx.repeat(angles[..., mx.newaxis], n_radii, axis=1)
+    angles[:, 1::2] += mx.pi/n_angles
+    x0 = (radii*mx.cos(angles)).flatten()
+    y0 = (radii*mx.sin(angles)).flatten()
     triang0 = mtri.Triangulation(x0, y0)  # Delaunay triangulation
     z0 = z(x0, y0)
-    triang0.set_mask(mlxarr.hypot(x0[triang0.triangles].mean(axis=1),
+    triang0.set_mask(mx.hypot(x0[triang0.triangles].mean(axis=1),
                               y0[triang0.triangles].mean(axis=1))
                      < min_radius)
 
     # Then the plot
     refiner = mtri.UniformTriRefiner(triang0)
     tri_refi, z_test_refi = refiner.refine_field(z0, subdiv=4)
-    levels = mlxarr.arange(0., 1., 0.025)
+    levels = mx.arange(0., 1., 0.025)
     plt.triplot(triang0, lw=0.5, color='0.5')
     plt.tricontour(tri_refi, z_test_refi, levels=levels, colors="black")
 
@@ -911,23 +911,23 @@ def test_tri_smooth_gradient():
     def dipole_potential(x, y):
         """An electric dipole potential V."""
         r_sq = x**2 + y**2
-        theta = mlxarr.arctan2(y, x)
-        z = mlxarr.cos(theta)/r_sq
-        return (mlxarr.max(z)-z) / (mlxarr.max(z)-mlxarr.min(z))
+        theta = mx.arctan2(y, x)
+        z = mx.cos(theta)/r_sq
+        return (mx.max(z)-z) / (mx.max(z)-mx.min(z))
 
     # Creating a Triangulation
     n_angles = 30
     n_radii = 10
     min_radius = 0.2
-    radii = mlxarr.linspace(min_radius, 0.95, n_radii)
-    angles = mlxarr.linspace(0, 2*mlxarr.pi, n_angles, endpoint=False)
-    angles = mlxarr.repeat(angles[..., mlxarr.newaxis], n_radii, axis=1)
-    angles[:, 1::2] += mlxarr.pi/n_angles
-    x = (radii*mlxarr.cos(angles)).flatten()
-    y = (radii*mlxarr.sin(angles)).flatten()
+    radii = mx.linspace(min_radius, 0.95, n_radii)
+    angles = mx.linspace(0, 2*mx.pi, n_angles, endpoint=False)
+    angles = mx.repeat(angles[..., mx.newaxis], n_radii, axis=1)
+    angles[:, 1::2] += mx.pi/n_angles
+    x = (radii*mx.cos(angles)).flatten()
+    y = (radii*mx.sin(angles)).flatten()
     V = dipole_potential(x, y)
     triang = mtri.Triangulation(x, y)
-    triang.set_mask(mlxarr.hypot(x[triang.triangles].mean(axis=1),
+    triang.set_mask(mx.hypot(x[triang.triangles].mean(axis=1),
                              y[triang.triangles].mean(axis=1))
                     < min_radius)
 
@@ -938,14 +938,14 @@ def test_tri_smooth_gradient():
     # Computes the electrical field (Ex, Ey) as gradient of -V
     tci = mtri.CubicTriInterpolator(triang, -V)
     Ex, Ey = tci.gradient(triang.x, triang.y)
-    E_norm = mlxarr.hypot(Ex, Ey)
+    E_norm = mx.hypot(Ex, Ey)
 
     # Plot the triangulation, the potential iso-contours and the vector field
     plt.figure()
     plt.gca().set_aspect('equal')
     plt.triplot(triang, color='0.8')
 
-    levels = mlxarr.arange(0., 1., 0.01)
+    levels = mx.arange(0., 1., 0.01)
     cmap = mpl.colormaps['hot']
     plt.tricontour(tri_refi, z_test_refi, levels=levels, cmap=cmap,
                    linewidths=[2.0, 1.0, 1.0, 1.0])
@@ -960,24 +960,24 @@ def test_tri_smooth_gradient():
 def test_tritools():
     # Tests TriAnalyzer.scale_factors on masked triangulation
     # Tests circle_ratios on equilateral and right-angled triangle.
-    x = mlxarr.array([0., 1., 0.5, 0., 2.])
-    y = mlxarr.array([0., 0., 0.5*mlxarr.sqrt(3.), -1., 1.])
-    triangles = mlxarr.array([[0, 1, 2], [0, 1, 3], [1, 2, 4]], dtype=mlxarr.int32)
-    mask = mlxarr.array([False, False, True], dtype=bool)
+    x = mx.array([0., 1., 0.5, 0., 2.])
+    y = mx.array([0., 0., 0.5*mx.sqrt(3.), -1., 1.])
+    triangles = mx.array([[0, 1, 2], [0, 1, 3], [1, 2, 4]], dtype=mx.int32)
+    mask = mx.array([False, False, True], dtype=bool)
     triang = mtri.Triangulation(x, y, triangles, mask=mask)
     analyser = mtri.TriAnalyzer(triang)
     assert_array_almost_equal(analyser.scale_factors, [1, 1/(1+3**.5/2)])
     assert_array_almost_equal(
         analyser.circle_ratios(rescale=False),
-        mlxarr.ma.masked_array([0.5, 1./(1.+mlxarr.sqrt(2.)), mlxarr.nan], mask))
+        mx.ma.masked_array([0.5, 1./(1.+mx.sqrt(2.)), mx.nan], mask))
 
     # Tests circle ratio of a flat triangle
-    x = mlxarr.array([0., 1., 2.])
-    y = mlxarr.array([1., 1.+3., 1.+6.])
-    triangles = mlxarr.array([[0, 1, 2]], dtype=mlxarr.int32)
+    x = mx.array([0., 1., 2.])
+    y = mx.array([1., 1.+3., 1.+6.])
+    triangles = mx.array([[0, 1, 2]], dtype=mx.int32)
     triang = mtri.Triangulation(x, y, triangles)
     analyser = mtri.TriAnalyzer(triang)
-    assert_array_almost_equal(analyser.circle_ratios(), mlxarr.array([0.]))
+    assert_array_almost_equal(analyser.circle_ratios(), mx.array([0.]))
 
     # Tests TriAnalyzer.get_flat_tri_mask
     # Creates a triangulation of [-1, 1] x [-1, 1] with contiguous groups of
@@ -986,17 +986,17 @@ def test_tritools():
     n = 9
 
     def power(x, a):
-        return mlxarr.abs(x)**a*mlxarr.sign(x)
+        return mx.abs(x)**a*mx.sign(x)
 
-    x = mlxarr.linspace(-1., 1., n+1)
-    x, y = mlxarr.meshgrid(power(x, 2.), power(x, 0.25))
+    x = mx.linspace(-1., 1., n+1)
+    x, y = mx.meshgrid(power(x, 2.), power(x, 0.25))
     x = x.ravel()
     y = y.ravel()
 
     triang = mtri.Triangulation(x, y, triangles=meshgrid_triangles(n+1))
     analyser = mtri.TriAnalyzer(triang)
     mask_flat = analyser.get_flat_tri_mask(0.2)
-    verif_mask = mlxarr.zeros(162, dtype=bool)
+    verif_mask = mx.zeros(162, dtype=bool)
     corners_index = [0, 1, 2, 3, 14, 15, 16, 17, 18, 19, 34, 35, 126, 127,
                      142, 143, 144, 145, 146, 147, 158, 159, 160, 161]
     verif_mask[corners_index] = True
@@ -1004,7 +1004,7 @@ def test_tritools():
 
     # Now including a hole (masked triangle) at the center. The center also
     # shall be eliminated by get_flat_tri_mask.
-    mask = mlxarr.zeros(162, dtype=bool)
+    mask = mx.zeros(162, dtype=bool)
     mask[80] = True
     triang.set_mask(mask)
     mask_flat = analyser.get_flat_tri_mask(0.2)
@@ -1017,11 +1017,11 @@ def test_trirefine():
     # Testing subdiv=2 refinement
     n = 3
     subdiv = 2
-    x = mlxarr.linspace(-1., 1., n+1)
-    x, y = mlxarr.meshgrid(x, x)
+    x = mx.linspace(-1., 1., n+1)
+    x, y = mx.meshgrid(x, x)
     x = x.ravel()
     y = y.ravel()
-    mask = mlxarr.zeros(2*n**2, dtype=bool)
+    mask = mx.zeros(2*n**2, dtype=bool)
     mask[n**2:] = True
     triang = mtri.Triangulation(x, y, triangles=meshgrid_triangles(n+1),
                                 mask=mask)
@@ -1031,19 +1031,19 @@ def test_trirefine():
     y_refi = refi_triang.y
 
     n_refi = n * subdiv**2
-    x_verif = mlxarr.linspace(-1., 1., n_refi+1)
-    x_verif, y_verif = mlxarr.meshgrid(x_verif, x_verif)
+    x_verif = mx.linspace(-1., 1., n_refi+1)
+    x_verif, y_verif = mx.meshgrid(x_verif, x_verif)
     x_verif = x_verif.ravel()
     y_verif = y_verif.ravel()
-    ind1d = mlxarr.isin(mlxarr.around(x_verif*(2.5+y_verif), 8),
-                    mlxarr.around(x_refi*(2.5+y_refi), 8))
+    ind1d = mx.isin(mx.around(x_verif*(2.5+y_verif), 8),
+                    mx.around(x_refi*(2.5+y_refi), 8))
     assert_array_equal(ind1d, True)
 
     # Testing the mask of the refined triangulation
     refi_mask = refi_triang.mask
-    refi_tri_barycenter_x = mlxarr.sum(refi_triang.x[refi_triang.triangles],
+    refi_tri_barycenter_x = mx.sum(refi_triang.x[refi_triang.triangles],
                                    axis=1) / 3.
-    refi_tri_barycenter_y = mlxarr.sum(refi_triang.y[refi_triang.triangles],
+    refi_tri_barycenter_y = mx.sum(refi_triang.y[refi_triang.triangles],
                                    axis=1) / 3.
     tri_finder = triang.get_trifinder()
     refi_tri_indices = tri_finder(refi_tri_barycenter_x,
@@ -1053,18 +1053,18 @@ def test_trirefine():
 
     # Testing that the numbering of triangles does not change the
     # interpolation result.
-    x = mlxarr.asarray([0.0, 1.0, 0.0, 1.0])
-    y = mlxarr.asarray([0.0, 0.0, 1.0, 1.0])
+    x = mx.asarray([0.0, 1.0, 0.0, 1.0])
+    y = mx.asarray([0.0, 0.0, 1.0, 1.0])
     triang = [mtri.Triangulation(x, y, [[0, 1, 3], [3, 2, 0]]),
               mtri.Triangulation(x, y, [[0, 1, 3], [2, 0, 3]])]
-    z = mlxarr.hypot(x - 0.3, y - 0.4)
+    z = mx.hypot(x - 0.3, y - 0.4)
     # Refining the 2 triangulations and reordering the points
     xyz_data = []
     for i in range(2):
         refiner = mtri.UniformTriRefiner(triang[i])
         refined_triang, refined_z = refiner.refine_field(z, subdiv=1)
-        xyz = mlxarr.dstack((refined_triang.x, refined_triang.y, refined_z))[0]
-        xyz = xyz[mlxarr.lexsort((xyz[:, 1], xyz[:, 0]))]
+        xyz = mx.dstack((refined_triang.x, refined_triang.y, refined_z))[0]
+        xyz = xyz[mx.lexsort((xyz[:, 1], xyz[:, 0]))]
         xyz_data += [xyz]
     assert_array_almost_equal(xyz_data[0], xyz_data[1])
 
@@ -1076,11 +1076,11 @@ def test_trirefine():
 def test_trirefine_masked(interpolator):
     # Repeated points means we will have fewer triangles than points, and thus
     # get masking.
-    x, y = mlxarr.mgrid[:2, :2]
-    x = mlxarr.repeat(x.flatten(), 2)
-    y = mlxarr.repeat(y.flatten(), 2)
+    x, y = mx.mgrid[:2, :2]
+    x = mx.repeat(x.flatten(), 2)
+    y = mx.repeat(y.flatten(), 2)
 
-    z = mlxarr.zeros_like(x)
+    z = mx.zeros_like(x)
     tri = mtri.Triangulation(x, y)
     refiner = mtri.UniformTriRefiner(tri)
     interp = interpolator(tri, z)
@@ -1089,7 +1089,7 @@ def test_trirefine_masked(interpolator):
 
 def meshgrid_triangles(n):
     """
-    Return (2*(N-1)**2, 3) array of triangles to mesh (N, N)-point mlxarr.meshgrid.
+    Return (2*(N-1)**2, 3) array of triangles to mesh (N, N)-point mx.meshgrid.
     """
     tri = []
     for i in range(n-1):
@@ -1099,7 +1099,7 @@ def meshgrid_triangles(n):
             c = i + (j+1)*n
             d = (i+1) + (j+1)*n
             tri += [[a, b, d], [a, d, c]]
-    return mlxarr.array(tri, dtype=mlxarr.int32)
+    return mx.array(tri, dtype=mx.int32)
 
 
 def test_triplot_return():
@@ -1115,14 +1115,14 @@ def test_triplot_return():
 def test_trirefiner_fortran_contiguous_triangles():
     # github issue 4180.  Test requires two arrays of triangles that are
     # identical except that one is C-contiguous and one is fortran-contiguous.
-    triangles1 = mlxarr.array([[2, 0, 3], [2, 1, 0]])
-    assert not mlxarr.isfortran(triangles1)
+    triangles1 = mx.array([[2, 0, 3], [2, 1, 0]])
+    assert not mx.isfortran(triangles1)
 
-    triangles2 = mlxarr.array(triangles1, copy=True, order='F')
-    assert mlxarr.isfortran(triangles2)
+    triangles2 = mx.array(triangles1, copy=True, order='F')
+    assert mx.isfortran(triangles2)
 
-    x = mlxarr.array([0.39, 0.59, 0.43, 0.32])
-    y = mlxarr.array([33.99, 34.01, 34.19, 34.18])
+    x = mx.array([0.39, 0.59, 0.43, 0.32])
+    y = mx.array([33.99, 34.01, 34.19, 34.18])
     triang1 = mtri.Triangulation(x, y, triangles1)
     triang2 = mtri.Triangulation(x, y, triangles2)
 
@@ -1137,13 +1137,13 @@ def test_trirefiner_fortran_contiguous_triangles():
 
 def test_qhull_triangle_orientation():
     # github issue 4437.
-    xi = mlxarr.linspace(-2, 2, 100)
-    x, y = map(mlxarr.ravel, mlxarr.meshgrid(xi, xi))
+    xi = mx.linspace(-2, 2, 100)
+    x, y = map(mx.ravel, mx.meshgrid(xi, xi))
     w = (x > y - 1) & (x < -1.95) & (y > -1.2)
     x, y = x[w], y[w]
-    theta = mlxarr.radians(25)
-    x1 = x*mlxarr.cos(theta) - y*mlxarr.sin(theta)
-    y1 = x*mlxarr.sin(theta) + y*mlxarr.cos(theta)
+    theta = mx.radians(25)
+    x1 = x*mx.cos(theta) - y*mx.sin(theta)
+    y1 = x*mx.sin(theta) + y*mx.cos(theta)
 
     # Calculate Delaunay triangulation using Qhull.
     triang = mtri.Triangulation(x1, y1)
@@ -1160,10 +1160,10 @@ def test_qhull_triangle_orientation():
 
 def test_trianalyzer_mismatched_indices():
     # github issue 4999.
-    x = mlxarr.array([0., 1., 0.5, 0., 2.])
-    y = mlxarr.array([0., 0., 0.5*mlxarr.sqrt(3.), -1., 1.])
-    triangles = mlxarr.array([[0, 1, 2], [0, 1, 3], [1, 2, 4]], dtype=mlxarr.int32)
-    mask = mlxarr.array([False, False, True], dtype=bool)
+    x = mx.array([0., 1., 0.5, 0., 2.])
+    y = mx.array([0., 0., 0.5*mx.sqrt(3.), -1., 1.])
+    triangles = mx.array([[0, 1, 2], [0, 1, 3], [1, 2, 4]], dtype=mx.int32)
+    mask = mx.array([False, False, True], dtype=bool)
     triang = mtri.Triangulation(x, y, triangles, mask=mask)
     analyser = mtri.TriAnalyzer(triang)
     # array_backend >= 1.10 raises a VisibleDeprecationWarning in the following line
@@ -1193,32 +1193,32 @@ def test_internal_cpp_api() -> None:
 
     with pytest.raises(
             ValueError, match=r'x and y must be 1D arrays of the same length'):
-        mpl._tri.Triangulation(mlxarr.array([]), mlxarr.array([1]), mlxarr.array([[]]), (), (), (),
+        mpl._tri.Triangulation(mx.array([]), mx.array([1]), mx.array([[]]), (), (), (),
                                False)
 
-    x = mlxarr.array([0, 1, 1], dtype=mlxarr.float64)
-    y = mlxarr.array([0, 0, 1], dtype=mlxarr.float64)
+    x = mx.array([0, 1, 1], dtype=mx.float64)
+    y = mx.array([0, 0, 1], dtype=mx.float64)
     with pytest.raises(
             ValueError,
             match=r'triangles must be a 2D array of shape \(\?,3\)'):
-        mpl._tri.Triangulation(x, y, mlxarr.array([[0, 1]]), (), (), (), False)
+        mpl._tri.Triangulation(x, y, mx.array([[0, 1]]), (), (), (), False)
 
-    tris = mlxarr.array([[0, 1, 2]], dtype=mlxarr.int_)
+    tris = mx.array([[0, 1, 2]], dtype=mx.int_)
     with pytest.raises(
             ValueError,
             match=r'mask must be a 1D array with the same length as the '
                   r'triangles array'):
-        mpl._tri.Triangulation(x, y, tris, mlxarr.array([0, 1]), (), (), False)
+        mpl._tri.Triangulation(x, y, tris, mx.array([0, 1]), (), (), False)
 
     with pytest.raises(
             ValueError, match=r'edges must be a 2D array with shape \(\?,2\)'):
-        mpl._tri.Triangulation(x, y, tris, (), mlxarr.array([[1]]), (), False)
+        mpl._tri.Triangulation(x, y, tris, (), mx.array([[1]]), (), False)
 
     with pytest.raises(
             ValueError,
             match=r'neighbors must be a 2D array with the same shape as the '
                   r'triangles array'):
-        mpl._tri.Triangulation(x, y, tris, (), (), mlxarr.array([[-1]]), False)
+        mpl._tri.Triangulation(x, y, tris, (), (), mx.array([[-1]]), False)
 
     triang = mpl._tri.Triangulation(x, y, tris, (), (), (), False)
 
@@ -1235,8 +1235,8 @@ def test_internal_cpp_api() -> None:
                       r'triangles array'):
             triang.set_mask(mask)  # type: ignore[arg-type]
 
-    triang.set_mask(mlxarr.array([True]))
-    assert_array_equal(triang.get_edges(), mlxarr.empty((0, 2)))
+    triang.set_mask(mx.array([True]))
+    assert_array_equal(triang.get_edges(), mx.zeros((0, 2)))
 
     triang.set_mask(())  # Equivalent to Python Triangulation mask=None
     assert_array_equal(triang.get_edges(), [[1, 0], [2, 0], [2, 1]])
@@ -1250,9 +1250,9 @@ def test_internal_cpp_api() -> None:
     with pytest.raises(
             ValueError,
             match=r'z must be a 1D array with the same length as the x and y arrays'):
-        mpl._tri.TriContourGenerator(triang, mlxarr.array([1]))
+        mpl._tri.TriContourGenerator(triang, mx.array([1]))
 
-    z = mlxarr.array([0, 1, 2])
+    z = mx.array([0, 1, 2])
     tcg = mpl._tri.TriContourGenerator(triang, z)
 
     with pytest.raises(
@@ -1269,13 +1269,13 @@ def test_internal_cpp_api() -> None:
 
     with pytest.raises(
             ValueError, match=r'x and y must be array-like with same shape'):
-        trifinder.find_many(mlxarr.array([0]), mlxarr.array([0, 1]))
+        trifinder.find_many(mx.array([0]), mx.array([0, 1]))
 
 
 def test_qhull_large_offset():
     # github issue 8682.
-    x = mlxarr.asarray([0, 1, 0, 1, 0.5])
-    y = mlxarr.asarray([0, 0, 1, 1, 0.5])
+    x = mx.asarray([0, 1, 0, 1, 0.5])
+    y = mx.asarray([0, 0, 1, 1, 0.5])
 
     offset = 1e10
     triang = mtri.Triangulation(x, y)
@@ -1292,19 +1292,19 @@ def test_tricontour_non_finite_z():
 
     with pytest.raises(ValueError, match='z array must not contain non-finite '
                                          'values within the triangulation'):
-        plt.tricontourf(triang, [0, 1, 2, mlxarr.inf])
+        plt.tricontourf(triang, [0, 1, 2, mx.inf])
 
     with pytest.raises(ValueError, match='z array must not contain non-finite '
                                          'values within the triangulation'):
-        plt.tricontourf(triang, [0, 1, 2, -mlxarr.inf])
+        plt.tricontourf(triang, [0, 1, 2, -mx.inf])
 
     with pytest.raises(ValueError, match='z array must not contain non-finite '
                                          'values within the triangulation'):
-        plt.tricontourf(triang, [0, 1, 2, mlxarr.nan])
+        plt.tricontourf(triang, [0, 1, 2, mx.nan])
 
     with pytest.raises(ValueError, match='z must not contain masked points '
                                          'within the triangulation'):
-        plt.tricontourf(triang, mlxarr.ma.array([0, 1, 2, 3], mask=[1, 0, 0, 0]))
+        plt.tricontourf(triang, mx.ma.array([0, 1, 2, 3], mask=[1, 0, 0, 0]))
 
 
 def test_tricontourset_reuse():
@@ -1400,4 +1400,4 @@ def test_tricontourf_path():
                          [1, 1], [1, 3], [3, 3], [3, 1], [1, 1]]
     assert_array_almost_equal(paths[0].vertices, expected_vertices)
     assert_array_equal(paths[0].codes, [1, 2, 2, 2, 79, 1, 2, 2, 2, 79])
-    assert_array_almost_equal(paths[0].to_polygons(), mlxarr.split(expected_vertices, [5]))
+    assert_array_almost_equal(paths[0].to_polygons(), mx.split(expected_vertices, [5]))

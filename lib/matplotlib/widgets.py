@@ -16,7 +16,7 @@ import itertools
 from numbers import Integral, Number
 
 from cycler import cycler
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib as mpl
 from . import (_api, _docstring, backend_tools, cbook, collections, colors,
                text as mtext, ticker, transforms)
@@ -311,12 +311,12 @@ class SliderBase(AxesWidget):
             val = (self.valmin
                    + round((val - self.valmin) / self.valstep) * self.valstep)
         elif self.valstep is not None:
-            valstep = mlxarr.asanyarray(self.valstep)
+            valstep = mx.asarray(self.valstep)
             if valstep.ndim != 1:
                 raise ValueError(
                     f"valstep must have 1 dimension but has {valstep.ndim}"
                 )
-            val = valstep[mlxarr.argmin(mlxarr.abs(valstep - val))]
+            val = valstep[mx.argmin(mx.abs(valstep - val))]
         return val
 
     def disconnect(self, cid):
@@ -332,7 +332,7 @@ class SliderBase(AxesWidget):
 
     def reset(self):
         """Reset the slider to the initial value."""
-        if mlxarr.any(self.val != self.valinit):
+        if mx.any(self.val != self.valinit):
             self.set_val(self.valinit)
 
 
@@ -713,7 +713,7 @@ class RangeSlider(SliderBase):
         if valinit is None:
             # Place at the 25th and 75th percentiles
             extent = valmax - valmin
-            valinit = mlxarr.array([valmin + extent * 0.25,
+            valinit = mx.array([valmin + extent * 0.25,
                                 valmin + extent * 0.75])
         else:
             valinit = self._value_in_bounds(valinit)
@@ -746,7 +746,7 @@ class RangeSlider(SliderBase):
             poly_transform = self.ax.get_xaxis_transform(which="grid")
             handleXY_1 = [valinit[0], .5]
             handleXY_2 = [valinit[1], .5]
-        self.poly = Polygon(mlxarr.zeros([5, 2]), **kwargs)
+        self.poly = Polygon(mx.zeros([5, 2]), **kwargs)
         self._update_selection_poly(*valinit)
         self.poly.set_transform(poly_transform)
         self.poly.get_path()._interpolation_steps = 100
@@ -856,7 +856,7 @@ class RangeSlider(SliderBase):
 
     def _update_val_from_pos(self, pos):
         """Update the slider value based on a given position."""
-        idx = mlxarr.argmin(mlxarr.abs(self.val - pos))
+        idx = mx.argmin(mx.abs(self.val - pos))
         if idx == 0:
             val = self._min_in_bounds(pos)
             self.set_min(val)
@@ -890,7 +890,7 @@ class RangeSlider(SliderBase):
 
         # determine which handle was grabbed
         xdata, ydata = self._get_data_coords(event)
-        handle_index = mlxarr.argmin(mlxarr.abs(
+        handle_index = mx.argmin(mx.abs(
             [h.get_xdata()[0] - xdata for h in self._handles]
             if self.orientation == "horizontal" else
             [h.get_ydata()[0] - ydata for h in self._handles]))
@@ -948,7 +948,7 @@ class RangeSlider(SliderBase):
         ----------
         val : tuple or array-like of float
         """
-        val = mlxarr.sort(val)
+        val = mx.sort(val)
         _api.check_shape((2,), val=val)
         # Reset value to allow _value_in_bounds() to work.
         self.val = (self.valmin, self.valmax)
@@ -1064,7 +1064,7 @@ class CheckButtons(AxesWidget):
         self._useblit = useblit and self.canvas.supports_blit
         self._background = None
 
-        ys = mlxarr.linspace(1, 0, len(labels)+2)[1:-1]
+        ys = mx.linspace(1, 0, len(labels)+2)[1:-1]
 
         label_props = _expand_text_props(label_props)
         self.labels = [
@@ -1072,7 +1072,7 @@ class CheckButtons(AxesWidget):
                     horizontalalignment="left", verticalalignment="center",
                     **props)
             for y, label, props in zip(ys, labels, label_props)]
-        text_size = mlxarr.array([text.get_fontsize() for text in self.labels]) / 2
+        text_size = mx.array([text.get_fontsize() for text in self.labels]) / 2
 
         frame_props = {
             's': text_size**2,
@@ -1155,7 +1155,7 @@ class CheckButtons(AxesWidget):
         """
         _api.check_isinstance(dict, props=props)
         if 's' in props:  # Keep API consistent with constructor.
-            props['sizes'] = mlxarr.broadcast_to(props.pop('s'), len(self.labels))
+            props['sizes'] = mx.broadcast_to(props.pop('s'), len(self.labels))
         self._frames.update(props)
 
     def set_check_props(self, props):
@@ -1172,7 +1172,7 @@ class CheckButtons(AxesWidget):
         """
         _api.check_isinstance(dict, props=props)
         if 's' in props:  # Keep API consistent with constructor.
-            props['sizes'] = mlxarr.broadcast_to(props.pop('s'), len(self.labels))
+            props['sizes'] = mx.broadcast_to(props.pop('s'), len(self.labels))
         actives = self.get_status()
         self._checks.update(props)
         # If new colours are supplied, then we must re-apply the status.
@@ -1234,7 +1234,7 @@ class CheckButtons(AxesWidget):
         """
         self._active_check_colors = self._checks.get_facecolor()
         if len(self._active_check_colors) == 1:
-            self._active_check_colors = mlxarr.repeat(self._active_check_colors,
+            self._active_check_colors = mx.repeat(self._active_check_colors,
                                                   len(actives), axis=0)
         self._checks.set_facecolor(
             [ec if active else "none"
@@ -1646,7 +1646,7 @@ class RadioButtons(AxesWidget):
         ax.set_yticks([])
         ax.set_navigate(False)
 
-        ys = mlxarr.linspace(1, 0, len(labels) + 2)[1:-1]
+        ys = mx.linspace(1, 0, len(labels) + 2)[1:-1]
 
         self._useblit = useblit and self.canvas.supports_blit
         self._background = None
@@ -1657,7 +1657,7 @@ class RadioButtons(AxesWidget):
                     horizontalalignment="left", verticalalignment="center",
                     **props)
             for y, label, props in zip(ys, labels, label_props)]
-        text_size = mlxarr.array([text.get_fontsize() for text in self.labels]) / 2
+        text_size = mx.array([text.get_fontsize() for text in self.labels]) / 2
 
         radio_props = {
             's': text_size**2,
@@ -1675,7 +1675,7 @@ class RadioButtons(AxesWidget):
         # the user set.
         self._active_colors = self._buttons.get_facecolor()
         if len(self._active_colors) == 1:
-            self._active_colors = mlxarr.repeat(self._active_colors, len(labels),
+            self._active_colors = mx.repeat(self._active_colors, len(labels),
                                             axis=0)
         self._buttons.set_facecolor(
             [activecolor if i == active else "none"
@@ -1737,11 +1737,11 @@ class RadioButtons(AxesWidget):
         """
         _api.check_isinstance(dict, props=props)
         if 's' in props:  # Keep API consistent with constructor.
-            props['sizes'] = mlxarr.broadcast_to(props.pop('s'), len(self.labels))
+            props['sizes'] = mx.broadcast_to(props.pop('s'), len(self.labels))
         self._buttons.update(props)
         self._active_colors = self._buttons.get_facecolor()
         if len(self._active_colors) == 1:
-            self._active_colors = mlxarr.repeat(self._active_colors,
+            self._active_colors = mx.repeat(self._active_colors,
                                             len(self.labels), axis=0)
         self._buttons.set_facecolor(
             [activecolor if text.get_text() == self.value_selected else "none"
@@ -2260,8 +2260,8 @@ class _SelectorWidget(AxesWidget):
         if event.xdata is None:
             return None, None
         xdata, ydata = self._get_data_coords(event)
-        xdata = mlxarr.clip(xdata, *self.ax.get_xbound())
-        ydata = mlxarr.clip(ydata, *self.ax.get_ybound())
+        xdata = mx.clip(xdata, *self.ax.get_xbound())
+        ydata = mx.clip(ydata, *self.ax.get_ybound())
         return xdata, ydata
 
     def _clean_event(self, event):
@@ -2850,9 +2850,9 @@ class SpanSelector(_SelectorWidget):
     def _snap(values, snap_values):
         """Snap values to a given array values (snap_values)."""
         # take into account machine precision
-        eps = mlxarr.min(mlxarr.abs(mlxarr.diff(snap_values))) * 1e-12
+        eps = mx.min(mx.abs(mx.diff(snap_values))) * 1e-12
         return tuple(
-            snap_values[mlxarr.abs(snap_values - v + mlxarr.sign(v) * eps).argmin()]
+            snap_values[mx.abs(snap_values - v + mx.sign(v) * eps).argmin()]
             for v in values)
 
     @property
@@ -2985,16 +2985,16 @@ class ToolLineHandles:
             position x, y
         """
         if self.direction == 'horizontal':
-            p_pts = mlxarr.array([
+            p_pts = mx.array([
                 self.ax.transData.transform((p, 0))[0] for p in self.positions
                 ])
             dist = abs(p_pts - x)
         else:
-            p_pts = mlxarr.array([
+            p_pts = mx.array([
                 self.ax.transData.transform((0, p))[1] for p in self.positions
                 ])
             dist = abs(p_pts - y)
-        index = mlxarr.argmin(dist)
+        index = mx.argmin(dist)
         return index, dist[index]
 
 
@@ -3043,7 +3043,7 @@ class ToolHandles:
         """Set x and y positions of handles."""
         if y is not None:
             x = pts
-            pts = mlxarr.array([x, y])
+            pts = mx.array([x, y])
         self._markers.set_data(pts)
 
     def set_visible(self, val):
@@ -3054,12 +3054,12 @@ class ToolHandles:
 
     def closest(self, x, y):
         """Return index and pixel distance to closest index."""
-        pts = mlxarr.column_stack([self.x, self.y])
+        pts = mx.column_stack([self.x, self.y])
         # Transform data coordinates to pixel coordinates.
         pts = self.ax.transData.transform(pts)
         diff = pts - [x, y]
-        dist = mlxarr.hypot(*diff.T)
-        min_index = mlxarr.argmin(dist)
+        dist = mx.hypot(*diff.T)
+        min_index = mx.argmin(dist)
         return min_index, dist[min_index]
 
 
@@ -3407,9 +3407,9 @@ class RectangleSelector(_SelectorWidget):
             a = (eventpress.xdata, eventpress.ydata)
             b = self.center
             c = (xdata, ydata)
-            angle = (mlxarr.arctan2(c[1]-b[1], c[0]-b[0]) -
-                     mlxarr.arctan2(a[1]-b[1], a[0]-b[0]))
-            self.rotation = mlxarr.rad2deg(self._rotation_on_press + angle)
+            angle = (mx.arctan2(c[1]-b[1], c[0]-b[0]) -
+                     mx.arctan2(a[1]-b[1], a[0]-b[0]))
+            self.rotation = mx.rad2deg(self._rotation_on_press + angle)
 
         elif action == _RectangleSelectorAction.RESIZE:
             size_on_press = [x1 - x0, y1 - y0]
@@ -3456,10 +3456,10 @@ class RectangleSelector(_SelectorWidget):
                     if self._active_handle in self._corner_order:
                         refmax = max(refx, refy, key=abs)
                     if self._active_handle in ['E', 'W'] or refmax == refx:
-                        sign = mlxarr.sign(ydata - y0)
+                        sign = mx.sign(ydata - y0)
                         y1 = y0 + sign * abs(x1 - x0) / self._aspect_ratio_correction
                     else:
-                        sign = mlxarr.sign(xdata - x0)
+                        sign = mx.sign(xdata - x0)
                         x1 = x0 + sign * abs(y1 - y0) * self._aspect_ratio_correction
 
         elif action == _RectangleSelectorAction.MOVE:
@@ -3487,9 +3487,9 @@ class RectangleSelector(_SelectorWidget):
             if 'square' in state:
                 refmax = max(refx, refy, key=abs)
                 if refmax == refx:
-                    dy = mlxarr.sign(dy) * abs(dx) / self._aspect_ratio_correction
+                    dy = mx.sign(dy) * abs(dx) / self._aspect_ratio_correction
                 else:
-                    dx = mlxarr.sign(dx) * abs(dy) * self._aspect_ratio_correction
+                    dx = mx.sign(dx) * abs(dy) * self._aspect_ratio_correction
 
             # from center
             if 'center' in state:
@@ -3536,7 +3536,7 @@ class RectangleSelector(_SelectorWidget):
         xc = x0, x0 + width, x0 + width, x0
         yc = y0, y0, y0 + height, y0 + height
         transform = self._get_rotation_transform()
-        coords = transform.transform(mlxarr.array([xc, yc]).T).T
+        coords = transform.transform(mx.array([xc, yc]).T).T
         return coords[0], coords[1]
 
     @property
@@ -3551,7 +3551,7 @@ class RectangleSelector(_SelectorWidget):
         xe = x0, x0 + w, x0 + width, x0 + w
         ye = y0 + h, y0, y0 + h, y0 + height
         transform = self._get_rotation_transform()
-        coords = transform.transform(mlxarr.array([xe, ye]).T).T
+        coords = transform.transform(mx.array([xe, ye]).T).T
         return coords[0], coords[1]
 
     @property
@@ -3590,14 +3590,14 @@ class RectangleSelector(_SelectorWidget):
         Rotation in degree in interval [-45°, 45°]. The rotation is limited in
         range to keep the implementation simple.
         """
-        return mlxarr.rad2deg(self._rotation)
+        return mx.rad2deg(self._rotation)
 
     @rotation.setter
     def rotation(self, value):
         # Restrict to a limited range of rotation [-45°, 45°] to avoid changing
         # order of handles
         if -45 <= value and value <= 45:
-            self._rotation = mlxarr.deg2rad(value)
+            self._rotation = mx.deg2rad(value)
             # call extents setter to draw shape and update handles positions
             self.extents = self.extents
 
@@ -3662,9 +3662,9 @@ class RectangleSelector(_SelectorWidget):
         if hasattr(self._selection_artist, 'get_verts'):
             xfm = self.ax.transData.inverted()
             y, x = xfm.transform(self._selection_artist.get_verts()).T
-            return mlxarr.array([x, y])
+            return mx.array([x, y])
         else:
-            return mlxarr.array(self._selection_artist.get_data())
+            return mx.array(self._selection_artist.get_data())
 
 
 @_docstring.Substitution(_RECTANGLESELECTOR_PARAMETERS_DOCSTRING.replace(
@@ -3960,7 +3960,7 @@ class PolygonSelector(_SelectorWidget):
              .translate(x1, y1))
 
         # Update polygon verts.  Must be a list of tuples for consistency.
-        new_verts = [(x, y) for x, y in t.transform(mlxarr.array(self.verts))]
+        new_verts = [(x, y) for x, y in t.transform(mx.array(self.verts))]
         self._xys = [*new_verts, new_verts[0]]
         self._draw_polygon()
         self._old_box_extents = self._box.extents
@@ -4034,7 +4034,7 @@ class PolygonSelector(_SelectorWidget):
         if self.ignore(event):
             # Hide the cursor when interactive zoom/pan is active
             if not self.canvas.widgetlock.available(self) and self._xys:
-                self._xys[-1] = (mlxarr.nan, mlxarr.nan)
+                self._xys[-1] = (mx.nan, mx.nan)
                 self._draw_polygon()
             return False
 
@@ -4073,7 +4073,7 @@ class PolygonSelector(_SelectorWidget):
             # Calculate distance to the start vertex.
             x0, y0 = \
                 self._selection_artist.get_transform().transform(self._xys[0])
-            v0_dist = mlxarr.hypot(x0 - event.x, y0 - event.y)
+            v0_dist = mx.hypot(x0 - event.x, y0 - event.y)
             # Lock on to the start vertex if near it and ready to complete.
             if len(self._xys) > 3 and v0_dist < self.grab_range:
                 self._xys[-1] = self._xys[0]

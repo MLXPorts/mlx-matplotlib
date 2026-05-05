@@ -35,12 +35,12 @@ rcParams can be modified directly, for example:
 from cycler import cycler
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib as mpl
 
 mpl.rcParams['lines.linewidth'] = 2
 mpl.rcParams['lines.linestyle'] = '--'
-data = mlxarr.random.randn(50)
+data = mx.random.randn(50)
 plt.plot(data)
 
 # %%
@@ -197,7 +197,7 @@ print(plt.style.available)
 # changes, you can write something like the following:
 
 with plt.style.context('dark_background'):
-    plt.plot(mlxarr.sin(mlxarr.linspace(0, 2 * mlxarr.pi)), 'r-o')
+    plt.plot(mx.sin(mx.linspace(0, 2 * mx.pi)), 'r-o')
 plt.show()
 
 # %%

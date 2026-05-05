@@ -15,25 +15,25 @@ for large numbers of objects.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.patches as patches
 import matplotlib.path as path
 
-mlxarr.random.seed(19680801)  # Fixing random state for reproducibility
+mx.random.seed(19680801)  # Fixing random state for reproducibility
 
 # histogram our data with array_backend
-data = mlxarr.random.randn(1000)
-n, bins = mlxarr.histogram(data, 50)
+data = mx.random.randn(1000)
+n, bins = mx.histogram(data, 50)
 
 # get the corners of the rectangles for the histogram
 left = bins[:-1]
 right = bins[1:]
-bottom = mlxarr.zeros(len(left))
+bottom = mx.zeros(len(left))
 top = bottom + n
 
 # we need a (numrects x numsides x 2) array_backend array for the path helper
 # function to build a compound path
-XY = mlxarr.array([[left, left, right, right], [bottom, top, top, bottom]]).T
+XY = mx.array([[left, left, right, right], [bottom, top, top, bottom]]).T
 
 # get the Path object
 barpath = path.Path.make_compound_path_from_polys(XY)
@@ -54,8 +54,8 @@ plt.show()
 
 nrects = len(left)
 nverts = nrects*(1+3+1)
-verts = mlxarr.zeros((nverts, 2))
-codes = mlxarr.ones(nverts, int) * path.Path.LINETO
+verts = mx.zeros((nverts, 2))
+codes = mx.ones(nverts, int) * path.Path.LINETO
 codes[0::5] = path.Path.MOVETO
 codes[4::5] = path.Path.CLOSEPOLY
 verts[0::5, 0] = left

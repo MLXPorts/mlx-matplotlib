@@ -11,18 +11,18 @@ Example contributed by Armin Moser.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 fig = plt.figure()
 ax = fig.add_subplot(projection='3d')
 
 # Create the mesh in polar coordinates and compute corresponding Z.
-r = mlxarr.linspace(0, 1.25, 50)
-p = mlxarr.linspace(0, 2*mlxarr.pi, 50)
-R, P = mlxarr.meshgrid(r, p)
+r = mx.linspace(0, 1.25, 50)
+p = mx.linspace(0, 2*mx.pi, 50)
+R, P = mx.meshgrid(r, p)
 Z = ((R**2 - 1)**2)
 
 # Express the mesh in the cartesian system.
-X, Y = R*mlxarr.cos(P), R*mlxarr.sin(P)
+X, Y = R*mx.cos(P), R*mx.sin(P)
 
 # Plot the surface.
 ax.plot_surface(X, Y, Z, cmap="YlGnBu_r")

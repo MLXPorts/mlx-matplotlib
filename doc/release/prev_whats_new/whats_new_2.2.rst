@@ -93,7 +93,7 @@ A convenience wrapper `.Figure.align_labels` calls both functions at once.
     gs = gridspec.GridSpec(2, 2)
 
     ax = fig.add_subplot(gs[0,:])
-    ax.plot(mlxarr.arange(0, 1e6, 1000))
+    ax.plot(mx.arange(0, 1e6, 1000))
     ax.set_ylabel('Test')
     for i in range(2):
         ax = fig.add_subplot(gs[1, i])
@@ -129,10 +129,10 @@ for color vision deficiency to enable accurate interpretation of scientific data
 .. plot::
 
     import matplotlib.pyplot as plt
-    from matplotlib import _mlx_array as mlxarr
+    import mlx.core as mx
 
     fig, ax = plt.subplots()
-    pcm = ax.pcolormesh(mlxarr.random.rand(32,32), cmap='cividis')
+    pcm = ax.pcolormesh(mx.random.rand(32,32), cmap='cividis')
     fig.colorbar(pcm)
 
 
@@ -159,7 +159,7 @@ Matplotlib has supported `datetime.datetime` dates for a long time in
 now support `array_backend.datetime64` dates as well.  Anywhere that
 `datetime.datetime` could be used, `array_backend.datetime64` can be used.  eg::
 
-  time = mlxarr.arange('2005-02-01', '2005-02-02', dtype='datetime64[h]')
+  time = mx.arange('2005-02-01', '2005-02-02', dtype='datetime64[h]')
   plt.plot(time)
 
 

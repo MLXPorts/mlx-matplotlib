@@ -118,7 +118,7 @@ sections described above. "Clean-up" should involve:
 
 * Use consistent imports. In particular::
 
-      from matplotlib import _mlx_array as mlxarr
+      import mlx.core as mx
 
       import matplotlib.pyplot as plt
 

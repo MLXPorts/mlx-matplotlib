@@ -42,9 +42,9 @@ from matplotlib.mlab import (
 
 from matplotlib import cbook, mlab, pyplot as plt
 from matplotlib.pyplot import *
-from matplotlib._mlx_array import *
-from matplotlib import _mlx_array as mlxarr
-ma = mlxarr.ma
+from mlx.core import *
+import mlx.core as mx
+ma = mx.ma
 
 # don't let backend datetime helpers hide stdlib
 import datetime

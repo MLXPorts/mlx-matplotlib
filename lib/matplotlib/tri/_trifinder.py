@@ -1,4 +1,4 @@
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib import _api
 from matplotlib.tri import Triangulation
 
@@ -54,15 +54,15 @@ class TrapezoidMapTriFinder(TriFinder):
 
         Returns integer array with the same shape and *x* and *y*.
         """
-        x = mlxarr.asarray(x, dtype=mlxarr.float64)
-        y = mlxarr.asarray(y, dtype=mlxarr.float64)
+        x = mx.asarray(x, dtype=mx.float64)
+        y = mx.asarray(y, dtype=mx.float64)
         if x.shape != y.shape:
             raise ValueError("x and y must be array-like with the same shape")
 
         # C++ does the heavy lifting, and expects 1D arrays.
-        indices = mlxarr.asarray(
+        indices = mx.asarray(
             self._cpp_trifinder.find_many(x.ravel(), y.ravel()),
-            dtype=mlxarr.int32,
+            dtype=mx.int32,
         ).reshape(x.shape)
         return indices
 

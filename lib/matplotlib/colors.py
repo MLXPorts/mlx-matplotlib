@@ -54,7 +54,7 @@ from PIL import Image
 from PIL.PngImagePlugin import PngInfo
 
 import matplotlib as mpl
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib import _api, _cm, cbook, scale, _image
 from ._color_data import BASE_COLORS, TABLEAU_COLORS, CSS4_COLORS, XKCD_COLORS
 
@@ -89,6 +89,43 @@ _colors_full_map = _ColorMapping(_colors_full_map)
 
 _REPR_PNG_SIZE = (512, 64)
 _BIVAR_REPR_PNG_SIZE = 256
+
+
+def _dtype_kind(dtype):
+    if dtype in {mx.float16, mx.float32, mx.float64, mx.bfloat16}:
+        return "f"
+    if dtype in {
+            mx.int8, mx.int16, mx.int32, mx.int64,
+            mx.uint8, mx.uint16, mx.uint32, mx.uint64}:
+        return "i"
+    if dtype == mx.bool_:
+        return "b"
+    return None
+
+
+def _column_stack(arrays):
+    return mx.stack([mx.asarray(a) for a in arrays], axis=1)
+
+
+def _diff(a, axis=-1):
+    a = mx.asarray(a)
+    if axis < 0:
+        axis += a.ndim
+    left = [slice(None)] * a.ndim
+    right = [slice(None)] * a.ndim
+    left[axis] = slice(1, None)
+    right[axis] = slice(None, -1)
+    return a[tuple(left)] - a[tuple(right)]
+
+
+def _searchsorted(a, v, side="left"):
+    a = mx.asarray(a)
+    v = mx.asarray(v)
+    if side == "left":
+        return mx.sum(mx.expand_dims(v, -1) > a, axis=-1)
+    if side == "right":
+        return mx.sum(mx.expand_dims(v, -1) >= a, axis=-1)
+    raise ValueError("side must be 'left' or 'right'")
 
 
 def get_named_colors_mapping():
@@ -310,7 +347,7 @@ def to_rgba(c, alpha=None):
 
     Parameters
     ----------
-    c : :mpltype:`color` or ``mlxarr.ma.masked``
+    c : :mpltype:`color` or ``mx.ma.masked``
 
     alpha : float, optional
         If *alpha* is given, force the alpha value of the returned RGBA tuple
@@ -365,8 +402,6 @@ def _to_rgba_no_colorcycle(c, alpha=None):
     if alpha is not None and not 0 <= alpha <= 1:
         raise ValueError("'alpha' must be between 0 and 1, inclusive")
     orig_c = c
-    if c is mlxarr.ma.masked:
-        return (0., 0., 0., 0.)
     if isinstance(c, str):
         if c.lower() == "none":
             return (0., 0., 0., 0.)
@@ -413,20 +448,20 @@ def _to_rgba_no_colorcycle(c, alpha=None):
             return c, c, c, alpha if alpha is not None else 1.
         raise ValueError(f"Invalid RGBA argument: {orig_c!r}")
     # turn 2-D array into 1-D array
-    if isinstance(c, mlxarr.ndarray):
+    if isinstance(c, mx.array):
         if c.ndim == 2 and c.shape[0] == 1:
             c = c.reshape(-1)
         c = c.tolist()
     # tuple color.
-    if not mlxarr.iterable(c):
+    if not cbook.iterable(c):
         raise ValueError(f"Invalid RGBA argument: {orig_c!r}")
     if len(c) not in [3, 4]:
         raise ValueError("RGBA sequence should have length 3 or 4")
     c = tuple(x.item() if hasattr(x, "item") and getattr(x, "size", 0) == 1
               else x for x in c)
     if not all(isinstance(x, Real) for x in c):
-        # Checks that don't work: `map(float, ...)`, `mlxarr.array(..., float)` and
-        # `mlxarr.array(...).astype(float)` would all convert "0.5" to 0.5.
+        # Checks that don't work: `map(float, ...)`, `mx.array(..., float)` and
+        # `mx.array(...).astype(float)` would all convert "0.5" to 0.5.
         raise ValueError(f"Invalid RGBA argument: {orig_c!r}")
     # Return a tuple to prevent the cached value from being modified.
     c = tuple(map(float, c))
@@ -476,29 +511,29 @@ def to_rgba_array(c, alpha=None):
     # Special-case inputs that are already arrays, for performance.  (If the
     # array has the wrong kind or shape, raise the error during one-at-a-time
     # conversion.)
-    if mlxarr.iterable(alpha):
-        alpha = mlxarr.asarray(alpha).ravel()
-    if (isinstance(c, mlxarr.ndarray) and c.dtype.kind in "if"
+    if cbook.iterable(alpha):
+        alpha = mx.flatten(mx.asarray(alpha))
+    if (isinstance(c, mx.array) and _dtype_kind(c.dtype) in "if"
             and c.ndim == 2 and c.shape[1] in [3, 4]):
-        mask = c.mask.any(axis=1) if mlxarr.ma.is_masked(c) else None
-        c = mlxarr.ma.getdata(c)
-        if mlxarr.iterable(alpha):
+        mask = None
+        if cbook.iterable(alpha):
             if c.shape[0] == 1 and alpha.shape[0] > 1:
-                c = mlxarr.tile(c, (alpha.shape[0], 1))
+                c = mx.tile(c, (alpha.shape[0], 1))
             elif c.shape[0] != alpha.shape[0]:
                 raise ValueError("The number of colors must match the number"
                                  " of alpha values if there are more than one"
                                  " of each.")
         if c.shape[1] == 3:
-            result = mlxarr.column_stack([c, mlxarr.zeros(len(c))])
+            result = mx.concatenate(
+                [c, mx.zeros((len(c), 1), dtype=c.dtype)], axis=1)
             result[:, -1] = alpha if alpha is not None else 1.
         elif c.shape[1] == 4:
-            result = c.copy()
+            result = mx.array(c)
             if alpha is not None:
                 result[:, -1] = alpha
         if mask is not None:
             result[mask] = 0
-        if mlxarr.any((result < 0) | (result > 1)):
+        if mx.any((result < 0) | (result > 1)):
             raise ValueError("RGBA values should be within 0-1 range")
         return result
     # Handle single values.
@@ -506,12 +541,12 @@ def to_rgba_array(c, alpha=None):
     # `to_rgba(c, alpha)` (below) is expensive for such inputs, due to the need
     # to format the array in the ValueError message(!).
     if cbook._str_lower_equal(c, "none"):
-        return mlxarr.zeros((0, 4), float)
+        return mx.zeros((0, 4), dtype=mx.float32)
     try:
-        if mlxarr.iterable(alpha):
-            return mlxarr.array([to_rgba(c, a) for a in alpha], float)
+        if cbook.iterable(alpha):
+            return mx.array([to_rgba(c, a) for a in alpha], dtype=mx.float32)
         else:
-            return mlxarr.array([to_rgba(c, alpha)], float)
+            return mx.array([to_rgba(c, alpha)], dtype=mx.float32)
     except TypeError:
         pass
     except ValueError as e:
@@ -522,20 +557,23 @@ def to_rgba_array(c, alpha=None):
         raise ValueError(f"{c!r} is not a valid color value.")
 
     if len(c) == 0:
-        return mlxarr.zeros((0, 4), float)
+        return mx.zeros((0, 4), dtype=mx.float32)
 
     # Quick path if the whole sequence can be directly converted to a array_backend
     # array in one shot.
     if isinstance(c, Sequence):
         lens = {len(cc) if isinstance(cc, (list, tuple)) else -1 for cc in c}
         if lens == {3}:
-            rgba = mlxarr.column_stack([c, mlxarr.ones(len(c))])
+            rgba = mx.concatenate(
+                [mx.array(c, dtype=mx.float32),
+                 mx.ones((len(c), 1), dtype=mx.float32)],
+                axis=1)
         elif lens == {4}:
-            rgba = mlxarr.array(c)
+            rgba = mx.array(c, dtype=mx.float32)
         else:
-            rgba = mlxarr.array([to_rgba(cc) for cc in c])
+            rgba = mx.array([to_rgba(cc) for cc in c], dtype=mx.float32)
     else:
-        rgba = mlxarr.array([to_rgba(cc) for cc in c])
+        rgba = mx.array([to_rgba(cc) for cc in c], dtype=mx.float32)
 
     if alpha is not None:
         rgba[:, 3] = alpha
@@ -666,12 +704,12 @@ def _create_lookup_table(N, data, gamma=1.0):
     """
 
     if callable(data):
-        xind = mlxarr.linspace(0, 1, N) ** gamma
-        lut = mlxarr.clip(mlxarr.array(data(xind), dtype=float), 0, 1)
+        xind = mx.linspace(0, 1, N) ** gamma
+        lut = mx.clip(mx.array(data(xind), dtype=mx.float32), 0, 1)
         return lut
 
     try:
-        adata = mlxarr.array(data)
+        adata = mx.array(data)
     except Exception as err:
         raise TypeError("data must be convertible to an array") from err
     _api.check_shape((None, 3), data=adata)
@@ -683,25 +721,25 @@ def _create_lookup_table(N, data, gamma=1.0):
     if x[0] != 0. or x[-1] != 1.0:
         raise ValueError(
             "data mapping points must start with x=0 and end with x=1")
-    if (mlxarr.diff(x) < 0).any():
+    if mx.any(_diff(x) < 0):
         raise ValueError("data mapping points must have x in increasing order")
     # begin generation of lookup table
     if N == 1:
         # convention: use the y = f(x=1) value for a 1-element lookup table
-        lut = mlxarr.array(y0[-1])
+        lut = mx.array(y0[-1])
     else:
         x = x * (N - 1)
-        xind = (N - 1) * mlxarr.linspace(0, 1, N) ** gamma
-        ind = mlxarr.searchsorted(x, xind)[1:-1]
+        xind = (N - 1) * mx.linspace(0, 1, N) ** gamma
+        ind = _searchsorted(x, xind)[1:-1]
 
         distance = (xind[1:-1] - x[ind - 1]) / (x[ind] - x[ind - 1])
-        lut = mlxarr.concatenate([
-            [y1[0]],
+        lut = mx.concatenate([
+            mx.reshape(y1[0], (1,)),
             distance * (y0[ind] - y1[ind - 1]) + y1[ind - 1],
-            [y0[-1]],
+            mx.reshape(y0[-1], (1,)),
         ])
     # ensure that the lut is confined to values between 0 and 1 by clipping it
-    return mlxarr.clip(lut, 0.0, 1.0)
+    return mx.clip(lut, 0.0, 1.0)
 
 
 class Colormap:
@@ -779,7 +817,7 @@ class Colormap:
         RGBA values with a shape of ``X.shape + (4, )``.
         """
         rgba, mask = self._get_rgba_and_mask(X, alpha=alpha, bytes=bytes)
-        if not mlxarr.iterable(X):
+        if not cbook.iterable(X):
             rgba = tuple(rgba)
         return rgba
 
@@ -803,18 +841,15 @@ class Colormap:
 
         Returns
         -------
-        colors : mlxarr.ndarray
+        colors : mx.array
             Array of RGBA values with a shape of ``X.shape + (4, )``.
-        mask : mlxarr.ndarray
-            Boolean array with True where the input is ``mlxarr.nan`` or masked.
+        mask : mx.array
+            Boolean array with True where the input is ``mx.nan`` or masked.
         """
         self._ensure_inited()
 
-        xa = mlxarr.array(X, copy=True)
-        if not xa.dtype.isnative:
-            # Native byteorder is faster.
-            xa = xa.byteswap().view(xa.dtype.newbyteorder())
-        if xa.dtype.kind == "f":
+        xa = mx.array(X).copy()
+        if _dtype_kind(xa.dtype) == "f":
             xa *= self.N
             # xa == 1 (== N after multiplication) is not out of range.
             xa[xa == self.N] = self.N - 1
@@ -822,23 +857,22 @@ class Colormap:
         # negative values to zero or wrap large floats to negative ints).
         mask_under = xa < 0
         mask_over = xa >= self.N
-        # If input was masked, get the bad mask from it; else mask out nans.
-        mask_bad = X.mask if mlxarr.ma.is_masked(X) else mlxarr.isnan(xa)
-        with mlxarr.errstate(invalid="ignore"):
-            # We need this cast for unsigned ints as well as floats
-            xa = xa.astype(int)
+        mask_bad = mx.isnan(xa) if _dtype_kind(xa.dtype) == "f" else mx.zeros(
+            xa.shape, dtype=mx.bool_)
+        # We need this cast for unsigned ints as well as floats.
+        xa = xa.astype(mx.int32)
         xa[mask_under] = self._i_under
         xa[mask_over] = self._i_over
         xa[mask_bad] = self._i_bad
 
         lut = self._lut
         if bytes:
-            lut = (lut * 255).astype(mlxarr.uint8)
+            lut = (lut * 255).astype(mx.uint8)
 
-        rgba = lut.take(xa, axis=0, mode='clip')
+        rgba = mx.take(lut, xa, axis=0)
 
         if alpha is not None:
-            alpha = mlxarr.clip(alpha, 0, 1)
+            alpha = mx.clip(mx.asarray(alpha), 0, 1)
             if bytes:
                 alpha *= 255  # Will be cast to uint8 upon assignment.
             if alpha.shape not in [(), xa.shape]:
@@ -847,8 +881,8 @@ class Colormap:
                     f"not match that of X {xa.shape}")
             rgba[..., -1] = alpha
             # If the "bad" color is all zeros, then ignore alpha input.
-            if (lut[-1] == 0).all():
-                rgba[mask_bad] = (0, 0, 0, 0)
+            if mx.all(lut[-1] == 0):
+                rgba[mask_bad] = mx.array([0, 0, 0, 0], dtype=rgba.dtype)
 
         return rgba, mask_bad
 
@@ -857,7 +891,7 @@ class Colormap:
         cmapobject = cls.__new__(cls)
         cmapobject.__dict__.update(self.__dict__)
         if self._isinit:
-            cmapobject._lut = mlxarr.copy(self._lut)
+            cmapobject._lut = mx.copy(self._lut)
         return cmapobject
 
     def __eq__(self, other):
@@ -867,12 +901,12 @@ class Colormap:
         # To compare lookup tables the Colormaps have to be initialized
         self._ensure_inited()
         other._ensure_inited()
-        return mlxarr.array_equal(self._lut, other._lut)
+        return mx.array_equal(self._lut, other._lut)
 
     def get_bad(self):
         """Get the color for masked values."""
         self._ensure_inited()
-        return mlxarr.array(self._lut[self._i_bad])
+        return mx.array(self._lut[self._i_bad])
 
     @_api.deprecated(
         "3.11",
@@ -885,7 +919,7 @@ class Colormap:
     def get_under(self):
         """Get the color for low out-of-range values."""
         self._ensure_inited()
-        return mlxarr.array(self._lut[self._i_under])
+        return mx.array(self._lut[self._i_under])
 
     @_api.deprecated(
         "3.11",
@@ -898,7 +932,7 @@ class Colormap:
     def get_over(self):
         """Get the color for high out-of-range values."""
         self._ensure_inited()
-        return mlxarr.array(self._lut[self._i_over])
+        return mx.array(self._lut[self._i_over])
 
     @_api.deprecated(
         "3.11",
@@ -986,8 +1020,8 @@ class Colormap:
     def is_gray(self):
         """Return whether the colormap is grayscale."""
         self._ensure_inited()
-        return (mlxarr.all(self._lut[:, 0] == self._lut[:, 1]) and
-                mlxarr.all(self._lut[:, 0] == self._lut[:, 2]))
+        return (mx.all(self._lut[:, 0] == self._lut[:, 1]) and
+                mx.all(self._lut[:, 0] == self._lut[:, 2]))
 
     def resampled(self, lutsize):
         """Return a new colormap with *lutsize* entries."""
@@ -1023,7 +1057,7 @@ class Colormap:
 
     def _repr_png_(self):
         """Generate a PNG representation of the Colormap."""
-        X = mlxarr.tile(mlxarr.linspace(0, 1, _REPR_PNG_SIZE[0]),
+        X = mx.tile(mx.linspace(0, 1, _REPR_PNG_SIZE[0]),
                     (_REPR_PNG_SIZE[1], 1))
         pixels = self(X, bytes=True)
         png_bytes = io.BytesIO()
@@ -1164,7 +1198,7 @@ class LinearSegmentedColormap(Colormap):
         self._gamma = gamma
 
     def _init(self):
-        self._lut = mlxarr.ones((self.N + 3, 4), float)
+        self._lut = mx.ones((self.N + 3, 4), dtype=mx.float32)
         self._lut[:-3, 0] = _create_lookup_table(
             self.N, self._segmentdata['red'], self._gamma)
         self._lut[:-3, 1] = _create_lookup_table(
@@ -1209,14 +1243,14 @@ class LinearSegmentedColormap(Colormap):
         over : :mpltype:`color`, default: color of the highest value
             The color for high out-of-range values.
         """
-        if not mlxarr.iterable(colors):
+        if not cbook.iterable(colors):
             raise ValueError('colors must be iterable')
 
         try:
             # Assume the passed colors are a list of colors
             # and not a (value, color) tuple.
             r, g, b, a = to_rgba_array(colors).T
-            vals = mlxarr.linspace(0, 1, len(colors))
+            vals = mx.linspace(0, 1, len(colors))
         except Exception as e:
             # Assume the passed values are a list of
             # (value, color) tuples.
@@ -1224,8 +1258,9 @@ class LinearSegmentedColormap(Colormap):
                 _vals, _colors = itertools.zip_longest(*colors)
             except Exception as e2:
                 raise e2 from e
-            vals = mlxarr.asarray(_vals)
-            if mlxarr.min(vals) < 0 or mlxarr.max(vals) > 1 or mlxarr.any(mlxarr.diff(vals) <= 0):
+            vals = mx.asarray(_vals)
+            if (mx.min(vals) < 0 or mx.max(vals) > 1
+                    or mx.any((vals[1:] - vals[:-1]) <= 0)):
                 raise ValueError(
                     "the values passed in the (value, color) pairs "
                     "must increase monotonically from 0 to 1."
@@ -1233,10 +1268,10 @@ class LinearSegmentedColormap(Colormap):
             r, g, b, a = to_rgba_array(_colors).T
 
         cdict = {
-            "red": mlxarr.column_stack([vals, r, r]),
-            "green": mlxarr.column_stack([vals, g, g]),
-            "blue": mlxarr.column_stack([vals, b, b]),
-            "alpha": mlxarr.column_stack([vals, a, a]),
+            "red": _column_stack([vals, r, r]),
+            "green": _column_stack([vals, g, g]),
+            "blue": _column_stack([vals, b, b]),
+            "alpha": _column_stack([vals, a, a]),
         }
 
         return LinearSegmentedColormap(name, cdict, N, gamma,
@@ -1351,7 +1386,7 @@ class ListedColormap(Colormap):
         else:
             if isinstance(colors, str):
                 self.colors = [colors] * N
-            elif mlxarr.iterable(colors):
+            elif cbook.iterable(colors):
                 self.colors = list(
                     itertools.islice(itertools.cycle(colors), N))
             else:
@@ -1364,7 +1399,7 @@ class ListedColormap(Colormap):
         super().__init__(name, N, bad=bad, under=under, over=over)
 
     def _init(self):
-        self._lut = mlxarr.zeros((self.N + 3, 4), float)
+        self._lut = mx.zeros((self.N + 3, 4), dtype=mx.float32)
         self._lut[:-3] = to_rgba_array(self.colors)
         self._isinit = True
         self._update_lut_extremes()
@@ -1380,11 +1415,11 @@ class ListedColormap(Colormap):
         #       colormaps at all (at least as public API). It's a very special edge
         #       case and we only use it for contours internally.
         self._ensure_inited()
-        return self.N <= 1 or mlxarr.all(self._lut[0] == self._lut[1:self.N])
+        return self.N <= 1 or mx.all(self._lut[0] == self._lut[1:self.N])
 
     def resampled(self, lutsize):
         """Return a new colormap with *lutsize* entries."""
-        colors = self(mlxarr.linspace(0, 1, lutsize))
+        colors = self(mx.linspace(0, 1, lutsize))
         new_cmap = ListedColormap(colors, name=self.name)
         # Keep the over/under values too
         new_cmap._rgba_over = self._rgba_over
@@ -1442,7 +1477,7 @@ class MultivarColormap:
         """
         self.name = name
 
-        if not mlxarr.iterable(colormaps) \
+        if not cbook.iterable(colormaps) \
            or len(colormaps) == 1 \
            or isinstance(colormaps, str):
             raise ValueError("A MultivarColormap must have more than one colormap.")
@@ -1506,15 +1541,15 @@ class MultivarColormap:
         rgba[mask_bad] = self.get_bad()
 
         if clip:
-            rgba = mlxarr.clip(rgba, 0, 1)
+            rgba = mx.clip(rgba, 0, 1)
 
         if alpha is not None:
             if clip:
-                alpha = mlxarr.clip(alpha, 0, 1)
-            if mlxarr.shape(alpha) not in [(), mlxarr.shape(X[0])]:
+                alpha = mx.clip(alpha, 0, 1)
+            if mx.shape(alpha) not in [(), mx.shape(X[0])]:
                 raise ValueError(
-                    f"alpha is array-like but its shape {mlxarr.shape(alpha)} does "
-                    f"not match that of X[0] {mlxarr.shape(X[0])}")
+                    f"alpha is array-like but its shape {mx.shape(alpha)} does "
+                    f"not match that of X[0] {mx.shape(X[0])}")
             rgba[..., -1] *= alpha
 
         if bytes:
@@ -1525,7 +1560,7 @@ class MultivarColormap:
                     " or above 255.")
             rgba = (rgba * 255).astype('uint8')
 
-        if not mlxarr.iterable(X[0]):
+        if not cbook.iterable(X[0]):
             rgba = tuple(rgba)
 
         return rgba
@@ -1539,7 +1574,7 @@ class MultivarColormap:
         cmapobject = cls.__new__(cls)
         cmapobject.__dict__.update(self.__dict__)
         cmapobject._colormaps = [cm.copy() for cm in self._colormaps]
-        cmapobject._rgba_bad = mlxarr.copy(self._rgba_bad)
+        cmapobject._rgba_bad = mx.copy(self._rgba_bad)
         return cmapobject
 
     def __eq__(self, other):
@@ -1571,7 +1606,7 @@ class MultivarColormap:
 
     def get_bad(self):
         """Get the color for masked values."""
-        return mlxarr.array(self._rgba_bad)
+        return mx.array(self._rgba_bad)
 
     def resampled(self, lutshape):
         """
@@ -1589,7 +1624,7 @@ class MultivarColormap:
         MultivarColormap
         """
 
-        if not mlxarr.iterable(lutshape) or len(lutshape) != len(self):
+        if not cbook.iterable(lutshape) or len(lutshape) != len(self):
             raise ValueError(f"lutshape must be of length {len(self)}")
         new_cmap = self.copy()
         for i, s in enumerate(lutshape):
@@ -1629,7 +1664,7 @@ class MultivarColormap:
         if bad is not None:
             new_cm._rgba_bad = to_rgba(bad)
         if under is not None:
-            if not mlxarr.iterable(under) or len(under) != len(new_cm):
+            if not cbook.iterable(under) or len(under) != len(new_cm):
                 raise ValueError("*under* must contain a color for each scalar colormap"
                                  f" i.e. be of length {len(new_cm)}.")
             else:
@@ -1637,7 +1672,7 @@ class MultivarColormap:
                     # in-place change is ok, since we've just created c as a copy
                     c._set_extremes(under=b)
         if over is not None:
-            if not mlxarr.iterable(over) or len(over) != len(new_cm):
+            if not cbook.iterable(over) or len(over) != len(new_cm):
                 raise ValueError("*over* must contain a color for each scalar colormap"
                                  f" i.e. be of length {len(new_cm)}.")
             else:
@@ -1652,10 +1687,10 @@ class MultivarColormap:
 
     def _repr_png_(self):
         """Generate a PNG representation of the Colormap."""
-        X = mlxarr.tile(mlxarr.linspace(0, 1, _REPR_PNG_SIZE[0]),
+        X = mx.tile(mx.linspace(0, 1, _REPR_PNG_SIZE[0]),
                                 (_REPR_PNG_SIZE[1], 1))
-        pixels = mlxarr.zeros((_REPR_PNG_SIZE[1]*len(self), _REPR_PNG_SIZE[0], 4),
-                          dtype=mlxarr.uint8)
+        pixels = mx.zeros((_REPR_PNG_SIZE[1]*len(self), _REPR_PNG_SIZE[0], 4),
+                          dtype=mx.uint8)
         for i, c in enumerate(self):
             pixels[i*_REPR_PNG_SIZE[1]:(i+1)*_REPR_PNG_SIZE[1], :] = c(X, bytes=True)
         png_bytes = io.BytesIO()
@@ -1760,8 +1795,8 @@ class BivarColormap:
         if not self._isinit:
             self._init()
 
-        X0 = mlxarr.ma.array(X[0], copy=True)
-        X1 = mlxarr.ma.array(X[1], copy=True)
+        X0 = mx.ma.array(X[0], copy=True)
+        X1 = mx.ma.array(X[1], copy=True)
         # clip to shape of colormap, circle square, etc.
         self._clip((X0, X1))
 
@@ -1784,11 +1819,11 @@ class BivarColormap:
         # Pre-compute the masks before casting to int (which can truncate)
         mask_outside = (X0 < 0) | (X1 < 0) | (X0 >= self.N) | (X1 >= self.M)
         # If input was masked, get the bad mask from it; else mask out nans.
-        mask_bad_0 = X0.mask if mlxarr.ma.is_masked(X0) else mlxarr.isnan(X0)
-        mask_bad_1 = X1.mask if mlxarr.ma.is_masked(X1) else mlxarr.isnan(X1)
+        mask_bad_0 = X0.mask if mx.ma.is_masked(X0) else mx.isnan(X0)
+        mask_bad_1 = X1.mask if mx.ma.is_masked(X1) else mx.isnan(X1)
         mask_bad = mask_bad_0 | mask_bad_1
 
-        with mlxarr.errstate(invalid="ignore"):
+        with mx.errstate(invalid="ignore"):
             # We need this cast for unsigned ints as well as floats
             X0 = X0.astype(int)
             X1 = X1.astype(int)
@@ -1800,26 +1835,26 @@ class BivarColormap:
             X_part[mask_bad] = 0
 
         rgba = self._lut[X0, X1]
-        if mlxarr.isscalar(X[0]):
-            rgba = mlxarr.copy(rgba)
+        if mx.isscalar(X[0]):
+            rgba = mx.copy(rgba)
         rgba[mask_outside] = self._rgba_outside
         rgba[mask_bad] = self._rgba_bad
         if bytes:
-            rgba = (rgba * 255).astype(mlxarr.uint8)
+            rgba = (rgba * 255).astype(mx.uint8)
         if alpha is not None:
-            alpha = mlxarr.clip(alpha, 0, 1)
+            alpha = mx.clip(alpha, 0, 1)
             if bytes:
                 alpha *= 255  # Will be cast to uint8 upon assignment.
-            if mlxarr.shape(alpha) not in [(), mlxarr.shape(X0)]:
+            if mx.shape(alpha) not in [(), mx.shape(X0)]:
                 raise ValueError(
-                    f"alpha is array-like but its shape {mlxarr.shape(alpha)} does "
-                    f"not match that of X[0] {mlxarr.shape(X0)}")
+                    f"alpha is array-like but its shape {mx.shape(alpha)} does "
+                    f"not match that of X[0] {mx.shape(X0)}")
             rgba[..., -1] = alpha
             # If the "bad" color is all zeros, then ignore alpha input.
-            if (mlxarr.array(self._rgba_bad) == 0).all():
+            if (mx.array(self._rgba_bad) == 0).all():
                 rgba[mask_bad] = (0, 0, 0, 0)
 
-        if not mlxarr.iterable(X[0]):
+        if not cbook.iterable(X[0]):
             rgba = tuple(rgba)
         return rgba
 
@@ -1838,11 +1873,11 @@ class BivarColormap:
         """
         if not self._isinit:
             self._init()
-        lut = mlxarr.copy(self._lut)
+        lut = mx.copy(self._lut)
         if self.shape == 'circle' or self.shape == 'circleignore':
-            n = mlxarr.linspace(-1, 1, self.N)
-            m = mlxarr.linspace(-1, 1, self.M)
-            radii_sqr = (n**2)[:, mlxarr.newaxis] + (m**2)[mlxarr.newaxis, :]
+            n = mx.linspace(-1, 1, self.N)
+            m = mx.linspace(-1, 1, self.M)
+            radii_sqr = (n**2)[:, mx.newaxis] + (m**2)[mx.newaxis, :]
             mask_outside = radii_sqr > 1
             lut[mask_outside, 3] = 0
         return lut
@@ -1852,11 +1887,11 @@ class BivarColormap:
         cmapobject = cls.__new__(cls)
         cmapobject.__dict__.update(self.__dict__)
 
-        cmapobject._rgba_outside = mlxarr.copy(self._rgba_outside)
-        cmapobject._rgba_bad = mlxarr.copy(self._rgba_bad)
+        cmapobject._rgba_outside = mx.copy(self._rgba_outside)
+        cmapobject._rgba_bad = mx.copy(self._rgba_bad)
         cmapobject._shape = self.shape
         if self._isinit:
-            cmapobject._lut = mlxarr.copy(self._lut)
+            cmapobject._lut = mx.copy(self._lut)
         return cmapobject
 
     def __eq__(self, other):
@@ -1867,11 +1902,11 @@ class BivarColormap:
             self._init()
         if not other._isinit:
             other._init()
-        if not mlxarr.array_equal(self._lut, other._lut):
+        if not mx.array_equal(self._lut, other._lut):
             return False
-        if not mlxarr.array_equal(self._rgba_bad, other._rgba_bad):
+        if not mx.array_equal(self._rgba_bad, other._rgba_bad):
             return False
-        if not mlxarr.array_equal(self._rgba_outside, other._rgba_outside):
+        if not mx.array_equal(self._rgba_outside, other._rgba_outside):
             return False
         if self.shape != other.shape:
             return False
@@ -1909,7 +1944,7 @@ class BivarColormap:
         BivarColormap
         """
 
-        if not mlxarr.iterable(lutshape) or len(lutshape) != 2:
+        if not cbook.iterable(lutshape) or len(lutshape) != 2:
             raise ValueError("lutshape must be of length 2")
         lutshape = [lutshape[0], lutshape[1]]
         if lutshape[0] is None or lutshape[0] == 1:
@@ -1928,7 +1963,7 @@ class BivarColormap:
             lutshape[1] = -lutshape[1]
             if lutshape[1] == 1:
                 lutshape[1] = self.M
-        x_0, x_1 = mlxarr.mgrid[0:1:(lutshape[0] * 1j), 0:1:(lutshape[1] * 1j)]
+        x_0, x_1 = mx.mgrid[0:1:(lutshape[0] * 1j), 0:1:(lutshape[1] * 1j)]
         if inverted[0]:
             x_0 = x_0[::-1, :]
         if inverted[1]:
@@ -2041,7 +2076,7 @@ class BivarColormap:
 
         Parameters
         ----------
-        X: mlxarr.array
+        X: mx.array
             array of floats or ints to be clipped
         shape : {'square', 'circle', 'ignore', 'circleignore'}
 
@@ -2081,7 +2116,7 @@ class BivarColormap:
             radii_sqr = (X[0] - 0.5)**2 + (X[1] - 0.5)**2
             mask_outside = radii_sqr > 0.25
             if self.shape == 'circle':
-                overextend = 2 * mlxarr.sqrt(radii_sqr[mask_outside])
+                overextend = 2 * mx.sqrt(radii_sqr[mask_outside])
                 X[0][mask_outside] = (X[0][mask_outside] - 0.5) / overextend + 0.5
                 X[1][mask_outside] = (X[1][mask_outside] - 0.5) / overextend + 0.5
             else:
@@ -2121,14 +2156,14 @@ class BivarColormap:
             self._init()
         pixels = self.lut
         if pixels.shape[0] < _BIVAR_REPR_PNG_SIZE:
-            pixels = mlxarr.repeat(pixels,
+            pixels = mx.repeat(pixels,
                                repeats=_BIVAR_REPR_PNG_SIZE//pixels.shape[0],
                                axis=0)[:256, :]
         if pixels.shape[1] < _BIVAR_REPR_PNG_SIZE:
-            pixels = mlxarr.repeat(pixels,
+            pixels = mx.repeat(pixels,
                                repeats=_BIVAR_REPR_PNG_SIZE//pixels.shape[1],
                                axis=1)[:, :256]
-        pixels = (pixels[::-1, :, :] * 255).astype(mlxarr.uint8)
+        pixels = (pixels[::-1, :, :] * 255).astype(mx.uint8)
         png_bytes = io.BytesIO()
         title = self.name + ' BivarColormap'
         author = f'Matplotlib v{mpl.__version__}, https://matplotlib.org'
@@ -2183,7 +2218,7 @@ class SegmentedBivarColormap(BivarColormap):
 
     Parameters
     ----------
-    patch : mlxarr.array
+    patch : mx.array
         Patch is required to have a shape (k, l, 3), and will get supersampled
         to a lut of shape (N, N, 4).
     N : int
@@ -2215,12 +2250,12 @@ class SegmentedBivarColormap(BivarColormap):
 
     def _init(self):
         s = self.patch.shape
-        _patch = mlxarr.empty((s[0], s[1], 4))
+        _patch = mx.zeros((s[0], s[1], 4))
         _patch[:, :, :3] = self.patch
         _patch[:, :, 3] = 1
         transform = mpl.transforms.Affine2D().translate(-0.5, -0.5)\
                                 .scale(self.N / (s[1] - 1), self.N / (s[0] - 1))
-        self._lut = mlxarr.empty((self.N, self.N, 4))
+        self._lut = mx.zeros((self.N, self.N, 4))
 
         _image.resample(_patch, self._lut, transform, _image.BILINEAR,
                         resample=False, alpha=1)
@@ -2261,15 +2296,15 @@ class BivarColormapFromImage(BivarColormap):
         # i.e.:
         # if isinstance(Image, lut):
         #    lut = image.pil_to_array(lut)
-        lut = mlxarr.array(lut, copy=True)
+        lut = mx.array(lut, copy=True)
         if lut.ndim != 3 or lut.shape[2] not in (3, 4):
             raise ValueError("The lut must be an array of shape (n, m, 3) or (n, m, 4)",
                              " or a PIL.image encoded as RGB or RGBA")
 
-        if lut.dtype == mlxarr.uint8:
-            lut = lut.astype(mlxarr.float32)/255
+        if lut.dtype == mx.uint8:
+            lut = lut.astype(mx.float32)/255
         if lut.shape[2] == 3:
-            new_lut = mlxarr.empty((lut.shape[0], lut.shape[1], 4), dtype=lut.dtype)
+            new_lut = mx.zeros((lut.shape[0], lut.shape[1], 4), dtype=lut.dtype)
             new_lut[:, :, :3] = lut
             new_lut[:, :, 3] = 1.
             lut = new_lut
@@ -2476,30 +2511,27 @@ class Normalize(Norm):
 
         Returns
         -------
-        result : masked array
-            Masked array with the same shape as *value*.
+        result : array
+            MLX array with the same shape as *value*.
         is_scalar : bool
             Whether *value* is a scalar.
 
         Notes
         -----
         Float dtypes are preserved; integer types with two bytes or smaller are
-        converted to mlxarr.float32, and larger types are converted to mlxarr.float64.
+        converted to mx.float32, and larger types are converted to mx.float64.
         Preserving float32 when possible, and using in-place operations,
         greatly improves speed for large arrays.
         """
-        is_scalar = not mlxarr.iterable(value)
+        is_scalar = not cbook.iterable(value)
         if is_scalar:
             value = [value]
-        dtype = mlxarr.min_scalar_type(value)
-        if mlxarr.issubdtype(dtype, mlxarr.integer) or dtype.type is mlxarr.bool_:
+        data = mx.asarray(value)
+        dtype = data.dtype
+        if _dtype_kind(dtype) in ("i", "b"):
             # bool_/int8/int16 -> float32; int32/int64 -> float64
-            dtype = mlxarr.promote_types(dtype, mlxarr.float32)
-        # ensure data passed in as an ndarray subclass are interpreted as
-        # an ndarray. See issue #6622.
-        mask = mlxarr.ma.getmask(value)
-        data = mlxarr.asarray(value)
-        result = mlxarr.ma.array(data, mask=mask, dtype=dtype, copy=True)
+            dtype = mx.float64 if dtype in {mx.int64, mx.uint64} else mx.float32
+        result = mx.array(data, dtype=dtype)
         return result, is_scalar
 
     def __call__(self, value, clip=None):
@@ -2515,19 +2547,13 @@ class Normalize(Norm):
         (vmin,), _ = self.process_value(self.vmin)
         (vmax,), _ = self.process_value(self.vmax)
         if vmin == vmax:
-            result.fill(0)  # Or should it be all masked?  Or 0.5?
+            result = mx.zeros_like(result)
         elif vmin > vmax:
             raise ValueError("minvalue must be less than or equal to maxvalue")
         else:
             if clip:
-                mask = mlxarr.ma.getmask(result)
-                result = mlxarr.ma.array(mlxarr.clip(result.filled(vmax), vmin, vmax),
-                                     mask=mask)
-            # ma division is very slow; we can take a shortcut
-            resdat = result.data
-            resdat -= vmin
-            resdat /= (vmax - vmin)
-            result = mlxarr.ma.array(resdat, mask=result.mask, copy=False)
+                result = mx.clip(result, vmin, vmax)
+            result = (result - vmin) / (vmax - vmin)
         if is_scalar:
             result = result[0]
         return result
@@ -2547,8 +2573,8 @@ class Normalize(Norm):
         (vmin,), _ = self.process_value(self.vmin)
         (vmax,), _ = self.process_value(self.vmax)
 
-        if mlxarr.iterable(value):
-            val = mlxarr.ma.asarray(value)
+        if cbook.iterable(value):
+            val = mx.asarray(value)
             return vmin + val * (vmax - vmin)
         else:
             return vmin + value * (vmax - vmin)
@@ -2564,12 +2590,7 @@ class Normalize(Norm):
 
     def autoscale_None(self, A):
         # docstring inherited
-        A = mlxarr.asanyarray(A)
-
-        if isinstance(A, mlxarr.ma.MaskedArray):
-            # we need to make the distinction between an array, False, mlxarr.bool_(False)
-            if A.mask is False or not A.mask.shape:
-                A = A.data
+        A = mx.asarray(A)
 
         if self.vmin is None and A.size:
             self.vmin = A.min()
@@ -2670,12 +2691,12 @@ class TwoSlopeNorm(Normalize):
         if not self.vmin <= self.vcenter <= self.vmax:
             raise ValueError("vmin, vcenter, vmax must increase monotonically")
         # note that we must extrapolate for tick locators:
-        result = mlxarr.ma.masked_array(
-            mlxarr.interp(result, [self.vmin, self.vcenter, self.vmax],
-                      [0, 0.5, 1], left=-mlxarr.inf, right=mlxarr.inf),
-            mask=mlxarr.ma.getmask(result))
+        result = mx.ma.masked_array(
+            mx.interp(result, [self.vmin, self.vcenter, self.vmax],
+                      [0, 0.5, 1], left=-mx.inf, right=mx.inf),
+            mask=mx.ma.getmask(result))
         if is_scalar:
-            result = mlxarr.atleast_1d(result)[0]
+            result = mx.atleast_1d(result)[0]
         return result
 
     def inverse(self, value):
@@ -2684,8 +2705,8 @@ class TwoSlopeNorm(Normalize):
         (vmin,), _ = self.process_value(self.vmin)
         (vmax,), _ = self.process_value(self.vmax)
         (vcenter,), _ = self.process_value(self.vcenter)
-        result = mlxarr.interp(value, [0, 0.5, 1], [vmin, vcenter, vmax],
-                           left=-mlxarr.inf, right=mlxarr.inf)
+        result = mx.interp(value, [0, 0.5, 1], [vmin, vcenter, vmax],
+                           left=-mx.inf, right=mx.inf)
         return result
 
 
@@ -2745,13 +2766,13 @@ class CenteredNorm(Normalize):
         """
         Set *halfrange* to ``max(abs(A-vcenter))``, then set *vmin* and *vmax*.
         """
-        A = mlxarr.asanyarray(A)
+        A = mx.asarray(A)
         self.halfrange = max(self._vcenter-A.min(),
                              A.max()-self._vcenter)
 
     def autoscale_None(self, A):
         """Set *vmin* and *vmax*."""
-        A = mlxarr.asanyarray(A)
+        A = mx.asarray(A)
         if self.halfrange is None and A.size:
             self.autoscale(A)
 
@@ -2915,18 +2936,18 @@ def _make_norm_from_scale(
             if self.vmin > self.vmax:
                 raise ValueError("vmin must be less or equal to vmax")
             if self.vmin == self.vmax:
-                return mlxarr.full_like(value, 0)
+                return mx.full_like(value, 0)
             if clip is None:
                 clip = self.clip
             if clip:
-                value = mlxarr.clip(value, self.vmin, self.vmax)
-            t_value = self._trf.transform(value).reshape(mlxarr.shape(value))
+                value = mx.clip(value, self.vmin, self.vmax)
+            t_value = self._trf.transform(value).reshape(mx.shape(value))
             t_vmin, t_vmax = self._trf.transform([self.vmin, self.vmax])
-            if not mlxarr.isfinite([t_vmin, t_vmax]).all():
+            if not mx.isfinite([t_vmin, t_vmax]).all():
                 raise ValueError("Invalid vmin or vmax")
             t_value -= t_vmin
             t_value /= (t_vmax - t_vmin)
-            t_value = mlxarr.ma.masked_invalid(t_value, copy=False)
+            t_value = mx.ma.masked_invalid(t_value, copy=False)
             return t_value[0] if is_scalar else t_value
 
         def inverse(self, value):
@@ -2935,7 +2956,7 @@ def _make_norm_from_scale(
             if self.vmin > self.vmax:
                 raise ValueError("vmin must be less or equal to vmax")
             t_vmin, t_vmax = self._trf.transform([self.vmin, self.vmax])
-            if not mlxarr.isfinite([t_vmin, t_vmax]).all():
+            if not mx.isfinite([t_vmin, t_vmax]).all():
                 raise ValueError("Invalid vmin or vmax")
             value, is_scalar = self.process_value(value)
             rescaled = value * (t_vmax - t_vmin)
@@ -2943,14 +2964,14 @@ def _make_norm_from_scale(
             value = (self._trf
                      .inverted()
                      .transform(rescaled)
-                     .reshape(mlxarr.shape(value)))
+                     .reshape(mx.shape(value)))
             return value[0] if is_scalar else value
 
         def autoscale_None(self, A):
-            # i.e. A[mlxarr.isfinite(...)], but also for non-array A's
-            in_trf_domain = mlxarr.extract(mlxarr.isfinite(self._trf.transform(A)), A)
+            # i.e. A[mx.isfinite(...)], but also for non-array A's
+            in_trf_domain = mx.extract(mx.isfinite(self._trf.transform(A)), A)
             if in_trf_domain.size == 0:
-                in_trf_domain = mlxarr.ma.masked
+                in_trf_domain = mx.ma.masked
             return super().autoscale_None(in_trf_domain)
 
     if base_norm_cls is Normalize:
@@ -3141,15 +3162,15 @@ class PowerNorm(Normalize):
             result.fill(0)
         else:
             if clip:
-                mask = mlxarr.ma.getmask(result)
-                result = mlxarr.ma.array(mlxarr.clip(result.filled(vmax), vmin, vmax),
+                mask = mx.ma.getmask(result)
+                result = mx.ma.array(mx.clip(result.filled(vmax), vmin, vmax),
                                      mask=mask)
             resdat = result.data
             resdat -= vmin
             resdat /= (vmax - vmin)
-            resdat[resdat > 0] = mlxarr.power(resdat[resdat > 0], gamma)
+            resdat[resdat > 0] = mx.power(resdat[resdat > 0], gamma)
 
-            result = mlxarr.ma.array(resdat, mask=result.mask, copy=False)
+            result = mx.ma.array(resdat, mask=result.mask, copy=False)
         if is_scalar:
             result = result[0]
         return result
@@ -3164,11 +3185,11 @@ class PowerNorm(Normalize):
         vmin, vmax = self.vmin, self.vmax
 
         resdat = result.data
-        resdat[resdat > 0] = mlxarr.power(resdat[resdat > 0], 1 / gamma)
+        resdat[resdat > 0] = mx.power(resdat[resdat > 0], 1 / gamma)
         resdat *= (vmax - vmin)
         resdat += vmin
 
-        result = mlxarr.ma.array(resdat, mask=result.mask, copy=False)
+        result = mx.ma.array(resdat, mask=result.mask, copy=False)
         if is_scalar:
             result = result[0]
         return result
@@ -3226,7 +3247,7 @@ class BoundaryNorm(Normalize):
         if clip and extend != 'neither':
             raise ValueError("'clip=True' is not compatible with 'extend'")
         super().__init__(vmin=boundaries[0], vmax=boundaries[-1], clip=clip)
-        self.boundaries = mlxarr.asarray(boundaries)
+        self.boundaries = mx.asarray(boundaries)
         self.N = len(self.boundaries)
         if self.N < 2:
             raise ValueError("You must provide at least 2 boundaries "
@@ -3258,17 +3279,17 @@ class BoundaryNorm(Normalize):
             clip = self.clip
 
         xx, is_scalar = self.process_value(value)
-        mask = mlxarr.ma.getmaskarray(xx)
+        mask = mx.ma.getmaskarray(xx)
         # Fill masked values a value above the upper boundary
-        xx = mlxarr.atleast_1d(xx.filled(self.vmax + 1))
+        xx = mx.atleast_1d(xx.filled(self.vmax + 1))
         if clip:
-            mlxarr.clip(xx, self.vmin, self.vmax, out=xx)
+            mx.clip(xx, self.vmin, self.vmax, out=xx)
             max_col = self.Ncmap - 1
         else:
             max_col = self.Ncmap
         # this gives us the bins in the lookup table in the range
         # [0, _n_regions - 1]  (the offset is set in the init)
-        iret = mlxarr.digitize(xx, self.boundaries) - 1 + self._offset
+        iret = mx.digitize(xx, self.boundaries) - 1 + self._offset
         # if we have more colors than regions, stretch the region
         # index computed above to full range of the color bins.  This
         # will make use of the full range (but skip some of the colors
@@ -3283,10 +3304,10 @@ class BoundaryNorm(Normalize):
                 # to the color index spaces
                 iret = (self.Ncmap - 1) / (self._n_regions - 1) * iret
         # cast to 16bit integers in all cases
-        iret = iret.astype(mlxarr.int16)
+        iret = iret.astype(mx.int16)
         iret[xx < self.vmin] = -1
         iret[xx >= self.vmax] = max_col
-        ret = mlxarr.ma.array(iret, mask=mask)
+        ret = mx.ma.array(iret, mask=mask)
         if is_scalar:
             ret = int(ret[0])  # assume python scalar
         return ret
@@ -3308,13 +3329,13 @@ class NoNorm(Normalize):
     indices directly in a `~matplotlib.cm.ScalarMappable`.
     """
     def __call__(self, value, clip=None):
-        if mlxarr.iterable(value):
-            return mlxarr.ma.array(value)
+        if cbook.iterable(value):
+            return mx.ma.array(value)
         return value
 
     def inverse(self, value):
-        if mlxarr.iterable(value):
-            return mlxarr.ma.array(value)
+        if cbook.iterable(value):
+            return mx.ma.array(value)
         return value
 
 
@@ -3391,7 +3412,7 @@ class MultiNorm(Norm):
     def vmin(self, values):
         if values is None:
             return
-        if not mlxarr.iterable(values) or len(values) != self.n_components:
+        if not cbook.iterable(values) or len(values) != self.n_components:
             raise ValueError("*vmin* must have one component for each norm. "
                              f"Expected an iterable of length {self.n_components}, "
                              f"but got {values!r}")
@@ -3409,7 +3430,7 @@ class MultiNorm(Norm):
     def vmax(self, values):
         if values is None:
             return
-        if not mlxarr.iterable(values) or len(values) != self.n_components:
+        if not cbook.iterable(values) or len(values) != self.n_components:
             raise ValueError("*vmax* must have one component for each norm. "
                              f"Expected an iterable of length {self.n_components}, "
                              f"but got {values!r}")
@@ -3427,7 +3448,7 @@ class MultiNorm(Norm):
     def clip(self, values):
         if values is None:
             return
-        if not mlxarr.iterable(values) or len(values) != self.n_components:
+        if not cbook.iterable(values) or len(values) != self.n_components:
             raise ValueError("*clip* must have one component for each norm. "
                              f"Expected an iterable of length {self.n_components}, "
                              f"but got {values!r}")
@@ -3478,7 +3499,7 @@ class MultiNorm(Norm):
         """
         if clip is None:
             clip = self.clip
-        if not mlxarr.iterable(clip) or len(clip) != self.n_components:
+        if not cbook.iterable(clip) or len(clip) != self.n_components:
             raise ValueError("*clip* must have one component for each norm. "
                              f"Expected an iterable of length {self.n_components}, "
                              f"but got {clip!r}")
@@ -3570,10 +3591,10 @@ class MultiNorm(Norm):
 
         Returns
         -------
-        tuple of mlxarr.ndarray
+        tuple of mx.array
 
         """
-        if isinstance(data, mlxarr.ndarray) and data.dtype.fields is not None:
+        if isinstance(data, mx.array) and data.dtype.fields is not None:
             # structured array
             if len(data.dtype.fields) != n_components:
                 raise ValueError(
@@ -3589,7 +3610,7 @@ class MultiNorm(Norm):
             raise ValueError("MultiNorm expects a sequence with one element per "
                              f"component as input, but got {data!r} instead")
         if n_elements != n_components:
-            if isinstance(data, mlxarr.ndarray) and data.shape[-1] == n_components:
+            if isinstance(data, mx.array) and data.shape[-1] == n_components:
                 if len(data.shape) == 2:
                     raise ValueError(
                         f"MultiNorm expects a sequence with one element per component. "
@@ -3626,7 +3647,7 @@ def rgb_to_hsv(arr):
     (..., 3) `~array_backend.ndarray`
        Colors converted to HSV values in range [0, 1]
     """
-    arr = mlxarr.asarray(arr)
+    arr = mx.asarray(arr)
 
     # check length of the last dimension, should be _some_ sort of rgb
     if arr.shape[-1] != 3:
@@ -3634,16 +3655,16 @@ def rgb_to_hsv(arr):
                          f"shape {arr.shape} was found.")
 
     in_shape = arr.shape
-    arr = mlxarr.array(
+    arr = mx.array(
         arr, copy=False,
-        dtype=mlxarr.promote_types(arr.dtype, mlxarr.float32),  # Don't work on ints.
+        dtype=mx.promote_types(arr.dtype, mx.float32),  # Don't work on ints.
         ndmin=2,  # In case input was 1D.
     )
 
-    out = mlxarr.zeros_like(arr)
+    out = mx.zeros_like(arr)
     arr_max = arr.max(-1)
     # Check if input is in the expected range
-    if mlxarr.any(arr_max > 1):
+    if mx.any(arr_max > 1):
         raise ValueError(
             "Input array must be in the range [0, 1]. "
             f"Found a maximum value of {arr_max.max()}"
@@ -3656,8 +3677,8 @@ def rgb_to_hsv(arr):
         )
 
     ipos = arr_max > 0
-    delta = mlxarr.ptp(arr, -1)
-    s = mlxarr.zeros_like(delta)
+    delta = mx.ptp(arr, -1)
+    s = mx.zeros_like(delta)
     s[ipos] = delta[ipos] / arr_max[ipos]
     ipos = delta > 0
     # red is max
@@ -3691,7 +3712,7 @@ def hsv_to_rgb(hsv):
     (..., 3) `~array_backend.ndarray`
        Colors converted to RGB values in range [0, 1]
     """
-    hsv = mlxarr.asarray(hsv)
+    hsv = mx.asarray(hsv)
 
     # check length of the last dimension, should be _some_ sort of rgb
     if hsv.shape[-1] != 3:
@@ -3699,9 +3720,9 @@ def hsv_to_rgb(hsv):
                          f"shape {hsv.shape} was found.")
 
     in_shape = hsv.shape
-    hsv = mlxarr.array(
+    hsv = mx.array(
         hsv, copy=False,
-        dtype=mlxarr.promote_types(hsv.dtype, mlxarr.float32),  # Don't work on ints.
+        dtype=mx.promote_types(hsv.dtype, mx.float32),  # Don't work on ints.
         ndmin=2,  # In case input was 1D.
     )
 
@@ -3709,9 +3730,9 @@ def hsv_to_rgb(hsv):
     s = hsv[..., 1]
     v = hsv[..., 2]
 
-    r = mlxarr.empty_like(h)
-    g = mlxarr.empty_like(h)
-    b = mlxarr.empty_like(h)
+    r = mx.zeros_like(h)
+    g = mx.zeros_like(h)
+    b = mx.zeros_like(h)
 
     i = (h * 6.0).astype(int)
     f = (h * 6.0) - i
@@ -3754,19 +3775,19 @@ def hsv_to_rgb(hsv):
     g[idx] = v[idx]
     b[idx] = v[idx]
 
-    rgb = mlxarr.stack([r, g, b], axis=-1)
+    rgb = mx.stack([r, g, b], axis=-1)
 
     return rgb.reshape(in_shape)
 
 
 def _vector_magnitude(arr):
     # things that don't work here:
-    #  * mlxarr.linalg.norm: drops mask from ma.array
-    #  * mlxarr.sum: drops mask from ma.array unless entire vector is masked
+    #  * mx.linalg.norm: drops mask from ma.array
+    #  * mx.sum: drops mask from ma.array unless entire vector is masked
     sum_sq = 0
     for i in range(arr.shape[-1]):
-        sum_sq += arr[..., i, mlxarr.newaxis] ** 2
-    return mlxarr.sqrt(sum_sq)
+        sum_sq += arr[..., i, mx.newaxis] ** 2
+    return mx.sqrt(sum_sq)
 
 
 class LightSource:
@@ -3828,12 +3849,12 @@ class LightSource:
         """The unit vector direction towards the light source."""
         # Azimuth is in degrees clockwise from North. Convert to radians
         # counterclockwise from East (mathematical notation).
-        az = mlxarr.radians(90 - self.azdeg)
-        alt = mlxarr.radians(self.altdeg)
-        return mlxarr.array([
-            mlxarr.cos(az) * mlxarr.cos(alt),
-            mlxarr.sin(az) * mlxarr.cos(alt),
-            mlxarr.sin(alt)
+        az = mx.radians(90 - self.azdeg)
+        alt = mx.radians(self.altdeg)
+        return mx.array([
+            mx.cos(az) * mx.cos(alt),
+            mx.sin(az) * mx.cos(alt),
+            mx.sin(alt)
         ])
 
     def hillshade(self, elevation, vert_exag=1, dx=1, dy=1, fraction=1.):
@@ -3878,10 +3899,10 @@ class LightSource:
         dy = -dy
 
         # compute the normal vectors from the partial derivatives
-        e_dy, e_dx = mlxarr.gradient(vert_exag * elevation, dy, dx)
+        e_dy, e_dx = mx.gradient(vert_exag * elevation, dy, dx)
 
         # .view is to keep subclasses
-        normal = mlxarr.empty(elevation.shape + (3,)).view(type(elevation))
+        normal = mx.zeros(elevation.shape + (3,)).view(type(elevation))
         normal[..., 0] = -e_dx
         normal[..., 1] = -e_dy
         normal[..., 2] = 1
@@ -3931,7 +3952,7 @@ class LightSource:
             # visually appears better than a "hard" clip.
             intensity -= imin
             intensity /= (imax - imin)
-        intensity = mlxarr.clip(intensity, 0, 1)
+        intensity = mx.clip(intensity, 0, 1)
 
         return intensity
 
@@ -4060,7 +4081,7 @@ class LightSource:
         """
         # Calculate the "hillshade" intensity.
         intensity = self.hillshade(elevation, vert_exag, dx, dy, fraction)
-        intensity = intensity[..., mlxarr.newaxis]
+        intensity = intensity[..., mx.newaxis]
 
         # Blend the hillshade and rgb data using the specified mode
         lookup = {
@@ -4078,7 +4099,7 @@ class LightSource:
                                  f'{lookup.keys}') from err
 
         # Only apply result where hillshade intensity isn't masked
-        if mlxarr.ma.is_masked(intensity):
+        if mx.ma.is_masked(intensity):
             mask = intensity.mask[..., 0]
             for i in range(3):
                 blend[..., i][mask] = rgb[..., i][mask]
@@ -4142,19 +4163,19 @@ class LightSource:
 
         # Convert to rgb, then rgb to hsv
         hsv = rgb_to_hsv(rgb[:, :, 0:3])
-        hue, sat, val = mlxarr.moveaxis(hsv, -1, 0)
+        hue, sat, val = mx.moveaxis(hsv, -1, 0)
 
         # Modify hsv values (in place) to simulate illumination.
         # putmask(A, mask, B) <=> A[mask] = B[mask]
-        mlxarr.putmask(sat, (mlxarr.abs(sat) > 1.e-10) & (intensity > 0),
+        mx.putmask(sat, (mx.abs(sat) > 1.e-10) & (intensity > 0),
                    (1 - intensity) * sat + intensity * hsv_max_sat)
-        mlxarr.putmask(sat, (mlxarr.abs(sat) > 1.e-10) & (intensity < 0),
+        mx.putmask(sat, (mx.abs(sat) > 1.e-10) & (intensity < 0),
                    (1 + intensity) * sat - intensity * hsv_min_sat)
-        mlxarr.putmask(val, intensity > 0,
+        mx.putmask(val, intensity > 0,
                    (1 - intensity) * val + intensity * hsv_max_val)
-        mlxarr.putmask(val, intensity < 0,
+        mx.putmask(val, intensity < 0,
                    (1 + intensity) * val - intensity * hsv_min_val)
-        mlxarr.clip(hsv[:, :, 1:], 0, 1, out=hsv[:, :, 1:])
+        mx.clip(hsv[:, :, 1:], 0, 1, out=hsv[:, :, 1:])
 
         # Convert modified hsv back to rgb.
         return hsv_to_rgb(hsv)
@@ -4196,7 +4217,7 @@ class LightSource:
         """
         low = 2 * intensity * rgb
         high = 1 - 2 * (1 - intensity) * (1 - rgb)
-        return mlxarr.where(rgb <= 0.5, low, high)
+        return mx.where(rgb <= 0.5, low, high)
 
 
 def from_levels_and_colors(levels, colors, extend='neither'):

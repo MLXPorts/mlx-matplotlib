@@ -9,14 +9,14 @@ of an `~.collections.EllipseCollection` allows for much shorter code.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.collections import EllipseCollection
 
-x = mlxarr.arange(10)
-y = mlxarr.arange(15)
-X, Y = mlxarr.meshgrid(x, y)
+x = mx.arange(10)
+y = mx.arange(15)
+X, Y = mx.meshgrid(x, y)
 
-XY = mlxarr.column_stack((X.ravel(), Y.ravel()))
+XY = mx.column_stack((X.ravel(), Y.ravel()))
 
 ww = X / 10.0
 hh = Y / 15.0

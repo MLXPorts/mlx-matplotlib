@@ -6,20 +6,20 @@ Spectrogram
 Plotting a spectrogram using `~.Axes.specgram`.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 dt = 0.0005
-t = mlxarr.arange(0.0, 20.5, dt)
-s1 = mlxarr.sin(2 * mlxarr.pi * 100 * t)
-s2 = 2 * mlxarr.sin(2 * mlxarr.pi * 400 * t)
+t = mx.arange(0.0, 20.5, dt)
+s1 = mx.sin(2 * mx.pi * 100 * t)
+s2 = 2 * mx.sin(2 * mx.pi * 400 * t)
 
 # create a transient "chirp"
 s2[t <= 10] = s2[12 <= t] = 0
 
 # add some noise into the mix
-nse = 0.01 * mlxarr.random.random(size=len(t))
+nse = 0.01 * mx.random.random(size=len(t))
 
 x = s1 + s2 + nse  # the signal
 NFFT = 1024  # the length of the windowing segments

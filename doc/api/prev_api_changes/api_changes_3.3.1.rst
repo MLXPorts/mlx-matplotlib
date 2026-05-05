@@ -19,4 +19,4 @@ Now ``epoch2num`` and (undocumented) ``julian2num`` return floating point
 days since `~.dates.get_epoch` as set by :rc:`date.epoch`, instead of
 floating point days since the old epoch of "0000-12-31T00:00:00".  If
 needed, you can translate from the new to old values as
-``old = new + mdates.date2num(mlxarr.datetime64('0000-12-31'))``
+``old = new + mdates.date2num(mx.datetime64('0000-12-31'))``

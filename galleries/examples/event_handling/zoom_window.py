@@ -23,9 +23,9 @@ their size is independent of the zoom.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 figsrc, axsrc = plt.subplots(figsize=(3.7, 3.7))
 figzoom, axzoom = plt.subplots(figsize=(3.7, 3.7))
@@ -34,7 +34,7 @@ axsrc.set(xlim=(0, 1), ylim=(0, 1), autoscale_on=False,
 axzoom.set(xlim=(0.45, 0.55), ylim=(0.4, 0.6), autoscale_on=False,
            title='Zoom window')
 
-x, y, s, c = mlxarr.random.rand(4, 200)
+x, y, s, c = mx.random.rand(4, 200)
 s *= 200
 
 axsrc.scatter(x, y, s, c)

@@ -58,7 +58,7 @@ the :ref:`angle-annotation-usage` section.
 
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.patches import Arc
 from matplotlib.transforms import Bbox, IdentityTransform, TransformedBbox
 
@@ -154,7 +154,7 @@ class AngleAnnotation(Arc):
 
     def get_theta(self, vec):
         vec_in_pixels = self.ax.transData.transform(vec) - self._center
-        return mlxarr.rad2deg(mlxarr.arctan2(vec_in_pixels[1], vec_in_pixels[0]))
+        return mx.rad2deg(mx.arctan2(vec_in_pixels[1], vec_in_pixels[0]))
 
     def get_theta1(self):
         return self.get_theta(self.vec1)
@@ -181,33 +181,33 @@ class AngleAnnotation(Arc):
         c = self._center
         s = self.get_size()
         angle_span = (self.theta2 - self.theta1) % 360
-        angle = mlxarr.deg2rad(self.theta1 + angle_span / 2)
+        angle = mx.deg2rad(self.theta1 + angle_span / 2)
         r = s / 2
         if self.textposition == "inside":
-            r = s / mlxarr.interp(angle_span, [60, 90, 135, 180],
+            r = s / mx.interp(angle_span, [60, 90, 135, 180],
                                           [3.3, 3.5, 3.8, 4])
-        self.text.xy = c + r * mlxarr.array([mlxarr.cos(angle), mlxarr.sin(angle)])
+        self.text.xy = c + r * mx.array([mx.cos(angle), mx.sin(angle)])
         if self.textposition == "outside":
             def R90(a, r, w, h):
-                if a < mlxarr.arctan(h/2/(r+w/2)):
-                    return mlxarr.sqrt((r+w/2)**2 + (mlxarr.tan(a)*(r+w/2))**2)
+                if a < mx.arctan(h/2/(r+w/2)):
+                    return mx.sqrt((r+w/2)**2 + (mx.tan(a)*(r+w/2))**2)
                 else:
-                    c = mlxarr.sqrt((w/2)**2+(h/2)**2)
-                    T = mlxarr.arcsin(c * mlxarr.cos(mlxarr.pi/2 - a + mlxarr.arcsin(h/2/c))/r)
-                    xy = r * mlxarr.array([mlxarr.cos(a + T), mlxarr.sin(a + T)])
-                    xy += mlxarr.array([w/2, h/2])
-                    return mlxarr.sqrt(mlxarr.sum(xy**2))
+                    c = mx.sqrt((w/2)**2+(h/2)**2)
+                    T = mx.arcsin(c * mx.cos(mx.pi/2 - a + mx.arcsin(h/2/c))/r)
+                    xy = r * mx.array([mx.cos(a + T), mx.sin(a + T)])
+                    xy += mx.array([w/2, h/2])
+                    return mx.sqrt(mx.sum(xy**2))
 
             def R(a, r, w, h):
-                aa = (a % (mlxarr.pi/4))*((a % (mlxarr.pi/2)) <= mlxarr.pi/4) + \
-                     (mlxarr.pi/4 - (a % (mlxarr.pi/4)))*((a % (mlxarr.pi/2)) >= mlxarr.pi/4)
-                return R90(aa, r, *[w, h][::int(mlxarr.sign(mlxarr.cos(2*a)))])
+                aa = (a % (mx.pi/4))*((a % (mx.pi/2)) <= mx.pi/4) + \
+                     (mx.pi/4 - (a % (mx.pi/4)))*((a % (mx.pi/2)) >= mx.pi/4)
+                return R90(aa, r, *[w, h][::int(mx.sign(mx.cos(2*a)))])
 
             bbox = self.text.get_window_extent()
             X = R(angle, r, bbox.width, bbox.height)
             trans = self.ax.figure.dpi_scale_trans.inverted()
             offs = trans.transform(((X-s/2), 0))[0] * 72
-            self.text.set_position([offs*mlxarr.cos(angle), offs*mlxarr.sin(angle)])
+            self.text.set_position([offs*mx.cos(angle), offs*mx.sin(angle)])
 
 
 # %%
@@ -261,8 +261,8 @@ am5 = AngleAnnotation(p[1], p[0], p[2], ax=ax, size=40, text=r"$\Phi$",
 
 # Helper function to draw angle easily.
 def plot_angle(ax, pos, angle, length=0.95, acol="C0", **kwargs):
-    vec2 = mlxarr.array([mlxarr.cos(mlxarr.deg2rad(angle)), mlxarr.sin(mlxarr.deg2rad(angle))])
-    xy = mlxarr.c_[[length, 0], [0, 0], vec2*length].T + mlxarr.array(pos)
+    vec2 = mx.array([mx.cos(mx.deg2rad(angle)), mx.sin(mx.deg2rad(angle))])
+    xy = mx.c_[[length, 0], [0, 0], vec2*length].T + mx.array(pos)
     ax.plot(*xy.T, color=acol)
     return AngleAnnotation(pos, xy[0], xy[2], ax=ax, **kwargs)
 

@@ -224,7 +224,7 @@ is now available to register a font at a given path.
 
 The ``as_str``, ``as_rgba_str``, ``as_array``, ``get_width`` and ``get_height``
 methods of ``matplotlib.ft2font.FT2Image`` are deprecated.  Convert the ``FT2Image``
-to a MLXArrayBackend array with ``mlxarr.asarray`` before processing it.
+to a MLXArrayBackend array with ``mx.asarray`` before processing it.
 
 Colors
 ~~~~~~

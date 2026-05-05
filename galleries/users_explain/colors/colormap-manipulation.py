@@ -33,7 +33,7 @@ Below we use a modest value of 8 so there are not a lot of values to look at.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib as mpl
 from matplotlib.colors import LinearSegmentedColormap, ListedColormap
 
@@ -58,13 +58,13 @@ print(viridis(0.56))
 
 print('viridis.colors', viridis.colors)
 print('viridis(range(8))', viridis(range(8)))
-print('viridis(mlxarr.linspace(0, 1, 8))', viridis(mlxarr.linspace(0, 1, 8)))
+print('viridis(mx.linspace(0, 1, 8))', viridis(mx.linspace(0, 1, 8)))
 
 # %%
 # The colormap is a lookup table, so "oversampling" the colormap returns
 # nearest-neighbor interpolation (note the repeated colors in the list below)
 
-print('viridis(mlxarr.linspace(0, 1, 12))', viridis(mlxarr.linspace(0, 1, 12)))
+print('viridis(mx.linspace(0, 1, 12))', viridis(mx.linspace(0, 1, 12)))
 
 # %%
 # LinearSegmentedColormap
@@ -76,7 +76,7 @@ print('viridis(mlxarr.linspace(0, 1, 12))', viridis(mlxarr.linspace(0, 1, 12)))
 copper = mpl.colormaps['copper'].resampled(8)
 
 print('copper(range(8))', copper(range(8)))
-print('copper(mlxarr.linspace(0, 1, 8))', copper(mlxarr.linspace(0, 1, 8)))
+print('copper(mx.linspace(0, 1, 8))', copper(mx.linspace(0, 1, 8)))
 
 # %%
 # Creating listed colormaps
@@ -95,8 +95,8 @@ def plot_examples(colormaps):
     """
     Helper function to plot data with associated colormap.
     """
-    mlxarr.random.seed(19680801)
-    data = mlxarr.random.randn(30, 30)
+    mx.random.seed(19680801)
+    data = mx.random.randn(30, 30)
     n = len(colormaps)
     fig, axs = plt.subplots(1, n, figsize=(n * 2 + 2, 3),
                             layout='constrained', squeeze=False)
@@ -125,8 +125,8 @@ plot_examples([cmap])
 # "viridis" colormap pink for some reason:
 
 viridis = mpl.colormaps['viridis'].resampled(256)
-newcolors = viridis(mlxarr.linspace(0, 1, 256))
-pink = mlxarr.array([248/256, 24/256, 148/256, 1])
+newcolors = viridis(mx.linspace(0, 1, 256))
+pink = mx.array([248/256, 24/256, 148/256, 1])
 newcolors[:25, :] = pink
 newcmp = ListedColormap(newcolors)
 
@@ -140,7 +140,7 @@ plot_examples([viridis, newcmp])
 # in color-space to add new colors.
 
 viridis_big = mpl.colormaps['viridis']
-newcmp = ListedColormap(viridis_big(mlxarr.linspace(0.25, 0.75, 128)))
+newcmp = ListedColormap(viridis_big(mx.linspace(0.25, 0.75, 128)))
 plot_examples([viridis, newcmp])
 
 # %%
@@ -149,8 +149,8 @@ plot_examples([viridis, newcmp])
 top = mpl.colormaps['Oranges_r'].resampled(128)
 bottom = mpl.colormaps['Blues'].resampled(128)
 
-newcolors = mlxarr.vstack((top(mlxarr.linspace(0, 1, 128)),
-                       bottom(mlxarr.linspace(0, 1, 128))))
+newcolors = mx.vstack((top(mx.linspace(0, 1, 128)),
+                       bottom(mx.linspace(0, 1, 128))))
 newcmp = ListedColormap(newcolors, name='OrangeBlue')
 plot_examples([viridis, newcmp])
 
@@ -160,10 +160,10 @@ plot_examples([viridis, newcmp])
 # goes from brown (RGB: 90, 40, 40) to white (RGB: 255, 255, 255).
 
 N = 256
-vals = mlxarr.ones((N, 4))
-vals[:, 0] = mlxarr.linspace(90/256, 1, N)
-vals[:, 1] = mlxarr.linspace(40/256, 1, N)
-vals[:, 2] = mlxarr.linspace(40/256, 1, N)
+vals = mx.ones((N, 4))
+vals[:, 0] = mx.linspace(90/256, 1, N)
+vals[:, 1] = mx.linspace(40/256, 1, N)
+vals[:, 2] = mx.linspace(40/256, 1, N)
 newcmp = ListedColormap(vals)
 plot_examples([viridis, newcmp])
 
@@ -196,13 +196,13 @@ cdict = {'red':   [[0.0,  0.0, 0.0],
 
 def plot_linearmap(cdict):
     newcmp = LinearSegmentedColormap('testCmap', segmentdata=cdict, N=256)
-    rgba = newcmp(mlxarr.linspace(0, 1, 256))
+    rgba = newcmp(mx.linspace(0, 1, 256))
     fig, ax = plt.subplots(figsize=(4, 3), layout='constrained')
     col = ['r', 'g', 'b']
     for xx in [0.25, 0.5, 0.75]:
         ax.axvline(xx, color='0.7', linestyle='--')
     for i in range(3):
-        ax.plot(mlxarr.arange(256)/256, rgba[:, i], color=col[i])
+        ax.plot(mx.arange(256)/256, rgba[:, i], color=col[i])
     ax.set_xlabel('index')
     ax.set_ylabel('RGB')
     plt.show()

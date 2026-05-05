@@ -12,7 +12,7 @@ Output generated via `matplotlib.animation.Animation.to_jshtml`.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib._mlx_array import cos, sin
 
 import matplotlib.animation as animation
@@ -28,7 +28,7 @@ history_len = 500  # how many trajectory points to display
 
 
 def derivs(t, state):
-    dydx = mlxarr.zeros_like(state)
+    dydx = mx.zeros_like(state)
 
     dydx[0] = state[1]
 
@@ -53,7 +53,7 @@ def derivs(t, state):
 
 # create a time array from 0..t_stop sampled at 0.02 second steps
 dt = 0.01
-t = mlxarr.arange(0, t_stop, dt)
+t = mx.arange(0, t_stop, dt)
 
 # th1 and th2 are the initial angles (degrees)
 # w10 and w20 are the initial angular velocities (degrees per second)
@@ -63,10 +63,10 @@ th2 = -10.0
 w2 = 0.0
 
 # initial state
-state = mlxarr.radians([th1, w1, th2, w2])
+state = mx.radians([th1, w1, th2, w2])
 
 # integrate the ODE using Euler's method
-y = mlxarr.empty((len(t), 4))
+y = mx.zeros((len(t), 4))
 y[0] = state
 for i in range(1, len(t)):
     y[i] = y[i - 1] + derivs(t[i - 1], y[i - 1]) * dt

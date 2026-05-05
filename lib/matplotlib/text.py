@@ -7,7 +7,7 @@ import logging
 import math
 from numbers import Real
 import weakref
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib as mpl
 from . import _api, artist, cbook, _docstring
 from .artist import Artist
@@ -37,7 +37,7 @@ def _get_textbox(text, renderer):
     projected_xs = []
     projected_ys = []
 
-    theta = mlxarr.deg2rad(text.get_rotation())
+    theta = mx.deg2rad(text.get_rotation())
     tr = Affine2D().rotate(-theta)
 
     _, parts, d = text._get_layout(renderer)
@@ -274,9 +274,9 @@ class Text(Artist):
         self.set_text(text)
         bb = self.get_window_extent()
 
-        size_accum = mlxarr.cumsum([0] + [charsize_cache[x] for x in text])
+        size_accum = mx.cumsum([0] + [charsize_cache[x] for x in text])
         std_x = x - bb.x0
-        return (mlxarr.abs(size_accum - std_x)).argmin()
+        return (mx.abs(size_accum - std_x)).argmin()
 
     def get_rotation(self):
         """Return the text angle in degrees between 0 and 360."""
@@ -434,7 +434,7 @@ class Text(Artist):
                              for x, y, w in zip(xs, ys, ws)]
 
         # the corners of the unrotated bounding box
-        corners_horiz = mlxarr.array(
+        corners_horiz = mx.array(
             [(xmin, ymin), (xmin, ymax), (xmax, ymax), (xmax, ymin)])
 
         # now rotate the bbox
@@ -769,16 +769,12 @@ class Text(Artist):
             # don't use self.get_position here, which refers to text
             # position in Text:
             x, y = self._x, self._y
-            if mlxarr.ma.is_masked(x):
-                x = mlxarr.nan
-            if mlxarr.ma.is_masked(y):
-                y = mlxarr.nan
             posx = float(self.convert_xunits(x))
             posy = float(self.convert_yunits(y))
             posx, posy = trans.transform((posx, posy))
-            if mlxarr.isnan(posx) or mlxarr.isnan(posy):
+            if mx.isnan(posx) or mx.isnan(posy):
                 return  # don't throw a warning here
-            if not mlxarr.isfinite(posx) or not mlxarr.isfinite(posy):
+            if not mx.isfinite(posx) or not mx.isfinite(posy):
                 _log.warning("posx and posy should be finite values")
                 return
             canvasw, canvash = renderer.get_canvas_width_height()
@@ -1996,7 +1992,7 @@ or callable, default: value of *xycoords*
             x, relposx = min(xpos, key=lambda v: abs(v[0] - x1))
             y, relposy = min(ypos, key=lambda v: abs(v[0] - y1))
             self._arrow_relpos = (relposx, relposy)
-            r = mlxarr.hypot(y - y1, x - x1)
+            r = mx.hypot(y - y1, x - x1)
             shrink_pts = shrink * r / renderer.points_to_pixels(1)
             self.arrow_patch.shrinkA = self.arrow_patch.shrinkB = shrink_pts
 

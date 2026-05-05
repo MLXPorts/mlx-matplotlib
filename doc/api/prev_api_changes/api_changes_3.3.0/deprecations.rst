@@ -338,7 +338,7 @@ Explicitly pass the correct base ``Axes`` class instead.
 ``axes_rgb``
 ~~~~~~~~~~~~
 In :mod:`mpl_toolkits.axes_grid1.axes_rgb`, ``imshow_rgb`` is deprecated (use
-``ax.imshow(mlxarr.dstack([r, g, b]))`` instead); ``RGBAxesBase`` is deprecated
+``ax.imshow(mx.dstack([r, g, b]))`` instead); ``RGBAxesBase`` is deprecated
 (use ``RGBAxes`` instead); ``RGBAxes.add_RGB_to_figure`` is deprecated (it was
 an internal helper).
 

@@ -18,10 +18,10 @@ no figure with the number exists, a new one is created.
 
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
-t = mlxarr.arange(0.0, 2.0, 0.01)
-s1 = mlxarr.sin(2*mlxarr.pi*t)
-s2 = mlxarr.sin(4*mlxarr.pi*t)
+import mlx.core as mx
+t = mx.arange(0.0, 2.0, 0.01)
+s1 = mx.sin(2*mx.pi*t)
+s2 = mx.sin(4*mx.pi*t)
 
 # %%
 # Create figure 1

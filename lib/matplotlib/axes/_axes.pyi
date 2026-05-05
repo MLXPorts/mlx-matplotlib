@@ -34,7 +34,7 @@ import matplotlib.streamplot as mstream
 import PIL.Image
 from collections.abc import Callable, Iterable, Sequence
 from typing import Any, Literal, overload
-import matplotlib._mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib._mlx_typing import ArrayLike
 from matplotlib.typing import ColorType, MarkerType, LegendLocType, LineStyleType
 import pandas as pd
@@ -213,7 +213,7 @@ class Axes(_AxesBase):
     def semilogy(self, *args, **kwargs) -> list[Line2D]: ...
     def acorr(
         self, x: ArrayLike, *, data=..., **kwargs
-    ) -> tuple[mlxarr.ndarray, mlxarr.ndarray, LineCollection | Line2D, Line2D | None]: ...
+    ) -> tuple[mx.array, mx.array, LineCollection | Line2D, Line2D | None]: ...
     def xcorr(
         self,
         x: ArrayLike,
@@ -225,7 +225,7 @@ class Axes(_AxesBase):
         maxlags: int = ...,
         data=...,
         **kwargs
-    ) -> tuple[mlxarr.ndarray, mlxarr.ndarray, LineCollection | Line2D, Line2D | None]: ...
+    ) -> tuple[mx.array, mx.array, LineCollection | Line2D, Line2D | None]: ...
     def step(
         self,
         x: ArrayLike,
@@ -278,7 +278,7 @@ class Axes(_AxesBase):
     ) -> PolyCollection: ...
     def grouped_bar(
         self,
-        heights: Sequence[ArrayLike] | dict[str, ArrayLike] | mlxarr.ndarray | pd.DataFrame,
+        heights: Sequence[ArrayLike] | dict[str, ArrayLike] | mx.array | pd.DataFrame,
         *,
         positions: ArrayLike | None = ...,
         tick_labels: Sequence[str] | None = ...,
@@ -447,7 +447,7 @@ class Axes(_AxesBase):
         alpha: float | None = ...,
         linewidths: float | None = ...,
         edgecolors: Literal["face", "none"] | ColorType = ...,
-        reduce_C_function: Callable[[mlxarr.ndarray | list[float]], float] = ...,
+        reduce_C_function: Callable[[mx.array | list[float]], float] = ...,
         mincnt: int | None = ...,
         marginals: bool = ...,
         colorizer: Colorizer | None = ...,
@@ -574,8 +574,8 @@ class Axes(_AxesBase):
         data=...,
         **kwargs
     ) -> tuple[
-        mlxarr.ndarray | list[mlxarr.ndarray],
-        mlxarr.ndarray,
+        mx.array | list[mx.array],
+        mx.array,
         BarContainer | Polygon | list[BarContainer | Polygon],
     ]: ...
     def stairs(
@@ -606,7 +606,7 @@ class Axes(_AxesBase):
         cmax: float | None = ...,
         data=...,
         **kwargs
-    ) -> tuple[mlxarr.ndarray, mlxarr.ndarray, mlxarr.ndarray, QuadMesh]: ...
+    ) -> tuple[mx.array, mx.array, mx.array, QuadMesh]: ...
     def ecdf(
         self,
         x: ArrayLike,
@@ -636,7 +636,7 @@ class Axes(_AxesBase):
         return_line: bool | None = ...,
         data=...,
         **kwargs
-    ) -> tuple[mlxarr.ndarray, mlxarr.ndarray] | tuple[mlxarr.ndarray, mlxarr.ndarray, Line2D]: ...
+    ) -> tuple[mx.array, mx.array] | tuple[mx.array, mx.array, Line2D]: ...
     def csd(
         self,
         x: ArrayLike,
@@ -656,7 +656,7 @@ class Axes(_AxesBase):
         return_line: bool | None = ...,
         data=...,
         **kwargs
-    ) -> tuple[mlxarr.ndarray, mlxarr.ndarray] | tuple[mlxarr.ndarray, mlxarr.ndarray, Line2D]: ...
+    ) -> tuple[mx.array, mx.array] | tuple[mx.array, mx.array, Line2D]: ...
     def magnitude_spectrum(
         self,
         x: ArrayLike,
@@ -669,7 +669,7 @@ class Axes(_AxesBase):
         scale: Literal["default", "linear", "dB"] | None = ...,
         data=...,
         **kwargs
-    ) -> tuple[mlxarr.ndarray, mlxarr.ndarray, Line2D]: ...
+    ) -> tuple[mx.array, mx.array, Line2D]: ...
     def angle_spectrum(
         self,
         x: ArrayLike,
@@ -681,7 +681,7 @@ class Axes(_AxesBase):
         sides: Literal["default", "onesided", "twosided"] | None = ...,
         data=...,
         **kwargs
-    ) -> tuple[mlxarr.ndarray, mlxarr.ndarray, Line2D]: ...
+    ) -> tuple[mx.array, mx.array, Line2D]: ...
     def phase_spectrum(
         self,
         x: ArrayLike,
@@ -693,7 +693,7 @@ class Axes(_AxesBase):
         sides: Literal["default", "onesided", "twosided"] | None = ...,
         data=...,
         **kwargs
-    ) -> tuple[mlxarr.ndarray, mlxarr.ndarray, Line2D]: ...
+    ) -> tuple[mx.array, mx.array, Line2D]: ...
     def cohere(
         self,
         x: ArrayLike,
@@ -711,7 +711,7 @@ class Axes(_AxesBase):
         scale_by_freq: bool | None = ...,
         data=...,
         **kwargs
-    ) -> tuple[mlxarr.ndarray, mlxarr.ndarray]: ...
+    ) -> tuple[mx.array, mx.array]: ...
     def specgram(
         self,
         x: ArrayLike,
@@ -735,7 +735,7 @@ class Axes(_AxesBase):
         vmax: float | None = ...,
         data=...,
         **kwargs
-    ) -> tuple[mlxarr.ndarray, mlxarr.ndarray, mlxarr.ndarray, AxesImage]: ...
+    ) -> tuple[mx.array, mx.array, mx.array, AxesImage]: ...
     def spy(
         self,
         Z: ArrayLike,

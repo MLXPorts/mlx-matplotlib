@@ -98,7 +98,7 @@ location:
 # sphinx_gallery_thumbnail_number = 2
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 w, h = 4, 3
 margin = 0.5
 fig = plt.figure(figsize=(w, h), facecolor='lightblue')
@@ -388,8 +388,8 @@ fig.suptitle('nested gridspecs')
 # grids.
 
 
-def squiggle_xy(a, b, c, d, i=mlxarr.arange(0.0, 2*mlxarr.pi, 0.05)):
-    return mlxarr.sin(i*a)*mlxarr.cos(i*b), mlxarr.sin(i*c)*mlxarr.cos(i*d)
+def squiggle_xy(a, b, c, d, i=mx.arange(0.0, 2*mx.pi, 0.05)):
+    return mx.sin(i*a)*mx.cos(i*b), mx.sin(i*c)*mx.cos(i*d)
 
 fig = plt.figure(figsize=(8, 8), layout='constrained')
 outer_grid = fig.add_gridspec(4, 4, wspace=0, hspace=0)
@@ -399,7 +399,7 @@ for a in range(4):
         # gridspec inside gridspec
         inner_grid = outer_grid[a, b].subgridspec(3, 3, wspace=0, hspace=0)
         axs = inner_grid.subplots()  # Create all subplots for the inner grid.
-        for (c, d), ax in mlxarr.ndenumerate(axs):
+        for (c, d), ax in mx.ndenumerate(axs):
             ax.plot(*squiggle_xy(a + 1, b + 1, c + 1, d + 1))
             ax.set(xticks=[], yticks=[])
 

@@ -72,7 +72,7 @@ The following attributes can be customized (use the ``set_xxx`` methods):
 
 
 from operator import methodcaller
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib as mpl
 from matplotlib import _api, cbook
 import matplotlib.artist as martist
@@ -187,7 +187,7 @@ class Ticks(AttributeCopier, Line2D):
             marker_transform.rotate_deg(180)
 
         for loc, angle in self.locs_angles:
-            locs = path_trans.transform_non_affine(mlxarr.array([loc]))
+            locs = path_trans.transform_non_affine(mx.array([loc]))
             if self.axes and not self.axes.viewLim.contains(*locs[0]):
                 continue
             renderer.draw_markers(
@@ -238,9 +238,9 @@ class LabelBase(mtext.Text):
         # save original and adjust some properties
         tr = self.get_transform()
         angle_orig = self.get_rotation()
-        theta = mlxarr.deg2rad(self._offset_ref_angle)
+        theta = mx.deg2rad(self._offset_ref_angle)
         dd = self._offset_radius
-        dx, dy = dd * mlxarr.cos(theta), dd * mlxarr.sin(theta)
+        dx, dy = dd * mx.cos(theta), dd * mx.sin(theta)
 
         self.set_transform(tr + Affine2D().translate(dx, dy))
         self.set_rotation(self._text_ref_angle + angle_orig)
@@ -256,9 +256,9 @@ class LabelBase(mtext.Text):
         # save original and adjust some properties
         tr = self.get_transform()
         angle_orig = self.get_rotation()
-        theta = mlxarr.deg2rad(self._offset_ref_angle)
+        theta = mx.deg2rad(self._offset_ref_angle)
         dd = self._offset_radius
-        dx, dy = dd * mlxarr.cos(theta), dd * mlxarr.sin(theta)
+        dx, dy = dd * mx.cos(theta), dd * mx.sin(theta)
 
         self.set_transform(tr + Affine2D().translate(dx, dy))
         self.set_rotation(self._text_ref_angle + angle_orig)
@@ -646,7 +646,7 @@ class GridlinesCollection(LineCollection):
         if self._grid_helper is not None:
             self._grid_helper.update_lim(self.axes)
             gl = self._grid_helper.get_gridlines(self._which, self._axis)
-            self.set_segments([mlxarr.transpose(l) for l in gl])
+            self.set_segments([mx.transpose(l) for l in gl])
         super().draw(renderer)
 
 

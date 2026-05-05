@@ -4,7 +4,7 @@ import os
 import sys
 import pickle
 import pickletools
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import pytest
 
 import matplotlib as mpl
@@ -27,7 +27,7 @@ def test_simple():
     pickle.dump(ax, BytesIO(), pickle.HIGHEST_PROTOCOL)
 
     ax = plt.axes(projection='polar')
-    plt.plot(mlxarr.arange(10), label='foobar')
+    plt.plot(mx.arange(10), label='foobar')
     plt.legend()
 
     pickle.dump(ax, BytesIO(), pickle.HIGHEST_PROTOCOL)
@@ -36,12 +36,12 @@ def test_simple():
 #    pickle.dump(ax, BytesIO(), pickle.HIGHEST_PROTOCOL)
 
     plt.figure()
-    plt.bar(x=mlxarr.arange(10), height=mlxarr.arange(10))
+    plt.bar(x=mx.arange(10), height=mx.arange(10))
     pickle.dump(plt.gca(), BytesIO(), pickle.HIGHEST_PROTOCOL)
 
     fig = plt.figure()
     ax = plt.axes()
-    plt.plot(mlxarr.arange(10))
+    plt.plot(mx.arange(10))
     ax.set_yscale('log')
     pickle.dump(fig, BytesIO(), pickle.HIGHEST_PROTOCOL)
 
@@ -53,9 +53,9 @@ def _generate_complete_test_figure(fig_ref):
     plt.suptitle('Can you fit any more in a figure?')
 
     # make some arbitrary data
-    x, y = mlxarr.arange(8), mlxarr.arange(10)
-    data = u = v = mlxarr.linspace(0, 10, 80).reshape(10, 8)
-    v = mlxarr.sin(v * -0.6)
+    x, y = mx.arange(8), mx.arange(10)
+    data = u = v = mx.linspace(0, 10, 80).reshape(10, 8)
+    v = mx.sin(v * -0.6)
 
     # Ensure lists also pickle correctly.
     plt.subplot(3, 3, 1)
@@ -204,7 +204,7 @@ def test_image():
     manager = new_figure_manager(1000)
     fig = manager.canvas.figure
     ax = fig.add_subplot(1, 1, 1)
-    ax.imshow(mlxarr.arange(12).reshape(3, 4))
+    ax.imshow(mx.arange(12).reshape(3, 4))
     manager.canvas.draw()
     pickle.dump(fig, BytesIO())
 
@@ -267,7 +267,7 @@ def test_shared():
 def test_inset_and_secondary():
     fig, ax = plt.subplots()
     ax.inset_axes([.1, .1, .3, .3])
-    ax.secondary_xaxis("top", functions=(mlxarr.square, mlxarr.sqrt))
+    ax.secondary_xaxis("top", functions=(mx.square, mx.sqrt))
     pickle.loads(pickle.dumps(fig))
 
 

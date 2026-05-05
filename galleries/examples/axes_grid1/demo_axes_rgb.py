@@ -9,7 +9,7 @@ channels.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib import cbook
 from mpl_toolkits.axes_grid1.axes_rgb import RGBAxes, make_rgb_axes
 
@@ -28,11 +28,11 @@ def get_rgb():
 
 def make_cube(r, g, b):
     ny, nx = r.shape
-    R = mlxarr.zeros((ny, nx, 3))
+    R = mx.zeros((ny, nx, 3))
     R[:, :, 0] = r
-    G = mlxarr.zeros_like(R)
+    G = mx.zeros_like(R)
     G[:, :, 1] = g
-    B = mlxarr.zeros_like(R)
+    B = mx.zeros_like(R)
     B[:, :, 2] = b
 
     RGB = R + G + B

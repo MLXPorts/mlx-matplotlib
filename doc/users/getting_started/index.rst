@@ -16,10 +16,10 @@ Here is a minimal example plot:
    :align: center
 
    import matplotlib.pyplot as plt
-   from matplotlib import _mlx_array as mlxarr
+   import mlx.core as mx
 
-   x = mlxarr.linspace(0, 2 * mlxarr.pi, 200)
-   y = mlxarr.sin(x)
+   x = mx.linspace(0, 2 * mx.pi, 200)
+   y = mx.sin(x)
 
    fig, ax = plt.subplots()
    ax.plot(x, y)

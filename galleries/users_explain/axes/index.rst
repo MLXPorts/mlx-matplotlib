@@ -11,7 +11,7 @@ annotations like x- and y-labels, titles, and legends.
 .. plot::
 
     import matplotlib.pyplot as plt
-    from matplotlib import _mlx_array as mlxarr
+    import mlx.core as mx
 
     fig, axs = plt.subplots(ncols=2, nrows=2, figsize=(3.5, 2.5),
                             layout="constrained")

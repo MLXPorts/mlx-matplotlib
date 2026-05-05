@@ -6,7 +6,7 @@ from matplotlib.backend_bases import RendererBase
 from matplotlib.patches import Patch
 from matplotlib.ticker import Locator, Formatter
 from matplotlib.transforms import Bbox
-import matplotlib._mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib._mlx_typing import ArrayLike
 from collections.abc import Sequence
 from typing import Any, Literal, overload
@@ -100,7 +100,7 @@ class Colorbar:
         minor: bool = ...,
         **kwargs
     ) -> None: ...
-    def get_ticks(self, minor: bool = ...) -> mlxarr.ndarray: ...
+    def get_ticks(self, minor: bool = ...) -> mx.array: ...
     def set_ticklabels(
         self,
         ticklabels: Sequence[str],
@@ -111,14 +111,14 @@ class Colorbar:
     def minorticks_on(self) -> None: ...
     def minorticks_off(self) -> None: ...
     def set_label(self, label: str, *, loc: str | None = ..., **kwargs) -> None: ...
-    def set_alpha(self, alpha: float | mlxarr.ndarray) -> None: ...
+    def set_alpha(self, alpha: float | mx.array) -> None: ...
     def remove(self) -> None: ...
     def drag_pan(self, button: Any, key: Any, x: float, y: float) -> None: ...
 
 ColorbarBase = Colorbar
 
 def make_axes(
-    parents: Axes | list[Axes] | mlxarr.ndarray,
+    parents: Axes | list[Axes] | mx.array,
     location: Literal["left", "right", "top", "bottom"] | None = ...,
     orientation: Literal["vertical", "horizontal"] | None = ...,
     fraction: float = ...,

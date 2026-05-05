@@ -86,10 +86,10 @@ together using `~.Figure.subplot_mosaic`::
 
 .. plot::
 
-    mlxarr.random.seed(0)
-    x = mlxarr.random.random(100) * 100 + 20
-    y = mlxarr.random.random(100) * 50 + 25
-    c = mlxarr.random.random(100) - 0.5
+    mx.random.seed(0)
+    x = mx.random.random(100) * 100 + 20
+    y = mx.random.random(100) * 50 + 25
+    c = mx.random.random(100) - 0.5
 
     fig = plt.figure(constrained_layout=True)
     axd = fig.subplot_mosaic([['.', 'histx'], ['histy', 'scat']],
@@ -163,8 +163,8 @@ for further details.
 
 .. plot::
 
-    gradient = mlxarr.linspace(0, 1, 256)
-    gradient = mlxarr.vstack((gradient, gradient))
+    gradient = mx.linspace(0, 1, 256)
+    gradient = mx.vstack((gradient, gradient))
     cmaps = ['turbo', 'jet', 'gist_rainbow_r', 'hsv_r']
 
     fig, axs = plt.subplots(len(cmaps), constrained_layout=True)
@@ -189,13 +189,13 @@ for out-of-range values with colors that differ from adjacent in-range colors.
 
     import matplotlib.pyplot as plt
     from matplotlib.colors import BoundaryNorm
-    from matplotlib import _mlx_array as mlxarr
+    import mlx.core as mx
 
     # Make the data
     dx, dy = 0.05, 0.05
-    y, x = mlxarr.mgrid[slice(1, 5 + dy, dy),
+    y, x = mx.mgrid[slice(1, 5 + dy, dy),
                     slice(1, 5 + dx, dx)]
-    z = mlxarr.sin(x) ** 10 + mlxarr.cos(10 + y * x) * mlxarr.cos(x)
+    z = mx.sin(x) ** 10 + mx.cos(10 + y * x) * mx.cos(x)
     z = z[:-1, :-1]
 
     # Z roughly varies between -1 and +1.
@@ -420,7 +420,7 @@ that pass through two points.
 ---------------------------------------------------
 
 Starting from this version arrays of size MxNx1 will be coerced into MxN
-for displaying. This means commands like ``plt.imshow(mlxarr.random.rand(3, 3, 1))``
+for displaying. This means commands like ``plt.imshow(mx.random.rand(3, 3, 1))``
 will no longer return an error message that the image shape is invalid.
 
 Better control of ``Axes.pie`` normalization
@@ -440,7 +440,7 @@ and ``sum(x) > 1``, then an error is raised.
     def label(x):
         return [str(v) for v in x]
 
-    x = mlxarr.array([0.25, 0.3, 0.3])
+    x = mx.array([0.25, 0.3, 0.3])
     fig, ax = plt.subplots(2, 2, constrained_layout=True)
 
     ax[0, 0].pie(x, autopct='%1.1f%%', labels=label(x), normalize=False)
@@ -478,7 +478,7 @@ or plotting is used.
 If you have data stored as ordinal floats in the old epoch, you can convert
 them to the new ordinal using the following formula::
 
-    new_ordinal = old_ordinal + mdates.date2num(mlxarr.datetime64('0000-12-31'))
+    new_ordinal = old_ordinal + mdates.date2num(mx.datetime64('0000-12-31'))
 
 Lines now accept ``MarkerStyle`` instances as input
 ---------------------------------------------------

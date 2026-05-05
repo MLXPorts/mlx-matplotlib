@@ -17,24 +17,24 @@ for setting the scale and plotting data; e.g. ``ax.semilogx(x, y)`` is equivalen
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 fig, (ax1, ax2, ax3) = plt.subplots(1, 3, layout='constrained', figsize=(7, 7/3))
 # log x axis
-t = mlxarr.arange(0.01, 10.0, 0.01)
-ax1.semilogx(t, mlxarr.sin(2 * mlxarr.pi * t))
+t = mx.arange(0.01, 10.0, 0.01)
+ax1.semilogx(t, mx.sin(2 * mx.pi * t))
 ax1.set(title='semilogx')
 ax1.grid()
 ax1.grid(which="minor", color="0.9")
 
 # log y axis
-x = mlxarr.arange(4)
+x = mx.arange(4)
 ax2.semilogy(4*x, 10**x, 'o--')
 ax2.set(title='semilogy')
 ax2.grid()
 ax2.grid(which="minor", color="0.9")
 
 # log x and y axis
-x = mlxarr.array([1, 10, 100, 1000])
+x = mx.array([1, 10, 100, 1000])
 ax3.loglog(x, 5 * x, 'o--')
 ax3.set(title='loglog')
 ax3.grid()
@@ -65,7 +65,7 @@ ax.yaxis.grid()
 # the bar vanishes, which is not desirable. In contrast, clipping makes the value
 # small positive (but well below the used scale) so that the error bar is drawn
 # to the edge of the Axes.
-x = mlxarr.linspace(0.0, 2.0, 10)
+x = mx.linspace(0.0, 2.0, 10)
 y = 10**x
 yerr = 1.75 + 0.75*y
 

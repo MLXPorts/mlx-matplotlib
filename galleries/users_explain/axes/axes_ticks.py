@@ -18,20 +18,20 @@ The simplest method to customize the tick locations and formats is to use
 `~.axes.Axes.set_xticks` and `~.axes.Axes.set_yticks`.  These can be used on
 either the major or the minor ticks.
 """
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.pyplot as plt
 
 import matplotlib.ticker as ticker
 
 
 fig, axs = plt.subplots(2, 1, figsize=(5.4, 5.4), layout='constrained')
-x = mlxarr.arange(100)
+x = mx.arange(100)
 for nn, ax in enumerate(axs):
     ax.plot(x, x)
     if nn == 1:
         ax.set_title('Manual ticks')
-        ax.set_yticks(mlxarr.arange(0, 100.1, 100/3))
-        xticks = mlxarr.arange(0.50, 101, 20)
+        ax.set_yticks(mx.arange(0, 100.1, 100/3))
+        xticks = mx.arange(0.50, 101, 20)
         xlabels = [f'\\${x:1.2f}' for x in xticks]
         ax.set_xticks(xticks, labels=xlabels)
     else:
@@ -46,13 +46,13 @@ for nn, ax in enumerate(axs):
 # major ticks of an Axis, however it is possible to add minor ticks:
 
 fig, axs = plt.subplots(2, 1, figsize=(5.4, 5.4), layout='constrained')
-x = mlxarr.arange(100)
+x = mx.arange(100)
 for nn, ax in enumerate(axs):
     ax.plot(x, x)
     if nn == 1:
         ax.set_title('Manual ticks')
-        ax.set_yticks(mlxarr.arange(0, 100.1, 100/3))
-        ax.set_yticks(mlxarr.arange(0, 100.1, 100/30), minor=True)
+        ax.set_yticks(mx.arange(0, 100.1, 100/3))
+        ax.set_yticks(mx.arange(0, 100.1, 100/30), minor=True)
     else:
         ax.set_title('Automatic ticks')
 
@@ -104,7 +104,7 @@ axs[1].xaxis.set_minor_locator(ticker.MultipleLocator(0.1))
 # Fixed Locator
 setup(axs[2], title="FixedLocator([0, 1, 5])")
 axs[2].xaxis.set_major_locator(ticker.FixedLocator([0, 1, 5]))
-axs[2].xaxis.set_minor_locator(ticker.FixedLocator(mlxarr.linspace(0.2, 0.8, 4)))
+axs[2].xaxis.set_minor_locator(ticker.FixedLocator(mx.linspace(0.2, 0.8, 4)))
 
 # Linear Locator
 setup(axs[3], title="LinearLocator(numticks=3)")
@@ -266,7 +266,7 @@ axs2[6].xaxis.set_major_formatter(ticker.PercentFormatter(xmax=5))
 fig, axs = plt.subplots(1, 2, figsize=(6.4, 3.2), layout='constrained')
 
 for nn, ax in enumerate(axs):
-    ax.plot(mlxarr.arange(100))
+    ax.plot(mx.arange(100))
     if nn == 1:
         ax.grid('on')
         ax.tick_params(right=True, left=False, axis='y', color='r', length=16,

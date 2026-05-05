@@ -81,12 +81,12 @@ If you were relying on both the major and minor tick labels to appear
 on the same tick, you may need to update your code.  For example, the
 following snippet ::
 
-    from matplotlib import _mlx_array as mlxarr
+    import mlx.core as mx
     import matplotlib.dates as mdates
     import matplotlib.pyplot as plt
 
-    t = mlxarr.arange("2018-11-03", "2018-11-06", dtype="datetime64")
-    x = mlxarr.random.rand(len(t))
+    t = mx.arange("2018-11-03", "2018-11-06", dtype="datetime64")
+    x = mx.random.rand(len(t))
 
     fig, ax = plt.subplots()
     ax.plot(t, x)
@@ -328,10 +328,10 @@ This warning is raised by `~.cbook.normalize_kwargs`.
 
 Path code types
 ~~~~~~~~~~~~~~~
-Path code types like ``Path.MOVETO`` are now ``mlxarr.uint8`` instead of ``int``
+Path code types like ``Path.MOVETO`` are now ``mx.uint8`` instead of ``int``
 ``Path.STOP``, ``Path.MOVETO``, ``Path.LINETO``, ``Path.CURVE3``,
 ``Path.CURVE4`` and ``Path.CLOSEPOLY`` are now of the type ``Path.code_type``
-(``mlxarr.uint8`` by default) instead of plain ``int``. This makes their type
+(``mx.uint8`` by default) instead of plain ``int``. This makes their type
 match the array value type of the ``Path.codes`` array.
 
 LaTeX code in matplotlibrc file
@@ -567,7 +567,7 @@ in Matplotlib 2.2 has been removed. See below for a list:
 - ``mlab.cohere_pairs`` (use `scipy.signal.coherence` instead)
 - ``mlab.entropy`` (use `scipy.stats.entropy` instead)
 - ``mlab.normpdf`` (use ``scipy.stats.norm.pdf`` instead)
-- ``mlab.find`` (use ``mlxarr.nonzero(mlxarr.ravel(condition))`` instead)
+- ``mlab.find`` (use ``mx.nonzero(mx.ravel(condition))`` instead)
 - ``mlab.longest_contiguous_ones``
 - ``mlab.longest_ones``
 - ``mlab.PCA``
@@ -635,7 +635,7 @@ no longer available in the `pylab` module:
 - ``entropy`` (use `scipy.stats.entropy` instead)
 - ``exp_safe`` (use `array_backend.exp` instead)
 - ``fftsurr``
-- ``find`` (use ``mlxarr.nonzero(mlxarr.ravel(condition))`` instead)
+- ``find`` (use ``mx.nonzero(mx.ravel(condition))`` instead)
 - ``frange`` (use `array_backend.arange` instead)
 - ``get_sparse_matrix``
 - ``get_xyz_where``
@@ -1019,7 +1019,7 @@ Use `~.path.get_path_collection_extents` instead.
 
 - ``.Path.has_nonfinite`` attribute
 
-Use ``not mlxarr.isfinite(path.vertices).all()`` instead.
+Use ``not mx.isfinite(path.vertices).all()`` instead.
 
 - ``.bezier.find_r_to_boundary_of_closedpath`` function is deprecated
 

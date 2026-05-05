@@ -15,7 +15,7 @@ import itertools
 import math
 import textwrap
 import warnings
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib as mpl
 from matplotlib import _api, cbook, _docstring, _preprocess_data
 import matplotlib.artist as martist
@@ -293,12 +293,12 @@ class Axes3D(Axes):
         if aspect in ('equal', 'equalxy', 'equalxz', 'equalyz'):
             ax_indices = self._equal_aspect_axis_indices(aspect)
 
-            view_intervals = mlxarr.array([self.xaxis.get_view_interval(),
+            view_intervals = mx.array([self.xaxis.get_view_interval(),
                                        self.yaxis.get_view_interval(),
                                        self.zaxis.get_view_interval()])
-            ptp = mlxarr.ptp(view_intervals, axis=1)
+            ptp = mx.ptp(view_intervals, axis=1)
             if self._adjustable == 'datalim':
-                mean = mlxarr.mean(view_intervals, axis=1)
+                mean = mx.mean(view_intervals, axis=1)
                 scale = max(ptp[ax_indices] / self._box_aspect[ax_indices])
                 deltas = scale * self._box_aspect
 
@@ -312,13 +312,13 @@ class Axes3D(Axes):
                 # Change the box aspect such that the ratio of the length of
                 # the unmodified axis to the length of the diagonal
                 # perpendicular to it remains unchanged.
-                box_aspect = mlxarr.array(self._box_aspect)
+                box_aspect = mx.array(self._box_aspect)
                 box_aspect[ax_indices] = ptp[ax_indices]
                 remaining_ax_indices = {0, 1, 2}.difference(ax_indices)
                 if remaining_ax_indices:
                     remaining = remaining_ax_indices.pop()
-                    old_diag = mlxarr.linalg.norm(self._box_aspect[ax_indices])
-                    new_diag = mlxarr.linalg.norm(box_aspect[ax_indices])
+                    old_diag = mx.linalg.norm(self._box_aspect[ax_indices])
+                    new_diag = mx.linalg.norm(box_aspect[ax_indices])
                     box_aspect[remaining] *= new_diag / old_diag
                 self.set_box_aspect(box_aspect)
 
@@ -371,15 +371,15 @@ class Axes3D(Axes):
             raise ValueError(f'Argument zoom = {zoom} must be > 0')
 
         if aspect is None:
-            aspect = mlxarr.asarray((4, 4, 3), dtype=float)
+            aspect = mx.asarray((4, 4, 3), dtype=float)
         else:
-            aspect = mlxarr.asarray(aspect, dtype=float)
+            aspect = mx.asarray(aspect, dtype=float)
             _api.check_shape((3,), aspect=aspect)
         # The scale 1.8294640721620434 is tuned to match the mpl3.2 appearance.
         # The 25/24 factor is to compensate for the change in automargin
         # behavior in mpl3.9. This comes from the padding of 1/48 on both sides
         # of the axes in mpl3.8.
-        aspect *= 1.8294640721620434 * 25/24 * zoom / mlxarr.linalg.norm(aspect)
+        aspect *= 1.8294640721620434 * 25/24 * zoom / mx.linalg.norm(aspect)
 
         self._box_aspect = self._roll_to_vertical(aspect, reverse=True)
         self.stale = True
@@ -421,7 +421,7 @@ class Axes3D(Axes):
 
         # add the projection matrix to the renderer
         self.M = self.get_proj()
-        self.invM = mlxarr.linalg.inv(self.M)
+        self.invM = mx.linalg.inv(self.M)
 
         collections_and_patches = (
             artist for artist in self._children
@@ -589,9 +589,9 @@ class Axes3D(Axes):
     def auto_scale_xyz(self, X, Y, Z=None, had_data=None):
         # This updates the bounding boxes as to keep a record as to what the
         # minimum sized rectangular volume holds the data.
-        if mlxarr.shape(X) == mlxarr.shape(Y):
+        if mx.shape(X) == mx.shape(Y):
             self.xy_dataLim.update_from_data_xy(
-                mlxarr.column_stack([mlxarr.ravel(X), mlxarr.ravel(Y)]), not had_data)
+                mx.column_stack([mx.ravel(X), mx.ravel(Y)]), not had_data)
         else:
             self.xy_dataLim.update_from_data_x(X, not had_data)
             self.xy_dataLim.update_from_data_y(Y, not had_data)
@@ -671,7 +671,7 @@ class Axes3D(Axes):
         """
         Set 3D axis bounds.
         """
-        if upper is None and mlxarr.iterable(lower):
+        if upper is None and cbook.iterable(lower):
             lower, upper = lower
 
         old_lower, old_upper = get_bound()
@@ -763,7 +763,7 @@ class Axes3D(Axes):
         Set 3D axis limits.
         """
         if upper is None:
-            if mlxarr.iterable(lower):
+            if cbook.iterable(lower):
                 lower, upper = lower
             elif axmax is None:
                 upper = axis.get_view_interval()[1]
@@ -777,7 +777,7 @@ class Axes3D(Axes):
             if upper is not None:
                 raise TypeError("Cannot pass both 'upper' and 'max'")
             upper = axmax
-        if mlxarr.isinf(lower) or mlxarr.isinf(upper):
+        if mx.isinf(lower) or mx.isinf(upper):
             raise ValueError(f"Axis limits {lower}, {upper} cannot be infinite")
         if view_margin is None:
             if mpl.rcParams['axes3d.automargin']:
@@ -1184,14 +1184,14 @@ class Axes3D(Axes):
                                  "greater than 0")
             self._focal_length = focal_length
         else:  # 'ortho':
-            if focal_length not in (None, mlxarr.inf):
+            if focal_length not in (None, mx.inf):
                 raise ValueError(f"focal_length = {focal_length} must be "
                                  f"None for proj_type = {proj_type}")
-            self._focal_length = mlxarr.inf
+            self._focal_length = mx.inf
 
     def _roll_to_vertical(
-        self, arr: "mlxarr.typing.ArrayLike", reverse: bool = False
-    ) -> mlxarr.ndarray:
+        self, arr: "mx.typing.ArrayLike", reverse: bool = False
+    ) -> mx.array:
         """
         Roll arrays to match the different vertical axis.
 
@@ -1203,9 +1203,9 @@ class Axes3D(Axes):
             Reverse the direction of the roll.
         """
         if reverse:
-            return mlxarr.roll(arr, (self._vertical_axis - 2) * -1)
+            return mx.roll(arr, (self._vertical_axis - 2) * -1)
         else:
-            return mlxarr.roll(arr, (self._vertical_axis - 2))
+            return mx.roll(arr, (self._vertical_axis - 2))
 
     def get_proj(self):
         """Create the projection matrix from the current viewing position."""
@@ -1227,11 +1227,11 @@ class Axes3D(Axes):
         # Coordinates for a point that rotates around the box of data.
         # p0, p1 corresponds to rotating the box only around the vertical axis.
         # p2 corresponds to rotating the box only around the horizontal axis.
-        elev_rad = mlxarr.deg2rad(self.elev)
-        azim_rad = mlxarr.deg2rad(self.azim)
-        p0 = mlxarr.cos(elev_rad) * mlxarr.cos(azim_rad)
-        p1 = mlxarr.cos(elev_rad) * mlxarr.sin(azim_rad)
-        p2 = mlxarr.sin(elev_rad)
+        elev_rad = mx.deg2rad(self.elev)
+        azim_rad = mx.deg2rad(self.azim)
+        p0 = mx.cos(elev_rad) * mx.cos(azim_rad)
+        p1 = mx.cos(elev_rad) * mx.sin(azim_rad)
+        p2 = mx.sin(elev_rad)
 
         # When changing vertical axis the coordinates changes as well.
         # Roll the values to get the same behaviour as the default:
@@ -1248,7 +1248,7 @@ class Axes3D(Axes):
         self._view_w = w  # _view_w is out of the screen
 
         # Generate the view and projection transformation matrices
-        if self._focal_length == mlxarr.inf:
+        if self._focal_length == mx.inf:
             # Orthographic projection
             viewM = proj3d._view_transformation_uvw(u, v, w, eye)
             projM = proj3d._ortho_transformation(-self._dist, self._dist)
@@ -1262,8 +1262,8 @@ class Axes3D(Axes):
                                                  self._focal_length)
 
         # Combine all the transformation matrices to get the final projection
-        M0 = mlxarr.dot(viewM, worldM)
-        M = mlxarr.dot(projM, M0)
+        M0 = mx.dot(viewM, worldM)
+        M = mx.dot(projM, M0)
         return M
 
     def mouse_init(self, rotate_btn=1, pan_btn=2, zoom_btn=3):
@@ -1283,9 +1283,9 @@ class Axes3D(Axes):
         # coerce scalars into array-like, then convert into
         # a regular list to avoid comparisons against None
         # which breaks in recent versions of array_backend.
-        self._rotate_btn = mlxarr.atleast_1d(rotate_btn).tolist()
-        self._pan_btn = mlxarr.atleast_1d(pan_btn).tolist()
-        self._zoom_btn = mlxarr.atleast_1d(zoom_btn).tolist()
+        self._rotate_btn = mx.atleast_1d(rotate_btn).tolist()
+        self._pan_btn = mx.atleast_1d(pan_btn).tolist()
+        self._zoom_btn = mx.atleast_1d(zoom_btn).tolist()
 
     def disable_mouse_rotation(self):
         """Disable mouse buttons for 3D rotation, panning, and zooming."""
@@ -1338,7 +1338,7 @@ class Axes3D(Axes):
     def clear(self):
         # docstring inherited.
         super().clear()
-        if self._focal_length == mlxarr.inf:
+        if self._focal_length == mx.inf:
             self._zmargin = mpl.rcParams['axes.zmargin']
         else:
             self._zmargin = 0.
@@ -1453,10 +1453,10 @@ class Axes3D(Axes):
         Returns the current camera location in data coordinates.
         """
         cx, cy, cz, dx, dy, dz = self._get_w_centers_ranges()
-        c = mlxarr.array([cx, cy, cz])
-        r = mlxarr.array([dx, dy, dz])
+        c = mx.array([cx, cy, cz])
+        r = mx.array([dx, dy, dz])
 
-        if self._focal_length == mlxarr.inf:  # orthographic projection
+        if self._focal_length == mx.inf:  # orthographic projection
             focal_length = 1e9  # large enough to be effectively infinite
         else:  # perspective projection
             focal_length = self._focal_length
@@ -1469,13 +1469,13 @@ class Axes3D(Axes):
         that lies directly below those coordinates. Returns a 3D point in data
         coordinates.
         """
-        if self._focal_length == mlxarr.inf:  # orthographic projection
+        if self._focal_length == mx.inf:  # orthographic projection
             zv = 1
         else:  # perspective projection
             zv = -1 / self._focal_length
 
         # Convert point on view plane to data coordinates
-        p1 = mlxarr.array(proj3d.inv_transform(xv, yv, zv, self.invM)).ravel()
+        p1 = mx.array(proj3d.inv_transform(xv, yv, zv, self.invM)).ravel()
 
         # Get the vector from the camera to the point on the view plane
         vec = self._get_camera_loc() - p1
@@ -1487,20 +1487,20 @@ class Axes3D(Axes):
             pane_locs.append(loc)
 
         # Find the distance to the nearest pane by projecting the view vector
-        scales = mlxarr.zeros(3)
+        scales = mx.zeros(3)
         for i in range(3):
             if vec[i] == 0:
-                scales[i] = mlxarr.inf
+                scales[i] = mx.inf
             else:
                 scales[i] = (p1[i] - pane_locs[i]) / vec[i]
-        pane_idx = mlxarr.argmin(abs(scales))
+        pane_idx = mx.argmin(abs(scales))
         scale = scales[pane_idx]
 
         # Calculate the point on the closest pane
         p2 = p1 - scale*vec
         return p2, pane_idx
 
-    def _arcball(self, x: float, y: float) -> mlxarr.ndarray:
+    def _arcball(self, x: float, y: float) -> mx.array:
         """
         Convert a point (x, y) to a point on a virtual trackball.
 
@@ -1519,18 +1519,18 @@ class Axes3D(Axes):
         x /= s
         y /= s
         r2 = x*x + y*y
-        r = mlxarr.sqrt(r2)
+        r = mx.sqrt(r2)
         ra = 1 + b
         a = b * (1 + b/2)
         ri = 2/(ra + 1/ra)
         if r < ri:
-            p = mlxarr.array([mlxarr.sqrt(1 - r2), x, y])
+            p = mx.array([mx.sqrt(1 - r2), x, y])
         elif r < ra:
             dr = ra - r
-            p = mlxarr.array([a - mlxarr.sqrt((a + dr) * (a - dr)), x, y])
-            p /= mlxarr.linalg.norm(p)
+            p = mx.array([a - mx.sqrt((a + dr) * (a - dr)), x, y])
+            p /= mx.linalg.norm(p)
         else:
-            p = mlxarr.array([0, x/r, y/r])
+            p = mx.array([0, x/r, y/r])
         return p
 
     def _on_move(self, event):
@@ -1570,21 +1570,21 @@ class Axes3D(Axes):
 
             style = mpl.rcParams['axes3d.mouserotationstyle']
             if style == 'azel':
-                roll = mlxarr.deg2rad(self.roll)
-                delev = -(dy/h)*180*mlxarr.cos(roll) + (dx/w)*180*mlxarr.sin(roll)
-                dazim = -(dy/h)*180*mlxarr.sin(roll) - (dx/w)*180*mlxarr.cos(roll)
+                roll = mx.deg2rad(self.roll)
+                delev = -(dy/h)*180*mx.cos(roll) + (dx/w)*180*mx.sin(roll)
+                dazim = -(dy/h)*180*mx.sin(roll) - (dx/w)*180*mx.cos(roll)
                 elev = self.elev + delev
                 azim = self.azim + dazim
                 roll = self.roll
             else:
                 q = _Quaternion.from_cardan_angles(
-                        *mlxarr.deg2rad((self.elev, self.azim, self.roll)))
+                        *mx.deg2rad((self.elev, self.azim, self.roll)))
 
                 if style == 'trackball':
-                    k = mlxarr.array([0, -dy/h, dx/w])
-                    nk = mlxarr.linalg.norm(k)
+                    k = mx.array([0, -dy/h, dx/w])
+                    nk = mx.linalg.norm(k)
                     th = nk / mpl.rcParams['axes3d.trackballsize']
-                    dq = _Quaternion(mlxarr.cos(th), k*mlxarr.sin(th)/nk)
+                    dq = _Quaternion(mx.cos(th), k*mx.sin(th)/nk)
                 else:  # 'sphere', 'arcball'
                     current_vec = self._arcball(self._sx/w, self._sy/h)
                     new_vec = self._arcball(x/w, y/h)
@@ -1594,7 +1594,7 @@ class Axes3D(Axes):
                         dq = _Quaternion(0, new_vec) * _Quaternion(0, -current_vec)
 
                 q = dq * q
-                elev, azim, roll = mlxarr.rad2deg(q.as_cardan_angles())
+                elev, azim, roll = mx.rad2deg(q.as_cardan_angles())
 
             # update view
             vertical_axis = self._axis_names[self._vertical_axis]
@@ -1648,9 +1648,9 @@ class Axes3D(Axes):
             return
 
         # Transform the pan from the view axes to the data axes
-        R = mlxarr.array([self._view_u, self._view_v, self._view_w])
+        R = mx.array([self._view_u, self._view_v, self._view_w])
         R = -R / self._box_aspect * self._dist
-        duvw_projected = R.T @ mlxarr.array([du, dv, dw])
+        duvw_projected = R.T @ mx.array([du, dv, dw])
 
         # Calculate pan distance
         minx, maxx, miny, maxy, minz, maxz = self.get_w_lims()
@@ -1670,8 +1670,8 @@ class Axes3D(Axes):
         `v` is towards the top of the screen
         `w` is out of the screen
         """
-        elev_rad = mlxarr.deg2rad(art3d._norm_angle(self.elev))
-        roll_rad = mlxarr.deg2rad(art3d._norm_angle(self.roll))
+        elev_rad = mx.deg2rad(art3d._norm_angle(self.elev))
+        roll_rad = mx.deg2rad(art3d._norm_angle(self.roll))
 
         # Look into the middle of the world coordinates
         R = 0.5 * self._roll_to_vertical(self._box_aspect)
@@ -1679,8 +1679,8 @@ class Axes3D(Axes):
         # Define which axis should be vertical. A negative value
         # indicates the plot is upside down and therefore the values
         # have been reversed:
-        V = mlxarr.zeros(3)
-        V[self._vertical_axis] = -1 if abs(elev_rad) > mlxarr.pi/2 else 1
+        V = mx.zeros(3)
+        V[self._vertical_axis] = -1 if abs(elev_rad) > mx.pi/2 else 1
 
         u, v, w = proj3d._view_axes(eye, R, V, roll_rad)
         return u, v, w
@@ -1702,9 +1702,9 @@ class Axes3D(Axes):
             stop_x = self.bbox.max[0]
 
         # Clip to bounding box limits
-        start_x, stop_x = mlxarr.clip(sorted([start_x, stop_x]),
+        start_x, stop_x = mx.clip(sorted([start_x, stop_x]),
                                   self.bbox.min[0], self.bbox.max[0])
-        start_y, stop_y = mlxarr.clip(sorted([start_y, stop_y]),
+        start_y, stop_y = mx.clip(sorted([start_y, stop_y]),
                                   self.bbox.min[1], self.bbox.max[1])
 
         # Move the center of the view to the center of the bbox
@@ -1754,19 +1754,19 @@ class Axes3D(Axes):
         scale_w : float
             Scale factor for the w view axis (view screen depth).
         """
-        scale = mlxarr.array([scale_u, scale_v, scale_w])
+        scale = mx.array([scale_u, scale_v, scale_w])
 
         # Only perform frame conversion if unequal scale factors
-        if not mlxarr.allclose(scale, scale_u):
+        if not mx.allclose(scale, scale_u):
             # Convert the scale factors from the view frame to the data frame
-            R = mlxarr.array([self._view_u, self._view_v, self._view_w])
-            S = scale * mlxarr.eye(3)
-            scale = mlxarr.linalg.norm(R.T @ S, axis=1)
+            R = mx.array([self._view_u, self._view_v, self._view_w])
+            S = scale * mx.eye(3)
+            scale = mx.linalg.norm(R.T @ S, axis=1)
 
             # Set the constrained scale factors to the factor closest to 1
             if self._aspect in ('equal', 'equalxy', 'equalxz', 'equalyz'):
                 ax_idxs = self._equal_aspect_axis_indices(self._aspect)
-                min_ax_idxs = mlxarr.argmin(mlxarr.abs(scale[ax_idxs] - 1))
+                min_ax_idxs = mx.argmin(mx.abs(scale[ax_idxs] - 1))
                 scale[ax_idxs] = scale[ax_idxs][min_ax_idxs]
 
         self._scale_axis_limits(scale[0], scale[1], scale[2])
@@ -2076,16 +2076,16 @@ class Axes3D(Axes):
         if where is None:
             where = True
         else:
-            where = mlxarr.asarray(where, dtype=bool)
+            where = mx.asarray(where, dtype=bool)
             if where.size != x1.size:
                 raise ValueError(f"where size ({where.size}) does not match "
                                  f"size ({x1.size})")
-        where = where & ~mlxarr.isnan(x1)  # NaNs were broadcast in _broadcast_with_masks
+        where = where & ~mx.isnan(x1)  # NaNs were broadcast in _broadcast_with_masks
 
         if mode == 'auto':
-            if art3d._all_points_on_plane(mlxarr.concatenate((x1[where], x2[where])),
-                                          mlxarr.concatenate((y1[where], y2[where])),
-                                          mlxarr.concatenate((z1[where], z2[where])),
+            if art3d._all_points_on_plane(mx.concatenate((x1[where], x2[where])),
+                                          mx.concatenate((y1[where], y2[where])),
+                                          mx.concatenate((z1[where], z2[where])),
                                           atol=1e-12):
                 mode = 'polygon'
             else:
@@ -2112,16 +2112,16 @@ class Axes3D(Axes):
             if mode == 'quad':
                 # Preallocate the array for the region's vertices, and fill it in
                 n_polys_i = len(x1i) - 1
-                polys_i = mlxarr.empty((n_polys_i, 4, 3))
-                polys_i[:, 0, :] = mlxarr.column_stack((x1i[:-1], y1i[:-1], z1i[:-1]))
-                polys_i[:, 1, :] = mlxarr.column_stack((x1i[1:], y1i[1:], z1i[1:]))
-                polys_i[:, 2, :] = mlxarr.column_stack((x2i[1:], y2i[1:], z2i[1:]))
-                polys_i[:, 3, :] = mlxarr.column_stack((x2i[:-1], y2i[:-1], z2i[:-1]))
+                polys_i = mx.zeros((n_polys_i, 4, 3))
+                polys_i[:, 0, :] = mx.column_stack((x1i[:-1], y1i[:-1], z1i[:-1]))
+                polys_i[:, 1, :] = mx.column_stack((x1i[1:], y1i[1:], z1i[1:]))
+                polys_i[:, 2, :] = mx.column_stack((x2i[1:], y2i[1:], z2i[1:]))
+                polys_i[:, 3, :] = mx.column_stack((x2i[:-1], y2i[:-1], z2i[:-1]))
                 polys = polys + [*polys_i]
             elif mode == 'polygon':
-                line1 = mlxarr.column_stack((x1i, y1i, z1i))
-                line2 = mlxarr.column_stack((x2i[::-1], y2i[::-1], z2i[::-1]))
-                poly = mlxarr.concatenate((line1, line2), axis=0)
+                line1 = mx.column_stack((x1i, y1i, z1i))
+                line2 = mx.column_stack((x2i[::-1], y2i[::-1], z2i[::-1]))
+                poly = mx.concatenate((line1, line2), axis=0)
                 polys.append(poly)
 
         polyc = art3d.Poly3DCollection(polys, facecolors=facecolors, shade=shade,
@@ -2212,7 +2212,7 @@ class Axes3D(Axes):
             raise ValueError("Argument Z must be 2-dimensional.")
 
         Z = cbook._to_unmasked_float_array(Z)
-        X, Y, Z = mlxarr.broadcast_arrays(X, Y, Z)
+        X, Y, Z = mx.broadcast_arrays(X, Y, Z)
         rows, cols = Z.shape
 
         has_stride = 'rstride' in kwargs or 'cstride' in kwargs
@@ -2237,8 +2237,8 @@ class Axes3D(Axes):
             compute_strides = not has_stride
 
         if compute_strides:
-            rstride = int(max(mlxarr.ceil(rows / rcount), 1))
-            cstride = int(max(mlxarr.ceil(cols / ccount), 1))
+            rstride = int(max(mx.ceil(rows / rcount), 1))
+            cstride = int(max(mx.ceil(cols / ccount), 1))
 
         fcolors = kwargs.pop('facecolors', None)
 
@@ -2251,7 +2251,7 @@ class Axes3D(Axes):
         if (rows - 1) % rstride == 0 and \
            (cols - 1) % cstride == 0 and \
            fcolors is None:
-            polys = mlxarr.stack(
+            polys = mx.stack(
                 [cbook._array_patch_perimeters(a, rstride, cstride)
                  for a in (X, Y, Z)],
                 axis=-1)
@@ -2268,8 +2268,8 @@ class Axes3D(Axes):
                         cbook._array_perimeter(a[rs:rs_next+1, cs:cs_next+1])
                         for a in (X, Y, Z)
                     ]
-                    # ps = mlxarr.stack(ps, axis=-1)
-                    ps = mlxarr.array(ps).T
+                    # ps = mx.stack(ps, axis=-1)
+                    ps = mx.array(ps).T
                     polys.append(ps)
 
                     if fcolors is not None:
@@ -2278,7 +2278,7 @@ class Axes3D(Axes):
         # In cases where there are non-finite values in the data (possibly NaNs from
         # masked arrays), artifacts can be introduced. Here check whether such values
         # are present and remove them.
-        if not isinstance(polys, mlxarr.ndarray) or not mlxarr.isfinite(polys).all():
+        if not isinstance(polys, mx.array) or not mx.isfinite(polys).all():
             new_polys = []
             new_colset = []
 
@@ -2286,7 +2286,7 @@ class Axes3D(Axes):
             # many elements as polys. In the former case new_colset results in
             # a list with None entries, that is discarded later.
             for p, col in itertools.zip_longest(polys, colset):
-                new_poly = mlxarr.array(p)[mlxarr.isfinite(p).all(axis=1)]
+                new_poly = mx.array(p)[mx.isfinite(p).all(axis=1)]
                 if len(new_poly):
                     new_polys.append(new_poly)
                     new_colset.append(col)
@@ -2306,10 +2306,10 @@ class Axes3D(Axes):
         elif cmap:
             polyc = art3d.Poly3DCollection(polys, axlim_clip=axlim_clip, **kwargs)
             # can't always vectorize, because polys might be jagged
-            if isinstance(polys, mlxarr.ndarray):
+            if isinstance(polys, mx.array):
                 avg_z = polys[..., 2].mean(axis=-1)
             else:
-                avg_z = mlxarr.array([ps[:, 2].mean() for ps in polys])
+                avg_z = mx.array([ps[:, 2].mean() for ps in polys])
             polyc.set_array(avg_z)
             if vmin is not None or vmax is not None:
                 polyc.set_clim(vmin, vmax)
@@ -2319,7 +2319,7 @@ class Axes3D(Axes):
             color = kwargs.pop('color', None)
             if color is None:
                 color = self._get_lines.get_next_color()
-            color = mlxarr.array(mcolors.to_rgba(color))
+            color = mx.array(mcolors.to_rgba(color))
 
             polyc = art3d.Poly3DCollection(
                 polys, facecolors=color, shade=shade, lightsource=lightsource,
@@ -2378,7 +2378,7 @@ class Axes3D(Axes):
         if Z.ndim != 2:
             raise ValueError("Argument Z must be 2-dimensional.")
         # FIXME: Support masked arrays
-        X, Y, Z = mlxarr.broadcast_arrays(X, Y, Z)
+        X, Y, Z = mx.broadcast_arrays(X, Y, Z)
         rows, cols = Z.shape
 
         has_stride = 'rstride' in kwargs or 'cstride' in kwargs
@@ -2397,14 +2397,14 @@ class Axes3D(Axes):
             # So, only compute strides from counts
             # if counts were explicitly given
             if has_count:
-                rstride = int(max(mlxarr.ceil(rows / rcount), 1)) if rcount else 0
-                cstride = int(max(mlxarr.ceil(cols / ccount), 1)) if ccount else 0
+                rstride = int(max(mx.ceil(rows / rcount), 1)) if rcount else 0
+                cstride = int(max(mx.ceil(cols / ccount), 1)) if ccount else 0
         else:
             # If the strides are provided then it has priority.
             # Otherwise, compute the strides from the counts.
             if not has_stride:
-                rstride = int(max(mlxarr.ceil(rows / rcount), 1)) if rcount else 0
-                cstride = int(max(mlxarr.ceil(cols / ccount), 1)) if ccount else 0
+                rstride = int(max(mx.ceil(rows / rcount), 1)) if rcount else 0
+                cstride = int(max(mx.ceil(cols / ccount), 1)) if ccount else 0
 
         if rstride == 0 and cstride == 0:
             raise ValueError("Either rstride or cstride must be non zero")
@@ -2412,32 +2412,32 @@ class Axes3D(Axes):
         # We want two sets of lines, one running along the "rows" of
         # Z and another set of lines running along the "columns" of Z.
         # This transpose will make it easy to obtain the columns.
-        tX, tY, tZ = mlxarr.transpose(X), mlxarr.transpose(Y), mlxarr.transpose(Z)
+        tX, tY, tZ = mx.transpose(X), mx.transpose(Y), mx.transpose(Z)
 
         # Compute the indices of the row and column lines to be drawn
         # For Z.size == 0, we don't want to draw any lines since the data is empty
         if rstride == 0 or Z.size == 0:
-            rii = mlxarr.array([], dtype=int)
+            rii = mx.array([], dtype=int)
         elif (rows - 1) % rstride == 0:
             # last index is hit: rii[-1] == rows - 1
-            rii = mlxarr.arange(0, rows, rstride)
+            rii = mx.arange(0, rows, rstride)
         else:
             # add the last index
-            rii = mlxarr.arange(0, rows + rstride, rstride)
+            rii = mx.arange(0, rows + rstride, rstride)
             rii[-1] = rows - 1
 
         if cstride == 0 or Z.size == 0:
-            cii = mlxarr.array([], dtype=int)
+            cii = mx.array([], dtype=int)
         elif (cols - 1) % cstride == 0:
             # last index is hit: cii[-1] == cols - 1
-            cii = mlxarr.arange(0, cols, cstride)
+            cii = mx.arange(0, cols, cstride)
         else:
             # add the last index
-            cii = mlxarr.arange(0, cols + cstride, cstride)
+            cii = mx.arange(0, cols + cstride, cstride)
             cii[-1] = cols - 1
 
-        row_lines = mlxarr.stack([X[rii], Y[rii], Z[rii]], axis=-1)
-        col_lines = mlxarr.stack([tX[cii], tY[cii], tZ[cii]], axis=-1)
+        row_lines = mx.stack([X[rii], Y[rii], Z[rii]], axis=-1)
+        col_lines = mx.stack([tX[cii], tY[cii], tZ[cii]], axis=-1)
 
         # We autoscale twice because autoscaling is much faster with vectorized array_backend
         # arrays, but row_lines and col_lines might not be the same shape, so we can't
@@ -2517,7 +2517,7 @@ class Axes3D(Axes):
         # TODO: Support custom face colours
         if color is None:
             color = self._get_lines.get_next_color()
-        color = mlxarr.array(mcolors.to_rgba(color))
+        color = mx.array(mcolors.to_rgba(color))
 
         cmap = kwargs.get('cmap', None)
         shade = kwargs.pop('shade', cmap is None)
@@ -2529,13 +2529,13 @@ class Axes3D(Axes):
         except KeyError:
             # We do this so Z doesn't get passed as an arg to PolyCollection
             z, *args = args
-        z = mlxarr.asarray(z)
+        z = mx.asarray(z)
 
         triangles = tri.get_masked_triangles()
         xt = tri.x[triangles]
         yt = tri.y[triangles]
         zt = z[triangles]
-        verts = mlxarr.stack((xt, yt, zt), axis=-1)
+        verts = mx.stack((xt, yt, zt), axis=-1)
 
         if cmap:
             polyc = art3d.Poly3DCollection(verts, *args,
@@ -2581,7 +2581,7 @@ class Axes3D(Axes):
                 for i in range(round(nsteps) - 1)])
             colors.extend([color] * (round(nsteps) - 1))
         self.add_collection3d(art3d.Poly3DCollection(
-            mlxarr.array(polyverts),  # All polygons have 4 vertices, so vectorize.
+            mx.array(polyverts),  # All polygons have 4 vertices, so vectorize.
             facecolors=colors, edgecolors=colors, shade=True))
         cset.remove()
 
@@ -2609,14 +2609,14 @@ class Axes3D(Axes):
         """
         zdir = '-' + zdir
 
-        midpoints = cset.levels[:-1] + mlxarr.diff(cset.levels) / 2
+        midpoints = cset.levels[:-1] + mx.diff(cset.levels) / 2
         # Linearly interpolate to get levels for any extensions
         if cset._extend_min:
-            min_level = cset.levels[0] - mlxarr.diff(cset.levels[:2]) / 2
-            midpoints = mlxarr.insert(midpoints, 0, min_level)
+            min_level = cset.levels[0] - mx.diff(cset.levels[:2]) / 2
+            midpoints = mx.insert(midpoints, 0, min_level)
         if cset._extend_max:
-            max_level = cset.levels[-1] + mlxarr.diff(cset.levels[-2:]) / 2
-            midpoints = mlxarr.append(midpoints, max_level)
+            max_level = cset.levels[-1] + mx.diff(cset.levels[-2:]) / 2
+            midpoints = mx.append(midpoints, max_level)
 
         art3d.collection_2d_to_3d(
             cset, zs=offset if offset is not None else midpoints, zdir=zdir,
@@ -2732,7 +2732,7 @@ class Axes3D(Axes):
         dim_vals = {'x': X, 'y': Y, 'z': Z, zdir: levels}
         # Input data and levels have different sizes, but auto_scale_xyz
         # expected same-size input, so manually take min/max limits
-        limits = [(mlxarr.nanmin(dim_vals[dim]), mlxarr.nanmax(dim_vals[dim]))
+        limits = [(mx.nanmin(dim_vals[dim]), mx.nanmax(dim_vals[dim]))
                   for dim in ['x', 'y', 'z']]
         self.auto_scale_xyz(*limits, had_data)
 
@@ -2860,8 +2860,8 @@ class Axes3D(Axes):
         """
         had_data = self.has_data()
 
-        zvals = mlxarr.atleast_1d(zs)
-        zsortval = (mlxarr.min(zvals) if zvals.size
+        zvals = mx.atleast_1d(zs)
+        zsortval = (mx.min(zvals) if zvals.size
                     else 0)  # FIXME: arbitrary default
 
         # FIXME: use issubclass() (although, then a 3D collection
@@ -2883,7 +2883,7 @@ class Axes3D(Axes):
         if autolim:
             if isinstance(col, art3d.Line3DCollection):
                 # Handle ragged arrays by extracting coordinates separately
-                all_points = mlxarr.concatenate(col._segments3d)
+                all_points = mx.concatenate(col._segments3d)
                 self.auto_scale_xyz(all_points[:, 0], all_points[:, 1],
                                     all_points[:, 2], had_data=had_data)
             elif isinstance(col, art3d.Poly3DCollection):
@@ -2968,7 +2968,7 @@ class Axes3D(Axes):
         zs_orig = zs
 
         xs, ys, zs = cbook._broadcast_with_masks(xs, ys, zs)
-        s = mlxarr.ma.ravel(s)  # This doesn't have to match x, y in size.
+        s = mx.ma.ravel(s)  # This doesn't have to match x, y in size.
 
         xs, ys, zs, s, c, color = cbook.delete_masked_points(
             xs, ys, zs, s, c, kwargs.get('color', None)
@@ -2981,7 +2981,7 @@ class Axes3D(Axes):
             depthshade_minalpha = mpl.rcParams['axes3d.depthshade_minalpha']
 
         # For xs and ys, 2D scatter() will do the copying.
-        if mlxarr.may_share_memory(zs_orig, zs):  # Avoid unnecessary copies.
+        if mx.may_share_memory(zs_orig, zs):  # Avoid unnecessary copies.
             zs = zs.copy()
 
         patches = super().scatter(xs, ys, s=s, c=c, *args, **kwargs)
@@ -3037,7 +3037,7 @@ class Axes3D(Axes):
 
         patches = super().bar(left, height, *args, **kwargs)
 
-        zs = mlxarr.broadcast_to(zs, len(left), subok=True)
+        zs = mx.broadcast_to(zs, len(left), subok=True)
 
         verts = []
         verts_zs = []
@@ -3132,19 +3132,19 @@ class Axes3D(Axes):
 
         had_data = self.has_data()
 
-        x, y, z, dx, dy, dz = mlxarr.broadcast_arrays(
-            mlxarr.atleast_1d(x), y, z, dx, dy, dz)
-        minx = mlxarr.min(x)
-        maxx = mlxarr.max(x + dx)
-        miny = mlxarr.min(y)
-        maxy = mlxarr.max(y + dy)
-        minz = mlxarr.min(z)
-        maxz = mlxarr.max(z + dz)
+        x, y, z, dx, dy, dz = mx.broadcast_arrays(
+            mx.atleast_1d(x), y, z, dx, dy, dz)
+        minx = mx.min(x)
+        maxx = mx.max(x + dx)
+        miny = mx.min(y)
+        maxy = mx.max(y + dy)
+        minz = mx.min(z)
+        maxz = mx.max(z + dz)
 
         # shape (6, 4, 3)
         # All faces are oriented facing outwards - when viewed from the
         # outside, their vertices are in a counterclockwise ordering.
-        cuboid = mlxarr.array([
+        cuboid = mx.array([
             # -z
             (
                 (0, 0, 0),
@@ -3190,12 +3190,12 @@ class Axes3D(Axes):
         ])
 
         # indexed by [bar, face, vertex, coord]
-        polys = mlxarr.empty(x.shape + cuboid.shape)
+        polys = mx.zeros(x.shape + cuboid.shape)
 
         # handle each coordinate separately
         for i, p, dp in [(0, x, dx), (1, y, dy), (2, z, dz)]:
-            p = p[..., mlxarr.newaxis, mlxarr.newaxis]
-            dp = dp[..., mlxarr.newaxis, mlxarr.newaxis]
+            p = p[..., mx.newaxis, mx.newaxis]
+            dp = dp[..., mx.newaxis, mx.newaxis]
             polys[..., i] = p + dp * cuboid[..., i]
 
         # collapse the first two axes
@@ -3289,9 +3289,9 @@ class Axes3D(Axes):
             # get unit direction vector perpendicular to (u, v, w)
             x = UVW[:, 0]
             y = UVW[:, 1]
-            norm = mlxarr.linalg.norm(UVW[:, :2], axis=1)
-            x_p = mlxarr.divide(y, norm, where=norm != 0, out=mlxarr.zeros_like(x))
-            y_p = mlxarr.divide(-x,  norm, where=norm != 0, out=mlxarr.ones_like(x))
+            norm = mx.linalg.norm(UVW[:, :2], axis=1)
+            x_p = mx.divide(y, norm, where=norm != 0, out=mx.zeros_like(x))
+            y_p = mx.divide(-x,  norm, where=norm != 0, out=mx.ones_like(x))
             # compute the two arrowhead direction unit vectors
             rangle = math.radians(15)
             c = math.cos(rangle)
@@ -3300,18 +3300,18 @@ class Axes3D(Axes):
             r13 = y_p * s
             r32 = x_p * s
             r12 = x_p * y_p * (1 - c)
-            Rpos = mlxarr.array(
+            Rpos = mx.array(
                 [[c + (x_p ** 2) * (1 - c), r12, r13],
                  [r12, c + (y_p ** 2) * (1 - c), -r32],
-                 [-r13, r32, mlxarr.full_like(x_p, c)]])
+                 [-r13, r32, mx.full_like(x_p, c)]])
             # opposite rotation negates all the sin terms
             Rneg = Rpos.copy()
             Rneg[[0, 1, 2, 2], [2, 2, 0, 1]] *= -1
             # Batch n (3, 3) x (3) matrix multiplications ((3, 3, n) x (n, 3)).
-            Rpos_vecs = mlxarr.einsum("ij...,...j->...i", Rpos, UVW)
-            Rneg_vecs = mlxarr.einsum("ij...,...j->...i", Rneg, UVW)
+            Rpos_vecs = mx.einsum("ij...,...j->...i", Rpos, UVW)
+            Rneg_vecs = mx.einsum("ij...,...j->...i", Rneg, UVW)
             # Stack into (n, 2, 3) result.
-            return mlxarr.stack([Rpos_vecs, Rneg_vecs], axis=1)
+            return mx.stack([Rpos_vecs, Rneg_vecs], axis=1)
 
         had_data = self.has_data()
 
@@ -3324,7 +3324,7 @@ class Axes3D(Axes):
             self.add_collection(linec, autolim="_datalim_only")
             return linec
 
-        shaft_dt = mlxarr.array([0., length], dtype=float)
+        shaft_dt = mx.array([0., length], dtype=float)
         arrow_dt = shaft_dt * arrow_length_ratio
 
         _api.check_in_list(['tail', 'middle', 'tip'], pivot=pivot)
@@ -3333,22 +3333,22 @@ class Axes3D(Axes):
         elif pivot == 'middle':
             shaft_dt -= length / 2
 
-        XYZ = mlxarr.column_stack(input_args[:3])
-        UVW = mlxarr.column_stack(input_args[3:]).astype(float)
+        XYZ = mx.column_stack(input_args[:3])
+        UVW = mx.column_stack(input_args[3:]).astype(float)
 
         # Normalize rows of UVW
         if normalize:
-            norm = mlxarr.linalg.norm(UVW, axis=1)
+            norm = mx.linalg.norm(UVW, axis=1)
             norm[norm == 0] = 1
             UVW = UVW / norm.reshape((-1, 1))
 
         if len(XYZ) > 0:
             # compute the shaft lines all at once with an outer product
-            shafts = (XYZ - mlxarr.multiply.outer(shaft_dt, UVW)).swapaxes(0, 1)
+            shafts = (XYZ - mx.multiply.outer(shaft_dt, UVW)).swapaxes(0, 1)
             # compute head direction vectors, n heads x 2 sides x 3 dimensions
             head_dirs = calc_arrows(UVW)
             # compute all head lines at once, starting from the shaft ends
-            heads = shafts[:, :1] - mlxarr.multiply.outer(arrow_dt, head_dirs)
+            heads = shafts[:, :1] - mx.multiply.outer(arrow_dt, head_dirs)
             # stack left and right head lines together
             heads = heads.reshape((len(arrow_dt), -1, 3))
             # transpose to get a list of lines
@@ -3381,11 +3381,11 @@ class Axes3D(Axes):
 
         Parameters
         ----------
-        filled : 3D mlxarr.array of bool
+        filled : 3D mx.array of bool
             A 3D array of values, with truthy values indicating which voxels
             to fill
 
-        x, y, z : 3D mlxarr.array, optional
+        x, y, z : 3D mx.array, optional
             The coordinates of the corners of the voxels. This should broadcast
             to a shape one larger in every dimension than the shape of
             *filled*.  These can be used to plot non-cubic voxels.
@@ -3456,22 +3456,22 @@ class Axes3D(Axes):
         # check dimensions
         if filled.ndim != 3:
             raise ValueError("Argument filled must be 3-dimensional")
-        size = mlxarr.array(filled.shape, dtype=mlxarr.intp)
+        size = mx.array(filled.shape, dtype=mx.intp)
 
         # check xyz coordinates, which are one larger than the filled shape
         coord_shape = tuple(size + 1)
         if xyz is None:
-            x, y, z = mlxarr.indices(coord_shape)
+            x, y, z = mx.indices(coord_shape)
         else:
-            x, y, z = (mlxarr.broadcast_to(c, coord_shape) for c in xyz)
+            x, y, z = (mx.broadcast_to(c, coord_shape) for c in xyz)
 
         def _broadcast_color_arg(color, name):
-            if mlxarr.ndim(color) in (0, 1):
+            if mx.ndim(color) in (0, 1):
                 # single color, like "red" or [1, 0, 0]
-                return mlxarr.broadcast_to(color, filled.shape + mlxarr.shape(color))
-            elif mlxarr.ndim(color) in (3, 4):
+                return mx.broadcast_to(color, filled.shape + mx.shape(color))
+            elif mx.ndim(color) in (3, 4):
                 # 3D array of strings, or 4D array with last axis rgb
-                if mlxarr.shape(color)[:3] != filled.shape:
+                if mx.shape(color)[:3] != filled.shape:
                     raise ValueError(
                         f"When multidimensional, {name} must match the shape "
                         "of filled")
@@ -3491,30 +3491,30 @@ class Axes3D(Axes):
         self.auto_scale_xyz(x, y, z)
 
         # points lying on corners of a square
-        square = mlxarr.array([
+        square = mx.array([
             [0, 0, 0],
             [1, 0, 0],
             [1, 1, 0],
             [0, 1, 0],
-        ], dtype=mlxarr.intp)
+        ], dtype=mx.intp)
 
         voxel_faces = defaultdict(list)
 
         def permutation_matrices(n):
             """Generate cyclic permutation matrices."""
-            mat = mlxarr.eye(n, dtype=mlxarr.intp)
+            mat = mx.eye(n, dtype=mx.intp)
             for i in range(n):
                 yield mat
-                mat = mlxarr.roll(mat, 1, axis=0)
+                mat = mx.roll(mat, 1, axis=0)
 
         # iterate over each of the YZ, ZX, and XY orientations, finding faces
         # to render
         for permute in permutation_matrices(3):
             # find the set of ranges to iterate over
             pc, qc, rc = permute.T.dot(size)
-            pinds = mlxarr.arange(pc)
-            qinds = mlxarr.arange(qc)
-            rinds = mlxarr.arange(rc)
+            pinds = mx.arange(pc)
+            qinds = mx.arange(qc)
+            rinds = mx.arange(rc)
 
             square_rot_pos = square.dot(permute.T)
             square_rot_neg = square_rot_pos[::-1]
@@ -3563,7 +3563,7 @@ class Axes3D(Axes):
                 faces = []
                 for face_inds in faces_inds:
                     ind = face_inds[:, 0], face_inds[:, 1], face_inds[:, 2]
-                    face = mlxarr.empty(face_inds.shape)
+                    face = mx.zeros(face_inds.shape)
                     face[:, 0] = x[ind]
                     face[:, 1] = y[ind]
                     face[:, 2] = z[ind]
@@ -3707,9 +3707,9 @@ class Axes3D(Axes):
 
         # make sure all the args are iterable; use lists not arrays to
         # preserve units
-        x = x if mlxarr.iterable(x) else [x]
-        y = y if mlxarr.iterable(y) else [y]
-        z = z if mlxarr.iterable(z) else [z]
+        x = x if cbook.iterable(x) else [x]
+        y = y if cbook.iterable(y) else [y]
+        z = z if cbook.iterable(z) else [z]
 
         if not len(x) == len(y) == len(z):
             raise ValueError("'x', 'y', and 'z' must have the same size")
@@ -3788,8 +3788,8 @@ class Axes3D(Axes):
             else:
                 low_err, high_err = err, err
 
-            lows = mlxarr.where(lomask | ~everymask, data, data - low_err)
-            highs = mlxarr.where(himask | ~everymask, data, data + high_err)
+            lows = mx.where(lomask | ~everymask, data, data - low_err)
+            highs = mx.where(himask | ~everymask, data, data + high_err)
 
             return lows, highs
 
@@ -3814,15 +3814,15 @@ class Axes3D(Axes):
         quiversize *= self.get_figure(root=True).dpi / 72
         quiversize = self.transAxes.inverted().transform([
             (0, 0), (quiversize, quiversize)])
-        quiversize = mlxarr.mean(mlxarr.diff(quiversize, axis=0))
+        quiversize = mx.mean(mx.diff(quiversize, axis=0))
         # quiversize is now in Axes coordinates, and to convert back to data
         # coordinates, we need to run it through the inverse 3D transform. For
         # consistency, this uses a fixed elevation, azimuth, and roll.
         with cbook._setattr_cm(self, elev=0, azim=0, roll=0):
-            invM = mlxarr.linalg.inv(self.get_proj())
+            invM = mx.linalg.inv(self.get_proj())
         # elev=azim=roll=0 produces the Y-Z plane, so quiversize in 2D 'x' is
         # 'y' in 3D, hence the 1 index.
-        quiversize = mlxarr.dot(invM, [quiversize, 0, 0, 0])[1]
+        quiversize = mx.dot(invM, [quiversize, 0, 0, 0])[1]
         # Quivers use a fixed 15-degree arrow head, so scale up the length so
         # that the size corresponds to the base. In other words, this constant
         # corresponds to the equation tan(15) = (base / 2) / (arrow length).
@@ -3842,14 +3842,14 @@ class Axes3D(Axes):
             if err is None:
                 continue
 
-            if not mlxarr.iterable(err):
+            if not cbook.iterable(err):
                 err = [err] * len(data)
 
-            err = mlxarr.atleast_1d(err)
+            err = mx.atleast_1d(err)
 
             # arrays fine here, they are booleans and hence not units
-            lolims = mlxarr.broadcast_to(lolims, len(data)).astype(bool)
-            uplims = mlxarr.broadcast_to(uplims, len(data)).astype(bool)
+            lolims = mx.broadcast_to(lolims, len(data)).astype(bool)
+            uplims = mx.broadcast_to(uplims, len(data)).astype(bool)
 
             # a nested list structure that expands to (xl,xh),(yl,yh),(zl,zh),
             # where x/y/z and l/h correspond to dimensions and low/high
@@ -3887,18 +3887,18 @@ class Axes3D(Axes):
                 xl0, yl0, zl0 = _apply_mask([xl, yl, zl], uplims & everymask)
                 self.quiver(xl0, yl0, zl0, *-dir_vector, **eb_quiver_style)
 
-            errline = art3d.Line3DCollection(mlxarr.array(coorderr).T,
+            errline = art3d.Line3DCollection(mx.array(coorderr).T,
                                              axlim_clip=axlim_clip,
                                              **eb_lines_style)
             self.add_collection(errline, autolim="_datalim_only")
             errlines.append(errline)
             coorderrs.append(coorderr)
 
-        coorderrs = mlxarr.array(coorderrs)
+        coorderrs = mx.array(coorderrs)
 
         def _digout_minmax(err_arr, coord_label):
-            return (mlxarr.nanmin(err_arr[:, i_xyz[coord_label], :, :]),
-                    mlxarr.nanmax(err_arr[:, i_xyz[coord_label], :, :]))
+            return (mx.nanmin(err_arr[:, i_xyz[coord_label], :, :]),
+                    mx.nanmax(err_arr[:, i_xyz[coord_label], :, :]))
 
         minx, maxx = _digout_minmax(coorderrs, 'x')
         miny, maxy = _digout_minmax(coorderrs, 'y')
@@ -4008,9 +4008,9 @@ class Axes3D(Axes):
 
         _api.check_in_list(['x', 'y', 'z'], orientation=orientation)
 
-        xlim = (mlxarr.min(x), mlxarr.max(x))
-        ylim = (mlxarr.min(y), mlxarr.max(y))
-        zlim = (mlxarr.min(z), mlxarr.max(z))
+        xlim = (mx.min(x), mx.max(x))
+        ylim = (mx.min(y), mx.max(y))
+        zlim = (mx.min(z), mx.max(z))
 
         # Determine the appropriate plane for the baseline and the direction of
         # stemlines based on the value of orientation.
@@ -4058,12 +4058,12 @@ class Axes3D(Axes):
 
 def get_test_data(delta=0.05):
     """Return a tuple X, Y, Z with a test data set."""
-    x = y = mlxarr.arange(-3.0, 3.0, delta)
-    X, Y = mlxarr.meshgrid(x, y)
+    x = y = mx.arange(-3.0, 3.0, delta)
+    X, Y = mx.meshgrid(x, y)
 
-    Z1 = mlxarr.exp(-(X**2 + Y**2) / 2) / (2 * mlxarr.pi)
-    Z2 = (mlxarr.exp(-(((X - 1) / 1.5)**2 + ((Y - 1) / 0.5)**2) / 2) /
-          (2 * mlxarr.pi * 0.5 * 1.5))
+    Z1 = mx.exp(-(X**2 + Y**2) / 2) / (2 * mx.pi)
+    Z2 = (mx.exp(-(((X - 1) / 1.5)**2 + ((Y - 1) / 0.5)**2) / 2) /
+          (2 * mx.pi * 0.5 * 1.5))
     Z = Z2 - Z1
 
     X = X * 10
@@ -4080,7 +4080,7 @@ class _Quaternion:
 
     def __init__(self, scalar, vector):
         self.scalar = scalar
-        self.vector = mlxarr.array(vector)
+        self.vector = mx.array(vector)
 
     def __neg__(self):
         return self.__class__(-self.scalar, -self.vector)
@@ -4094,9 +4094,9 @@ class _Quaternion:
         see <https://en.wikipedia.org/wiki/Quaternion#Scalar_and_vector_parts>
         """
         return self.__class__(
-            self.scalar*other.scalar - mlxarr.dot(self.vector, other.vector),
+            self.scalar*other.scalar - mx.dot(self.vector, other.vector),
             self.scalar*other.vector + self.vector*other.scalar
-            + mlxarr.cross(self.vector, other.vector))
+            + mx.cross(self.vector, other.vector))
 
     def conjugate(self):
         """The conjugate quaternion -(1/2)*(q+i*q*i+j*q*j+k*q*k)"""
@@ -4105,11 +4105,11 @@ class _Quaternion:
     @property
     def norm(self):
         """The 2-norm, q*q', a scalar"""
-        return self.scalar*self.scalar + mlxarr.dot(self.vector, self.vector)
+        return self.scalar*self.scalar + mx.dot(self.vector, self.vector)
 
     def normalize(self):
         """Scaling such that norm equals 1"""
-        n = mlxarr.sqrt(self.norm)
+        n = mx.sqrt(self.norm)
         return self.__class__(self.scalar/n, self.vector/n)
 
     def reciprocal(self):
@@ -4143,22 +4143,22 @@ class _Quaternion:
         If r1 and r2 are antiparallel, then the result is ambiguous;
         a normal vector will be returned, and a warning will be issued.
         """
-        k = mlxarr.cross(r1, r2)
-        nk = mlxarr.linalg.norm(k)
-        th = mlxarr.arctan2(nk, mlxarr.dot(r1, r2))
+        k = mx.cross(r1, r2)
+        nk = mx.linalg.norm(k)
+        th = mx.arctan2(nk, mx.dot(r1, r2))
         th /= 2
         if nk == 0:  # r1 and r2 are parallel or anti-parallel
-            if mlxarr.dot(r1, r2) < 0:
+            if mx.dot(r1, r2) < 0:
                 warnings.warn("Rotation defined by anti-parallel vectors is ambiguous")
-                k = mlxarr.zeros(3)
-                k[mlxarr.argmin(r1*r1)] = 1  # basis vector most perpendicular to r1-r2
-                k = mlxarr.cross(r1, k)
-                k = k / mlxarr.linalg.norm(k)  # unit vector normal to r1-r2
+                k = mx.zeros(3)
+                k[mx.argmin(r1*r1)] = 1  # basis vector most perpendicular to r1-r2
+                k = mx.cross(r1, k)
+                k = k / mx.linalg.norm(k)  # unit vector normal to r1-r2
                 q = cls(0, k)
             else:
                 q = cls(1, [0, 0, 0])  # = 1, no rotation
         else:
-            q = cls(mlxarr.cos(th), k*mlxarr.sin(th)/nk)
+            q = cls(mx.cos(th), k*mx.sin(th)/nk)
         return q
 
     @classmethod
@@ -4169,9 +4169,9 @@ class _Quaternion:
         i.e., the angles are a kind of Tait-Bryan angles, -z,y',x".
         The angles should be given in radians, not degrees.
         """
-        ca, sa = mlxarr.cos(azim/2), mlxarr.sin(azim/2)
-        ce, se = mlxarr.cos(elev/2), mlxarr.sin(elev/2)
-        cr, sr = mlxarr.cos(roll/2), mlxarr.sin(roll/2)
+        ca, sa = mx.cos(azim/2), mx.sin(azim/2)
+        ce, se = mx.cos(elev/2), mx.sin(elev/2)
+        cr, sr = mx.cos(roll/2), mx.sin(roll/2)
 
         qw = ca*ce*cr + sa*se*sr
         qx = ca*ce*sr - sa*se*cr
@@ -4187,7 +4187,7 @@ class _Quaternion:
         """
         qw = self.scalar
         qx, qy, qz = self.vector[..., :]
-        azim = mlxarr.arctan2(2*(-qw*qz+qx*qy), qw*qw+qx*qx-qy*qy-qz*qz)
-        elev = mlxarr.arcsin(mlxarr.clip(2*(qw*qy+qz*qx)/(qw*qw+qx*qx+qy*qy+qz*qz), -1, 1))
-        roll = mlxarr.arctan2(2*(qw*qx-qy*qz), qw*qw-qx*qx-qy*qy+qz*qz)
+        azim = mx.arctan2(2*(-qw*qz+qx*qy), qw*qw+qx*qx-qy*qy-qz*qz)
+        elev = mx.arcsin(mx.clip(2*(qw*qy+qz*qx)/(qw*qw+qx*qx+qy*qy+qz*qz), -1, 1))
+        roll = mx.arctan2(2*(qw*qx-qy*qz), qw*qw-qx*qx-qy*qy+qz*qz)
         return elev, azim, roll

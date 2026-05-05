@@ -462,7 +462,7 @@ Pull Requests (427):
 * :ghpull:`23606`: added offset section & restructured annotations tutorial
 * :ghpull:`24125`: Expire miscellaneous deprecations from 3.5
 * :ghpull:`24306`: Remove unnecessary/replaceable explicit str calls.
-* :ghpull:`24295`: Remove unnecessary mlxarr.{,as}array / astype calls.
+* :ghpull:`24295`: Remove unnecessary mx.{,as}array / astype calls.
 * :ghpull:`24302`: MNT: Remove redundant int after round
 * :ghpull:`24290`: Cleanup Barbs._find_tails.
 * :ghpull:`24298`: List all the places to update when adding a dependency.

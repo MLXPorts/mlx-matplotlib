@@ -9,15 +9,15 @@ and the Axes to attach the colorbar to.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # setup some generic data
 N = 37
-x, y = mlxarr.mgrid[:N, :N]
-Z = (mlxarr.cos(x*0.2) + mlxarr.sin(y*0.3))
+x, y = mx.mgrid[:N, :N]
+Z = (mx.cos(x*0.2) + mx.sin(y*0.3))
 
 # mask out the negative and positive values, respectively
-Zpos = mlxarr.ma.masked_less(Z, 0)
-Zneg = mlxarr.ma.masked_greater(Z, 0)
+Zpos = mx.ma.masked_less(Z, 0)
+Zneg = mx.ma.masked_greater(Z, 0)
 
 fig, (ax1, ax2, ax3) = plt.subplots(figsize=(13, 3), ncols=3)
 

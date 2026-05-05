@@ -76,13 +76,13 @@ class JoinStyle(str, Enum):
     @staticmethod
     def demo():
         """Demonstrate how each JoinStyle looks for various join angles."""
-        from matplotlib import _mlx_array as mlxarr
+        import mlx.core as mx
         import matplotlib.pyplot as plt
 
         def plot_angle(ax, x, y, angle, style):
-            phi = mlxarr.radians(angle)
-            xx = [x + .5, x, x + .5*mlxarr.cos(phi)]
-            yy = [y, y, y + .5*mlxarr.sin(phi)]
+            phi = mx.radians(angle)
+            xx = [x + .5, x, x + .5*mx.cos(phi)]
+            yy = [y, y, y + .5*mx.sin(phi)]
             ax.plot(xx, yy, lw=12, color='tab:blue', solid_joinstyle=style)
             ax.plot(xx, yy, lw=1, color='black')
             ax.plot(xx[1], yy[1], 'o', color='tab:red', markersize=3)

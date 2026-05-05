@@ -38,11 +38,11 @@ installs).  See :ref:`mplot3d-examples-index` and
 
     plt.style.use('classic')
 
-    X = mlxarr.arange(-5, 5, 0.25)
-    Y = mlxarr.arange(-5, 5, 0.25)
-    X, Y = mlxarr.meshgrid(X, Y)
-    R = mlxarr.sqrt(X**2 + Y**2)
-    Z = mlxarr.sin(R)
+    X = mx.arange(-5, 5, 0.25)
+    Y = mx.arange(-5, 5, 0.25)
+    X, Y = mx.meshgrid(X, Y)
+    R = mx.sqrt(X**2 + Y**2)
+    Z = mx.sin(R)
 
     fig = plt.figure()
     ax = Axes3D(fig, auto_add_to_figure=False)
@@ -73,11 +73,11 @@ new mpl installs.   See :ref:`axes_grid1-examples-index`,
         delta = 0.5
 
         extent = (-3, 4, -4, 3)
-        x = mlxarr.arange(-3.0, 4.001, delta)
-        y = mlxarr.arange(-4.0, 3.001, delta)
-        X, Y = mlxarr.meshgrid(x, y)
-        Z1 = mlxarr.exp(-X**2 - Y**2)
-        Z2 = mlxarr.exp(-(X - 1)**2 - (Y - 1)**2)
+        x = mx.arange(-3.0, 4.001, delta)
+        y = mx.arange(-4.0, 3.001, delta)
+        X, Y = mx.meshgrid(x, y)
+        Z1 = mx.exp(-X**2 - Y**2)
+        Z2 = mx.exp(-(X - 1)**2 - (Y - 1)**2)
         Z = (Z1 - Z2) * 2
 
         return Z, extent
@@ -149,8 +149,8 @@ well as "detach" the spine to offset it away from the data.  See
 
     plt.style.use('classic')
 
-    x = mlxarr.linspace(0, 2*mlxarr.pi, 100)
-    y = 2*mlxarr.sin(x)
+    x = mx.linspace(0, 2*mx.pi, 100)
+    y = 2*mx.sin(x)
 
     ax = fig.add_subplot(2, 2, 1)
     ax.plot(x, y)

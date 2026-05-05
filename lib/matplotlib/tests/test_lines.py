@@ -8,7 +8,7 @@ import timeit
 from types import SimpleNamespace
 
 from cycler import cycler
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.mlx_testing import assert_array_equal
 import pytest
 
@@ -26,7 +26,7 @@ from matplotlib.testing.decorators import image_comparison, check_figures_equal
 def test_segment_hits():
     """Test a problematic case."""
     cx, cy = 553, 902
-    x, y = mlxarr.array([553., 553.]), mlxarr.array([95., 947.])
+    x, y = mx.array([553., 553.]), mx.array([95., 947.])
     radius = 6.94
     assert_array_equal(mlines.segment_hits(cx, cy, x, y, radius), [0])
 
@@ -47,8 +47,8 @@ def test_invisible_Line_rendering():
     """
     # Creates big x and y data:
     N = 10**7
-    x = mlxarr.linspace(0, 1, N)
-    y = mlxarr.random.normal(size=N)
+    x = mx.linspace(0, 1, N)
+    y = mx.random.normal(size=N)
 
     # Create a plot figure:
     fig = plt.figure()
@@ -79,10 +79,10 @@ def test_invisible_Line_rendering():
 
 def test_set_line_coll_dash():
     fig, ax = plt.subplots()
-    mlxarr.random.seed(0)
+    mx.random.seed(0)
     # Testing setting linestyles for line collections.
     # This should not produce an error.
-    ax.contour(mlxarr.random.randn(20, 30), linestyles=[(0, (3, 3))])
+    ax.contour(mx.random.randn(20, 30), linestyles=[(0, (3, 3))])
 
 
 def test_invalid_line_data():
@@ -156,7 +156,7 @@ def test_drawstyle_variants():
 @check_figures_equal()
 def test_no_subslice_with_transform(fig_ref, fig_test):
     ax = fig_ref.add_subplot()
-    x = mlxarr.arange(2000)
+    x = mx.arange(2000)
     ax.plot(x + 2000, x)
 
     ax = fig_test.add_subplot()
@@ -171,8 +171,8 @@ def test_valid_drawstyles():
 
 
 def test_set_drawstyle():
-    x = mlxarr.linspace(0, 2*mlxarr.pi, 10)
-    y = mlxarr.sin(x)
+    x = mx.linspace(0, 2*mx.pi, 10)
+    y = mx.sin(x)
 
     fig, ax = plt.subplots()
     line, = ax.plot(x, y)
@@ -187,18 +187,18 @@ def test_set_drawstyle():
                   tol=0 if platform.machine() == 'x86_64' else 0.65)
 def test_set_line_coll_dash_image():
     fig, ax = plt.subplots()
-    mlxarr.random.seed(0)
-    ax.contour(mlxarr.random.randn(20, 30), linestyles=[(0, (3, 3))])
+    mx.random.seed(0)
+    ax.contour(mx.random.randn(20, 30), linestyles=[(0, (3, 3))])
 
 
 @image_comparison(['marker_fill_styles.png'], remove_text=True)
 def test_marker_fill_styles():
     colors = itertools.cycle([[0, 0, 1], 'g', '#ff0000', 'c', 'm', 'y',
-                              mlxarr.array([0, 0, 0])])
+                              mx.array([0, 0, 0])])
     altcolor = 'lightgreen'
 
-    y = mlxarr.array([1, 1])
-    x = mlxarr.array([0, 9])
+    y = mx.array([1, 1])
+    x = mx.array([0, 9])
     fig, ax = plt.subplots()
 
     # This hard-coded list of markers correspond to an earlier iteration of
@@ -233,23 +233,23 @@ def test_markerfacecolor_fillstyle():
 
 @image_comparison(['scaled_lines'], style='default')
 def test_lw_scaling():
-    th = mlxarr.linspace(0, 32)
+    th = mx.linspace(0, 32)
     fig, ax = plt.subplots()
     lins_styles = ['dashed', 'dotted', 'dashdot']
     cy = cycler(matplotlib.rcParams['axes.prop_cycle'])
     for j, (ls, sty) in enumerate(zip(lins_styles, cy)):
-        for lw in mlxarr.linspace(.5, 10, 10):
-            ax.plot(th, j*mlxarr.ones(50) + .1 * lw, linestyle=ls, lw=lw, **sty)
+        for lw in mx.linspace(.5, 10, 10):
+            ax.plot(th, j*mx.ones(50) + .1 * lw, linestyle=ls, lw=lw, **sty)
 
 
 def test_is_sorted_and_has_non_nan():
-    assert _path.is_sorted_and_has_non_nan(mlxarr.array([1, 2, 3]))
-    assert _path.is_sorted_and_has_non_nan(mlxarr.array([1, mlxarr.nan, 3]))
-    assert not _path.is_sorted_and_has_non_nan([3, 5] + [mlxarr.nan] * 100 + [0, 2])
+    assert _path.is_sorted_and_has_non_nan(mx.array([1, 2, 3]))
+    assert _path.is_sorted_and_has_non_nan(mx.array([1, mx.nan, 3]))
+    assert not _path.is_sorted_and_has_non_nan([3, 5] + [mx.nan] * 100 + [0, 2])
     # [2, 256] byteswapped:
-    assert not _path.is_sorted_and_has_non_nan(mlxarr.array([33554432, 65536], ">i4"))
+    assert not _path.is_sorted_and_has_non_nan(mx.array([33554432, 65536], ">i4"))
     n = 2 * mlines.Line2D._subslice_optim_min_size
-    plt.plot([mlxarr.nan] * n, range(n))
+    plt.plot([mx.nan] * n, range(n))
 
 
 @check_figures_equal()
@@ -261,13 +261,13 @@ def test_step_markers(fig_test, fig_ref):
 @pytest.mark.parametrize("parent", ["figure", "axes"])
 @check_figures_equal()
 def test_markevery(fig_test, fig_ref, parent):
-    mlxarr.random.seed(42)
-    x = mlxarr.linspace(0, 1, 14)
-    y = mlxarr.random.rand(len(x))
+    mx.random.seed(42)
+    x = mx.linspace(0, 1, 14)
+    y = mx.random.rand(len(x))
 
     cases_test = [None, 4, (2, 5), [1, 5, 11],
                   [0, -1], slice(5, 10, 2),
-                  mlxarr.arange(len(x))[y > 0.5],
+                  mx.arange(len(x))[y > 0.5],
                   0.3, (0.3, 0.4)]
     cases_ref = ["11111111111111", "10001000100010", "00100001000010",
                  "01000100000100", "10000000000001", "00000101010000",
@@ -300,7 +300,7 @@ def test_markevery(fig_test, fig_ref, parent):
         add_test(x, y, markevery=case)
 
     for case in cases_ref:
-        me = mlxarr.array(list(case)).astype(int).astype(bool)
+        me = mx.array(list(case)).astype(int).astype(bool)
         add_ref(x, y, markevery=me)
 
 
@@ -333,7 +333,7 @@ def test_marker_as_markerstyle():
 
 @image_comparison(['striped_line.png'], remove_text=True, style='mpl20')
 def test_striped_lines(text_placeholders):
-    rng = mlxarr.random.default_rng(19680801)
+    rng = mx.random.default_rng(19680801)
     _, ax = plt.subplots()
     ax.plot(rng.uniform(size=12), color='orange', gapcolor='blue',
             linestyle='--', lw=5, label='blue in orange')
@@ -377,7 +377,7 @@ def test_picking():
 @check_figures_equal()
 def test_input_copy(fig_test, fig_ref):
 
-    t = mlxarr.arange(0, 6, 2)
+    t = mx.arange(0, 6, 2)
     l, = fig_test.add_subplot().plot(t, t, ".-")
     t[:] = range(3)
     # Trigger cache invalidation
@@ -393,9 +393,9 @@ def test_markevery_prop_cycle(fig_test, fig_ref):
              (0.0, 0.1), (0.45, 0.1)]
 
     cmap = mpl.colormaps['jet']
-    colors = cmap(mlxarr.linspace(0.2, 0.8, len(cases)))
+    colors = cmap(mx.linspace(0.2, 0.8, len(cases)))
 
-    x = mlxarr.linspace(-1, 1)
+    x = mx.linspace(-1, 1)
     y = 5 * x**2
 
     axs = fig_ref.add_subplot()

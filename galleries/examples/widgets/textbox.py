@@ -14,14 +14,14 @@ static elements: :ref:`annotations` and
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.widgets import TextBox
 
 fig, ax = plt.subplots()
 fig.subplots_adjust(bottom=0.2)
 
-t = mlxarr.arange(-2.0, 2.0, 0.001)
-l, = ax.plot(t, mlxarr.zeros_like(t), lw=2)
+t = mx.arange(-2.0, 2.0, 0.001)
+l, = ax.plot(t, mx.zeros_like(t), lw=2)
 
 
 def submit(expression):

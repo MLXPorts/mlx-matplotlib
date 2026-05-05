@@ -6,16 +6,16 @@ Scatter plot
 This example showcases a simple scatter plot.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 
 N = 50
-x = mlxarr.random.rand(N)
-y = mlxarr.random.rand(N)
-colors = mlxarr.random.rand(N)
-area = (30 * mlxarr.random.rand(N))**2  # 0 to 15 point radii
+x = mx.random.rand(N)
+y = mx.random.rand(N)
+colors = mx.random.rand(N)
+area = (30 * mx.random.rand(N))**2  # 0 to 15 point radii
 
 plt.scatter(x, y, s=area, c=colors, alpha=0.5)
 plt.show()

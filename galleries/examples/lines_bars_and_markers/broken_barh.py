@@ -7,14 +7,14 @@ Broken horizontal bars
 a timing diagram.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # data is a sequence of (start, duration) tuples
 cpu_1 = [(0, 3), (3.5, 1), (5, 5)]
-cpu_2 = mlxarr.column_stack([mlxarr.linspace(0, 9, 10), mlxarr.full(10, 0.5)])
-cpu_3 = mlxarr.column_stack([10*mlxarr.random.random(61), mlxarr.full(61, 0.05)])
+cpu_2 = mx.column_stack([mx.linspace(0, 9, 10), mx.full(10, 0.5)])
+cpu_3 = mx.column_stack([10*mx.random.random(61), mx.full(61, 0.05)])
 cpu_4 = [(2, 1.7), (7, 1.2)]
 disk = [(1, 1.5)]
-network = mlxarr.column_stack([10*mlxarr.random.random(10), mlxarr.full(10, 0.05)])
+network = mx.column_stack([10*mx.random.random(10), mx.full(10, 0.05)])
 
 fig, ax = plt.subplots()
 # broken_barh(xranges, (ypos, height))

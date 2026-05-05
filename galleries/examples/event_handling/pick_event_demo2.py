@@ -16,13 +16,13 @@ data from the dataset that generated this point.
     using the link at the bottom of the page.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
-X = mlxarr.random.rand(100, 1000)
-xs = mlxarr.mean(X, axis=1)
-ys = mlxarr.std(X, axis=1)
+X = mx.random.rand(100, 1000)
+xs = mx.mean(X, axis=1)
+ys = mx.std(X, axis=1)
 
 fig, ax = plt.subplots()
 ax.set_title('click on point to plot time series')

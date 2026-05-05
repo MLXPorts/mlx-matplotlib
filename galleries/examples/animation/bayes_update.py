@@ -14,7 +14,7 @@ Output generated via `matplotlib.animation.Animation.to_jshtml`.
 import math
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.animation import FuncAnimation
 
 
@@ -28,7 +28,7 @@ class UpdateDist:
         self.success = 0
         self.prob = prob
         self.line, = ax.plot([], [], 'k-')
-        self.x = mlxarr.linspace(0, 1, 200)
+        self.x = mx.linspace(0, 1, 200)
         self.ax = ax
 
         # Set up plot parameters
@@ -54,14 +54,14 @@ class UpdateDist:
             return self.line,
 
         # Choose success based on exceed a threshold with a uniform pick
-        if mlxarr.random.rand() < self.prob:
+        if mx.random.rand() < self.prob:
             self.success += 1
         y = beta_pdf(self.x, self.success + 1, (i - self.success) + 1)
         self.line.set_data(self.x, y)
         return self.line,
 
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 
 fig, ax = plt.subplots()

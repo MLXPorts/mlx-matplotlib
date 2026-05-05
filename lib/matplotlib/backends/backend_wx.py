@@ -13,7 +13,7 @@ import math
 import pathlib
 import sys
 import weakref
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import PIL.Image
 
 import matplotlib as mpl
@@ -1111,7 +1111,7 @@ class NavigationToolbar2Wx(NavigationToolbar2, wx.ToolBar):
         else:
             pilimg = PIL.Image.open(path)
             # ensure RGBA as wx BitMap expects RGBA format
-            image = mlxarr.array(pilimg.convert("RGBA"))
+            image = mx.array(pilimg.convert("RGBA"))
             if dark:
                 fg = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT)
                 black_mask = (image[..., :3] == 0).all(axis=-1)

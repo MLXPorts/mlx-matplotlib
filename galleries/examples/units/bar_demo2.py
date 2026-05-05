@@ -16,8 +16,8 @@ set the xlimits using scalars (ax3, current units assumed) or units
 from basic_units import cm, inch
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
-cms = cm * mlxarr.arange(0, 10, 2)
+import mlx.core as mx
+cms = cm * mx.arange(0, 10, 2)
 bottom = 0 * cm
 width = 0.8 * cm
 

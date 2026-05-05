@@ -18,7 +18,7 @@ a rectangle in the first panel, denoting the zoomed region.
 import functools
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.patches import Rectangle
 
 
@@ -34,15 +34,15 @@ class MandelbrotDisplay:
         self.power = power
 
     def compute_image(self, xlim, ylim):
-        self.x = mlxarr.linspace(*xlim, self.width)
-        self.y = mlxarr.linspace(*ylim, self.height).reshape(-1, 1)
+        self.x = mx.linspace(*xlim, self.width)
+        self.y = mx.linspace(*ylim, self.height).reshape(-1, 1)
         c = self.x + 1.0j * self.y
-        threshold_time = mlxarr.zeros((self.height, self.width))
-        z = mlxarr.zeros(threshold_time.shape, dtype=complex)
-        mask = mlxarr.ones(threshold_time.shape, dtype=bool)
+        threshold_time = mx.zeros((self.height, self.width))
+        z = mx.zeros(threshold_time.shape, dtype=complex)
+        mask = mx.ones(threshold_time.shape, dtype=bool)
         for i in range(self.niter):
             z[mask] = z[mask]**self.power + c[mask]
-            mask = (mlxarr.abs(z) < self.radius)
+            mask = (mx.abs(z) < self.radius)
             threshold_time += mask
         return threshold_time
 

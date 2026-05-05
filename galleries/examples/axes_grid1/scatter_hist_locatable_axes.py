@@ -16,15 +16,15 @@ If one wants to set Axes sizes and pads relative to the main Figure, see the
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 # the random data
-x = mlxarr.random.randn(1000)
-y = mlxarr.random.randn(1000)
+x = mx.random.randn(1000)
+y = mx.random.randn(1000)
 
 
 fig, ax = plt.subplots(figsize=(5.5, 5.5))
@@ -47,10 +47,10 @@ ax_histy.yaxis.set_tick_params(labelleft=False)
 
 # now determine nice limits by hand:
 binwidth = 0.25
-xymax = max(mlxarr.max(mlxarr.abs(x)), mlxarr.max(mlxarr.abs(y)))
+xymax = max(mx.max(mx.abs(x)), mx.max(mx.abs(y)))
 lim = (int(xymax/binwidth) + 1)*binwidth
 
-bins = mlxarr.arange(-lim, lim + binwidth, binwidth)
+bins = mx.arange(-lim, lim + binwidth, binwidth)
 ax_histx.hist(x, bins=bins)
 ax_histy.hist(y, bins=bins, orientation='horizontal')
 

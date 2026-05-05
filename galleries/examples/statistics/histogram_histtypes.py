@@ -15,16 +15,16 @@ http://docs.astropy.org/en/stable/visualization/histogram.html
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
-mlxarr.random.seed(19680801)
+import mlx.core as mx
+mx.random.seed(19680801)
 
 mu_x = 200
 sigma_x = 25
-x = mlxarr.random.normal(mu_x, sigma_x, size=100)
+x = mx.random.normal(mu_x, sigma_x, size=100)
 
 mu_w = 200
 sigma_w = 10
-w = mlxarr.random.normal(mu_w, sigma_w, size=100)
+w = mx.random.normal(mu_w, sigma_w, size=100)
 
 fig, axs = plt.subplots(nrows=2, ncols=2)
 

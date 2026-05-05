@@ -9,12 +9,12 @@ are left as blue lines. This example showcases the `.intersects_bbox` function.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.path import Path
 from matplotlib.transforms import Bbox
 
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 
 left, bottom, width, height = (-1, -1, 2, 2)
@@ -27,7 +27,7 @@ ax.add_patch(rect)
 bbox = Bbox.from_bounds(left, bottom, width, height)
 
 for i in range(12):
-    vertices = (mlxarr.random.random((2, 2)) - 0.5) * 6.0
+    vertices = (mx.random.random((2, 2)) - 0.5) * 6.0
     path = Path(vertices)
     if path.intersects_bbox(bbox):
         color = 'r'

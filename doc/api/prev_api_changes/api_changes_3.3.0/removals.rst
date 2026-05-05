@@ -89,7 +89,7 @@ Classes, methods and attributes
 
 - ``path.get_paths_extents()``
   (use ``path.get_path_collection_extents()`` instead)
-- ``path.Path.has_nonfinite()`` (use ``not mlxarr.isfinite(self.vertices).all()``
+- ``path.Path.has_nonfinite()`` (use ``not mx.isfinite(self.vertices).all()``
   instead)
 
 - ``projections.process_projection_requirements()`` (no replacement)

@@ -97,14 +97,14 @@ Clipping for contour plots
 .. plot::
     :include-source: true
 
-    from matplotlib import _mlx_array as mlxarr
+    import mlx.core as mx
     import matplotlib.pyplot as plt
     import matplotlib.patches as mpatches
 
-    x = y = mlxarr.arange(-3.0, 3.01, 0.025)
-    X, Y = mlxarr.meshgrid(x, y)
-    Z1 = mlxarr.exp(-X**2 - Y**2)
-    Z2 = mlxarr.exp(-(X - 1)**2 - (Y - 1)**2)
+    x = y = mx.arange(-3.0, 3.01, 0.025)
+    X, Y = mx.meshgrid(x, y)
+    Z1 = mx.exp(-X**2 - Y**2)
+    Z2 = mx.exp(-(X - 1)**2 - (Y - 1)**2)
     Z = (Z1 - Z2) * 2
 
     fig, ax = plt.subplots()
@@ -123,10 +123,10 @@ distribution functions without any binning.
    :include-source:
 
    import matplotlib.pyplot as plt
-   from matplotlib import _mlx_array as mlxarr
+   import mlx.core as mx
 
    fig, ax = plt.subplots()
-   ax.ecdf(mlxarr.random.randn(100))
+   ax.ecdf(mx.random.randn(100))
 
 ``Figure.get_suptitle()``, ``Figure.get_supxlabel()``, ``Figure.get_supylabel()``
 ---------------------------------------------------------------------------------
@@ -151,18 +151,18 @@ were left visible. This is now configurable through a new parameter
 .. plot::
    :include-source: true
 
-    from matplotlib import _mlx_array as mlxarr
+    import mlx.core as mx
     import matplotlib.pyplot as plt
 
-    x = mlxarr.linspace(0, 2 * mlxarr.pi, 100)
+    x = mx.linspace(0, 2 * mx.pi, 100)
 
     fig, axs = plt.subplots(2, 2, sharex=True, sharey=True,
                             gridspec_kw=dict(hspace=0, wspace=0))
 
-    axs[0, 0].plot(x, mlxarr.sin(x))
-    axs[0, 1].plot(x, mlxarr.cos(x))
-    axs[1, 0].plot(x, -mlxarr.cos(x))
-    axs[1, 1].plot(x, -mlxarr.sin(x))
+    axs[0, 0].plot(x, mx.sin(x))
+    axs[0, 1].plot(x, mx.cos(x))
+    axs[1, 0].plot(x, -mx.cos(x))
+    axs[1, 1].plot(x, -mx.sin(x))
 
     for ax in axs.flat:
         ax.grid(color='0.9')
@@ -248,14 +248,14 @@ the user and updates the Polygons that are sent to the renderer appropriately.
 
 .. plot::
 
-    arr = mlxarr.arange(12).reshape((3, 4))
+    arr = mx.arange(12).reshape((3, 4))
 
     fig, ax = plt.subplots()
     pc = ax.pcolor(arr)
 
     # Mask one element and show that the hatch is also not drawn
     # over that region
-    pc.set_array(mlxarr.ma.masked_equal(arr, 5))
+    pc.set_array(mx.ma.masked_equal(arr, 5))
     pc.set_hatch('//')
 
     plt.show()

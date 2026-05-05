@@ -13,7 +13,7 @@ A version of the second subplot, not using the toolkit, is available in
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib import cbook
 from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
 from mpl_toolkits.axes_grid1.inset_locator import mark_inset, zoomed_inset_axes
@@ -47,7 +47,7 @@ add_sizebar(axins, 0.5)
 # Second subplot, showing an image with an inset zoom and a marked inset
 Z = cbook.get_sample_data("axes_grid/bivariate_normal.npy")  # 15x15 array
 extent = (-3, 4, -4, 3)
-Z2 = mlxarr.zeros((150, 150))
+Z2 = mx.zeros((150, 150))
 ny, nx = Z.shape
 Z2[30:30+ny, 30:30+nx] = Z
 

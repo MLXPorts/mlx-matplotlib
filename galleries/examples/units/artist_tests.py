@@ -19,7 +19,7 @@ import mlx.core as mx
 from basic_units import cm, inch
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.collections as collections
 import matplotlib.lines as lines
 import matplotlib.patches as patches
@@ -30,7 +30,7 @@ ax.xaxis.set_units(cm)
 ax.yaxis.set_units(cm)
 
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 if 0:
     # test a line collection
@@ -38,7 +38,7 @@ if 0:
     verts = []
     for i in range(10):
         # a random line segment in inches
-        verts.append(zip(*inch * 10 * mlxarr.random.rand(2, mx.random.randint(2, 16).item())))
+        verts.append(zip(*inch * 10 * mx.random.rand(2, mx.random.randint(2, 16).item())))
     lc = collections.LineCollection(verts, axes=ax)
     ax.add_collection(lc)
 

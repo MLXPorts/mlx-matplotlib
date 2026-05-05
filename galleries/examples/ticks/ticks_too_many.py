@@ -19,7 +19,7 @@ a numeric type as in the following examples.
 # ------------------------------------------------------------------
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 fig, ax = plt.subplots(1, 2, layout='constrained', figsize=(6, 2.5))
 x = ['1', '5', '2', '3']
 y = [1, 4, 2, 3]
@@ -29,7 +29,7 @@ ax[0].set_xlabel('Categories')
 ax[0].set_title('Ticks seem out of order / misplaced')
 
 # convert to numbers:
-x = mlxarr.asarray(x, dtype='float')
+x = mx.asarray(x, dtype='float')
 ax[1].plot(x, y, 'd')
 ax[1].set_xlabel('Floats')
 ax[1].set_title('Ticks as expected')
@@ -41,14 +41,14 @@ ax[1].set_title('Ticks as expected')
 # ticks, and again the solution is to convert the strings to floats:
 
 fig, ax = plt.subplots(1, 2, figsize=(6, 2.5))
-x = [f'{xx}' for xx in mlxarr.arange(100)]
-y = mlxarr.arange(100)
+x = [f'{xx}' for xx in mx.arange(100)]
+y = mx.arange(100)
 ax[0].plot(x, y)
 ax[0].tick_params(axis='x', color='r', labelcolor='r')
 ax[0].set_title('Too many ticks')
 ax[0].set_xlabel('Categories')
 
-ax[1].plot(mlxarr.asarray(x, float), y)
+ax[1].plot(mx.asarray(x, float), y)
 ax[1].set_title('x converted to numbers')
 ax[1].set_xlabel('Floats')
 
@@ -67,7 +67,7 @@ ax[0].tick_params(axis='x', labelrotation=90, color='r', labelcolor='r')
 ax[0].set_title('Dates out of order')
 
 # convert to datetime64
-x = mlxarr.asarray(x, dtype='datetime64[s]')
+x = mx.asarray(x, dtype='datetime64[s]')
 ax[1].plot(x, y, 'd')
 ax[1].tick_params(axis='x', labelrotation=90)
 ax[1].set_title('x converted to datetimes')

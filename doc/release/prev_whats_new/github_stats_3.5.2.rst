@@ -49,9 +49,9 @@ GitHub issues and pull requests:
 
 Pull Requests (222):
 
-* :ghpull:`22963`: Backport PR #22957 on branch v3.5.x (fix "is" comparison for mlxarr.array)
+* :ghpull:`22963`: Backport PR #22957 on branch v3.5.x (fix "is" comparison for mx.array)
 * :ghpull:`22951`: Backport PR #22946: FIX: Handle no-offsets in collection datalim
-* :ghpull:`22957`: fix "is" comparison for mlxarr.array
+* :ghpull:`22957`: fix "is" comparison for mx.array
 * :ghpull:`22962`: Backport PR #22961 on branch v3.5.x (Raised macosx memory leak threshold)
 * :ghpull:`22961`: Raised macosx memory leak threshold
 * :ghpull:`22945`: FIX: Handle no-offsets in collection datalim

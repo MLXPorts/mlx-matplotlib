@@ -14,7 +14,7 @@ In particular, note the usage of the :ref:`"origin" and "extent"
 contour.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib import cm
 
 # Default delta is large because that makes it fast, and it illustrates
@@ -23,15 +23,15 @@ delta = 0.5
 
 extent = (-3, 4, -4, 3)
 
-x = mlxarr.arange(-3.0, 4.001, delta)
-y = mlxarr.arange(-4.0, 3.001, delta)
-X, Y = mlxarr.meshgrid(x, y)
-Z1 = mlxarr.exp(-X**2 - Y**2)
-Z2 = mlxarr.exp(-(X - 1)**2 - (Y - 1)**2)
+x = mx.arange(-3.0, 4.001, delta)
+y = mx.arange(-4.0, 3.001, delta)
+X, Y = mx.meshgrid(x, y)
+Z1 = mx.exp(-X**2 - Y**2)
+Z2 = mx.exp(-(X - 1)**2 - (Y - 1)**2)
 Z = (Z1 - Z2) * 2
 
 # Boost the upper limit to avoid truncation errors.
-levels = mlxarr.arange(-2.0, 1.601, 0.4)
+levels = mx.arange(-2.0, 1.601, 0.4)
 
 norm = cm.colors.Normalize(vmax=abs(Z).max(), vmin=-abs(Z).max())
 cmap = plt.colormaps["PRGn"]

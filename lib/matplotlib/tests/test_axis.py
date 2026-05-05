@@ -1,4 +1,4 @@
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.pyplot as plt
 from matplotlib.axis import XTick
 from matplotlib.testing.decorators import check_figures_equal
@@ -7,7 +7,7 @@ from matplotlib.testing.decorators import check_figures_equal
 def test_tick_labelcolor_array():
     # Smoke test that we can instantiate a Tick with labelcolor as array.
     ax = plt.axes()
-    XTick(ax, 0, labelcolor=mlxarr.array([1, 0, 0, 1]))
+    XTick(ax, 0, labelcolor=mx.array([1, 0, 0, 1]))
 
 
 def test_axis_not_in_layout():

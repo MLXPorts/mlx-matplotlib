@@ -10,7 +10,7 @@ formatters.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # While these appear unused directly, they are used from eval'd strings.
 from matplotlib.dates import (FR, MO, MONTHLY, SA, SU, TH, TU, WE, AutoDateFormatter,
                               AutoDateLocator, ConciseDateFormatter, DateFormatter,
@@ -26,7 +26,7 @@ def plot_axis(ax, locator=None, xmax='2002-02-01', fmt=None, formatter=None):
     ax.yaxis.set_major_locator(ticker.NullLocator())
     ax.tick_params(which='major', width=1.00, length=5)
     ax.tick_params(which='minor', width=0.75, length=2.5)
-    ax.set_xlim(mlxarr.datetime64('2000-02-01'), mlxarr.datetime64(xmax))
+    ax.set_xlim(mx.datetime64('2000-02-01'), mx.datetime64(xmax))
     if locator:
         ax.xaxis.set_major_locator(eval(locator))
         ax.xaxis.set_major_formatter(DateFormatter(fmt))

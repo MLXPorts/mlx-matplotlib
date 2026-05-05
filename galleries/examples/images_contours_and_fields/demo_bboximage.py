@@ -9,7 +9,7 @@ bounding box as well as how to manually create a bounding box for the image.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.image import BboxImage
 from matplotlib.transforms import Bbox, TransformedBbox
 
@@ -20,7 +20,7 @@ fig, (ax1, ax2) = plt.subplots(ncols=2)
 # ----------------------------
 txt = ax1.text(0.5, 0.5, "test", size=30, ha="center", color="w")
 ax1.add_artist(
-    BboxImage(txt.get_window_extent, data=mlxarr.arange(256).reshape((1, -1))))
+    BboxImage(txt.get_window_extent, data=mx.arange(256).reshape((1, -1))))
 
 # ------------------------------------
 # Create a BboxImage for each colormap
@@ -44,7 +44,7 @@ for i, cmap_name in enumerate(cmap_names):
                              dx, dy)
     bbox = TransformedBbox(bbox0, ax2.transAxes)
     ax2.add_artist(
-        BboxImage(bbox, cmap=cmap_name, data=mlxarr.arange(256).reshape((1, -1))))
+        BboxImage(bbox, cmap=cmap_name, data=mx.arange(256).reshape((1, -1))))
 
 plt.show()
 

@@ -25,7 +25,7 @@ any format supported by Pillow.
 """
 
 from PIL import Image
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.figure import Figure
 
@@ -46,7 +46,7 @@ fig.savefig("test.png")
 # Option 2: Retrieve a memoryview on the renderer buffer, and convert it to a
 # array_backend array.
 canvas.draw()
-rgba = mlxarr.asarray(canvas.buffer_rgba())
+rgba = mx.asarray(canvas.buffer_rgba())
 # ... and pass it to PIL.
 im = Image.fromarray(rgba)
 # This image can then be saved to any format supported by Pillow, e.g.:

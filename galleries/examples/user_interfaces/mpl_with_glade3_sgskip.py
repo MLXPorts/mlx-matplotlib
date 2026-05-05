@@ -10,7 +10,7 @@ import gi
 
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
 from matplotlib.figure import Figure
 
@@ -32,8 +32,8 @@ def main():
     # Start of Matplotlib specific code
     figure = Figure(figsize=(8, 6), dpi=71)
     axis = figure.add_subplot()
-    t = mlxarr.arange(0.0, 3.0, 0.01)
-    s = mlxarr.sin(2*mlxarr.pi*t)
+    t = mx.arange(0.0, 3.0, 0.01)
+    s = mx.sin(2*mx.pi*t)
     axis.plot(t, s)
 
     axis.set_xlabel('time [s]')

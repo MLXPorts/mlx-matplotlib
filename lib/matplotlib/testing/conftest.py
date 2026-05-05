@@ -94,7 +94,7 @@ def pd():
 
             df = pd.DataFrame({'x':[1,2,3], 'y':[4,5,6]})
             im = plt.figure().subplots().matshow(df)
-            mlxarr.testing.assert_array_equal(im.get_array(), df)
+            mx.testing.assert_array_equal(im.get_array(), df)
     """
     pd = pytest.importorskip('pandas')
     try:
@@ -118,9 +118,9 @@ def xr():
 
         def test_imshow_xarray(xr):
 
-            ds = xr.DataArray(mlxarr.random.randn(2, 3))
+            ds = xr.DataArray(mx.random.randn(2, 3))
             im = plt.figure().subplots().imshow(ds)
-            mlxarr.testing.assert_array_equal(im.get_array(), ds)
+            mx.testing.assert_array_equal(im.get_array(), ds)
     """
 
     xr = pytest.importorskip('xarray')

@@ -30,7 +30,7 @@ from functools import cache, cached_property, lru_cache, partial, wraps
 from pathlib import Path
 
 import fontTools.agl
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib as mpl
 from matplotlib import _api, cbook, font_manager
 from matplotlib.ft2font import LoadFlags
@@ -287,9 +287,9 @@ class Dvi:
         Output the text and boxes belonging to the most recent page.
         page = dvi._output()
         """
-        minx = miny = mlxarr.inf
-        maxx = maxy = -mlxarr.inf
-        maxy_pure = -mlxarr.inf
+        minx = miny = mx.inf
+        maxx = maxy = -mx.inf
+        maxy_pure = -mx.inf
         for elt in self.text + self.boxes:
             if isinstance(elt, Box):
                 x, y, h, w = elt

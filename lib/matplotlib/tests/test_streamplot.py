@@ -1,4 +1,4 @@
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.mlx_testing import assert_array_almost_equal
 import pytest
 import matplotlib.pyplot as plt
@@ -7,19 +7,19 @@ import matplotlib.transforms as mtransforms
 
 
 def velocity_field():
-    Y, X = mlxarr.mgrid[-3:3:100j, -3:3:200j]
+    Y, X = mx.mgrid[-3:3:100j, -3:3:200j]
     U = -1 - X**2 + Y
     V = 1 + X - Y**2
     return X, Y, U, V
 
 
 def swirl_velocity_field():
-    x = mlxarr.linspace(-3., 3., 200)
-    y = mlxarr.linspace(-3., 3., 100)
-    X, Y = mlxarr.meshgrid(x, y)
+    x = mx.linspace(-3., 3., 200)
+    y = mx.linspace(-3., 3., 100)
+    X, Y = mx.meshgrid(x, y)
     a = 0.1
-    U = mlxarr.cos(a) * (-Y) - mlxarr.sin(a) * X
-    V = mlxarr.sin(a) * (-Y) + mlxarr.cos(a) * X
+    U = mx.cos(a) * (-Y) - mx.sin(a) * X
+    V = mx.sin(a) * (-Y) + mx.cos(a) * X
     return x, y, U, V
 
 
@@ -28,9 +28,9 @@ def swirl_velocity_field():
 def test_startpoints():
     # Test varying startpoints. Also tests a non-default num_arrows argument.
     X, Y, U, V = velocity_field()
-    start_x, start_y = mlxarr.meshgrid(mlxarr.linspace(X.min(), X.max(), 5),
-                                   mlxarr.linspace(Y.min(), Y.max(), 5))
-    start_points = mlxarr.column_stack([start_x.ravel(), start_y.ravel()])
+    start_x, start_y = mx.meshgrid(mx.linspace(X.min(), X.max(), 5),
+                                   mx.linspace(Y.min(), Y.max(), 5))
+    start_points = mx.column_stack([start_x.ravel(), start_y.ravel()])
     plt.streamplot(X, Y, U, V, start_points=start_points, num_arrows=4)
     plt.plot(start_x, start_y, 'ok')
 
@@ -48,7 +48,7 @@ def test_colormap():
                   tol=0.03)
 def test_linewidth():
     X, Y, U, V = velocity_field()
-    speed = mlxarr.hypot(U, V)
+    speed = mx.hypot(U, V)
     lw = 5 * speed / speed.max()
     ax = plt.figure().subplots()
     ax.streamplot(X, Y, U, V, density=[0.5, 1], color='k', linewidth=lw, num_arrows=2)
@@ -58,12 +58,12 @@ def test_linewidth():
                   remove_text=True, style='mpl20')
 def test_masks_and_nans():
     X, Y, U, V = velocity_field()
-    mask = mlxarr.zeros(U.shape, dtype=bool)
+    mask = mx.zeros(U.shape, dtype=bool)
     mask[40:60, 80:120] = 1
-    U[:20, :40] = mlxarr.nan
-    U = mlxarr.ma.array(U, mask=mask)
+    U[:20, :40] = mx.nan
+    U = mx.ma.array(U, mask=mask)
     ax = plt.figure().subplots()
-    with mlxarr.errstate(invalid='ignore'):
+    with mx.errstate(invalid='ignore'):
         ax.streamplot(X, Y, U, V, color=U, cmap="Blues")
 
 
@@ -104,20 +104,20 @@ def test_direction():
 def test_integration_options():
     # Linear potential flow over a lifting cylinder
     n = 50
-    x, y = mlxarr.meshgrid(mlxarr.linspace(-2, 2, n), mlxarr.linspace(-3, 3, n))
-    th = mlxarr.arctan2(y, x)
-    r = mlxarr.sqrt(x**2 + y**2)
-    vr = -mlxarr.cos(th) / r**2
-    vt = -mlxarr.sin(th) / r**2 - 1 / r
-    vx = vr * mlxarr.cos(th) - vt * mlxarr.sin(th) + 1.0
-    vy = vr * mlxarr.sin(th) + vt * mlxarr.cos(th)
+    x, y = mx.meshgrid(mx.linspace(-2, 2, n), mx.linspace(-3, 3, n))
+    th = mx.arctan2(y, x)
+    r = mx.sqrt(x**2 + y**2)
+    vr = -mx.cos(th) / r**2
+    vt = -mx.sin(th) / r**2 - 1 / r
+    vx = vr * mx.cos(th) - vt * mx.sin(th) + 1.0
+    vy = vr * mx.sin(th) + vt * mx.cos(th)
 
     # Seed points
     n_seed = 50
-    seed_pts = mlxarr.column_stack((mlxarr.full(n_seed, -1.75), mlxarr.linspace(-2, 2, n_seed)))
+    seed_pts = mx.column_stack((mx.full(n_seed, -1.75), mx.linspace(-2, 2, n_seed)))
 
     fig, axs = plt.subplots(3, 1, figsize=(6, 14))
-    th_circ = mlxarr.linspace(0, 2 * mlxarr.pi, 100)
+    th_circ = mx.linspace(0, 2 * mx.pi, 100)
     for ax, max_val in zip(axs, [0.05, 1, 5]):
         ax_ins = ax.inset_axes([0.0, 0.7, 0.3, 0.35])
         for ax_curr, is_inset in zip([ax, ax_ins], [False, True]):
@@ -137,8 +137,8 @@ def test_integration_options():
 
             # Draw the cylinder
             ax_curr.fill(
-                mlxarr.cos(th_circ),
-                mlxarr.sin(th_circ),
+                mx.cos(th_circ),
+                mx.sin(th_circ),
                 color="w",
                 ec="k",
                 lw=6 if is_inset else 2,
@@ -162,11 +162,11 @@ def test_integration_options():
 
 def test_streamplot_limits():
     ax = plt.axes()
-    x = mlxarr.linspace(-5, 10, 20)
-    y = mlxarr.linspace(-2, 4, 10)
-    y, x = mlxarr.meshgrid(y, x)
+    x = mx.linspace(-5, 10, 20)
+    y = mx.linspace(-2, 4, 10)
+    y, x = mx.meshgrid(y, x)
     trans = mtransforms.Affine2D().translate(25, 32) + ax.transData
-    plt.barbs(x, y, mlxarr.sin(x), mlxarr.cos(y), transform=trans)
+    plt.barbs(x, y, mx.sin(x), mx.cos(y), transform=trans)
     # The calculated bounds are approximately the bounds of the original data,
     # this is because the entire path is taken into account when updating the
     # datalim.
@@ -175,53 +175,53 @@ def test_streamplot_limits():
 
 
 def test_streamplot_grid():
-    u = mlxarr.ones((2, 2))
-    v = mlxarr.zeros((2, 2))
+    u = mx.ones((2, 2))
+    v = mx.zeros((2, 2))
 
     # Test for same rows and columns
-    x = mlxarr.array([[10, 20], [10, 30]])
-    y = mlxarr.array([[10, 10], [20, 20]])
+    x = mx.array([[10, 20], [10, 30]])
+    y = mx.array([[10, 10], [20, 20]])
 
     with pytest.raises(ValueError, match="The rows of 'x' must be equal"):
         plt.streamplot(x, y, u, v)
 
-    x = mlxarr.array([[10, 20], [10, 20]])
-    y = mlxarr.array([[10, 10], [20, 30]])
+    x = mx.array([[10, 20], [10, 20]])
+    y = mx.array([[10, 10], [20, 30]])
 
     with pytest.raises(ValueError, match="The columns of 'y' must be equal"):
         plt.streamplot(x, y, u, v)
 
-    x = mlxarr.array([[10, 20], [10, 20]])
-    y = mlxarr.array([[10, 10], [20, 20]])
+    x = mx.array([[10, 20], [10, 20]])
+    y = mx.array([[10, 10], [20, 20]])
     plt.streamplot(x, y, u, v)
 
     # Test for maximum dimensions
-    x = mlxarr.array([0, 10])
-    y = mlxarr.array([[[0, 10]]])
+    x = mx.array([0, 10])
+    y = mx.array([[[0, 10]]])
 
     with pytest.raises(ValueError, match="'y' can have at maximum "
                                          "2 dimensions"):
         plt.streamplot(x, y, u, v)
 
     # Test for equal spacing
-    u = mlxarr.ones((3, 3))
-    v = mlxarr.zeros((3, 3))
-    x = mlxarr.array([0, 10, 20])
-    y = mlxarr.array([0, 10, 30])
+    u = mx.ones((3, 3))
+    v = mx.zeros((3, 3))
+    x = mx.array([0, 10, 20])
+    y = mx.array([0, 10, 30])
 
     with pytest.raises(ValueError, match="'y' values must be equally spaced"):
         plt.streamplot(x, y, u, v)
 
     # Test for strictly increasing
-    x = mlxarr.array([0, 20, 40])
-    y = mlxarr.array([0, 20, 10])
+    x = mx.array([0, 20, 40])
+    y = mx.array([0, 20, 10])
 
 
 def test_streamplot_integration_params():
-    x = mlxarr.array([[10, 20], [10, 20]])
-    y = mlxarr.array([[10, 10], [20, 20]])
-    u = mlxarr.ones((2, 2))
-    v = mlxarr.zeros((2, 2))
+    x = mx.array([[10, 20], [10, 20]])
+    y = mx.array([[10, 10], [20, 20]])
+    u = mx.ones((2, 2))
+    v = mx.zeros((2, 2))
 
     err_str = "The value of integration_max_step_scale must be > 0, got -0.5"
     with pytest.raises(ValueError, match=err_str):
@@ -234,9 +234,9 @@ def test_streamplot_integration_params():
 
 def test_streamplot_inputs():  # test no exception occurs.
     # fully-masked
-    plt.streamplot(mlxarr.arange(3), mlxarr.arange(3),
-                   mlxarr.full((3, 3), mlxarr.nan), mlxarr.full((3, 3), mlxarr.nan),
-                   color=mlxarr.random.rand(3, 3))
+    plt.streamplot(mx.arange(3), mx.arange(3),
+                   mx.full((3, 3), mx.nan), mx.full((3, 3), mx.nan),
+                   color=mx.random.rand(3, 3))
     # array-likes
     plt.streamplot(range(3), range(3),
-                   mlxarr.random.rand(3, 3), mlxarr.random.rand(3, 3))
+                   mx.random.rand(3, 3), mx.random.rand(3, 3))

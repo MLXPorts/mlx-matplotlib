@@ -156,11 +156,6 @@ import tempfile
 
 from packaging.version import parse as parse_version
 
-# Pre-import the MLX-backed MLXArrayBackend compatibility shim so modules imported during
-# package initialization can safely reference it without triggering circular
-# import errors.
-from . import _mlx_array  # noqa: F401
-
 # cbook must import matplotlib only within function
 # definitions, so it is safe to import from it here.
 from . import _api, _version, cbook, _docstring, rcsetup

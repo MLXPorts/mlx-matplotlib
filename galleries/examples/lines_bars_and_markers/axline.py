@@ -14,9 +14,9 @@ sigmoid function.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
-t = mlxarr.linspace(-10, 10, 100)
-sig = 1 / (1 + mlxarr.exp(-t))
+import mlx.core as mx
+t = mx.linspace(-10, 10, 100)
+sig = 1 / (1 + mx.exp(-t))
 
 fig, ax = plt.subplots()
 ax.axhline(y=0, color="black", linestyle="--")
@@ -36,7 +36,7 @@ plt.show()
 # plot limits are moved.
 
 fig, ax = plt.subplots()
-for pos in mlxarr.linspace(-2, 1, 10):
+for pos in mx.linspace(-2, 1, 10):
     ax.axline((pos, 0), slope=0.5, color='k', transform=ax.transAxes)
 
 ax.set(xlim=(0, 1), ylim=(0, 1))

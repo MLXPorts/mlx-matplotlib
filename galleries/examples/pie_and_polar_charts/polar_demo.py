@@ -11,9 +11,9 @@ the origin of the radial axis to 0 allows the radial ticks to be placed at the
 same location as the first plot.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
-r = mlxarr.arange(0, 2, 0.01)
-theta = 2 * mlxarr.pi * r
+import mlx.core as mx
+r = mx.arange(0, 2, 0.01)
+theta = 2 * mx.pi * r
 
 fig, axs = plt.subplots(2, 1, figsize=(5, 8), subplot_kw={'projection': 'polar'},
                         layout='constrained')

@@ -7,7 +7,7 @@ Demonstrate using `.pathpatch_2d_to_3d` to 'draw' shapes and text on a 3D plot.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.patches import Circle, PathPatch
 from matplotlib.text import TextPath
 from matplotlib.transforms import Affine2D
@@ -52,9 +52,9 @@ art3d.pathpatch_2d_to_3d(p, z=0, zdir="x")
 text3d(ax, (4, -2, 0), "X-axis", zdir="z", size=.5, usetex=False,
        ec="none", fc="k")
 text3d(ax, (12, 4, 0), "Y-axis", zdir="z", size=.5, usetex=False,
-       angle=mlxarr.pi / 2, ec="none", fc="k")
+       angle=mx.pi / 2, ec="none", fc="k")
 text3d(ax, (12, 10, 4), "Z-axis", zdir="y", size=.5, usetex=False,
-       angle=mlxarr.pi / 2, ec="none", fc="k")
+       angle=mx.pi / 2, ec="none", fc="k")
 
 # Write a Latex formula on the z=0 'floor'
 text3d(ax, (1, 5, 0),

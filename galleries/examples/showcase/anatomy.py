@@ -8,7 +8,7 @@ This figure shows the name of several matplotlib elements composing a figure
 
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.patches import Circle
 from matplotlib.patheffects import withStroke
 from matplotlib.ticker import AutoMinorLocator, MultipleLocator
@@ -18,12 +18,12 @@ royal_blue = [0, 20/256, 82/256]
 
 # make the figure
 
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
-X = mlxarr.linspace(0.5, 3.5, 100)
-Y1 = 3+mlxarr.cos(X)
-Y2 = 1+mlxarr.cos(1+X/0.75)/2
-Y3 = mlxarr.random.uniform(Y1, Y2, len(X))
+X = mx.linspace(0.5, 3.5, 100)
+Y1 = 3+mx.cos(X)
+Y2 = 1+mx.cos(1+X/0.75)/2
+Y3 = mx.random.uniform(Y1, Y2, len(X))
 
 fig = plt.figure(figsize=(7.5, 7.5))
 ax = fig.add_axes((0.2, 0.17, 0.68, 0.7), aspect=1)

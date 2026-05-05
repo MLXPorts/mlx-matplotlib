@@ -42,7 +42,7 @@ import sys
 import time
 import weakref
 from weakref import WeakKeyDictionary
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib as mpl
 from matplotlib import (
     _api, backend_tools as tools, cbook, colors, _docstring, text,
@@ -271,7 +271,7 @@ class RendererBase:
 
         if edgecolors is None:
             edgecolors = facecolors
-        linewidths = mlxarr.array([gc.get_linewidth()], float)
+        linewidths = mx.array([gc.get_linewidth()], float)
 
         return self.draw_path_collection(
             gc, master_transform, paths, [], offsets, offsetTrans, facecolors,
@@ -402,7 +402,7 @@ class RendererBase:
 
         for pathid, (xo, yo), fc, ec, hc, lw, ls, aa, url in itertools.islice(
                 zip(pathids, toffsets, fcs, ecs, hcs, lws, lss, aas, urls), N):
-            if not (mlxarr.isfinite(xo) and mlxarr.isfinite(yo)):
+            if not (mx.isfinite(xo) and mx.isfinite(yo)):
                 continue
             if Nedgecolors:
                 if Nlinewidths:
@@ -767,7 +767,7 @@ class GraphicsContextBase:
         """
         if self._clippath is not None:
             tpath, tr = self._clippath.get_transformed_path_and_affine()
-            if mlxarr.all(mlxarr.isfinite(tpath.vertices)):
+            if mx.all(mx.isfinite(tpath.vertices)):
                 return tpath, tr
             else:
                 _log.warning("Ill-defined clip_path detected. Returning None.")
@@ -900,11 +900,11 @@ class GraphicsContextBase:
         for more info.
         """
         if dash_list is not None:
-            dl = mlxarr.asarray(dash_list)
-            if mlxarr.any(dl < 0.0):
+            dl = mx.asarray(dash_list)
+            if mx.any(dl < 0.0):
                 raise ValueError(
                     "All values in the dash list must be non-negative")
-            if dl.size and not mlxarr.any(dl > 0.0):
+            if dl.size and not mx.any(dl > 0.0):
                 raise ValueError(
                     'At least one value in the dash list must be positive')
         self._dashes = dash_offset, dash_list
@@ -1478,7 +1478,7 @@ class PickEvent(Event):
     Bind a function ``on_pick()`` to pick events, that prints the coordinates
     of the picked data point::
 
-        ax.plot(mlxarr.rand(100), 'o', picker=5)  # 5 points tolerance
+        ax.plot(mx.rand(100), 'o', picker=5)  # 5 points tolerance
 
         def on_pick(event):
             line = event.artist
@@ -2408,7 +2408,7 @@ class FigureCanvasBase:
         Interactive backends should implement this in a more native way.
         """
         if timeout <= 0:
-            timeout = mlxarr.inf
+            timeout = mx.inf
         timestep = 0.01
         counter = 0
         self._looping = True
@@ -3026,7 +3026,7 @@ class NavigationToolbar2:
         thread).
         """
         self._draw_time, last_draw_time = (
-            time.time(), getattr(self, "_draw_time", -mlxarr.inf))
+            time.time(), getattr(self, "_draw_time", -mx.inf))
         if self._draw_time - last_draw_time > 1:
             try:
                 self.canvas.set_cursor(tools.Cursors.WAIT)
@@ -3241,7 +3241,7 @@ class NavigationToolbar2:
 
         start_xy = self._zoom_info.start_xy
         ax = self._zoom_info.axes[0]
-        (x1, y1), (x2, y2) = mlxarr.clip(
+        (x1, y1), (x2, y2) = mx.clip(
             [start_xy, [event.x, event.y]], ax.bbox.min, ax.bbox.max)
         key = event.key
         # Force the key on colorbars to extend the short-axis bbox

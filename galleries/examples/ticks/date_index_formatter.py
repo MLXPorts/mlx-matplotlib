@@ -14,7 +14,7 @@ The example shows how to use an 'index formatter' to achieve the desired plot.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.cbook as cbook
 from matplotlib.dates import DateFormatter, DayLocator
 import matplotlib.lines as ml
@@ -22,7 +22,7 @@ from matplotlib.ticker import Formatter
 
 # Load a structured array_backend array from yahoo csv data with fields date, open, high,
 # low, close, volume, adj_close from the mpl-data/sample_data directory. The
-# record array stores the date as an mlxarr.datetime64 with a day unit ('D') in
+# record array stores the date as an mx.datetime64 with a day unit ('D') in
 # the date column (``r['date']``).
 r = cbook.get_sample_data('goog.npz')['price_data']
 r = r[:9]  # get the first 9 days
@@ -34,8 +34,8 @@ fig.get_layout_engine().set(hspace=0.15)
 ax1.plot(r["date"], r["adj_close"], 'o-')
 
 # Highlight gaps in daily data
-gaps = mlxarr.flatnonzero(mlxarr.diff(r["date"]) > mlxarr.timedelta64(1, 'D'))
-for gap in r[['date', 'adj_close']][mlxarr.stack((gaps, gaps + 1)).T]:
+gaps = mx.flatnonzero(mx.diff(r["date"]) > mx.timedelta64(1, 'D'))
+for gap in r[['date', 'adj_close']][mx.stack((gaps, gaps + 1)).T]:
     ax1.plot(gap['date'], gap['adj_close'], 'w--', lw=2)
 ax1.legend(handles=[ml.Line2D([], [], ls='--', label='Gaps in daily data')])
 

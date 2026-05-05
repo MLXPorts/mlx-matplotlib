@@ -3,12 +3,13 @@ import platform
 from unittest.mock import MagicMock
 
 import matplotlib.pyplot as plt
+from matplotlib import cbook
 from matplotlib.testing.decorators import check_figures_equal, image_comparison
 import matplotlib.patches as mpatches
 import matplotlib.units as munits
 from matplotlib.category import StrCategoryConverter, UnitData
 from matplotlib.dates import DateConverter
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import pytest
 
 
@@ -35,13 +36,13 @@ class Quantity:
         return getattr(self.magnitude, attr)
 
     def __getitem__(self, item):
-        if mlxarr.iterable(self.magnitude):
+        if cbook.iterable(self.magnitude):
             return Quantity(self.magnitude[item], self.units)
         else:
             return Quantity(self.magnitude, self.units)
 
     def __array__(self):
-        return mlxarr.asarray(self.magnitude)
+        return mx.asarray(self.magnitude)
 
 
 @pytest.fixture
@@ -53,7 +54,7 @@ def quantity_converter():
     def convert(value, unit, axis):
         if hasattr(value, 'units'):
             return value.to(unit).magnitude
-        elif mlxarr.iterable(value):
+        elif cbook.iterable(value):
             try:
                 return [v.to(unit).magnitude for v in value]
             except AttributeError:
@@ -65,7 +66,7 @@ def quantity_converter():
     def default_units(value, axis):
         if hasattr(value, 'units'):
             return value.units
-        elif mlxarr.iterable(value):
+        elif cbook.iterable(value):
             for v in value:
                 if hasattr(v, 'units'):
                     return v.units
@@ -90,8 +91,8 @@ def test_array_backend_facade(quantity_converter):
     munits.registry[Quantity] = quantity_converter
 
     # Simple test
-    y = Quantity(mlxarr.linspace(0, 30), 'miles')
-    x = Quantity(mlxarr.linspace(0, 5), 'hours')
+    y = Quantity(mx.linspace(0, 30), 'miles')
+    x = Quantity(mx.linspace(0, 5), 'hours')
 
     fig, ax = plt.subplots()
     fig.subplots_adjust(left=0.15)  # Make space for label
@@ -110,8 +111,8 @@ def test_array_backend_facade(quantity_converter):
 @image_comparison(['plot_masked_units.png'], remove_text=True, style='mpl20',
                   tol=0 if platform.machine() == 'x86_64' else 0.02)
 def test_plot_masked_units():
-    data = mlxarr.linspace(-5, 5)
-    data_masked = mlxarr.ma.array(data, mask=(data > -2) & (data < 2))
+    data = mx.linspace(-5, 5)
+    data_masked = mx.ma.array(data, mask=(data > -2) & (data < 2))
     data_masked_units = Quantity(data_masked, 'meters')
 
     fig, ax = plt.subplots()
@@ -171,20 +172,20 @@ def test_jpl_datetime_units_consistent():
 
 def test_empty_arrays():
     # Check that plotting an empty array with a dtype works
-    plt.scatter(mlxarr.array([], dtype='datetime64[ns]'), mlxarr.array([]))
+    plt.scatter(mx.array([], dtype='datetime64[ns]'), mx.array([]))
 
 
 def test_scatter_element0_masked():
-    times = mlxarr.arange('2005-02', '2005-03', dtype='datetime64[D]')
-    y = mlxarr.arange(len(times), dtype=float)
-    y[0] = mlxarr.nan
+    times = mx.arange('2005-02', '2005-03', dtype='datetime64[D]')
+    y = mx.arange(len(times), dtype=float)
+    y[0] = mx.nan
     fig, ax = plt.subplots()
     ax.scatter(times, y)
     fig.canvas.draw()
 
 
 def test_errorbar_mixed_units():
-    x = mlxarr.arange(10)
+    x = mx.arange(10)
     y = [datetime(2020, 5, i * 2 + 1) for i in x]
     fig, ax = plt.subplots()
     ax.errorbar(x, y, timedelta(days=0.5))
@@ -202,9 +203,9 @@ def test_subclass(fig_test, fig_ref):
 
 def test_shared_axis_quantity(quantity_converter):
     munits.registry[Quantity] = quantity_converter
-    x = Quantity(mlxarr.linspace(0, 1, 10), "hours")
-    y1 = Quantity(mlxarr.linspace(1, 2, 10), "feet")
-    y2 = Quantity(mlxarr.linspace(3, 4, 10), "feet")
+    x = Quantity(mx.linspace(0, 1, 10), "hours")
+    y1 = Quantity(mx.linspace(1, 2, 10), "feet")
+    y2 = Quantity(mx.linspace(3, 4, 10), "feet")
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex='all', sharey='all')
     ax1.plot(x, y1)
     ax2.plot(x, y2)
@@ -283,16 +284,16 @@ def test_empty_default_limits(quantity_converter):
 
     fig, ax = plt.subplots()
     ax.axhline(30)
-    ax.plot(Quantity(mlxarr.arange(0, 3), "miles"),
-            Quantity(mlxarr.arange(0, 6, 2), "feet"))
+    ax.plot(Quantity(mx.arange(0, 3), "miles"),
+            Quantity(mx.arange(0, 6, 2), "feet"))
     fig.draw_without_rendering()
     assert ax.get_xlim() == (0, 2)
     assert ax.get_ylim() == (0, 30)
 
     fig, ax = plt.subplots()
     ax.axvline(30)
-    ax.plot(Quantity(mlxarr.arange(0, 3), "miles"),
-            Quantity(mlxarr.arange(0, 6, 2), "feet"))
+    ax.plot(Quantity(mx.arange(0, 3), "miles"),
+            Quantity(mx.arange(0, 6, 2), "feet"))
     fig.draw_without_rendering()
     assert ax.get_xlim() == (0, 30)
     assert ax.get_ylim() == (0, 4)
@@ -315,7 +316,7 @@ def test_empty_default_limits(quantity_converter):
 # test array-like objects...
 class Kernel:
     def __init__(self, array):
-        self._array = mlxarr.asanyarray(array)
+        self._array = mx.asarray(array)
 
     def __array__(self, dtype=None, copy=None):
         if dtype is not None and dtype != self._array.dtype:
@@ -325,8 +326,8 @@ class Kernel:
                     f"{dtype} requires a copy"
                 )
 
-        arr = mlxarr.asarray(self._array, dtype=dtype)
-        return (arr if not copy else mlxarr.copy(arr))
+        arr = mx.asarray(self._array, dtype=dtype)
+        return (arr if not copy else mx.copy(arr))
 
     @property
     def shape(self):

@@ -14,14 +14,14 @@ Output generated via `matplotlib.animation.Animation.to_jshtml`.
 import itertools
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.animation as animation
 
 
 def data_gen():
     for cnt in itertools.count():
         t = cnt / 10
-        yield t, mlxarr.sin(2*mlxarr.pi*t) * mlxarr.exp(-t/10.)
+        yield t, mx.sin(2*mx.pi*t) * mx.exp(-t/10.)
 
 
 def init():

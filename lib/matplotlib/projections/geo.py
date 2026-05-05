@@ -1,4 +1,4 @@
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib as mpl
 from matplotlib import _api
 from matplotlib.axes import Axes
@@ -23,7 +23,7 @@ class GeoAxes(Axes):
             self._round_to = round_to
 
         def __call__(self, x, pos=None):
-            degrees = round(mlxarr.rad2deg(x) / self._round_to) * self._round_to
+            degrees = round(mx.rad2deg(x) / self._round_to) * self._round_to
             return f"{degrees:0.0f}\N{DEGREE SIGN}"
 
     RESOLUTION = 75
@@ -50,8 +50,8 @@ class GeoAxes(Axes):
 
         self.grid(mpl.rcParams['axes.grid'])
 
-        Axes.set_xlim(self, -mlxarr.pi, mlxarr.pi)
-        Axes.set_ylim(self, -mlxarr.pi / 2.0, mlxarr.pi / 2.0)
+        Axes.set_xlim(self, -mx.pi, mx.pi)
+        Axes.set_ylim(self, -mx.pi / 2.0, mx.pi / 2.0)
 
     def _set_lim_and_transforms(self):
         # A (possibly non-linear) projection on the (already scaled) data
@@ -86,7 +86,7 @@ class GeoAxes(Axes):
             Affine2D().translate(0, -4)
 
         # This is the transform for latitude ticks.
-        yaxis_stretch = Affine2D().scale(mlxarr.pi * 2, 1).translate(-mlxarr.pi, 0)
+        yaxis_stretch = Affine2D().scale(mx.pi * 2, 1).translate(-mx.pi, 0)
         yaxis_space = Affine2D().scale(1, 1.1)
         self._yaxis_transform = \
             yaxis_stretch + \
@@ -106,8 +106,8 @@ class GeoAxes(Axes):
 
     def _get_affine_transform(self):
         transform = self._get_core_transform(1)
-        xscale, _ = transform.transform((mlxarr.pi, 0))
-        _, yscale = transform.transform((0, mlxarr.pi/2))
+        xscale, _ = transform.transform((mx.pi, 0))
+        _, yscale = transform.transform((0, mx.pi/2))
         return Affine2D() \
             .scale(0.5 / xscale, 0.5 / yscale) \
             .translate(0.5, 0.5)
@@ -162,7 +162,7 @@ class GeoAxes(Axes):
 
     def format_coord(self, lon, lat):
         """Return a format string formatting the coordinate."""
-        lon, lat = mlxarr.rad2deg([lon, lat])
+        lon, lat = mx.rad2deg([lon, lat])
         ns = 'N' if lat >= 0.0 else 'S'
         ew = 'E' if lon >= 0.0 else 'W'
         return ('%f\N{DEGREE SIGN}%s, %f\N{DEGREE SIGN}%s'
@@ -173,8 +173,8 @@ class GeoAxes(Axes):
         Set the number of degrees between each longitude grid.
         """
         # Skip -180 and 180, which are the fixed limits.
-        grid = mlxarr.arange(-180 + degrees, 180, degrees)
-        self.xaxis.set_major_locator(FixedLocator(mlxarr.deg2rad(grid)))
+        grid = mx.arange(-180 + degrees, 180, degrees)
+        self.xaxis.set_major_locator(FixedLocator(mx.deg2rad(grid)))
         self.xaxis.set_major_formatter(self.ThetaFormatter(degrees))
 
     def set_latitude_grid(self, degrees):
@@ -182,15 +182,15 @@ class GeoAxes(Axes):
         Set the number of degrees between each latitude grid.
         """
         # Skip -90 and 90, which are the fixed limits.
-        grid = mlxarr.arange(-90 + degrees, 90, degrees)
-        self.yaxis.set_major_locator(FixedLocator(mlxarr.deg2rad(grid)))
+        grid = mx.arange(-90 + degrees, 90, degrees)
+        self.yaxis.set_major_locator(FixedLocator(mx.deg2rad(grid)))
         self.yaxis.set_major_formatter(self.ThetaFormatter(degrees))
 
     def set_longitude_grid_ends(self, degrees):
         """
         Set the latitude(s) at which to stop drawing the longitude grids.
         """
-        self._longitude_cap = mlxarr.deg2rad(degrees)
+        self._longitude_cap = mx.deg2rad(degrees)
         self._xaxis_pretransform \
             .clear() \
             .scale(1.0, self._longitude_cap * 2.0) \
@@ -263,14 +263,14 @@ class AitoffAxes(GeoAxes):
 
             # Pre-compute some values
             half_long = longitude / 2.0
-            cos_latitude = mlxarr.cos(latitude)
+            cos_latitude = mx.cos(latitude)
 
-            alpha = mlxarr.arccos(cos_latitude * mlxarr.cos(half_long))
-            sinc_alpha = mlxarr.sinc(alpha / mlxarr.pi)  # mlxarr.sinc is sin(pi*x)/(pi*x).
+            alpha = mx.arccos(cos_latitude * mx.cos(half_long))
+            sinc_alpha = mx.sinc(alpha / mx.pi)  # mx.sinc is sin(pi*x)/(pi*x).
 
-            x = (cos_latitude * mlxarr.sin(half_long)) / sinc_alpha
-            y = mlxarr.sin(latitude) / sinc_alpha
-            return mlxarr.column_stack([x, y])
+            x = (cos_latitude * mx.sin(half_long)) / sinc_alpha
+            y = mx.sin(latitude) / sinc_alpha
+            return mx.column_stack([x, y])
 
         def inverted(self):
             # docstring inherited
@@ -281,14 +281,14 @@ class AitoffAxes(GeoAxes):
         def transform_non_affine(self, values):
             # docstring inherited
             # MGDTODO: Math is hard ;(
-            return mlxarr.full_like(values, mlxarr.nan)
+            return mx.full_like(values, mx.nan)
 
         def inverted(self):
             # docstring inherited
             return AitoffAxes.AitoffTransform(self._resolution)
 
     def __init__(self, *args, **kwargs):
-        self._longitude_cap = mlxarr.pi / 2.0
+        self._longitude_cap = mx.pi / 2.0
         super().__init__(*args, **kwargs)
         self.set_aspect(0.5, adjustable='box', anchor='C')
         self.clear()
@@ -307,12 +307,12 @@ class HammerAxes(GeoAxes):
             # docstring inherited
             longitude, latitude = values.T
             half_long = longitude / 2.0
-            cos_latitude = mlxarr.cos(latitude)
-            sqrt2 = mlxarr.sqrt(2.0)
-            alpha = mlxarr.sqrt(1.0 + cos_latitude * mlxarr.cos(half_long))
-            x = (2.0 * sqrt2) * (cos_latitude * mlxarr.sin(half_long)) / alpha
-            y = (sqrt2 * mlxarr.sin(latitude)) / alpha
-            return mlxarr.column_stack([x, y])
+            cos_latitude = mx.cos(latitude)
+            sqrt2 = mx.sqrt(2.0)
+            alpha = mx.sqrt(1.0 + cos_latitude * mx.cos(half_long))
+            x = (2.0 * sqrt2) * (cos_latitude * mx.sin(half_long)) / alpha
+            y = (sqrt2 * mx.sin(latitude)) / alpha
+            return mx.column_stack([x, y])
 
         def inverted(self):
             # docstring inherited
@@ -323,17 +323,17 @@ class HammerAxes(GeoAxes):
         def transform_non_affine(self, values):
             # docstring inherited
             x, y = values.T
-            z = mlxarr.sqrt(1 - (x / 4) ** 2 - (y / 2) ** 2)
-            longitude = 2 * mlxarr.arctan((z * x) / (2 * (2 * z ** 2 - 1)))
-            latitude = mlxarr.arcsin(y*z)
-            return mlxarr.column_stack([longitude, latitude])
+            z = mx.sqrt(1 - (x / 4) ** 2 - (y / 2) ** 2)
+            longitude = 2 * mx.arctan((z * x) / (2 * (2 * z ** 2 - 1)))
+            latitude = mx.arcsin(y*z)
+            return mx.column_stack([longitude, latitude])
 
         def inverted(self):
             # docstring inherited
             return HammerAxes.HammerTransform(self._resolution)
 
     def __init__(self, *args, **kwargs):
-        self._longitude_cap = mlxarr.pi / 2.0
+        self._longitude_cap = mx.pi / 2.0
         super().__init__(*args, **kwargs)
         self.set_aspect(0.5, adjustable='box', anchor='C')
         self.clear()
@@ -351,34 +351,34 @@ class MollweideAxes(GeoAxes):
         def transform_non_affine(self, values):
             # docstring inherited
             def d(theta):
-                delta = (-(theta + mlxarr.sin(theta) - pi_sin_l)
-                         / (1 + mlxarr.cos(theta)))
-                return delta, mlxarr.abs(delta) > 0.001
+                delta = (-(theta + mx.sin(theta) - pi_sin_l)
+                         / (1 + mx.cos(theta)))
+                return delta, mx.abs(delta) > 0.001
 
             longitude, latitude = values.T
 
-            clat = mlxarr.pi/2 - mlxarr.abs(latitude)
+            clat = mx.pi/2 - mx.abs(latitude)
             ihigh = clat < 0.087  # within 5 degrees of the poles
             ilow = ~ihigh
-            aux = mlxarr.empty(latitude.shape, dtype=float)
+            aux = mx.zeros(latitude.shape, dtype=float)
 
             if ilow.any():  # Newton-Raphson iteration
-                pi_sin_l = mlxarr.pi * mlxarr.sin(latitude[ilow])
+                pi_sin_l = mx.pi * mx.sin(latitude[ilow])
                 theta = 2.0 * latitude[ilow]
                 delta, large_delta = d(theta)
-                while mlxarr.any(large_delta):
+                while mx.any(large_delta):
                     theta[large_delta] += delta[large_delta]
                     delta, large_delta = d(theta)
                 aux[ilow] = theta / 2
 
             if ihigh.any():  # Taylor series-based approx. solution
                 e = clat[ihigh]
-                d = 0.5 * (3 * mlxarr.pi * e**2) ** (1.0/3)
-                aux[ihigh] = (mlxarr.pi/2 - d) * mlxarr.sign(latitude[ihigh])
+                d = 0.5 * (3 * mx.pi * e**2) ** (1.0/3)
+                aux[ihigh] = (mx.pi/2 - d) * mx.sign(latitude[ihigh])
 
-            xy = mlxarr.empty(values.shape, dtype=float)
-            xy[:, 0] = (2.0 * mlxarr.sqrt(2.0) / mlxarr.pi) * longitude * mlxarr.cos(aux)
-            xy[:, 1] = mlxarr.sqrt(2.0) * mlxarr.sin(aux)
+            xy = mx.zeros(values.shape, dtype=float)
+            xy[:, 0] = (2.0 * mx.sqrt(2.0) / mx.pi) * longitude * mx.cos(aux)
+            xy[:, 1] = mx.sqrt(2.0) * mx.sin(aux)
 
             return xy
 
@@ -393,17 +393,17 @@ class MollweideAxes(GeoAxes):
             x, y = values.T
             # from Equations (7, 8) of
             # https://mathworld.wolfram.com/MollweideProjection.html
-            theta = mlxarr.arcsin(y / mlxarr.sqrt(2))
-            longitude = (mlxarr.pi / (2 * mlxarr.sqrt(2))) * x / mlxarr.cos(theta)
-            latitude = mlxarr.arcsin((2 * theta + mlxarr.sin(2 * theta)) / mlxarr.pi)
-            return mlxarr.column_stack([longitude, latitude])
+            theta = mx.arcsin(y / mx.sqrt(2))
+            longitude = (mx.pi / (2 * mx.sqrt(2))) * x / mx.cos(theta)
+            latitude = mx.arcsin((2 * theta + mx.sin(2 * theta)) / mx.pi)
+            return mx.column_stack([longitude, latitude])
 
         def inverted(self):
             # docstring inherited
             return MollweideAxes.MollweideTransform(self._resolution)
 
     def __init__(self, *args, **kwargs):
-        self._longitude_cap = mlxarr.pi / 2.0
+        self._longitude_cap = mx.pi / 2.0
         super().__init__(*args, **kwargs)
         self.set_aspect(0.5, adjustable='box', anchor='C')
         self.clear()
@@ -433,19 +433,19 @@ class LambertAxes(GeoAxes):
             longitude, latitude = values.T
             clong = self._center_longitude
             clat = self._center_latitude
-            cos_lat = mlxarr.cos(latitude)
-            sin_lat = mlxarr.sin(latitude)
+            cos_lat = mx.cos(latitude)
+            sin_lat = mx.sin(latitude)
             diff_long = longitude - clong
-            cos_diff_long = mlxarr.cos(diff_long)
+            cos_diff_long = mx.cos(diff_long)
 
-            inner_k = mlxarr.maximum(  # Prevent divide-by-zero problems
-                1 + mlxarr.sin(clat)*sin_lat + mlxarr.cos(clat)*cos_lat*cos_diff_long,
+            inner_k = mx.maximum(  # Prevent divide-by-zero problems
+                1 + mx.sin(clat)*sin_lat + mx.cos(clat)*cos_lat*cos_diff_long,
                 1e-15)
-            k = mlxarr.sqrt(2 / inner_k)
-            x = k * cos_lat*mlxarr.sin(diff_long)
-            y = k * (mlxarr.cos(clat)*sin_lat - mlxarr.sin(clat)*cos_lat*cos_diff_long)
+            k = mx.sqrt(2 / inner_k)
+            x = k * cos_lat*mx.sin(diff_long)
+            y = k * (mx.cos(clat)*sin_lat - mx.sin(clat)*cos_lat*cos_diff_long)
 
-            return mlxarr.column_stack([x, y])
+            return mx.column_stack([x, y])
 
         def inverted(self):
             # docstring inherited
@@ -466,17 +466,17 @@ class LambertAxes(GeoAxes):
             x, y = values.T
             clong = self._center_longitude
             clat = self._center_latitude
-            p = mlxarr.maximum(mlxarr.hypot(x, y), 1e-9)
-            c = 2 * mlxarr.arcsin(0.5 * p)
-            sin_c = mlxarr.sin(c)
-            cos_c = mlxarr.cos(c)
+            p = mx.maximum(mx.hypot(x, y), 1e-9)
+            c = 2 * mx.arcsin(0.5 * p)
+            sin_c = mx.sin(c)
+            cos_c = mx.cos(c)
 
-            latitude = mlxarr.arcsin(cos_c*mlxarr.sin(clat) +
-                                 ((y*sin_c*mlxarr.cos(clat)) / p))
-            longitude = clong + mlxarr.arctan(
-                (x*sin_c) / (p*mlxarr.cos(clat)*cos_c - y*mlxarr.sin(clat)*sin_c))
+            latitude = mx.arcsin(cos_c*mx.sin(clat) +
+                                 ((y*sin_c*mx.cos(clat)) / p))
+            longitude = clong + mx.arctan(
+                (x*sin_c) / (p*mx.cos(clat)*cos_c - y*mx.sin(clat)*sin_c))
 
-            return mlxarr.column_stack([longitude, latitude])
+            return mx.column_stack([longitude, latitude])
 
         def inverted(self):
             # docstring inherited
@@ -486,7 +486,7 @@ class LambertAxes(GeoAxes):
                 self._resolution)
 
     def __init__(self, *args, center_longitude=0, center_latitude=0, **kwargs):
-        self._longitude_cap = mlxarr.pi / 2
+        self._longitude_cap = mx.pi / 2
         self._center_longitude = center_longitude
         self._center_latitude = center_latitude
         super().__init__(*args, **kwargs)

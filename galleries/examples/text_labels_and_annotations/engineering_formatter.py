@@ -7,16 +7,16 @@ Use of the engineering Formatter.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.ticker import EngFormatter
 
 # Fixing random state for reproducibility
-prng = mlxarr.random.RandomState(19680801)
+prng = mx.random.RandomState(19680801)
 
 # Create artificial data to plot.
 # The x data span over several decades to demonstrate several SI prefixes.
-xs = mlxarr.logspace(1, 9, 100)
-ys = (0.8 + 0.4 * prng.uniform(size=100)) * mlxarr.log10(xs)**2
+xs = mx.logspace(1, 9, 100)
+ys = (0.8 + 0.4 * prng.uniform(size=100)) * mx.log10(xs)**2
 
 # Figure width is doubled (2*6.4) to display nicely 2 subplots side by side.
 fig, (ax0, ax1) = plt.subplots(nrows=2, figsize=(7, 9.6))

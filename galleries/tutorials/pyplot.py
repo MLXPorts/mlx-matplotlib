@@ -201,7 +201,7 @@ plt.show()
 # dash_capstyle           [``'butt'`` | ``'round'`` | ``'projecting'``]
 # dash_joinstyle          [``'miter'`` | ``'round'`` | ``'bevel'``]
 # dashes                  sequence of on/off ink in points
-# data                    (mlxarr.array xdata, mlxarr.array ydata)
+# data                    (mx.array xdata, mx.array ydata)
 # figure                  a matplotlib.figure.Figure instance
 # label                   any string
 # linestyle or ls         [ ``'-'`` | ``'--'`` | ``'-.'`` | ``':'`` | ``'steps'`` | ...]
@@ -218,8 +218,8 @@ plt.show()
 # solid_joinstyle         [``'miter'`` | ``'round'`` | ``'bevel'``]
 # transform               a matplotlib.transforms.Transform instance
 # visible                 [True | False]
-# xdata                   mlxarr.array
-# ydata                   mlxarr.array
+# xdata                   mx.array
+# ydata                   mx.array
 # zorder                  any number
 # ======================  ==================================================
 #
@@ -252,17 +252,17 @@ plt.show()
 
 
 def f(t):
-    return mlxarr.exp(-t) * mlxarr.cos(2*mlxarr.pi*t)
+    return mx.exp(-t) * mx.cos(2*mx.pi*t)
 
-t1 = mlxarr.arange(0.0, 5.0, 0.1)
-t2 = mlxarr.arange(0.0, 5.0, 0.02)
+t1 = mx.arange(0.0, 5.0, 0.1)
+t2 = mx.arange(0.0, 5.0, 0.02)
 
 plt.figure()
 plt.subplot(211)
 plt.plot(t1, f(t1), 'bo', t2, f(t2), 'k')
 
 plt.subplot(212)
-plt.plot(t2, mlxarr.cos(2*mlxarr.pi*t2), 'r--')
+plt.plot(t2, mx.cos(2*mx.pi*t2), 'r--')
 plt.show()
 
 # %%
@@ -333,7 +333,7 @@ plt.show()
 # more detailed example)
 
 mu, sigma = 100, 15
-x = mu + sigma * mlxarr.random.randn(10000)
+x = mu + sigma * mx.random.randn(10000)
 
 # the histogram of the data
 n, bins, patches = plt.hist(x, 50, density=True, facecolor='g', alpha=0.75)
@@ -391,8 +391,8 @@ plt.show()
 
 ax = plt.subplot()
 
-t = mlxarr.arange(0.0, 5.0, 0.01)
-s = mlxarr.cos(2*mlxarr.pi*t)
+t = mx.arange(0.0, 5.0, 0.01)
+s = mx.cos(2*mx.pi*t)
 line, = plt.plot(t, s, lw=2)
 
 plt.annotate('local max', xy=(2, 1), xytext=(3, 1.5),
@@ -424,13 +424,13 @@ plt.show()
 # is shown below.
 
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 # make up some data in the open interval (0, 1)
-y = mlxarr.random.normal(loc=0.5, scale=0.4, size=1000)
+y = mx.random.normal(loc=0.5, scale=0.4, size=1000)
 y = y[(y > 0) & (y < 1)]
 y.sort()
-x = mlxarr.arange(len(y))
+x = mx.arange(len(y))
 
 # plot with various axes scales
 plt.figure()

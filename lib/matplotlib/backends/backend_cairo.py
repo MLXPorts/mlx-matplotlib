@@ -9,7 +9,7 @@ This backend depends on cairocffi or pycairo.
 import functools
 import gzip
 import math
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 try:
     import cairo
     if cairo.version_info < (1, 14, 0):  # Introduced set_device_scale.
@@ -49,7 +49,7 @@ def _append_path(ctx, path, transform, clip=None):
         elif code == Path.LINETO:
             ctx.line_to(*points)
         elif code == Path.CURVE3:
-            cur = mlxarr.asarray(ctx.get_current_point())
+            cur = mx.asarray(ctx.get_current_point())
             a = points[:2]
             b = points[-2:]
             ctx.curve_to(*(cur / 3 + a * 2 / 3), *(a * 2 / 3 + b / 3), *b)
@@ -232,7 +232,7 @@ class RendererCairo(RendererBase):
             opts.set_antialias(gc.get_antialiased())
             ctx.set_font_options(opts)
             if angle:
-                ctx.rotate(mlxarr.deg2rad(-angle))
+                ctx.rotate(mx.deg2rad(-angle))
             ctx.show_text(s)
             ctx.restore()
 
@@ -244,7 +244,7 @@ class RendererCairo(RendererBase):
         ctx.save()
         ctx.translate(x, y)
         if angle:
-            ctx.rotate(mlxarr.deg2rad(-angle))
+            ctx.rotate(mx.deg2rad(-angle))
 
         for font, fontsize, idx, ox, oy in glyphs:
             ctx.new_path()
@@ -346,7 +346,7 @@ class GraphicsContextCairo(GraphicsContextBase):
     def set_clip_rectangle(self, rectangle):
         if not rectangle:
             return
-        x, y, w, h = mlxarr.round(rectangle.bounds)
+        x, y, w, h = mx.round(rectangle.bounds)
         ctx = self.ctx
         ctx.new_path()
         ctx.rectangle(x, self.renderer.height - h - y, w, h)
@@ -369,7 +369,7 @@ class GraphicsContextCairo(GraphicsContextBase):
             self.ctx.set_dash([], 0)  # switch dashes off
         else:
             self.ctx.set_dash(
-                list(self.renderer.points_to_pixels(mlxarr.asarray(dashes))),
+                list(self.renderer.points_to_pixels(mx.asarray(dashes))),
                 offset)
 
     def set_foreground(self, fg, isRGBA=None):
@@ -426,7 +426,7 @@ class FigureCanvasCairo(FigureCanvasBase):
                 and 0 <= y0 and y1 <= sh and bbox.y0 <= bbox.y1):
             raise ValueError("Invalid bbox")
         sls = slice(y0, y0 + max(y1 - y0, 0)), slice(x0, x0 + max(x1 - x0, 0))
-        data = (mlxarr.frombuffer(surface.get_data(), mlxarr.uint32)
+        data = (mx.frombuffer(surface.get_data(), mx.uint32)
                 .reshape((sh, sw))[sls].copy())
         return _CairoRegion(sls, data)
 
@@ -439,7 +439,7 @@ class FigureCanvasCairo(FigureCanvasBase):
         sw = surface.get_width()
         sh = surface.get_height()
         sly, slx = region._slices
-        (mlxarr.frombuffer(surface.get_data(), mlxarr.uint32)
+        (mx.frombuffer(surface.get_data(), mx.uint32)
          .reshape((sh, sw))[sly, slx]) = region._data
         surface.mark_dirty_rectangle(
             slx.start, sly.start, slx.stop - slx.start, sly.stop - sly.start)
@@ -451,7 +451,7 @@ class FigureCanvasCairo(FigureCanvasBase):
         width, height = self.get_width_height()
         buf = self._get_printed_image_surface().get_data()
         fobj.write(cbook._premultiplied_argb32_to_unmultiplied_rgba8888(
-            mlxarr.asarray(buf).reshape((width, height, 4))))
+            mx.asarray(buf).reshape((width, height, 4))))
 
     print_raw = print_rgba
 
@@ -503,7 +503,7 @@ class FigureCanvasCairo(FigureCanvasBase):
         ctx = self._renderer.gc.ctx
 
         if orientation == 'landscape':
-            ctx.rotate(mlxarr.pi / 2)
+            ctx.rotate(mx.pi / 2)
             ctx.translate(0, -height_in_points)
             # Perhaps add an '%%Orientation: Landscape' comment?
 

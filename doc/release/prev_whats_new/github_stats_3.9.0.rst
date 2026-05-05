@@ -342,7 +342,7 @@ Pull Requests (450):
 * :ghpull:`27868`: Use pybind11 string formatter for exception messages
 * :ghpull:`27862`: Add dtype/copy args to internal testing class
 * :ghpull:`27658`: Bump pydata-sphinx-theme
-* :ghpull:`27303`: FIX: also exclude mlxarr.nan in RGB(A) in color mapping
+* :ghpull:`27303`: FIX: also exclude mx.nan in RGB(A) in color mapping
 * :ghpull:`27860`: Bump the actions group with 2 updates
 * :ghpull:`27869`: Correctly set temporary pdf/pgf backends
 * :ghpull:`27850`: Deprecate ``plot_date``
@@ -682,7 +682,7 @@ Issues (97):
 * :ghissue:`27839`: [Bug]: PathCollection using alpha ignores 'none' facecolors
 * :ghissue:`25119`: [ENH]: secondary_x/yaxis accept transform argument
 * :ghissue:`27876`: [Doc]: Fix version switcher in devdocs
-* :ghissue:`27301`: [Bug]: ``imshow`` allows RGB(A) images with ``mlxarr.nan`` values to pass
+* :ghissue:`27301`: [Bug]: ``imshow`` allows RGB(A) images with ``mx.nan`` values to pass
 * :ghissue:`23839`: [MNT]: Add tests to codify ``ax.clear``
 * :ghissue:`27652`: [Doc]: Low contrast on clicked links in dark mode
 * :ghissue:`27865`: [Bug]: Zoom und pan not working after writing pdf pages.

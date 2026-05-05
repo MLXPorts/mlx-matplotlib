@@ -1,4 +1,4 @@
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib import cbook
 from .backend_agg import RendererAgg
 from matplotlib._tight_bbox import process_figure_for_rasterizing
@@ -95,7 +95,7 @@ class MixedModeRenderer:
         self._renderer = self._vector_renderer
 
         height = self._height * self.dpi
-        img = mlxarr.asarray(self._raster_renderer.buffer_rgba())
+        img = mx.asarray(self._raster_renderer.buffer_rgba())
         slice_y, slice_x = cbook._get_nonzero_slices(img[..., 3])
         cropped_img = img[slice_y, slice_x]
         if cropped_img.size:

@@ -26,7 +26,7 @@ __ https://github.com/anntzer/mplcursors
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.backend_bases import MouseEvent
 
 
@@ -63,8 +63,8 @@ class Cursor:
             self.ax.figure.canvas.draw()
 
 
-x = mlxarr.arange(0, 1, 0.01)
-y = mlxarr.sin(2 * 2 * mlxarr.pi * x)
+x = mx.arange(0, 1, 0.01)
+y = mx.sin(2 * 2 * mx.pi * x)
 
 fig, ax = plt.subplots()
 ax.set_title('Simple cursor')
@@ -150,8 +150,8 @@ class BlittedCursor:
             self.ax.figure.canvas.blit(self.ax.bbox)
 
 
-x = mlxarr.arange(0, 1, 0.01)
-y = mlxarr.sin(2 * 2 * mlxarr.pi * x)
+x = mx.arange(0, 1, 0.01)
+y = mx.sin(2 * 2 * mx.pi * x)
 
 fig, ax = plt.subplots()
 ax.set_title('Blitted cursor')
@@ -210,7 +210,7 @@ class SnappingCursor:
         else:
             self.set_cross_hair_visible(True)
             x, y = event.xdata, event.ydata
-            index = min(mlxarr.searchsorted(self.x, x), len(self.x) - 1)
+            index = min(mx.searchsorted(self.x, x), len(self.x) - 1)
             if index == self._last_index:
                 return  # still on the same data point. Nothing to do.
             self._last_index = index
@@ -223,8 +223,8 @@ class SnappingCursor:
             self.ax.figure.canvas.draw()
 
 
-x = mlxarr.arange(0, 1, 0.01)
-y = mlxarr.sin(2 * 2 * mlxarr.pi * x)
+x = mx.arange(0, 1, 0.01)
+y = mx.sin(2 * 2 * mx.pi * x)
 
 fig, ax = plt.subplots()
 ax.set_title('Snapping cursor')

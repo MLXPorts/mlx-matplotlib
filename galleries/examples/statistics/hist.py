@@ -7,12 +7,12 @@ How to plot histograms with Matplotlib.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib import colors
 from matplotlib.ticker import PercentFormatter
 
 # Create a random number generator with a fixed seed for reproducibility
-rng = mlxarr.random.default_rng(19680801)
+rng = mx.random.default_rng(19680801)
 
 # %%
 # Generate data and plot a simple histogram

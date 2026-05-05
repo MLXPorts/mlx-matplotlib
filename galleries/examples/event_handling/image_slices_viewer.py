@@ -16,7 +16,7 @@ In this example a scroll wheel event is used to scroll through 2D slices of
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 class IndexTracker:
     def __init__(self, ax, X):
         self.index = 0
@@ -29,7 +29,7 @@ class IndexTracker:
         print(event.button, event.step)
         increment = 1 if event.button == 'up' else -1
         max_index = self.X.shape[-1] - 1
-        self.index = mlxarr.clip(self.index + increment, 0, max_index)
+        self.index = mx.clip(self.index + increment, 0, max_index)
         self.update()
 
     def update(self):
@@ -39,8 +39,8 @@ class IndexTracker:
         self.im.axes.figure.canvas.draw()
 
 
-x, y, z = mlxarr.ogrid[-10:10:100j, -10:10:100j, 1:10:20j]
-X = mlxarr.sin(x * y * z) / (x * y * z)
+x, y, z = mx.ogrid[-10:10:100j, -10:10:100j, 1:10:20j]
+X = mx.sin(x * y * z) / (x * y * z)
 
 fig, ax = plt.subplots()
 # create an IndexTracker and make sure it lives during the whole

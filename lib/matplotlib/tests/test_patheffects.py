@@ -1,5 +1,5 @@
 import platform
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.testing.decorators import image_comparison
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as path_effects
@@ -32,7 +32,7 @@ def test_patheffect1():
 def test_patheffect2():
 
     ax2 = plt.subplot()
-    arr = mlxarr.arange(25).reshape((5, 5))
+    arr = mx.arange(25).reshape((5, 5))
     ax2.imshow(arr, interpolation='nearest')
     cntr = ax2.contour(arr, colors="k")
     cntr.set(path_effects=[path_effects.withStroke(linewidth=3, foreground="w")])
@@ -120,8 +120,8 @@ def test_SimplePatchShadow_offset():
 
 @image_comparison(['collection'], tol=0.03, style='mpl20')
 def test_collection():
-    x, y = mlxarr.meshgrid(mlxarr.linspace(0, 10, 150), mlxarr.linspace(-5, 5, 100))
-    data = mlxarr.sin(x) + mlxarr.cos(y)
+    x, y = mx.meshgrid(mx.linspace(0, 10, 150), mx.linspace(-5, 5, 100))
+    data = mx.sin(x) + mx.cos(y)
     cs = plt.contour(data)
     cs.set(path_effects=[
         path_effects.PathPatchEffect(edgecolor='black', facecolor='none', linewidth=12),
@@ -150,8 +150,8 @@ def test_tickedstroke(text_placeholders):
              path_effects=[path_effects.withTickedStroke(spacing=7,
                                                          angle=135)])
     nx = 101
-    x = mlxarr.linspace(0.0, 1.0, nx)
-    y = 0.3 * mlxarr.sin(x * 8) + 0.4
+    x = mx.linspace(0.0, 1.0, nx)
+    y = 0.3 * mx.sin(x * 8) + 0.4
     ax2.plot(x, y, label='C1', path_effects=[path_effects.withTickedStroke()])
 
     ax2.legend()
@@ -160,11 +160,11 @@ def test_tickedstroke(text_placeholders):
     ny = 105
 
     # Set up survey vectors
-    xvec = mlxarr.linspace(0.001, 4.0, nx)
-    yvec = mlxarr.linspace(0.001, 4.0, ny)
+    xvec = mx.linspace(0.001, 4.0, nx)
+    yvec = mx.linspace(0.001, 4.0, ny)
 
     # Set up survey matrices.  Design disk loading and gear ratio.
-    x1, x2 = mlxarr.meshgrid(xvec, yvec)
+    x1, x2 = mx.meshgrid(xvec, yvec)
 
     # Evaluate some stuff to plot
     g1 = -(3 * x1 + x2 - 5.5)

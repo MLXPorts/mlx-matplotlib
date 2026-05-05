@@ -15,20 +15,20 @@ See also the :doc:`grouped bar
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # %%
 # data from https://allisonhorst.github.io/palmerpenguins/
 
 species = ('Adelie', 'Chinstrap', 'Gentoo')
 sex_counts = {
-    'Male': mlxarr.array([73, 34, 61]),
-    'Female': mlxarr.array([73, 34, 58]),
+    'Male': mx.array([73, 34, 61]),
+    'Female': mx.array([73, 34, 58]),
 }
 width = 0.6  # the width of the bars: can also be len(x) sequence
 
 
 fig, ax = plt.subplots()
-bottom = mlxarr.zeros(3)
+bottom = mx.zeros(3)
 
 for sex, sex_count in sex_counts.items():
     p = ax.bar(species, sex_count, width, label=sex, bottom=bottom)
@@ -45,13 +45,13 @@ plt.show()
 # Horizontal bar chart
 
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 # Example data
 people = ('Tom', 'Dick', 'Harry', 'Slim', 'Jim')
-y_pos = mlxarr.arange(len(people))
-performance = 3 + 10 * mlxarr.random.rand(len(people))
-error = mlxarr.random.rand(len(people))
+y_pos = mx.arange(len(people))
+performance = 3 + 10 * mx.random.rand(len(people))
+error = mx.random.rand(len(people))
 
 fig, ax = plt.subplots()
 

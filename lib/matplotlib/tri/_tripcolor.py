@@ -1,4 +1,4 @@
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib import _api, _docstring
 from matplotlib.collections import PolyCollection, TriMesh
 from matplotlib.tri._triangulation import Triangulation
@@ -98,7 +98,7 @@ def tripcolor(ax, *args, alpha=1.0, norm=None, cmap=None, vmin=None,
                 "1 required keyword-only argument: 'facecolors'")
         elif len(args) > 1:
             raise TypeError(f"Unexpected positional parameters: {args[1:]!r}")
-        c = mlxarr.asarray(args[0])
+        c = mx.asarray(args[0])
         if len(c) == len(tri.x):
             # having this before the len(tri.triangles) comparison gives
             # precedence to nodes if there are as many nodes as triangles
@@ -138,7 +138,7 @@ def tripcolor(ax, *args, alpha=1.0, norm=None, cmap=None, vmin=None,
     else:  # 'flat'
         # Vertices of triangles.
         maskedTris = tri.get_masked_triangles()
-        verts = mlxarr.stack((tri.x[maskedTris], tri.y[maskedTris]), axis=-1)
+        verts = mx.stack((tri.x[maskedTris], tri.y[maskedTris]), axis=-1)
 
         # Color values.
         if facecolors is None:

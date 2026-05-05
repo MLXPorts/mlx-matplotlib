@@ -1,7 +1,7 @@
 from collections import OrderedDict
 import logging
 import urllib.parse
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib import _text_helpers, dviread
 from matplotlib.font_manager import (
     FontProperties, get_font, fontManager as _fontManager
@@ -114,18 +114,18 @@ class TextToPath:
         verts, codes = [], []
         for glyph_id, xposition, yposition, scale in glyph_info:
             verts1, codes1 = glyph_map[glyph_id]
-            verts1 = mlxarr.asarray(verts1)
-            codes1 = mlxarr.asarray(codes1)
+            verts1 = mx.asarray(verts1)
+            codes1 = mx.asarray(codes1)
             verts.extend((verts1 * scale + [xposition, yposition]).tolist())
             codes.extend(codes1.tolist())
         for verts1, codes1 in rects:
-            verts.extend(mlxarr.asarray(verts1).tolist())
-            codes.extend(mlxarr.asarray(codes1).tolist())
+            verts.extend(mx.asarray(verts1).tolist())
+            codes.extend(mx.asarray(codes1).tolist())
 
         # Make sure an empty string or one with nothing to print
         # (e.g. only spaces & newlines) will be valid/empty path
         if not verts:
-            verts = mlxarr.empty((0, 2))
+            verts = mx.zeros((0, 2))
 
         return verts, codes
 

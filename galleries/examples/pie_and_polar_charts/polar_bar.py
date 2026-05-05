@@ -6,15 +6,15 @@ Bar chart on polar axis
 Demo of bar plot on a polar axis.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 # Compute pie slices
 N = 20
-theta = mlxarr.linspace(0.0, 2 * mlxarr.pi, N, endpoint=False)
-radii = 10 * mlxarr.random.rand(N)
-width = mlxarr.pi / 4 * mlxarr.random.rand(N)
+theta = mx.linspace(0.0, 2 * mx.pi, N, endpoint=False)
+radii = 10 * mx.random.rand(N)
+width = mx.pi / 4 * mx.random.rand(N)
 colors = plt.colormaps["viridis"](radii / 10.)
 
 ax = plt.subplot(projection='polar')

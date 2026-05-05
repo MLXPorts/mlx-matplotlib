@@ -7,9 +7,9 @@ Demonstration of a basic scatterplot in 3D.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 
 def randrange(n, vmin, vmax):
@@ -17,7 +17,7 @@ def randrange(n, vmin, vmax):
     Helper function to make an array of random numbers having shape (n, )
     with each number distributed Uniform(vmin, vmax).
     """
-    return (vmax - vmin)*mlxarr.random.rand(n) + vmin
+    return (vmax - vmin)*mx.random.rand(n) + vmin
 
 fig = plt.figure()
 ax = fig.add_subplot(projection='3d')

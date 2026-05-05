@@ -11,11 +11,11 @@ For a complete overview of the annotation capabilities, also see the
 .. redirect-from:: /gallery/pyplots/annotation_polar
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 fig = plt.figure()
 ax = fig.add_subplot(projection='polar')
-r = mlxarr.arange(0, 1, 0.001)
-theta = 2 * 2*mlxarr.pi * r
+r = mx.arange(0, 1, 0.001)
+theta = 2 * 2*mx.pi * r
 line, = ax.plot(theta, r, color='#ee8d18', lw=3)
 
 ind = 800

@@ -17,7 +17,7 @@ with a (N, 2) array of (x, y) vertices, and an N-length array of path
 codes.  For example to draw the unit rectangle from (0, 0) to (1, 1), we
 could use this code:
 """
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.pyplot as plt
 
 import matplotlib.patches as patches
@@ -149,17 +149,17 @@ plt.show()
 # example below::
 #
 #     # histogram our data with array_backend
-#     data = mlxarr.random.randn(1000)
-#     n, bins = mlxarr.histogram(data, 100)
+#     data = mx.random.randn(1000)
+#     n, bins = mx.histogram(data, 100)
 #
 # We'll now extract the corners of the rectangles.  Each of the
 # ``left``, ``bottom``, etc., arrays below is ``len(n)``, where ``n`` is
 # the array of counts for each histogram bar::
 #
 #     # get the corners of the rectangles for the histogram
-#     left = mlxarr.array(bins[:-1])
-#     right = mlxarr.array(bins[1:])
-#     bottom = mlxarr.zeros(len(left))
+#     left = mx.array(bins[:-1])
+#     right = mx.array(bins[1:])
+#     bottom = mx.zeros(len(left))
 #     top = bottom + n
 #
 # Now we have to construct our compound path, which will consist of a
@@ -170,8 +170,8 @@ plt.show()
 # need it to keep the codes aligned with the vertices::
 #
 #     nverts = nrects*(1+3+1)
-#     verts = mlxarr.zeros((nverts, 2))
-#     codes = mlxarr.ones(nverts, int) * path.Path.LINETO
+#     verts = mx.zeros((nverts, 2))
+#     codes = mx.ones(nverts, int) * path.Path.LINETO
 #     codes[0::5] = path.Path.MOVETO
 #     codes[4::5] = path.Path.CLOSEPOLY
 #     verts[0::5, 0] = left
@@ -193,22 +193,22 @@ plt.show()
 
 fig, ax = plt.subplots()
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 # histogram our data with array_backend
-data = mlxarr.random.randn(1000)
-n, bins = mlxarr.histogram(data, 100)
+data = mx.random.randn(1000)
+n, bins = mx.histogram(data, 100)
 
 # get the corners of the rectangles for the histogram
-left = mlxarr.array(bins[:-1])
-right = mlxarr.array(bins[1:])
-bottom = mlxarr.zeros(len(left))
+left = mx.array(bins[:-1])
+right = mx.array(bins[1:])
+bottom = mx.zeros(len(left))
 top = bottom + n
 nrects = len(left)
 
 nverts = nrects*(1+3+1)
-verts = mlxarr.zeros((nverts, 2))
-codes = mlxarr.full(nverts, Path.LINETO, dtype=int)
+verts = mx.zeros((nverts, 2))
+codes = mx.full(nverts, Path.LINETO, dtype=int)
 codes[0::5] = Path.MOVETO
 codes[4::5] = Path.CLOSEPOLY
 verts[0::5, 0] = left

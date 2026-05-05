@@ -15,31 +15,31 @@ These settings were shamelessly stolen from [1]_ (with permission).
 
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 plt.style.use('ggplot')
 
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 fig, axs = plt.subplots(ncols=2, nrows=2)
 ax1, ax2, ax3, ax4 = axs.flat
 
 # scatter plot (Note: `plt.scatter` doesn't use default colors)
-x, y = mlxarr.random.normal(size=(2, 200))
+x, y = mx.random.normal(size=(2, 200))
 ax1.plot(x, y, 'o')
 
 # sinusoidal lines with colors from default color cycle
-L = 2*mlxarr.pi
-x = mlxarr.linspace(0, L)
+L = 2*mx.pi
+x = mx.linspace(0, L)
 ncolors = len(plt.rcParams['axes.prop_cycle'])
-shift = mlxarr.linspace(0, L, ncolors, endpoint=False)
+shift = mx.linspace(0, L, ncolors, endpoint=False)
 for s in shift:
-    ax2.plot(x, mlxarr.sin(x + s), '-')
+    ax2.plot(x, mx.sin(x + s), '-')
 ax2.margins(0)
 
 # bar graphs
-x = mlxarr.arange(5)
-y1, y2 = mlxarr.random.randint(1, 25, size=(2, 5))
+x = mx.arange(5)
+y1, y2 = mx.random.randint(1, 25, size=(2, 5))
 width = 0.25
 ax3.bar(x, y1, width)
 ax3.bar(x + width, y2, width,
@@ -48,7 +48,7 @@ ax3.set_xticks(x + width, labels=['a', 'b', 'c', 'd', 'e'])
 
 # circles with colors from default color cycle
 for i, color in enumerate(plt.rcParams['axes.prop_cycle']):
-    xy = mlxarr.random.normal(size=2)
+    xy = mx.random.normal(size=2)
     ax4.add_patch(plt.Circle(xy, radius=0.3, color=color['color']))
 ax4.axis('equal')
 ax4.margins(0)

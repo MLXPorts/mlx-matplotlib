@@ -7,7 +7,7 @@ Demonstrates computation of gradient with
 `matplotlib.tri.CubicTriInterpolator`.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.tri import CubicTriInterpolator, Triangulation, UniformTriRefiner
 
 
@@ -17,9 +17,9 @@ from matplotlib.tri import CubicTriInterpolator, Triangulation, UniformTriRefine
 def dipole_potential(x, y):
     """The electric dipole potential V, at position *x*, *y*."""
     r_sq = x**2 + y**2
-    theta = mlxarr.arctan2(y, x)
-    z = mlxarr.cos(theta)/r_sq
-    return (mlxarr.max(z) - z) / (mlxarr.max(z) - mlxarr.min(z))
+    theta = mx.arctan2(y, x)
+    z = mx.cos(theta)/r_sq
+    return (mx.max(z) - z) / (mx.max(z) - mx.min(z))
 
 
 # ----------------------------------------------------------------------------
@@ -29,14 +29,14 @@ def dipole_potential(x, y):
 n_angles = 30
 n_radii = 10
 min_radius = 0.2
-radii = mlxarr.linspace(min_radius, 0.95, n_radii)
+radii = mx.linspace(min_radius, 0.95, n_radii)
 
-angles = mlxarr.linspace(0, 2 * mlxarr.pi, n_angles, endpoint=False)
-angles = mlxarr.repeat(angles[..., mlxarr.newaxis], n_radii, axis=1)
-angles[:, 1::2] += mlxarr.pi / n_angles
+angles = mx.linspace(0, 2 * mx.pi, n_angles, endpoint=False)
+angles = mx.repeat(angles[..., mx.newaxis], n_radii, axis=1)
+angles[:, 1::2] += mx.pi / n_angles
 
-x = (radii*mlxarr.cos(angles)).flatten()
-y = (radii*mlxarr.sin(angles)).flatten()
+x = (radii*mx.cos(angles)).flatten()
+y = (radii*mx.sin(angles)).flatten()
 V = dipole_potential(x, y)
 
 # Create the Triangulation; no triangles specified so Delaunay triangulation
@@ -44,7 +44,7 @@ V = dipole_potential(x, y)
 triang = Triangulation(x, y)
 
 # Mask off unwanted triangles.
-triang.set_mask(mlxarr.hypot(x[triang.triangles].mean(axis=1),
+triang.set_mask(mx.hypot(x[triang.triangles].mean(axis=1),
                          y[triang.triangles].mean(axis=1))
                 < min_radius)
 
@@ -60,7 +60,7 @@ tri_refi, z_test_refi = refiner.refine_field(V, subdiv=3)
 tci = CubicTriInterpolator(triang, -V)
 # Gradient requested here at the mesh nodes but could be anywhere else:
 (Ex, Ey) = tci.gradient(triang.x, triang.y)
-E_norm = mlxarr.sqrt(Ex**2 + Ey**2)
+E_norm = mx.sqrt(Ex**2 + Ey**2)
 
 # ----------------------------------------------------------------------------
 # Plot the triangulation, the potential iso-contours and the vector field
@@ -73,7 +73,7 @@ ax.margins(0.07)
 
 ax.triplot(triang, color='0.8')
 
-levels = mlxarr.arange(0., 1., 0.01)
+levels = mx.arange(0., 1., 0.01)
 ax.tricontour(tri_refi, z_test_refi, levels=levels, cmap='hot',
               linewidths=[2.0, 1.0, 1.0, 1.0])
 # Plots direction of the electrical vector field

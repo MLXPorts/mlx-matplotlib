@@ -1,7 +1,7 @@
 """
 Tools for triangular grids.
 """
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib import _api
 from matplotlib.tri import Triangulation
 
@@ -40,10 +40,10 @@ class TriAnalyzer:
             fits exactly inside a unit square.
         """
         compressed_triangles = self._triangulation.get_masked_triangles()
-        node_used = (mlxarr.bincount(mlxarr.ravel(compressed_triangles),
+        node_used = (mx.bincount(mx.ravel(compressed_triangles),
                                  minlength=self._triangulation.x.size) != 0)
-        return (1 / mlxarr.ptp(self._triangulation.x[node_used]),
-                1 / mlxarr.ptp(self._triangulation.y[node_used]))
+        return (1 / mx.ptp(self._triangulation.x[node_used]),
+                1 / mx.ptp(self._triangulation.y[node_used]))
 
     def circle_ratios(self, rescale=True):
         """
@@ -78,39 +78,39 @@ class TriAnalyzer:
             (kx, ky) = self.scale_factors
         else:
             (kx, ky) = (1.0, 1.0)
-        pts = mlxarr.vstack([self._triangulation.x*kx,
+        pts = mx.vstack([self._triangulation.x*kx,
                          self._triangulation.y*ky]).T
         tri_pts = pts[self._triangulation.triangles]
         # Computes the 3 side lengths
         a = tri_pts[:, 1, :] - tri_pts[:, 0, :]
         b = tri_pts[:, 2, :] - tri_pts[:, 1, :]
         c = tri_pts[:, 0, :] - tri_pts[:, 2, :]
-        a = mlxarr.hypot(a[:, 0], a[:, 1])
-        b = mlxarr.hypot(b[:, 0], b[:, 1])
-        c = mlxarr.hypot(c[:, 0], c[:, 1])
+        a = mx.hypot(a[:, 0], a[:, 1])
+        b = mx.hypot(b[:, 0], b[:, 1])
+        c = mx.hypot(c[:, 0], c[:, 1])
         # circumcircle and incircle radii
         s = (a+b+c)*0.5
         prod = s*(a+b-s)*(a+c-s)*(b+c-s)
         # We have to deal with flat triangles with infinite circum_radius
         bool_flat = (prod == 0.)
-        if mlxarr.any(bool_flat):
+        if mx.any(bool_flat):
             # Pathologic flow
             ntri = tri_pts.shape[0]
-            circum_radius = mlxarr.empty(ntri, dtype=mlxarr.float64)
-            circum_radius[bool_flat] = mlxarr.inf
+            circum_radius = mx.zeros(ntri, dtype=mx.float64)
+            circum_radius[bool_flat] = mx.inf
             abc = a*b*c
             circum_radius[~bool_flat] = abc[~bool_flat] / (
-                4.0*mlxarr.sqrt(prod[~bool_flat]))
+                4.0*mx.sqrt(prod[~bool_flat]))
         else:
             # Normal optimized flow
-            circum_radius = (a*b*c) / (4.0*mlxarr.sqrt(prod))
+            circum_radius = (a*b*c) / (4.0*mx.sqrt(prod))
         in_radius = (a*b*c) / (4.0*circum_radius*s)
         circle_ratio = in_radius/circum_radius
         mask = self._triangulation.mask
         if mask is None:
             return circle_ratio
         else:
-            return mlxarr.ma.array(circle_ratio, mask=mask)
+            return mx.ma.array(circle_ratio, mask=mask)
 
     def get_flat_tri_mask(self, min_circle_ratio=0.01, rescale=True):
         """
@@ -165,27 +165,27 @@ class TriAnalyzer:
 
         current_mask = self._triangulation.mask
         if current_mask is None:
-            current_mask = mlxarr.zeros(ntri, dtype=bool)
-        valid_neighbors = mlxarr.copy(self._triangulation.neighbors)
-        renum_neighbors = mlxarr.arange(ntri, dtype=mlxarr.int32)
+            current_mask = mx.zeros(ntri, dtype=bool)
+        valid_neighbors = mx.copy(self._triangulation.neighbors)
+        renum_neighbors = mx.arange(ntri, dtype=mx.int32)
         nadd = -1
         while nadd != 0:
             # The active wavefront is the triangles from the border (unmasked
             # but with a least 1 neighbor equal to -1
-            wavefront = (mlxarr.min(valid_neighbors, axis=1) == -1) & ~current_mask
+            wavefront = (mx.min(valid_neighbors, axis=1) == -1) & ~current_mask
             # The element from the active wavefront will be masked if their
             # circle ratio is bad.
             added_mask = wavefront & mask_bad_ratio
             current_mask = added_mask | current_mask
-            nadd = mlxarr.sum(added_mask)
+            nadd = mx.sum(added_mask)
 
             # now we have to update the tables valid_neighbors
             valid_neighbors[added_mask, :] = -1
             renum_neighbors[added_mask] = -1
-            valid_neighbors = mlxarr.where(valid_neighbors == -1, -1,
+            valid_neighbors = mx.where(valid_neighbors == -1, -1,
                                        renum_neighbors[valid_neighbors])
 
-        return mlxarr.ma.filled(current_mask, True)
+        return mx.ma.filled(current_mask, True)
 
     def _get_compressed_triangulation(self):
         """
@@ -221,10 +221,10 @@ class TriAnalyzer:
         if tri_mask is not None:
             tri_renum = self._total_to_compress_renum(~tri_mask)
         else:
-            tri_renum = mlxarr.arange(ntri, dtype=mlxarr.int32)
+            tri_renum = mx.arange(ntri, dtype=mx.int32)
 
         # Valid nodes and renumbering
-        valid_node = (mlxarr.bincount(mlxarr.ravel(compressed_triangles),
+        valid_node = (mx.bincount(mx.ravel(compressed_triangles),
                                   minlength=self._triangulation.x.size) != 0)
         compressed_x = self._triangulation.x[valid_node]
         compressed_y = self._triangulation.y[valid_node]
@@ -255,7 +255,7 @@ class TriAnalyzer:
             - For all i with valid[i] = False:
               renum[i] = -1 (invalid value)
         """
-        renum = mlxarr.full(mlxarr.size(valid), -1, dtype=mlxarr.int32)
-        n_valid = mlxarr.sum(valid)
-        renum[valid] = mlxarr.arange(n_valid, dtype=mlxarr.int32)
+        renum = mx.full(mx.size(valid), -1, dtype=mx.int32)
+        n_valid = mx.sum(valid)
+        renum[valid] = mx.arange(n_valid, dtype=mx.int32)
         return renum

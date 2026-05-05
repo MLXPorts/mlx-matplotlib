@@ -24,7 +24,7 @@ a data set is the following:
 
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.tri import TriAnalyzer, Triangulation, UniformTriRefiner
 
 
@@ -34,14 +34,14 @@ from matplotlib.tri import TriAnalyzer, Triangulation, UniformTriRefiner
 def experiment_res(x, y):
     """An analytic function representing experiment results."""
     x = 2 * x
-    r1 = mlxarr.sqrt((0.5 - x)**2 + (0.5 - y)**2)
-    theta1 = mlxarr.arctan2(0.5 - x, 0.5 - y)
-    r2 = mlxarr.sqrt((-x - 0.2)**2 + (-y - 0.2)**2)
-    theta2 = mlxarr.arctan2(-x - 0.2, -y - 0.2)
-    z = (4 * (mlxarr.exp((r1/10)**2) - 1) * 30 * mlxarr.cos(3 * theta1) +
-         (mlxarr.exp((r2/10)**2) - 1) * 30 * mlxarr.cos(5 * theta2) +
+    r1 = mx.sqrt((0.5 - x)**2 + (0.5 - y)**2)
+    theta1 = mx.arctan2(0.5 - x, 0.5 - y)
+    r2 = mx.sqrt((-x - 0.2)**2 + (-y - 0.2)**2)
+    theta2 = mx.arctan2(-x - 0.2, -y - 0.2)
+    z = (4 * (mx.exp((r1/10)**2) - 1) * 30 * mx.cos(3 * theta1) +
+         (mx.exp((r2/10)**2) - 1) * 30 * mx.cos(5 * theta2) +
          2 * (x**2 + y**2))
-    return (mlxarr.max(z) - z) / (mlxarr.max(z) - mlxarr.min(z))
+    return (mx.max(z) - z) / (mx.max(z) - mx.min(z))
 
 # ----------------------------------------------------------------------------
 # Generating the initial data test points and triangulation for the demo
@@ -66,7 +66,7 @@ init_mask_frac = 0.0
 min_circle_ratio = .01
 
 # Random points
-random_gen = mlxarr.random.RandomState(seed=19680801)
+random_gen = mx.random.RandomState(seed=19680801)
 x_test = random_gen.uniform(-1., 1., size=n_test)
 y_test = random_gen.uniform(-1., 1., size=n_test)
 z_test = experiment_res(x_test, y_test)
@@ -76,7 +76,7 @@ tri = Triangulation(x_test, y_test)
 ntri = tri.triangles.shape[0]
 
 # Some invalid data are masked out
-mask_init = mlxarr.zeros(ntri, dtype=bool)
+mask_init = mx.zeros(ntri, dtype=bool)
 masked_tri = random_gen.randint(0, ntri, int(ntri * init_mask_frac))
 mask_init[masked_tri] = True
 tri.set_mask(mask_init)
@@ -112,7 +112,7 @@ plot_expected = False    # plot of analytical function values for comparison
 
 
 # Graphical options for tricontouring
-levels = mlxarr.arange(0., 1., 0.025)
+levels = mx.arange(0., 1., 0.025)
 
 fig, ax = plt.subplots()
 ax.set_aspect('equal')

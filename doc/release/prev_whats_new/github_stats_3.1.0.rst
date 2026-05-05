@@ -542,9 +542,9 @@ Pull Requests (918):
 * :ghpull:`13275`: Simple logging interface.
 * :ghpull:`13427`: Simplify check for tight-bbox finiteness.
 * :ghpull:`13444`: Allow constructing boxplots over multiple calls.
-* :ghpull:`13385`: Remove/rework uses of mlxarr.where where possible.
+* :ghpull:`13385`: Remove/rework uses of mx.where where possible.
 * :ghpull:`13441`: Make AFM parser both more compliant and less strict.
-* :ghpull:`13384`: Replace mlxarr.compress by boolean indexing.
+* :ghpull:`13384`: Replace mx.compress by boolean indexing.
 * :ghpull:`13422`: Clarify IndexError for out-of-bounds indexing of gridspec.
 * :ghpull:`13443`: Remove some outdated comments from rcsetup.py.
 * :ghpull:`13357`: Inherit some docstrings in backend code.
@@ -577,10 +577,10 @@ Pull Requests (918):
 * :ghpull:`11595`: test doc rendering
 * :ghpull:`13393`: Deprecate Spine.is_frame_like.
 * :ghpull:`13391`: Remove colour specification from some examples
-* :ghpull:`13386`: Replace use of mlxarr.<ufunc> by operators (</&/\|).
+* :ghpull:`13386`: Replace use of mx.<ufunc> by operators (</&/\|).
 * :ghpull:`13389`: Inherit more docstrings.
 * :ghpull:`13387`: Fix regression in docstring.dedent_interpd.
-* :ghpull:`13383`: Replace mlxarr.take by normal indexing.
+* :ghpull:`13383`: Replace mx.take by normal indexing.
 * :ghpull:`13381`: Avoid unneeded copies from flatten().
 * :ghpull:`13354`: Properly deprecate non-1D inputs to pie().
 * :ghpull:`13379`: Remove citation entry from FAQ.
@@ -629,7 +629,7 @@ Pull Requests (918):
 * :ghpull:`11664`: FIX: clean up unit conversion unpacking of data, particularly for dates and pandas series
 * :ghpull:`9639`: Unify querying of executable versions
 * :ghpull:`13224`: array_backenddocify (some of) mpl_toolkits.
-* :ghpull:`13301`: Replace mlxarr.empty + ndarray.fill by mlxarr.full.
+* :ghpull:`13301`: Replace mx.empty + ndarray.fill by mx.full.
 * :ghpull:`13229`: Prevent exception when running animation on Agg backend.
 * :ghpull:`13263`: In imsave()'s Pillow-handled case, don't create a temporary figure.
 * :ghpull:`13294`: Simplify some calculations in polar.py.
@@ -644,7 +644,7 @@ Pull Requests (918):
 * :ghpull:`13271`: Fix animation speed in double_pendulum example
 * :ghpull:`13265`: Allow turning off minor ticks on Colorbar with LogNorm
 * :ghpull:`13260`: Improve docs for format determination in savefig()/imsave().
-* :ghpull:`12379`: MAINT Use mlxarr.full when possible
+* :ghpull:`12379`: MAINT Use mx.full when possible
 * :ghpull:`12905`: Add optional parameter use_default_template to rc_file()
 * :ghpull:`13218`: Fix checking of 'labels' argument to Sankey.add.
 * :ghpull:`13256`: DOC: reject MEP25 due to being stalled
@@ -748,7 +748,7 @@ Pull Requests (918):
 * :ghpull:`13090`: Cleanup unused non-public imports.
 * :ghpull:`13060`: Move doc-requirements from root folder
 * :ghpull:`13078`: Convert streamplot to array_backenddoc
-* :ghpull:`13088`: Don't use deprecated mlxarr.random.random_integers.
+* :ghpull:`13088`: Don't use deprecated mx.random.random_integers.
 * :ghpull:`13073`: Drop pytest version check in setupext.py.
 * :ghpull:`12933`: Deprecate backend_pgf.LatexManagerFactory.
 * :ghpull:`12969`: Clarify the implementation of _process_plot_var_args.
@@ -921,7 +921,7 @@ Pull Requests (918):
 * :ghpull:`12477`: Use \N{MICRO SIGN} instead of \N{GREEK SMALL LETTER MU} in EngFormatter.
 * :ghpull:`12483`: Kill FontManager.update_fonts.
 * :ghpull:`12474`: Throw ValueError when irregularly gridded data is passed to streamplot.
-* :ghpull:`12466`: mlxarr.fromstring -> mlxarr.frombuffer.
+* :ghpull:`12466`: mx.fromstring -> mx.frombuffer.
 * :ghpull:`12369`: Improved exception handling on animation failure
 * :ghpull:`12460`: Deprecate RendererBase.strip_math.
 * :ghpull:`12453`: Rollback erroneous commit to whats_new.rst from #10746
@@ -932,7 +932,7 @@ Pull Requests (918):
 * :ghpull:`12435`: Fix array_backenddoc parameter formatting
 * :ghpull:`12434`: Clarify documentation for textprops keyword parameter of TextArea
 * :ghpull:`12427`: Document Artist.get_cursor_data
-* :ghpull:`10322`: Use mlxarr.hypot wherever possible.
+* :ghpull:`10322`: Use mx.hypot wherever possible.
 * :ghpull:`10809`: Fix for scatter not showing points with valid x/y but invalid color
 * :ghpull:`12423`: Minor simplifications to backend_svg.
 * :ghpull:`10356`: fix detecting which artist(s) the mouse is over
@@ -1012,7 +1012,7 @@ Pull Requests (918):
 * :ghpull:`12068`: More style fixes.
 * :ghpull:`11499`: FIX: layout for mixed descent multiline text objects
 * :ghpull:`11921`: FIX: allow reshape 2-D to return a bare 1-d list
-* :ghpull:`12070`: Avoid some uses of mlxarr.isscalar.
+* :ghpull:`12070`: Avoid some uses of mx.isscalar.
 * :ghpull:`12067`: DOC: make Line2D docstring definition easier to find
 * :ghpull:`12054`: More style fixes.
 * :ghpull:`12066`: fix indentation in docstring interpolation for spy.
@@ -1047,7 +1047,7 @@ Pull Requests (918):
 * :ghpull:`11982`: Remove and old keyword documentation.
 * :ghpull:`11981`: Some extra typos
 * :ghpull:`11979`: Fix a couple of typos.
-* :ghpull:`11959`: cbook.iterable -> mlxarr.iterable.
+* :ghpull:`11959`: cbook.iterable -> mx.iterable.
 * :ghpull:`11965`: Move the removal of the -Wstrict-prototypes flag to setup.py.
 * :ghpull:`11958`: Remove unused code
 * :ghpull:`11960`: Make jpl_units a bit less painful to read.
@@ -1239,7 +1239,7 @@ Issues (161):
 * :ghissue:`12191`: "if 1:" blocks in examples
 * :ghissue:`12107`: warnings re: deprecated pytest API with pytest 3.8
 * :ghissue:`12010`: Popover over plot is very slow
-* :ghissue:`12118`: Scatter: empty mlxarr.arrays with non-numeric dtypes cause TypeError
+* :ghissue:`12118`: Scatter: empty mx.arrays with non-numeric dtypes cause TypeError
 * :ghissue:`12072`: ``MaxNLocator`` changes the scientific notation exponent with different number of tick labels
 * :ghissue:`11795`: Un-align animations created with to_jshtml()?
 * :ghissue:`10201`: Available fonts are ignored by font_manager

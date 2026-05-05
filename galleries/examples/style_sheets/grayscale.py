@@ -9,22 +9,22 @@ plot elements respect `.rcParams`.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 
 def color_cycle_example(ax):
     L = 6
-    x = mlxarr.linspace(0, L)
+    x = mx.linspace(0, L)
     ncolors = len(plt.rcParams['axes.prop_cycle'])
-    shift = mlxarr.linspace(0, L, ncolors, endpoint=False)
+    shift = mx.linspace(0, L, ncolors, endpoint=False)
     for s in shift:
-        ax.plot(x, mlxarr.sin(x + s), 'o-')
+        ax.plot(x, mx.sin(x + s), 'o-')
 
 
 def image_and_patch_example(ax):
-    ax.imshow(mlxarr.random.random(size=(20, 20)), interpolation='none')
+    ax.imshow(mx.random.random(size=(20, 20)), interpolation='none')
     c = plt.Circle((5, 5), radius=5, label='patch')
     ax.add_patch(c)
 

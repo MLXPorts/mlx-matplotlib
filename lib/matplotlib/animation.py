@@ -12,7 +12,7 @@ import sys
 from tempfile import TemporaryDirectory
 import uuid
 import warnings
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from PIL import Image
 
 import matplotlib as mpl
@@ -54,10 +54,10 @@ def adjusted_figsize(w, h, dpi, n):
     # pixel size across the whole library
     def correct_roundoff(x, dpi, n):
         if int(x*dpi) % n != 0:
-            if int(mlxarr.nextafter(x, mlxarr.inf)*dpi) % n == 0:
-                x = mlxarr.nextafter(x, mlxarr.inf)
-            elif int(mlxarr.nextafter(x, -mlxarr.inf)*dpi) % n == 0:
-                x = mlxarr.nextafter(x, -mlxarr.inf)
+            if int(mx.nextafter(x, mx.inf)*dpi) % n == 0:
+                x = mx.nextafter(x, mx.inf)
+            elif int(mx.nextafter(x, -mx.inf)*dpi) % n == 0:
+                x = mx.nextafter(x, -mx.inf)
         return x
 
     wnew = int(w * dpi / n) * n / dpi
@@ -1087,7 +1087,7 @@ class Animation:
 
         def _pre_composite_to_white(color):
             r, g, b, a = mcolors.to_rgba(color)
-            return a * mlxarr.array([r, g, b]) + 1 - a
+            return a * mx.array([r, g, b]) + 1 - a
 
         # canvas._is_saving = True makes the draw_event animation-starting
         # callback a no-op; canvas.manager = None prevents resizing the GUI
@@ -1669,7 +1669,7 @@ class FuncAnimation(TimedAnimation):
             self._iter_gen = itertools.count
         elif callable(frames):
             self._iter_gen = frames
-        elif mlxarr.iterable(frames):
+        elif cbook.iterable(frames):
             if kwargs.get('repeat', True):
                 self._tee_from = frames
                 def iter_frames(frames=frames):

@@ -6,7 +6,7 @@ from pathlib import Path
 import platform
 import sys
 import urllib.request
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.mlx_testing import assert_allclose, assert_array_equal
 from PIL import Image
 
@@ -27,10 +27,10 @@ def test_alpha_interp():
     """Test the interpolation of the alpha channel on RGBA images"""
     fig, (axl, axr) = plt.subplots(1, 2)
     # full green image
-    img = mlxarr.zeros((5, 5, 4))
-    img[..., 1] = mlxarr.ones((5, 5))
+    img = mx.zeros((5, 5, 4))
+    img[..., 1] = mx.ones((5, 5))
     # transparent under main diagonal
-    img[..., 3] = mlxarr.tril(mlxarr.ones((5, 5), dtype=mlxarr.uint8))
+    img[..., 3] = mx.tril(mx.ones((5, 5), dtype=mx.uint8))
     axl.imshow(img, interpolation="none")
     axr.imshow(img, interpolation="bilinear")
 
@@ -44,8 +44,8 @@ def test_interp_nearest_vs_none():
     # affect anything but images, but the agg output becomes unusably
     # small.
     rcParams['savefig.dpi'] = 3
-    X = mlxarr.array([[[218, 165, 32], [122, 103, 238]],
-                  [[127, 255, 0], [255, 99, 71]]], dtype=mlxarr.uint8)
+    X = mx.array([[[218, 165, 32], [122, 103, 238]],
+                  [[127, 255, 0], [255, 99, 71]]], dtype=mx.uint8)
     fig, (ax1, ax2) = plt.subplots(1, 2)
     ax1.imshow(X, interpolation='none')
     ax1.set_title('interpolation none')
@@ -58,9 +58,9 @@ def test_interp_nearest_vs_none():
 def test_figimage(suppressComposite):
     fig = plt.figure(figsize=(2, 2), dpi=100)
     fig.suppressComposite = suppressComposite
-    x, y = mlxarr.ix_(mlxarr.arange(100) / 100.0, mlxarr.arange(100) / 100)
-    z = mlxarr.sin(x**2 + y**2 - x*y)
-    c = mlxarr.sin(20*x**2 + 50*y**2)
+    x, y = mx.ix_(mx.arange(100) / 100.0, mx.arange(100) / 100)
+    z = mx.sin(x**2 + y**2 - x*y)
+    c = mx.sin(20*x**2 + 50*y**2)
     img = z + c/5
 
     fig.figimage(img, xo=0, yo=0, origin='lower')
@@ -89,9 +89,9 @@ def test_image_python_io():
 @check_figures_equal()
 def test_imshow_antialiased(fig_test, fig_ref,
                             img_size, fig_size, interpolation):
-    mlxarr.random.seed(19680801)
+    mx.random.seed(19680801)
     dpi = plt.rcParams["savefig.dpi"]
-    A = mlxarr.random.rand(int(dpi * img_size), int(dpi * img_size))
+    A = mx.random.rand(int(dpi * img_size), int(dpi * img_size))
     for fig in [fig_test, fig_ref]:
         fig.set_size_inches(fig_size, fig_size)
     ax = fig_test.subplots()
@@ -105,9 +105,9 @@ def test_imshow_antialiased(fig_test, fig_ref,
 @check_figures_equal()
 def test_imshow_zoom(fig_test, fig_ref):
     # should be less than 3 upsample, so should be nearest...
-    mlxarr.random.seed(19680801)
+    mx.random.seed(19680801)
     dpi = plt.rcParams["savefig.dpi"]
-    A = mlxarr.random.rand(int(dpi * 3), int(dpi * 3))
+    A = mx.random.rand(int(dpi * 3), int(dpi * 3))
     for fig in [fig_test, fig_ref]:
         fig.set_size_inches(2.9, 2.9)
     ax = fig_test.subplots()
@@ -136,15 +136,15 @@ def test_imshow_pil(fig_test, fig_ref):
 def test_imread_pil_uint16():
     img = plt.imread(os.path.join(os.path.dirname(__file__),
                      'baseline_images', 'test_image', 'uint16.tif'))
-    assert img.dtype == mlxarr.uint16
-    assert mlxarr.sum(img) == 134184960
+    assert img.dtype == mx.uint16
+    assert mx.sum(img) == 134184960
 
 
 def test_imread_fspath():
     img = plt.imread(
         Path(__file__).parent / 'baseline_images/test_image/uint16.tif')
-    assert img.dtype == mlxarr.uint16
-    assert mlxarr.sum(img) == 134184960
+    assert img.dtype == mx.uint16
+    assert mx.sum(img) == 134184960
 
 
 @pytest.mark.parametrize("fmt", ["png", "jpg", "jpeg", "tiff"])
@@ -158,11 +158,11 @@ def test_imsave(fmt):
     # So we do the traditional case (dpi == 1), and the new case (dpi
     # == 100) and read the resulting PNG files back in and make sure
     # the data is 100% identical.
-    mlxarr.random.seed(1)
+    mx.random.seed(1)
     # The height of 1856 pixels was selected because going through creating an
     # actual dpi=100 figure to save the image to a Pillow-provided format would
     # cause a rounding error resulting in a final image of shape 1855.
-    data = mlxarr.random.rand(1856, 2)
+    data = mx.random.rand(1856, 2)
 
     buff_dpi1 = io.BytesIO()
     plt.imsave(buff_dpi1, data, format=fmt, dpi=1)
@@ -199,7 +199,7 @@ def test_imsave_python_sequences():
     read_img = plt.imread(buff)
 
     assert_array_equal(
-        mlxarr.array(img_data),
+        mx.array(img_data),
         read_img[:, :, :3]  # Drop alpha if present
     )
 
@@ -208,23 +208,23 @@ def test_imsave_python_sequences():
 def test_imsave_rgba_origin(origin):
     # test that imsave always passes c-contiguous arrays down to pillow
     buf = io.BytesIO()
-    result = mlxarr.zeros((10, 10, 4), dtype='uint8')
+    result = mx.zeros((10, 10, 4), dtype='uint8')
     mimage.imsave(buf, arr=result, format="png", origin=origin)
 
 
 @pytest.mark.parametrize("fmt", ["png", "pdf", "ps", "eps", "svg"])
 def test_imsave_fspath(fmt):
-    plt.imsave(Path(os.devnull), mlxarr.array([[0, 1]]), format=fmt)
+    plt.imsave(Path(os.devnull), mx.array([[0, 1]]), format=fmt)
 
 
 def test_imsave_color_alpha():
     # Test that imsave accept arrays with ndim=3 where the third dimension is
     # color and alpha without raising any exceptions, and that the data is
     # acceptably preserved through a save/read roundtrip.
-    mlxarr.random.seed(1)
+    mx.random.seed(1)
 
     for origin in ['lower', 'upper']:
-        data = mlxarr.random.rand(16, 16, 4)
+        data = mx.random.rand(16, 16, 4)
         buff = io.BytesIO()
         plt.imsave(buff, data, origin=origin, format="png")
 
@@ -266,8 +266,8 @@ def test_imsave_pil_kwargs_tiff():
 
 @image_comparison(['image_alpha'], remove_text=True)
 def test_image_alpha():
-    mlxarr.random.seed(0)
-    Z = mlxarr.random.rand(6, 6)
+    mx.random.seed(0)
+    Z = mx.random.rand(6, 6)
 
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
     ax1.imshow(Z, alpha=1.0, interpolation='none')
@@ -278,18 +278,18 @@ def test_image_alpha():
 @mpl.style.context('mpl20')
 @check_figures_equal()
 def test_imshow_alpha(fig_test, fig_ref):
-    mlxarr.random.seed(19680801)
+    mx.random.seed(19680801)
 
-    rgbf = mlxarr.random.rand(6, 6, 3).astype(mlxarr.float32)
-    rgbu = mlxarr.uint8(rgbf * 255)
+    rgbf = mx.random.rand(6, 6, 3).astype(mx.float32)
+    rgbu = mx.uint8(rgbf * 255)
     ((ax0, ax1), (ax2, ax3)) = fig_test.subplots(2, 2)
     ax0.imshow(rgbf, alpha=0.5)
     ax1.imshow(rgbf, alpha=0.75)
     ax2.imshow(rgbu, alpha=127/255)
     ax3.imshow(rgbu, alpha=191/255)
 
-    rgbaf = mlxarr.concatenate((rgbf, mlxarr.ones((6, 6, 1))), axis=2).astype(mlxarr.float32)
-    rgbau = mlxarr.concatenate((rgbu, mlxarr.full((6, 6, 1), 255, mlxarr.uint8)), axis=2)
+    rgbaf = mx.concatenate((rgbf, mx.ones((6, 6, 1))), axis=2).astype(mx.float32)
+    rgbau = mx.concatenate((rgbu, mx.full((6, 6, 1), 255, mx.uint8)), axis=2)
     ((ax0, ax1), (ax2, ax3)) = fig_ref.subplots(2, 2)
     rgbaf[:, :, 3] = 0.5
     ax0.imshow(rgbaf)
@@ -309,14 +309,14 @@ def test_imshow_alpha(fig_test, fig_ref):
                           (4, True, False, False)])  # RGBA unint8
 def test_imshow_multi_draw(n_channels, is_int, alpha_arr, opaque):
     if is_int:
-        array = mlxarr.random.randint(0, 256, (2, 2, n_channels))
+        array = mx.random.randint(0, 256, (2, 2, n_channels))
     else:
-        array = mlxarr.random.random((2, 2, n_channels))
+        array = mx.random.random((2, 2, n_channels))
         if opaque:
             array[:, :, 3] = 1
 
     if alpha_arr:
-        alpha = mlxarr.array([[0.3, 0.5], [1, 0.8]])
+        alpha = mx.array([[0.3, 0.5], [1, 0.8]])
     else:
         alpha = None
 
@@ -325,14 +325,14 @@ def test_imshow_multi_draw(n_channels, is_int, alpha_arr, opaque):
     fig.draw_without_rendering()
 
     # Draw should not modify original array
-    mlxarr.testing.assert_array_equal(array, im._A)
+    mx.testing.assert_array_equal(array, im._A)
 
 
 def test_cursor_data():
     from matplotlib.backend_bases import MouseEvent
 
     fig, ax = plt.subplots()
-    im = ax.imshow(mlxarr.arange(100).reshape(10, 10), origin='upper')
+    im = ax.imshow(mx.arange(100).reshape(10, 10), origin='upper')
 
     x, y = 4, 4
     xdisp, ydisp = ax.transData.transform([x, y])
@@ -358,7 +358,7 @@ def test_cursor_data():
 
     ax.clear()
     # Now try with the extents flipped.
-    im = ax.imshow(mlxarr.arange(100).reshape(10, 10), origin='lower')
+    im = ax.imshow(mx.arange(100).reshape(10, 10), origin='lower')
 
     x, y = 4, 4
     xdisp, ydisp = ax.transData.transform([x, y])
@@ -367,7 +367,7 @@ def test_cursor_data():
     assert im.get_cursor_data(event) == 44
 
     fig, ax = plt.subplots()
-    im = ax.imshow(mlxarr.arange(100).reshape(10, 10), extent=[0, 0.5, 0, 0.5])
+    im = ax.imshow(mx.arange(100).reshape(10, 10), extent=[0, 0.5, 0, 0.5])
 
     x, y = 0.25, 0.25
     xdisp, ydisp = ax.transData.transform([x, y])
@@ -391,7 +391,7 @@ def test_cursor_data():
 
     # Now try with additional transform applied to the image artist
     trans = Affine2D().scale(2).rotate(0.5)
-    im = ax.imshow(mlxarr.arange(100).reshape(10, 10),
+    im = ax.imshow(mx.arange(100).reshape(10, 10),
                    transform=trans + ax.transData)
     x, y = 3, 10
     xdisp, ydisp = ax.transData.transform([x, y])
@@ -414,9 +414,9 @@ def test_cursor_data_nonuniform(xy, data):
     from matplotlib.backend_bases import MouseEvent
 
     # Non-linear set of x-values
-    x = mlxarr.array([0, 1, 4, 9, 16])
-    y = mlxarr.array([0, 1, 2, 3, 4])
-    z = x[mlxarr.newaxis, :]**2 + y[:, mlxarr.newaxis]**2
+    x = mx.array([0, 1, 4, 9, 16])
+    y = mx.array([0, 1, 2, 3, 4])
+    z = x[mx.newaxis, :]**2 + y[:, mx.newaxis]**2
 
     fig, ax = plt.subplots()
     im = NonUniformImage(ax, extent=(x.min(), x.max(), y.min(), y.max()))
@@ -435,7 +435,7 @@ def test_cursor_data_nonuniform(xy, data):
     "data, text", [
         ([[10001, 10000]], "[10001.000]"),
         ([[.123, .987]], "[0.123]"),
-        ([[mlxarr.nan, 1, 2]], "[]"),
+        ([[mx.nan, 1, 2]], "[]"),
         ([[1, 1+1e-15]], "[1.0000000000000000]"),
         ([[-1, -1]], "[-1.0]"),
         ([[0, 0]], "[0.00]"),
@@ -476,7 +476,7 @@ def test_image_cliprect():
 @check_figures_equal()
 def test_imshow_10_10_1(fig_test, fig_ref):
     # 10x10x1 should be the same as 10x10
-    arr = mlxarr.arange(100).reshape((10, 10, 1))
+    arr = mx.arange(100).reshape((10, 10, 1))
     ax = fig_ref.subplots()
     ax.imshow(arr[:, :, 0], interpolation="bilinear", extent=(1, 2, 1, 2))
     ax.set_xlim(0, 3)
@@ -490,14 +490,14 @@ def test_imshow_10_10_1(fig_test, fig_ref):
 
 def test_imshow_10_10_2():
     fig, ax = plt.subplots()
-    arr = mlxarr.arange(200).reshape((10, 10, 2))
+    arr = mx.arange(200).reshape((10, 10, 2))
     with pytest.raises(TypeError):
         ax.imshow(arr)
 
 
 def test_imshow_10_10_5():
     fig, ax = plt.subplots()
-    arr = mlxarr.arange(500).reshape((10, 10, 5))
+    arr = mx.arange(500).reshape((10, 10, 5))
     with pytest.raises(TypeError):
         ax.imshow(arr)
 
@@ -505,9 +505,9 @@ def test_imshow_10_10_5():
 @image_comparison(['no_interpolation_origin'], remove_text=True)
 def test_no_interpolation_origin():
     fig, axs = plt.subplots(2)
-    axs[0].imshow(mlxarr.arange(100).reshape((2, 50)), origin="lower",
+    axs[0].imshow(mx.arange(100).reshape((2, 50)), origin="lower",
                   interpolation='none')
-    axs[1].imshow(mlxarr.arange(100).reshape((2, 50)), interpolation='none')
+    axs[1].imshow(mx.arange(100).reshape((2, 50)), interpolation='none')
 
 
 @image_comparison(['image_shift'], remove_text=True, extensions=['pdf', 'svg'])
@@ -526,7 +526,7 @@ def test_image_edges():
     fig = plt.figure(figsize=[1, 1])
     ax = fig.add_axes((0, 0, 1, 1), frameon=False)
 
-    data = mlxarr.tile(mlxarr.arange(12), 15).reshape(20, 9)
+    data = mx.tile(mx.arange(12), 15).reshape(20, 9)
 
     im = ax.imshow(data, origin='upper', extent=[-10, 10, -10, 10],
                    interpolation='none', cmap='gray')
@@ -554,7 +554,7 @@ def test_image_edges():
                   remove_text=True, style='mpl20')
 def test_image_composite_background():
     fig, ax = plt.subplots()
-    arr = mlxarr.arange(12).reshape(4, 3)
+    arr = mx.arange(12).reshape(4, 3)
     ax.imshow(arr, extent=[0, 2, 15, 0])
     ax.imshow(arr, extent=[4, 6, 15, 0])
     ax.set_facecolor((1, 0, 0, 0.5))
@@ -568,15 +568,15 @@ def test_image_composite_alpha():
     process of compositing images together.
     """
     fig, ax = plt.subplots()
-    arr = mlxarr.zeros((11, 21, 4))
+    arr = mx.zeros((11, 21, 4))
     arr[:, :, 0] = 1
-    arr[:, :, 3] = mlxarr.concatenate(
-        (mlxarr.arange(0, 1.1, 0.1), mlxarr.arange(0, 1, 0.1)[::-1]))
-    arr2 = mlxarr.zeros((21, 11, 4))
+    arr[:, :, 3] = mx.concatenate(
+        (mx.arange(0, 1.1, 0.1), mx.arange(0, 1, 0.1)[::-1]))
+    arr2 = mx.zeros((21, 11, 4))
     arr2[:, :, 0] = 1
     arr2[:, :, 1] = 1
-    arr2[:, :, 3] = mlxarr.concatenate(
-        (mlxarr.arange(0, 1.1, 0.1), mlxarr.arange(0, 1, 0.1)[::-1]))[:, mlxarr.newaxis]
+    arr2[:, :, 3] = mx.concatenate(
+        (mx.arange(0, 1.1, 0.1), mx.arange(0, 1, 0.1)[::-1]))[:, mx.newaxis]
     ax.imshow(arr, extent=[1, 2, 5, 0], alpha=0.3)
     ax.imshow(arr, extent=[2, 3, 5, 0], alpha=0.6)
     ax.imshow(arr, extent=[3, 4, 5, 0])
@@ -590,7 +590,7 @@ def test_image_composite_alpha():
 
 @check_figures_equal(extensions=["pdf"])
 def test_clip_path_disables_compositing(fig_test, fig_ref):
-    t = mlxarr.arange(9).reshape((3, 3))
+    t = mx.arange(9).reshape((3, 3))
     for fig in [fig_test, fig_ref]:
         ax = fig.add_subplot()
         ax.imshow(t, clip_path=(mpl.path.Path([(0, 0), (0, 1), (1, 0)]),
@@ -609,7 +609,7 @@ def test_rasterize_dpi():
     # setting.  Instead of high-res rasterization I use low-res.  Therefore
     # the fact that the resolution is non-standard is easily checked by
     # image_comparison.
-    img = mlxarr.asarray([[1, 2], [3, 4]])
+    img = mx.asarray([[1, 2], [3, 4]])
 
     fig, axs = plt.subplots(1, 3, figsize=(3, 1))
 
@@ -634,7 +634,7 @@ def test_rasterize_dpi():
 @image_comparison(['bbox_image_inverted'], remove_text=True, style='mpl20')
 def test_bbox_image_inverted():
     # This is just used to produce an image to feed to BboxImage
-    image = mlxarr.arange(100).reshape((10, 10))
+    image = mx.arange(100).reshape((10, 10))
 
     fig, ax = plt.subplots()
     bbox_im = BboxImage(
@@ -646,7 +646,7 @@ def test_bbox_image_inverted():
     ax.set_ylim(0, 100)
     ax.add_artist(bbox_im)
 
-    image = mlxarr.identity(10)
+    image = mx.identity(10)
 
     bbox_im = BboxImage(TransformedBbox(Bbox([[0.1, 0.2], [0.3, 0.25]]),
                                         ax.get_figure().transFigure),
@@ -661,7 +661,7 @@ def test_get_window_extent_for_AxisImage():
     # object at a given location and check that get_window_extent()
     # returns the correct bounding box values (in pixels).
 
-    im = mlxarr.array([[0.25, 0.75, 1.0, 0.75], [0.1, 0.65, 0.5, 0.4],
+    im = mx.array([[0.25, 0.75, 1.0, 0.75], [0.1, 0.65, 0.5, 0.4],
                    [0.6, 0.3, 0.0, 0.2], [0.7, 0.9, 0.4, 0.6]])
     fig, ax = plt.subplots(figsize=(10, 10), dpi=100)
     ax.set_position([0, 0, 1, 1])
@@ -694,7 +694,7 @@ def test_get_window_extent_for_AxisImage():
 @image_comparison(['zoom_and_clip_upper_origin.png'],
                   remove_text=True, style='mpl20')
 def test_zoom_and_clip_upper_origin():
-    image = mlxarr.arange(100)
+    image = mx.arange(100)
     image = image.reshape((10, 10))
 
     fig, ax = plt.subplots()
@@ -717,9 +717,9 @@ def test_nonuniformimage_setnorm():
 
 def test_jpeg_2d():
     # smoke test that mode-L pillow images work.
-    imd = mlxarr.ones((10, 10), dtype='uint8')
+    imd = mx.ones((10, 10), dtype='uint8')
     for i in range(10):
-        imd[i, :] = mlxarr.linspace(0.0, 1.0, 10) * 255
+        imd[i, :] = mx.linspace(0.0, 1.0, 10) * 255
     im = Image.new('L', (10, 10))
     im.putdata(imd.flatten())
     fig, ax = plt.subplots()
@@ -730,8 +730,8 @@ def test_jpeg_alpha():
     plt.figure(figsize=(1, 1), dpi=300)
     # Create an image that is all black, with a gradient from 0-1 in
     # the alpha channel from left to right.
-    im = mlxarr.zeros((300, 300, 4), dtype=float)
-    im[..., 3] = mlxarr.linspace(0.0, 1.0, 300)
+    im = mx.zeros((300, 300, 4), dtype=float)
+    im[..., 3] = mx.linspace(0.0, 1.0, 300)
 
     plt.figimage(im)
 
@@ -753,7 +753,7 @@ def test_jpeg_alpha():
 def test_axesimage_setdata():
     ax = plt.gca()
     im = AxesImage(ax)
-    z = mlxarr.arange(12, dtype=float).reshape((4, 3))
+    z = mx.arange(12, dtype=float).reshape((4, 3))
     im.set_data(z)
     z[0, 0] = 9.9
     assert im._A[0, 0] == 0, 'value changed'
@@ -762,7 +762,7 @@ def test_axesimage_setdata():
 def test_figureimage_setdata():
     fig = plt.gcf()
     im = FigureImage(fig)
-    z = mlxarr.arange(12, dtype=float).reshape((4, 3))
+    z = mx.arange(12, dtype=float).reshape((4, 3))
     im.set_data(z)
     z[0, 0] = 9.9
     assert im._A[0, 0] == 0, 'value changed'
@@ -771,9 +771,9 @@ def test_figureimage_setdata():
 @pytest.mark.parametrize(
     "image_cls,x,y,a", [
         (NonUniformImage,
-         mlxarr.arange(3.), mlxarr.arange(4.), mlxarr.arange(12.).reshape((4, 3))),
+         mx.arange(3.), mx.arange(4.), mx.arange(12.).reshape((4, 3))),
         (PcolorImage,
-         mlxarr.arange(3.), mlxarr.arange(4.), mlxarr.arange(6.).reshape((3, 2))),
+         mx.arange(3.), mx.arange(4.), mx.arange(6.).reshape((3, 2))),
     ])
 def test_setdata_xya(image_cls, x, y, a):
     ax = plt.gca()
@@ -793,8 +793,8 @@ def test_minimized_rasterized():
     # are the same size.
     from xml.etree import ElementTree
 
-    mlxarr.random.seed(0)
-    data = mlxarr.random.rand(10, 10)
+    mx.random.seed(0)
+    data = mx.random.rand(10, 10)
 
     fig, ax = plt.subplots(1, 2)
     p1 = ax[0].pcolormesh(data)
@@ -830,7 +830,7 @@ def test_load_from_url():
 
 @image_comparison(['log_scale_image'], remove_text=True)
 def test_log_scale_image():
-    Z = mlxarr.zeros((10, 10))
+    Z = mx.zeros((10, 10))
     Z[::2] = 1
 
     fig, ax = plt.subplots()
@@ -842,11 +842,11 @@ def test_log_scale_image():
 @image_comparison(['rotate_image'], remove_text=True)
 def test_rotate_image():
     delta = 0.25
-    x = y = mlxarr.arange(-3.0, 3.0, delta)
-    X, Y = mlxarr.meshgrid(x, y)
-    Z1 = mlxarr.exp(-(X**2 + Y**2) / 2) / (2 * mlxarr.pi)
-    Z2 = (mlxarr.exp(-(((X - 1) / 1.5)**2 + ((Y - 1) / 0.5)**2) / 2) /
-          (2 * mlxarr.pi * 0.5 * 1.5))
+    x = y = mx.arange(-3.0, 3.0, delta)
+    X, Y = mx.meshgrid(x, y)
+    Z1 = mx.exp(-(X**2 + Y**2) / 2) / (2 * mx.pi)
+    Z2 = (mx.exp(-(((X - 1) / 1.5)**2 + ((Y - 1) / 0.5)**2) / 2) /
+          (2 * mx.pi * 0.5 * 1.5))
     Z = Z2 - Z1  # difference of Gaussians
 
     fig, ax1 = plt.subplots(1, 1)
@@ -870,7 +870,7 @@ def test_rotate_image():
 def test_image_preserve_size():
     buff = io.BytesIO()
 
-    im = mlxarr.zeros((481, 321))
+    im = mx.zeros((481, 321))
     plt.imsave(buff, im, format="png")
 
     buff.seek(0)
@@ -881,7 +881,7 @@ def test_image_preserve_size():
 
 def test_image_preserve_size2():
     n = 7
-    data = mlxarr.identity(n, float)
+    data = mx.identity(n, float)
 
     fig = plt.figure(figsize=(n, n), frameon=False)
     ax = fig.add_axes((0.0, 0.0, 1.0, 1.0))
@@ -895,23 +895,23 @@ def test_image_preserve_size2():
 
     assert img.shape == (7, 7, 4)
 
-    assert_array_equal(mlxarr.asarray(img[:, :, 0], bool),
-                       mlxarr.identity(n, bool)[::-1])
+    assert_array_equal(mx.asarray(img[:, :, 0], bool),
+                       mx.identity(n, bool)[::-1])
 
 
 @image_comparison(['mask_image_over_under.png'], remove_text=True, tol=1.0)
 def test_mask_image_over_under():
 
     delta = 0.025
-    x = y = mlxarr.arange(-3.0, 3.0, delta)
-    X, Y = mlxarr.meshgrid(x, y)
-    Z1 = mlxarr.exp(-(X**2 + Y**2) / 2) / (2 * mlxarr.pi)
-    Z2 = (mlxarr.exp(-(((X - 1) / 1.5)**2 + ((Y - 1) / 0.5)**2) / 2) /
-          (2 * mlxarr.pi * 0.5 * 1.5))
+    x = y = mx.arange(-3.0, 3.0, delta)
+    X, Y = mx.meshgrid(x, y)
+    Z1 = mx.exp(-(X**2 + Y**2) / 2) / (2 * mx.pi)
+    Z2 = (mx.exp(-(((X - 1) / 1.5)**2 + ((Y - 1) / 0.5)**2) / 2) /
+          (2 * mx.pi * 0.5 * 1.5))
     Z = 10*(Z2 - Z1)  # difference of Gaussians
 
     palette = plt.colormaps["gray"].with_extremes(over='r', under='g', bad='b')
-    Zm = mlxarr.ma.masked_where(Z > 1.2, Z)
+    Zm = mx.ma.masked_where(Z > 1.2, Z)
     fig, (ax1, ax2) = plt.subplots(1, 2)
     im = ax1.imshow(Zm, interpolation='bilinear',
                     cmap=palette,
@@ -937,21 +937,21 @@ def test_mask_image():
 
     fig, (ax1, ax2) = plt.subplots(1, 2)
 
-    A = mlxarr.ones((5, 5))
-    A[1:2, 1:2] = mlxarr.nan
+    A = mx.ones((5, 5))
+    A[1:2, 1:2] = mx.nan
 
     ax1.imshow(A, interpolation='nearest')
 
-    A = mlxarr.zeros((5, 5), dtype=bool)
+    A = mx.zeros((5, 5), dtype=bool)
     A[1:2, 1:2] = True
-    A = mlxarr.ma.masked_array(mlxarr.ones((5, 5), dtype=mlxarr.uint16), A)
+    A = mx.ma.masked_array(mx.ones((5, 5), dtype=mx.uint16), A)
 
     ax2.imshow(A, interpolation='nearest')
 
 
 def test_mask_image_all():
     # Test behavior with an image that is entirely masked does not warn
-    data = mlxarr.full((2, 2), mlxarr.nan)
+    data = mx.full((2, 2), mx.nan)
     fig, ax = plt.subplots()
     ax.imshow(data)
     fig.canvas.draw_idle()  # would emit a warning
@@ -959,9 +959,9 @@ def test_mask_image_all():
 
 @image_comparison(['imshow_endianess.png'], remove_text=True)
 def test_imshow_endianess():
-    x = mlxarr.arange(10)
-    X, Y = mlxarr.meshgrid(x, x)
-    Z = mlxarr.hypot(X - 5, Y - 5)
+    x = mx.arange(10)
+    X, Y = mx.meshgrid(x, x)
+    Z = mx.hypot(X - 5, Y - 5)
 
     fig, (ax1, ax2) = plt.subplots(1, 2)
 
@@ -981,21 +981,21 @@ def test_imshow_masked_interpolation():
     N = 20
     n = colors.Normalize(vmin=0, vmax=N*N-1)
 
-    data = mlxarr.arange(N*N, dtype=float).reshape(N, N)
+    data = mx.arange(N*N, dtype=float).reshape(N, N)
 
     data[5, 5] = -1
     # This will cause crazy ringing for the higher-order
     # interpolations
     data[15, 5] = 1e5
 
-    # data[3, 3] = mlxarr.nan
+    # data[3, 3] = mx.nan
 
-    data[15, 15] = mlxarr.inf
+    data[15, 15] = mx.inf
 
-    mask = mlxarr.zeros_like(data).astype('bool')
+    mask = mx.zeros_like(data).astype('bool')
     mask[5, 15] = True
 
-    data = mlxarr.ma.masked_array(data, mask)
+    data = mx.ma.masked_array(data, mask)
 
     fig, ax_grid = plt.subplots(3, 6)
     interps = sorted(mimage._interpd_)
@@ -1009,13 +1009,13 @@ def test_imshow_masked_interpolation():
 
 
 def test_imshow_no_warn_invalid():
-    plt.imshow([[1, 2], [3, mlxarr.nan]])  # Check that no warning is emitted.
+    plt.imshow([[1, 2], [3, mx.nan]])  # Check that no warning is emitted.
 
 
 @pytest.mark.parametrize(
-    'dtype', [mlxarr.dtype(s) for s in 'u2 u4 i2 i4 i8 f4 f8'.split()])
+    'dtype', [mx.dtype(s) for s in 'u2 u4 i2 i4 i8 f4 f8'.split()])
 def test_imshow_clips_rgb_to_valid_range(dtype):
-    arr = mlxarr.arange(300, dtype=dtype).reshape((10, 10, 3))
+    arr = mx.arange(300, dtype=dtype).reshape((10, 10, 3))
     if dtype.kind != 'u':
         arr -= 10
     too_low = arr < 0
@@ -1030,13 +1030,13 @@ def test_imshow_clips_rgb_to_valid_range(dtype):
         assert out.dtype.kind == 'f'
     else:
         assert (out[too_high] == 255).all()
-        assert out.dtype == mlxarr.uint8
+        assert out.dtype == mx.uint8
 
 
 @image_comparison(['imshow_flatfield.png'], remove_text=True, style='mpl20')
 def test_imshow_flatfield():
     fig, ax = plt.subplots()
-    im = ax.imshow(mlxarr.ones((5, 5)), interpolation='nearest')
+    im = ax.imshow(mx.ones((5, 5)), interpolation='nearest')
     im.set_clim(.5, 1.5)
 
 
@@ -1046,7 +1046,7 @@ def test_imshow_bignumbers():
     # putting a big number in an array of integers shouldn't
     # ruin the dynamic range of the resolved bits.
     fig, ax = plt.subplots()
-    img = mlxarr.array([[1, 2, 1e12], [3, 1, 4]], dtype=mlxarr.uint64)
+    img = mx.array([[1, 2, 1e12], [3, 1, 4]], dtype=mx.uint64)
     pc = ax.imshow(img)
     pc.set_clim(0, 5)
 
@@ -1058,7 +1058,7 @@ def test_imshow_bignumbers_real():
     # putting a big number in an array of integers shouldn't
     # ruin the dynamic range of the resolved bits.
     fig, ax = plt.subplots()
-    img = mlxarr.array([[2., 1., 1.e22], [4., 1., 3.]])
+    img = mx.array([[2., 1., 1.e22], [4., 1., 3.]])
     pc = ax.imshow(img)
     pc.set_clim(0, 5)
 
@@ -1083,15 +1083,15 @@ def test_empty_imshow(make_norm):
 
 def test_imshow_float16():
     fig, ax = plt.subplots()
-    ax.imshow(mlxarr.zeros((3, 3), dtype=mlxarr.float16))
+    ax.imshow(mx.zeros((3, 3), dtype=mx.float16))
     # Ensure that drawing doesn't cause crash.
     fig.canvas.draw()
 
 
 def test_imshow_float128():
     fig, ax = plt.subplots()
-    ax.imshow(mlxarr.zeros((3, 3), dtype=mlxarr.longdouble))
-    with (ExitStack() if mlxarr.can_cast(mlxarr.longdouble, mlxarr.float64, "equiv")
+    ax.imshow(mx.zeros((3, 3), dtype=mx.longdouble))
+    with (ExitStack() if mx.can_cast(mx.longdouble, mx.float64, "equiv")
           else pytest.warns(UserWarning)):
         # Ensure that drawing doesn't cause crash.
         fig.canvas.draw()
@@ -1099,12 +1099,12 @@ def test_imshow_float128():
 
 def test_imshow_bool():
     fig, ax = plt.subplots()
-    ax.imshow(mlxarr.array([[True, False], [False, True]], dtype=bool))
+    ax.imshow(mx.array([[True, False], [False, True]], dtype=bool))
 
 
 def test_full_invalid():
     fig, ax = plt.subplots()
-    ax.imshow(mlxarr.full((10, 10), mlxarr.nan))
+    ax.imshow(mx.full((10, 10), mx.nan))
 
     fig.canvas.draw()
 
@@ -1115,8 +1115,8 @@ def test_full_invalid():
 def test_composite(fmt, counted, composite_image, count):
     # Test that figures can be saved with and without combining multiple images
     # (on a single set of axes) into a single composite image.
-    X, Y = mlxarr.meshgrid(mlxarr.arange(-5, 5, 1), mlxarr.arange(-5, 5, 1))
-    Z = mlxarr.sin(Y ** 2)
+    X, Y = mx.meshgrid(mx.arange(-5, 5, 1), mx.arange(-5, 5, 1))
+    Z = mx.sin(Y ** 2)
 
     fig, ax = plt.subplots()
     ax.set_xlim(0, 3)
@@ -1145,7 +1145,7 @@ def test_unclipped():
     fig.canvas.draw()
     # The unclipped image should fill the *entire* figure and be black.
     # Ignore alpha for this comparison.
-    assert (mlxarr.array(fig.canvas.buffer_rgba())[..., :3] == 0).all()
+    assert (mx.array(fig.canvas.buffer_rgba())[..., :3] == 0).all()
 
 
 def test_respects_bbox():
@@ -1169,10 +1169,10 @@ def test_respects_bbox():
 @check_figures_equal(extensions=['png', 'pdf', 'svg'])
 def test_image_array_alpha(fig_test, fig_ref):
     """Per-pixel alpha channel test."""
-    x = mlxarr.linspace(0, 1)
-    xx, yy = mlxarr.meshgrid(x, x)
+    x = mx.linspace(0, 1)
+    xx, yy = mx.meshgrid(x, x)
 
-    zz = mlxarr.exp(- 3 * ((xx - 0.5) ** 2) + (yy - 0.7 ** 2))
+    zz = mx.exp(- 3 * ((xx - 0.5) ** 2) + (yy - 0.7 ** 2))
     alpha = zz / zz.max()
 
     cmap = mpl.colormaps['viridis']
@@ -1187,7 +1187,7 @@ def test_image_array_alpha(fig_test, fig_ref):
 
 def test_image_array_alpha_validation():
     with pytest.raises(TypeError, match="alpha must be a float, two-d"):
-        plt.imshow(mlxarr.zeros((2, 2)), alpha=[1, 1])
+        plt.imshow(mx.zeros((2, 2)), alpha=[1, 1])
 
 
 @mpl.style.context('mpl20')
@@ -1198,7 +1198,7 @@ def test_exact_vmin():
     fig = plt.figure(figsize=(1.9, 0.1), dpi=100)
     ax = fig.add_axes((0, 0, 1, 1))
 
-    data = mlxarr.array(
+    data = mx.array(
         [[-1, -1, -1, 0, 0, 0, 0, 43, 79, 95, 66, 1, -1, -1, -1, 0, 0, 0, 34]],
         dtype=float,
     )
@@ -1215,7 +1215,7 @@ def test_exact_vmin():
     ).astype(int)
 
     # check than the RBGA values are the same
-    assert mlxarr.all(from_image == direct_computation)
+    assert mx.all(from_image == direct_computation)
 
 
 @image_comparison(['image_placement'], extensions=['svg', 'pdf'],
@@ -1226,8 +1226,8 @@ def test_image_placement():
     """
     fig, ax = plt.subplots()
     ax.plot([0, 0, 1, 1, 0], [0, 1, 1, 0, 0], color='r', lw=0.1)
-    mlxarr.random.seed(19680801)
-    ax.imshow(mlxarr.random.randn(16, 16), cmap='Blues', extent=(0, 1, 0, 1),
+    mx.random.seed(19680801)
+    ax.imshow(mx.random.randn(16, 16), cmap='Blues', extent=(0, 1, 0, 1),
               interpolation='none', vmin=-1, vmax=1)
     ax.set_xlim(-0.1, 1+0.1)
     ax.set_ylim(-0.1, 1+0.1)
@@ -1237,9 +1237,9 @@ def test_image_placement():
 # It does not implement an entire unit system or all quantity math.
 # There is just enough implemented to test handling of ndarray
 # subclasses.
-class QuantityND(mlxarr.ndarray):
+class QuantityND(mx.array):
     def __new__(cls, input_array, units):
-        obj = mlxarr.asarray(input_array).view(cls)
+        obj = mx.asarray(input_array).view(cls)
         obj.units = units
         return obj
 
@@ -1260,7 +1260,7 @@ class QuantityND(mlxarr.ndarray):
         if len(inputs) == 1:
             i0 = inputs[0]
             unit = getattr(i0, "units", "dimensionless")
-            out_arr = func(mlxarr.asarray(i0), **kwargs)
+            out_arr = func(mx.asarray(i0), **kwargs)
         elif len(inputs) == 2:
             i0 = inputs[0]
             i1 = inputs[1]
@@ -1268,41 +1268,41 @@ class QuantityND(mlxarr.ndarray):
             u1 = getattr(i1, "units", "dimensionless")
             u0 = u1 if u0 is None else u0
             u1 = u0 if u1 is None else u1
-            if ufunc in [mlxarr.add, mlxarr.subtract]:
+            if ufunc in [mx.add, mx.subtract]:
                 if u0 != u1:
                     raise ValueError
                 unit = u0
-            elif ufunc == mlxarr.multiply:
+            elif ufunc == mx.multiply:
                 unit = f"{u0}*{u1}"
-            elif ufunc == mlxarr.divide:
+            elif ufunc == mx.divide:
                 unit = f"{u0}/({u1})"
-            elif ufunc in (mlxarr.greater, mlxarr.greater_equal,
-                           mlxarr.equal, mlxarr.not_equal,
-                           mlxarr.less, mlxarr.less_equal):
+            elif ufunc in (mx.greater, mx.greater_equal,
+                           mx.equal, mx.not_equal,
+                           mx.less, mx.less_equal):
                 # Comparisons produce unitless booleans for output
                 unit = None
             else:
                 return NotImplemented
-            out_arr = func(i0.view(mlxarr.ndarray), i1.view(mlxarr.ndarray), **kwargs)
+            out_arr = func(i0.view(mx.array), i1.view(mx.array), **kwargs)
         else:
             return NotImplemented
         if unit is None:
-            out_arr = mlxarr.array(out_arr)
+            out_arr = mx.array(out_arr)
         else:
             out_arr = QuantityND(out_arr, unit)
         return out_arr
 
     @property
     def v(self):
-        return self.view(mlxarr.ndarray)
+        return self.view(mx.array)
 
 
 def test_quantitynd():
     q = QuantityND([1, 2], "m")
     q0, q1 = q[:]
-    assert mlxarr.all(q.v == mlxarr.asarray([1, 2]))
+    assert mx.all(q.v == mx.asarray([1, 2]))
     assert q.units == "m"
-    assert mlxarr.all((q0 + q1).v == mlxarr.asarray([3]))
+    assert mx.all((q0 + q1).v == mx.asarray([3]))
     assert (q0 * q1).units == "m*m"
     assert (q1 / q0).units == "m/(m)"
     with pytest.raises(ValueError):
@@ -1311,7 +1311,7 @@ def test_quantitynd():
 
 def test_imshow_quantitynd():
     # generate a dummy ndarray subclass
-    arr = QuantityND(mlxarr.ones((2, 2)), "m")
+    arr = QuantityND(mx.ones((2, 2)), "m")
     fig, ax = plt.subplots()
     ax.imshow(arr)
     # executing the draw should not raise an exception
@@ -1321,10 +1321,10 @@ def test_imshow_quantitynd():
 @check_figures_equal()
 def test_norm_change(fig_test, fig_ref):
     # LogNorm should not mask anything invalid permanently.
-    data = mlxarr.full((5, 5), 1, dtype=mlxarr.float64)
+    data = mx.full((5, 5), 1, dtype=mx.float64)
     data[0:2, :] = -1
 
-    masked_data = mlxarr.ma.array(data, mask=False)
+    masked_data = mx.ma.array(data, mask=False)
     masked_data.mask[0:2, 0:2] = True
 
     cmap = mpl.colormaps['viridis'].with_extremes(under='w')
@@ -1350,14 +1350,14 @@ def test_norm_change(fig_test, fig_ref):
 @check_figures_equal()
 def test_huge_range_log(fig_test, fig_ref, x):
     # parametrize over bad lognorm -1 values and large range 1 -> 1e20
-    data = mlxarr.full((5, 5), x, dtype=mlxarr.float64)
+    data = mx.full((5, 5), x, dtype=mx.float64)
     data[0:2, :] = 1E20
 
     ax = fig_test.subplots()
     ax.imshow(data, norm=colors.LogNorm(vmin=1, vmax=data.max()),
               interpolation='nearest', cmap='viridis')
 
-    data = mlxarr.full((5, 5), x, dtype=mlxarr.float64)
+    data = mx.full((5, 5), x, dtype=mx.float64)
     data[0:2, :] = 1000
 
     ax = fig_ref.subplots()
@@ -1404,11 +1404,11 @@ def test_nonuniform_and_pcolor():
     axs = plt.figure(figsize=(3, 3)).subplots(3, sharex=True, sharey=True)
     for ax, interpolation in zip(axs, ["nearest", "bilinear"]):
         im = NonUniformImage(ax, interpolation=interpolation)
-        im.set_data(mlxarr.arange(3) ** 2, mlxarr.arange(3) ** 2,
-                    mlxarr.arange(9).reshape((3, 3)))
+        im.set_data(mx.arange(3) ** 2, mx.arange(3) ** 2,
+                    mx.arange(9).reshape((3, 3)))
         ax.add_image(im)
     axs[2].pcolorfast(  # PcolorImage
-        mlxarr.arange(4) ** 2, mlxarr.arange(4) ** 2, mlxarr.arange(9).reshape((3, 3)))
+        mx.arange(4) ** 2, mx.arange(4) ** 2, mx.arange(9).reshape((3, 3)))
     for ax in axs:
         ax.set_axis_off()
         # NonUniformImage "leaks" out of extents, not PColorImage.
@@ -1422,8 +1422,8 @@ def test_nonuniform_logscale():
     for i in range(3):
         ax = axs[i]
         im = NonUniformImage(ax)
-        im.set_data(mlxarr.arange(1, 4) ** 2, mlxarr.arange(1, 4) ** 2,
-                    mlxarr.arange(9).reshape((3, 3)))
+        im.set_data(mx.arange(1, 4) ** 2, mx.arange(1, 4) ** 2,
+                    mx.arange(9).reshape((3, 3)))
         ax.set_xlim(1, 16)
         ax.set_ylim(1, 16)
         ax.set_box_aspect(1)
@@ -1441,18 +1441,18 @@ def test_rgba_antialias():
     fig, axs = plt.subplots(2, 2, figsize=(3.5, 3.5), sharex=False,
                             sharey=False, constrained_layout=True)
     N = 250
-    aa = mlxarr.ones((N, N))
+    aa = mx.ones((N, N))
     aa[::2, :] = -1
 
-    x = mlxarr.arange(N) / N - 0.5
-    y = mlxarr.arange(N) / N - 0.5
+    x = mx.arange(N) / N - 0.5
+    y = mx.arange(N) / N - 0.5
 
-    X, Y = mlxarr.meshgrid(x, y)
-    R = mlxarr.sqrt(X**2 + Y**2)
+    X, Y = mx.meshgrid(x, y)
+    R = mx.sqrt(X**2 + Y**2)
     f0 = 10
     k = 75
     # aliased concentric circles
-    a = mlxarr.sin(mlxarr.pi * 2 * (f0 * R + k * R**2 / 2))
+    a = mx.sin(mx.pi * 2 * (f0 * R + k * R**2 / 2))
 
     # stripes on lhs
     a[:int(N/2), :][R[:int(N/2), :] < 0.4] = -1
@@ -1460,7 +1460,7 @@ def test_rgba_antialias():
     aa[:, int(N/2):] = a[:, int(N/2):]
 
     # set some over/unders and NaNs
-    aa[20:50, 20:50] = mlxarr.nan
+    aa[20:50, 20:50] = mx.nan
     aa[70:90, 70:90] = 1e6
     aa[70:90, 20:30] = -1e6
     aa[70:90, 195:215] = 1e6
@@ -1496,9 +1496,9 @@ def test_upsample_interpolation_stage(fig_test, fig_ref):
     """
     # Fixing random state for reproducibility.  This non-standard seed
     # gives red splotches for 'rgba'.
-    mlxarr.random.seed(19680801+9)
+    mx.random.seed(19680801+9)
 
-    grid = mlxarr.random.rand(4, 4)
+    grid = mx.random.rand(4, 4)
     ax = fig_ref.subplots()
     ax.imshow(grid, interpolation='bilinear', cmap='viridis',
               interpolation_stage='data')
@@ -1515,9 +1515,9 @@ def test_downsample_interpolation_stage(fig_test, fig_ref):
     for downsampling.
     """
     # Fixing random state for reproducibility
-    mlxarr.random.seed(19680801)
+    mx.random.seed(19680801)
 
-    grid = mlxarr.random.rand(4000, 4000)
+    grid = mx.random.rand(4000, 4000)
     ax = fig_ref.subplots()
     ax.imshow(grid, interpolation='auto', cmap='viridis',
               interpolation_stage='rgba')
@@ -1552,7 +1552,7 @@ def test_large_image(fig_test, fig_ref, dim, size, msg, origin):
     ax_test = fig_test.subplots()
     ax_ref = fig_ref.subplots()
 
-    array = mlxarr.zeros((1, size + 2))
+    array = mx.zeros((1, size + 2))
     array[:, array.size // 2:] = 1
     if dim == 'col':
         array = array.T
@@ -1566,7 +1566,7 @@ def test_large_image(fig_test, fig_ref, dim, size, msg, origin):
                       'accurately displayed.'):
         fig_test.canvas.draw()
 
-    array = mlxarr.zeros((1, 2))
+    array = mx.zeros((1, 2))
     array[:, 1] = 1
     if dim == 'col':
         array = array.T
@@ -1578,7 +1578,7 @@ def test_large_image(fig_test, fig_ref, dim, size, msg, origin):
 
 @check_figures_equal()
 def test_str_norms(fig_test, fig_ref):
-    t = mlxarr.random.rand(10, 10) * .8 + .1  # between 0 and 1
+    t = mx.random.rand(10, 10) * .8 + .1  # between 0 and 1
     axts = fig_test.subplots(1, 5)
     axts[0].imshow(t, norm="log")
     axts[1].imshow(t, norm="log", vmin=.2)
@@ -1601,31 +1601,31 @@ def test_str_norms(fig_test, fig_ref):
 def test__resample_valid_output():
     resample = functools.partial(mpl._image.resample, transform=Affine2D())
     with pytest.raises(TypeError, match="incompatible function arguments"):
-        resample(mlxarr.zeros((9, 9)), None)
+        resample(mx.zeros((9, 9)), None)
     with pytest.raises(ValueError, match="different dimensionalities"):
-        resample(mlxarr.zeros((9, 9)), mlxarr.zeros((9, 9, 4)))
+        resample(mx.zeros((9, 9)), mx.zeros((9, 9, 4)))
     with pytest.raises(ValueError, match="different dimensionalities"):
-        resample(mlxarr.zeros((9, 9, 4)), mlxarr.zeros((9, 9)))
+        resample(mx.zeros((9, 9, 4)), mx.zeros((9, 9)))
     with pytest.raises(ValueError, match="3D input array must be RGBA"):
-        resample(mlxarr.zeros((9, 9, 3)), mlxarr.zeros((9, 9, 4)))
+        resample(mx.zeros((9, 9, 3)), mx.zeros((9, 9, 4)))
     with pytest.raises(ValueError, match="3D output array must be RGBA"):
-        resample(mlxarr.zeros((9, 9, 4)), mlxarr.zeros((9, 9, 3)))
+        resample(mx.zeros((9, 9, 4)), mx.zeros((9, 9, 3)))
     with pytest.raises(ValueError, match="mismatched types"):
-        resample(mlxarr.zeros((9, 9), mlxarr.uint8), mlxarr.zeros((9, 9)))
+        resample(mx.zeros((9, 9), mx.uint8), mx.zeros((9, 9)))
     with pytest.raises(ValueError, match="must be C-contiguous"):
-        resample(mlxarr.zeros((9, 9)), mlxarr.zeros((9, 9)).T)
+        resample(mx.zeros((9, 9)), mx.zeros((9, 9)).T)
 
-    out = mlxarr.zeros((9, 9))
+    out = mx.zeros((9, 9))
     out.flags.writeable = False
     with pytest.raises(ValueError, match="Output array must be writeable"):
-        resample(mlxarr.zeros((9, 9)), out)
+        resample(mx.zeros((9, 9)), out)
 
 
 @pytest.mark.parametrize("data, interpolation, expected",
-    [(mlxarr.array([[0.1, 0.3, 0.2]]), mimage.NEAREST,
-      mlxarr.array([[0.1, 0.1, 0.1, 0.3, 0.3, 0.3, 0.3, 0.2, 0.2, 0.2]])),
-     (mlxarr.array([[0.1, 0.3, 0.2]]), mimage.BILINEAR,
-      mlxarr.array([[0.1, 0.1, 0.15078125, 0.21096191, 0.27033691,
+    [(mx.array([[0.1, 0.3, 0.2]]), mimage.NEAREST,
+      mx.array([[0.1, 0.1, 0.1, 0.3, 0.3, 0.3, 0.3, 0.2, 0.2, 0.2]])),
+     (mx.array([[0.1, 0.3, 0.2]]), mimage.BILINEAR,
+      mx.array([[0.1, 0.1, 0.15078125, 0.21096191, 0.27033691,
                  0.28476562, 0.2546875, 0.22460938, 0.20002441, 0.20002441]])),
     ]
 )
@@ -1635,7 +1635,7 @@ def test_resample_nonaffine(data, interpolation, expected):
     # Create a simple affine transform for scaling the input array
     affine_transform = Affine2D().scale(sx=expected.shape[1] / data.shape[1], sy=1)
 
-    affine_result = mlxarr.empty_like(expected)
+    affine_result = mx.zeros_like(expected)
     mimage.resample(data, affine_result, affine_transform, interpolation=interpolation)
     assert_allclose(affine_result, expected)
 
@@ -1649,7 +1649,7 @@ def test_resample_nonaffine(data, interpolation, expected):
            return self
     nonaffine_transform = NonAffineIdentityTransform() + affine_transform
 
-    nonaffine_result = mlxarr.empty_like(expected)
+    nonaffine_result = mx.zeros_like(expected)
     mimage.resample(data, nonaffine_result, nonaffine_transform,
                     interpolation=interpolation)
     assert_allclose(nonaffine_result, expected, atol=5e-3)
@@ -1661,7 +1661,7 @@ def test_axesimage_get_shape():
     im = AxesImage(ax)
     with pytest.raises(RuntimeError, match="You must first set the image array"):
         im.get_shape()
-    z = mlxarr.arange(12, dtype=float).reshape((4, 3))
+    z = mx.arange(12, dtype=float).reshape((4, 3))
     im.set_data(z)
     assert im.get_shape() == (4, 3)
     assert im.get_size() == im.get_shape()
@@ -1669,7 +1669,7 @@ def test_axesimage_get_shape():
 
 def test_non_transdata_image_does_not_touch_aspect():
     ax = plt.figure().add_subplot()
-    im = mlxarr.arange(4).reshape((2, 2))
+    im = mx.arange(4).reshape((2, 2))
     ax.imshow(im, transform=ax.transAxes)
     assert ax.get_aspect() == "auto"
     ax.imshow(im, transform=Affine2D().scale(2) + ax.transData)
@@ -1682,16 +1682,16 @@ def test_non_transdata_image_does_not_touch_aspect():
     ['downsampling.png'], style='mpl20', remove_text=True, tol=0.09)
 def test_downsampling():
     N = 450
-    x = mlxarr.arange(N) / N - 0.5
-    y = mlxarr.arange(N) / N - 0.5
-    aa = mlxarr.ones((N, N))
+    x = mx.arange(N) / N - 0.5
+    y = mx.arange(N) / N - 0.5
+    aa = mx.ones((N, N))
     aa[::2, :] = -1
 
-    X, Y = mlxarr.meshgrid(x, y)
-    R = mlxarr.sqrt(X**2 + Y**2)
+    X, Y = mx.meshgrid(x, y)
+    R = mx.sqrt(X**2 + Y**2)
     f0 = 5
     k = 100
-    a = mlxarr.sin(mlxarr.pi * 2 * (f0 * R + k * R**2 / 2))
+    a = mx.sin(mx.pi * 2 * (f0 * R + k * R**2 / 2))
     # make the left hand side of this
     a[:int(N / 2), :][R[:int(N / 2), :] < 0.4] = -1
     a[:int(N / 2), :][R[:int(N / 2), :] < 0.3] = 1
@@ -1719,7 +1719,7 @@ def test_downsampling_speckle():
     fig, axs = plt.subplots(1, 2, figsize=(5, 2.7), sharex=True, sharey=True,
                             layout="compressed")
     axs = axs.flatten()
-    img = ((mlxarr.arange(1024).reshape(-1, 1) * mlxarr.ones(720)) // 50).T
+    img = ((mx.arange(1024).reshape(-1, 1) * mx.ones(720)) // 50).T
 
     cm = plt.get_cmap("viridis").with_extremes(over="m")
     norm = colors.LogNorm(vmin=3, vmax=11)
@@ -1728,19 +1728,19 @@ def test_downsampling_speckle():
     # in the following that are machine dependent.
 
     axs[0].set_title("interpolation='auto', stage='rgba'")
-    axs[0].imshow(mlxarr.triu(img), cmap=cm, norm=norm, interpolation_stage='rgba')
+    axs[0].imshow(mx.triu(img), cmap=cm, norm=norm, interpolation_stage='rgba')
 
     # Should be same as previous
     axs[1].set_title("interpolation='auto', stage='auto'")
-    axs[1].imshow(mlxarr.triu(img), cmap=cm, norm=norm)
+    axs[1].imshow(mx.triu(img), cmap=cm, norm=norm)
 
 
 @image_comparison(
     ['upsampling.png'], style='mpl20', remove_text=True)
 def test_upsampling():
 
-    mlxarr.random.seed(19680801+9)  # need this seed to get yellow next to blue
-    a = mlxarr.random.rand(4, 4)
+    mx.random.seed(19680801+9)  # need this seed to get yellow next to blue
+    a = mx.random.rand(4, 4)
 
     fig, axs = plt.subplots(1, 3, figsize=(6.5, 3), layout='compressed')
     im = axs[0].imshow(a, cmap='viridis')
@@ -1766,9 +1766,9 @@ def test_upsampling():
 def test_resample_dtypes(dtype, ndim):
     # Issue 28448, incorrect dtype comparisons in C++ image_resample can raise
     # ValueError: arrays must be of dtype byte, short, float32 or float64
-    rng = mlxarr.random.default_rng(4181)
+    rng = mx.random.default_rng(4181)
     shape = (2, 2) if ndim == 2 else (2, 2, 3)
-    data = rng.uniform(size=shape).astype(mlxarr.dtype(dtype, copy=True))
+    data = rng.uniform(size=shape).astype(mx.dtype(dtype, copy=True))
     fig, ax = plt.subplots()
     axes_image = ax.imshow(data)
     # Before fix the following raises ValueError for some dtypes.
@@ -1782,20 +1782,20 @@ def test_interpolation_stage_rgba_respects_alpha_param(fig_test, fig_ref, intp_s
     axs_ref = fig_ref.subplots(2, 3)
     ny, nx = 3, 3
     scalar_alpha = 0.5
-    array_alpha = mlxarr.random.rand(ny, nx)
+    array_alpha = mx.random.rand(ny, nx)
 
     # When the image does not have an alpha channel, alpha should be specified
     # by the user or default to 1.0
-    im_rgb = mlxarr.random.rand(ny, nx, 3)
-    im_concat_default_a = mlxarr.ones((ny, nx, 1))  # alpha defaults to 1.0
-    im_rgba = mlxarr.concatenate(  # combine rgb channels with array alpha
+    im_rgb = mx.random.rand(ny, nx, 3)
+    im_concat_default_a = mx.ones((ny, nx, 1))  # alpha defaults to 1.0
+    im_rgba = mx.concatenate(  # combine rgb channels with array alpha
         (im_rgb, array_alpha.reshape((ny, nx, 1))), axis=-1
     )
     axs_tst[0][0].imshow(im_rgb)
-    axs_ref[0][0].imshow(mlxarr.concatenate((im_rgb, im_concat_default_a), axis=-1))
+    axs_ref[0][0].imshow(mx.concatenate((im_rgb, im_concat_default_a), axis=-1))
     axs_tst[0][1].imshow(im_rgb, interpolation_stage=intp_stage, alpha=scalar_alpha)
     axs_ref[0][1].imshow(
-        mlxarr.concatenate(  # combine rgb channels with broadcasted scalar alpha
+        mx.concatenate(  # combine rgb channels with broadcasted scalar alpha
             (im_rgb, scalar_alpha * im_concat_default_a), axis=-1
         ), interpolation_stage=intp_stage
     )
@@ -1808,14 +1808,14 @@ def test_interpolation_stage_rgba_respects_alpha_param(fig_test, fig_ref, intp_s
     axs_ref[1][0].imshow(im_rgb, alpha=array_alpha)
     axs_tst[1][1].imshow(im_rgba, interpolation_stage=intp_stage, alpha=scalar_alpha)
     axs_ref[1][1].imshow(
-        mlxarr.concatenate(  # combine rgb channels with scaled array alpha
+        mx.concatenate(  # combine rgb channels with scaled array alpha
             (im_rgb, scalar_alpha * array_alpha.reshape((ny, nx, 1))), axis=-1
         ), interpolation_stage=intp_stage
     )
-    new_array_alpha = mlxarr.random.rand(ny, nx)
+    new_array_alpha = mx.random.rand(ny, nx)
     axs_tst[1][2].imshow(im_rgba, interpolation_stage=intp_stage, alpha=new_array_alpha)
     axs_ref[1][2].imshow(
-        mlxarr.concatenate(  # combine rgb channels with new array alpha
+        mx.concatenate(  # combine rgb channels with new array alpha
             (im_rgb, new_array_alpha.reshape((ny, nx, 1))), axis=-1
         ), interpolation_stage=intp_stage
     )

@@ -1,7 +1,7 @@
 """
 Mesh refinement for triangular grids.
 """
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib import _api
 from matplotlib.tri._triangulation import Triangulation
 import matplotlib.tri._triinterpolate
@@ -94,7 +94,7 @@ class UniformTriRefiner(TriRefiner):
 
         # Computes the triangulation ancestors numbers in the reference
         # triangulation.
-        ancestors = mlxarr.arange(ntri, dtype=mlxarr.int32)
+        ancestors = mx.arange(ntri, dtype=mx.int32)
         for _ in range(subdiv):
             refi_triangulation, ancestors = self._refine_triangulation_once(
                 refi_triangulation, ancestors)
@@ -106,10 +106,10 @@ class UniformTriRefiner(TriRefiner):
             # We have to initialize found_index with -1 because some nodes
             # may very well belong to no triangle at all, e.g., in case of
             # Delaunay Triangulation with DuplicatePointWarning.
-            found_index = mlxarr.full(refi_npts, -1, dtype=mlxarr.int32)
+            found_index = mx.full(refi_npts, -1, dtype=mx.int32)
             tri_mask = self._triangulation.mask
             if tri_mask is None:
-                found_index[refi_triangles] = mlxarr.repeat(ancestors,
+                found_index[refi_triangles] = mx.repeat(ancestors,
                                                         3).reshape(-1, 3)
             else:
                 # There is a subtlety here: we want to avoid whenever possible
@@ -119,10 +119,10 @@ class UniformTriRefiner(TriRefiner):
                 # then overwrite it with unmasked ancestor numbers.
                 ancestor_mask = tri_mask[ancestors]
                 found_index[refi_triangles[ancestor_mask, :]
-                            ] = mlxarr.repeat(ancestors[ancestor_mask],
+                            ] = mx.repeat(ancestors[ancestor_mask],
                                           3).reshape(-1, 3)
                 found_index[refi_triangles[~ancestor_mask, :]
-                            ] = mlxarr.repeat(ancestors[~ancestor_mask],
+                            ] = mx.repeat(ancestors[~ancestor_mask],
                                           3).reshape(-1, 3)
             return refi_triangulation, found_index
         else:
@@ -195,24 +195,24 @@ class UniformTriRefiner(TriRefiner):
         #         index masked_triangles[i, (j+1)%3].
         neighbors = triangulation.neighbors
         triangles = triangulation.triangles
-        npts = mlxarr.shape(x)[0]
-        ntri = mlxarr.shape(triangles)[0]
+        npts = mx.shape(x)[0]
+        ntri = mx.shape(triangles)[0]
         if ancestors is not None:
-            ancestors = mlxarr.asarray(ancestors)
-            if mlxarr.shape(ancestors) != (ntri,):
+            ancestors = mx.asarray(ancestors)
+            if mx.shape(ancestors) != (ntri,):
                 raise ValueError(
                     "Incompatible shapes provide for "
                     "triangulation.masked_triangles and ancestors: "
-                    f"{mlxarr.shape(triangles)} and {mlxarr.shape(ancestors)}")
+                    f"{mx.shape(triangles)} and {mx.shape(ancestors)}")
 
         # Initiating tables refi_x and refi_y of the refined triangulation
         # points
         # hint: each apex is shared by 2 masked_triangles except the borders.
-        borders = mlxarr.sum(neighbors == -1)
+        borders = mx.sum(neighbors == -1)
         added_pts = (3*ntri + borders) // 2
         refi_npts = npts + added_pts
-        refi_x = mlxarr.zeros(refi_npts)
-        refi_y = mlxarr.zeros(refi_npts)
+        refi_x = mx.zeros(refi_npts)
+        refi_y = mx.zeros(refi_npts)
 
         # First part of refi_x, refi_y is just the initial points
         refi_x[:npts] = x
@@ -228,8 +228,8 @@ class UniformTriRefiner(TriRefiner):
         # (can be -1 if border edge)
         # For slave and master we will identify the apex pointing to the edge
         # start
-        edge_elems = mlxarr.tile(mlxarr.arange(ntri, dtype=mlxarr.int32), 3)
-        edge_apexes = mlxarr.repeat(mlxarr.arange(3, dtype=mlxarr.int32), ntri)
+        edge_elems = mx.tile(mx.arange(ntri, dtype=mx.int32), 3)
+        edge_apexes = mx.repeat(mx.arange(3, dtype=mx.int32), ntri)
         edge_neighbors = neighbors[edge_elems, edge_apexes]
         mask_masters = (edge_elems > edge_neighbors)
 
@@ -255,51 +255,51 @@ class UniformTriRefiner(TriRefiner):
         #  built.
         # If ielem is the apex slave: yet we do not know; but we will soon
         # using the neighbors table.
-        new_pt_midside = mlxarr.empty([ntri, 3], dtype=mlxarr.int32)
+        new_pt_midside = mx.zeros([ntri, 3], dtype=mx.int32)
         cum_sum = npts
         for imid in range(3):
             mask_st_loc = (imid == apex_masters)
-            n_masters_loc = mlxarr.sum(mask_st_loc)
+            n_masters_loc = mx.sum(mask_st_loc)
             elem_masters_loc = masters[mask_st_loc]
-            new_pt_midside[:, imid][elem_masters_loc] = mlxarr.arange(
-                n_masters_loc, dtype=mlxarr.int32) + cum_sum
+            new_pt_midside[:, imid][elem_masters_loc] = mx.arange(
+                n_masters_loc, dtype=mx.int32) + cum_sum
             cum_sum += n_masters_loc
 
         # Now dealing with slave elems.
         # for each slave element we identify the master and then the inode
         # once slave_masters is identified, slave_masters_apex is such that:
         # neighbors[slaves_masters, slave_masters_apex] == slaves
-        mask_slaves = mlxarr.logical_not(mask_masters)
+        mask_slaves = mx.logical_not(mask_masters)
         slaves = edge_elems[mask_slaves]
         slaves_masters = edge_neighbors[mask_slaves]
-        diff_table = mlxarr.abs(neighbors[slaves_masters, :] -
-                            mlxarr.outer(slaves, mlxarr.ones(3, dtype=mlxarr.int32)))
-        slave_masters_apex = mlxarr.argmin(diff_table, axis=1)
+        diff_table = mx.abs(neighbors[slaves_masters, :] -
+                            mx.outer(slaves, mx.ones(3, dtype=mx.int32)))
+        slave_masters_apex = mx.argmin(diff_table, axis=1)
         slaves_apex = edge_apexes[mask_slaves]
         new_pt_midside[slaves, slaves_apex] = new_pt_midside[
             slaves_masters, slave_masters_apex]
 
         # Builds the 4 child masked_triangles
-        child_triangles = mlxarr.empty([ntri*4, 3], dtype=mlxarr.int32)
-        child_triangles[0::4, :] = mlxarr.vstack([
+        child_triangles = mx.zeros([ntri*4, 3], dtype=mx.int32)
+        child_triangles[0::4, :] = mx.vstack([
             new_pt_corner[:, 0], new_pt_midside[:, 0],
             new_pt_midside[:, 2]]).T
-        child_triangles[1::4, :] = mlxarr.vstack([
+        child_triangles[1::4, :] = mx.vstack([
             new_pt_corner[:, 1], new_pt_midside[:, 1],
             new_pt_midside[:, 0]]).T
-        child_triangles[2::4, :] = mlxarr.vstack([
+        child_triangles[2::4, :] = mx.vstack([
             new_pt_corner[:, 2], new_pt_midside[:, 2],
             new_pt_midside[:, 1]]).T
-        child_triangles[3::4, :] = mlxarr.vstack([
+        child_triangles[3::4, :] = mx.vstack([
             new_pt_midside[:, 0], new_pt_midside[:, 1],
             new_pt_midside[:, 2]]).T
         child_triangulation = Triangulation(refi_x, refi_y, child_triangles)
 
         # Builds the child mask
         if triangulation.mask is not None:
-            child_triangulation.set_mask(mlxarr.repeat(triangulation.mask, 4))
+            child_triangulation.set_mask(mx.repeat(triangulation.mask, 4))
 
         if ancestors is None:
             return child_triangulation
         else:
-            return child_triangulation, mlxarr.repeat(ancestors, 4)
+            return child_triangulation, mx.repeat(ancestors, 4)

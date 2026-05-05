@@ -7,9 +7,9 @@ Stem plot
 places a marker at the tip.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
-x = mlxarr.linspace(0.1, 2 * mlxarr.pi, 41)
-y = mlxarr.exp(mlxarr.sin(x))
+import mlx.core as mx
+x = mx.linspace(0.1, 2 * mx.pi, 41)
+y = mx.exp(mx.sin(x))
 
 plt.stem(x, y)
 plt.show()

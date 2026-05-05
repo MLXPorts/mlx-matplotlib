@@ -1,9 +1,9 @@
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.pyplot as plt
 
 fig, ax = plt.subplots(figsize=(6.5, 4))
-x = mlxarr.linspace(0, 1, 33)
-y = -mlxarr.sin(x * 2*mlxarr.pi)
+x = mx.linspace(0, 1, 33)
+y = -mx.sin(x * 2*mx.pi)
 ax.plot(x, y, 'o')
 ax.margins(0.5, 0.2)
 ax.set_title("margins(x=0.5, y=0.2)")

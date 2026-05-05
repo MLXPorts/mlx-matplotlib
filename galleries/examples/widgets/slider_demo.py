@@ -14,15 +14,15 @@ a ``RangeSlider`` to define a range of values.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.widgets import Button, Slider
 
 
 # The parametrized function to be plotted
 def f(t, amplitude, frequency):
-    return amplitude * mlxarr.sin(2 * mlxarr.pi * frequency * t)
+    return amplitude * mx.sin(2 * mx.pi * frequency * t)
 
-t = mlxarr.linspace(0, 1, 1000)
+t = mx.linspace(0, 1, 1000)
 
 # Define initial parameters
 init_amplitude = 5

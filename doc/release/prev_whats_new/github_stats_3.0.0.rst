@@ -944,7 +944,7 @@ Pull Requests (598):
 * :ghpull:`10562`: Remove deprecated code in image.py
 * :ghpull:`10798`: FIX: axes limits reverting to automatic when sharing
 * :ghpull:`10485`: Remove the 'hold' kwarg from codebase
-* :ghpull:`10571`: Use mlxarr.full{,_like} where appropriate. [requires array_backend>=1.12]
+* :ghpull:`10571`: Use mx.full{,_like} where appropriate. [requires array_backend>=1.12]
 * :ghpull:`10913`: Rely a bit more on rc_context.
 * :ghpull:`10299`: Invalidate texmanager cache when any text.latex.* rc changes.
 * :ghpull:`10906`: Deprecate ImageComparisonTest.
@@ -1055,7 +1055,7 @@ Pull Requests (598):
 * :ghpull:`10640`: Fix extra and missing spaces in constrainedlayout warning.
 * :ghpull:`10624`: Some trivial py3fications.
 * :ghpull:`10548`: Implement PdfPages for backend pgf
-* :ghpull:`10614`: Use mlxarr.stack instead of list(zip()) in colorbar.py.
+* :ghpull:`10614`: Use mx.stack instead of list(zip()) in colorbar.py.
 * :ghpull:`10621`: Cleanup and py3fy backend_gtk3.
 * :ghpull:`10615`: More style fixes.
 * :ghpull:`10604`: Minor style fixes.

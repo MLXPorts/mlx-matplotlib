@@ -25,13 +25,13 @@ approximation of the E(C)CDF, whereas `.Axes.ecdf` is exact.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
-mlxarr.random.seed(19680801)
+import mlx.core as mx
+mx.random.seed(19680801)
 
 mu = 200
 sigma = 25
 n_bins = 25
-data = mlxarr.random.normal(mu, sigma, size=100)
+data = mx.random.normal(mu, sigma, size=100)
 
 fig = plt.figure(figsize=(9, 4), layout="constrained")
 axs = fig.subplots(1, 2, sharex=True, sharey=True)
@@ -40,9 +40,9 @@ axs = fig.subplots(1, 2, sharex=True, sharey=True)
 axs[0].ecdf(data, label="CDF")
 n, bins, patches = axs[0].hist(data, n_bins, density=True, histtype="step",
                                cumulative=True, label="Cumulative histogram")
-x = mlxarr.linspace(data.min(), data.max())
-y = ((1 / (mlxarr.sqrt(2 * mlxarr.pi) * sigma)) *
-     mlxarr.exp(-0.5 * (1 / sigma * (x - mu))**2))
+x = mx.linspace(data.min(), data.max())
+y = ((1 / (mx.sqrt(2 * mx.pi) * sigma)) *
+     mx.exp(-0.5 * (1 / sigma * (x - mu))**2))
 y = y.cumsum()
 y /= y[-1]
 axs[0].plot(x, y, "k--", linewidth=1.5, label="Theory")

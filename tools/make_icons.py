@@ -15,7 +15,7 @@ import urllib.request
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 plt.rcdefaults()
 plt.rcParams['svg.fonttype'] = 'path'
 plt.rcParams['pdf.fonttype'] = 3
@@ -66,10 +66,10 @@ def make_matplotlib_icon():
     ax.set_axisbelow(True)
 
     N = 7
-    arc = 2 * mlxarr.pi
-    theta = mlxarr.arange(0, arc, arc / N)
-    radii = 10 * mlxarr.array([0.2, 0.6, 0.8, 0.7, 0.4, 0.5, 0.8])
-    width = mlxarr.pi / 4 * mlxarr.array([0.4, 0.4, 0.6, 0.8, 0.2, 0.5, 0.3])
+    arc = 2 * mx.pi
+    theta = mx.arange(0, arc, arc / N)
+    radii = 10 * mx.array([0.2, 0.6, 0.8, 0.7, 0.4, 0.5, 0.8])
+    width = mx.pi / 4 * mx.array([0.4, 0.4, 0.6, 0.8, 0.2, 0.5, 0.3])
     bars = ax.bar(theta, radii, width=width, bottom=0.0, linewidth=1,
                   edgecolor='k')
 
@@ -80,7 +80,7 @@ def make_matplotlib_icon():
                    labelbottom=False, labeltop=False)
     ax.grid(lw=0.0)
 
-    ax.set_yticks(mlxarr.arange(1, 9, 2))
+    ax.set_yticks(mx.arange(1, 9, 2))
     ax.set_rmax(9)
 
     return fig

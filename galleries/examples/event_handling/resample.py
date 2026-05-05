@@ -17,7 +17,7 @@ through dragging and zooming.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # A class that will downsample the data and recompute when zoomed.
 class DataDisplayDownsampler:
     def __init__(self, xdata, y1data, y2data):
@@ -37,9 +37,9 @@ class DataDisplayDownsampler:
         mask = (self.origXData > xstart) & (self.origXData < xend)
         # dilate the mask by one to catch the points just outside
         # of the view range to not truncate the line
-        mask = mlxarr.convolve([1, 1, 1], mask, mode='same').astype(bool)
+        mask = mx.convolve([1, 1, 1], mask, mode='same').astype(bool)
         # sort out how many points to drop
-        ratio = max(mlxarr.sum(mask) // self.max_points, 1)
+        ratio = max(mx.sum(mask) // self.max_points, 1)
 
         # mask data
         xdata = self.origXData[mask]
@@ -51,7 +51,7 @@ class DataDisplayDownsampler:
         y1data = y1data[::ratio]
         y2data = y2data[::ratio]
 
-        print(f"using {len(y1data)} of {mlxarr.sum(mask)} visible points")
+        print(f"using {len(y1data)} of {mx.sum(mask)} visible points")
 
         return xdata, y1data, y2data
 
@@ -68,8 +68,8 @@ class DataDisplayDownsampler:
 
 
 # Create a signal
-xdata = mlxarr.linspace(16, 365, (365-16)*4)
-y1data = mlxarr.sin(2*mlxarr.pi*xdata/153) + mlxarr.cos(2*mlxarr.pi*xdata/127)
+xdata = mx.linspace(16, 365, (365-16)*4)
+y1data = mx.sin(2*mx.pi*xdata/153) + mx.cos(2*mx.pi*xdata/127)
 y2data = y1data + .2
 
 d = DataDisplayDownsampler(xdata, y1data, y2data)

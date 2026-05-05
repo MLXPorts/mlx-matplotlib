@@ -10,7 +10,7 @@ to what kind of units client packages use.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.ticker as ticker
 import matplotlib.units as units
 
@@ -47,7 +47,7 @@ class FooConverter(units.ConversionInterface):
 
         If *obj* is a sequence, return the converted sequence.
         """
-        if mlxarr.iterable(obj):
+        if mx.iterable(obj):
             return [o.value(unit) for o in obj]
         else:
             return obj.value(unit)
@@ -55,7 +55,7 @@ class FooConverter(units.ConversionInterface):
     @staticmethod
     def default_units(x, axis):
         """Return the default unit for *x* or None."""
-        if mlxarr.iterable(x):
+        if mx.iterable(x):
             for thisx in x:
                 return thisx.unit
         else:

@@ -7,7 +7,7 @@ Grid of images with shared xaxis and yaxis.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib import cbook
 from mpl_toolkits.axes_grid1 import ImageGrid
 
@@ -55,7 +55,7 @@ grid2 = ImageGrid(
     cbar_location="right", cbar_mode="single", cbar_size="10%", cbar_pad=0.05)
 grid2[0].set(xlabel="X", ylabel="Y", xticks=[-2, 0], yticks=[-2, 0, 2])
 
-clim = (mlxarr.min(ZS), mlxarr.max(ZS))
+clim = (mx.min(ZS), mx.max(ZS))
 for ax, z in zip(grid2, ZS):
     im = ax.imshow(z, clim=clim, origin="lower", extent=extent)
 

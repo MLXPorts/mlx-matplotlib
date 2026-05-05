@@ -7,9 +7,9 @@ Demonstrates plotting 3D volumetric objects with `.Axes3D.voxels`.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # prepare some coordinates
-x, y, z = mlxarr.indices((8, 8, 8))
+x, y, z = mx.indices((8, 8, 8))
 
 # draw cuboids in the top left and bottom right corners, and a link between
 # them
@@ -21,7 +21,7 @@ link = abs(x - y) + abs(y - z) + abs(z - x) <= 2
 voxelarray = cube1 | cube2 | link
 
 # set the colors of each object
-colors = mlxarr.empty(voxelarray.shape, dtype=object)
+colors = mx.zeros(voxelarray.shape, dtype=object)
 colors[link] = 'red'
 colors[cube1] = 'blue'
 colors[cube2] = 'green'

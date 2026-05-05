@@ -21,11 +21,11 @@ because you may want to make the tick labels smaller on the upper
 axes, e.g., in the example below.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
-t = mlxarr.arange(0.01, 5.0, 0.01)
-s1 = mlxarr.sin(2 * mlxarr.pi * t)
-s2 = mlxarr.exp(-t)
-s3 = mlxarr.sin(4 * mlxarr.pi * t)
+import mlx.core as mx
+t = mx.arange(0.01, 5.0, 0.01)
+s1 = mx.sin(2 * mx.pi * t)
+s2 = mx.exp(-t)
+s3 = mx.sin(4 * mx.pi * t)
 
 ax1 = plt.subplot(311)
 plt.plot(t, s1)

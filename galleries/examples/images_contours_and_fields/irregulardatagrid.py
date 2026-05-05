@@ -21,16 +21,16 @@ This example shows both methods in action.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.tri as tri
 
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 npts = 200
 ngridx = 100
 ngridy = 200
-x = mlxarr.random.uniform(-2, 2, npts)
-y = mlxarr.random.uniform(-2, 2, npts)
-z = x * mlxarr.exp(-x**2 - y**2)
+x = mx.random.uniform(-2, 2, npts)
+y = mx.random.uniform(-2, 2, npts)
+z = x * mx.exp(-x**2 - y**2)
 
 fig, (ax1, ax2) = plt.subplots(nrows=2)
 
@@ -41,13 +41,13 @@ fig, (ax1, ax2) = plt.subplots(nrows=2)
 # via interpolation on a grid.
 
 # Create grid values first.
-xi = mlxarr.linspace(-2.1, 2.1, ngridx)
-yi = mlxarr.linspace(-2.1, 2.1, ngridy)
+xi = mx.linspace(-2.1, 2.1, ngridx)
+yi = mx.linspace(-2.1, 2.1, ngridy)
 
 # Linearly interpolate the data (x, y) on a grid defined by (xi, yi).
 triang = tri.Triangulation(x, y)
 interpolator = tri.LinearTriInterpolator(triang, z)
-Xi, Yi = mlxarr.meshgrid(xi, yi)
+Xi, Yi = mx.meshgrid(xi, yi)
 zi = interpolator(Xi, Yi)
 
 # Note that scipy.interpolate provides means to interpolate data on a grid

@@ -79,13 +79,13 @@ minimum and maximum colorbar extensions.
 .. plot::
 
     import matplotlib.pyplot as plt
-    from matplotlib import _mlx_array as mlxarr
+    import mlx.core as mx
     
     plt.style.use('classic')
 
-    x = y = mlxarr.linspace(0., 2*mlxarr.pi, 100)
-    X, Y = mlxarr.meshgrid(x, y)
-    Z = mlxarr.cos(X) * mlxarr.sin(0.5*Y)
+    x = y = mx.linspace(0., 2*mx.pi, 100)
+    X, Y = mx.meshgrid(x, y)
+    Z = mx.cos(X) * mx.sin(0.5*Y)
 
     clevs = [-.75, -.5, -.25, 0., .25, .5, .75]
     cmap = plt.get_cmap(name='jet', lut=8)

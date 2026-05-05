@@ -20,7 +20,7 @@ Output generated via `matplotlib.animation.Animation.to_jshtml`.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.animation as animation
 
 
@@ -28,11 +28,11 @@ class PauseAnimation:
     def __init__(self):
         fig, ax = plt.subplots()
         ax.set_title('Click to pause/resume the animation')
-        x = mlxarr.linspace(-0.1, 0.1, 1000)
+        x = mx.linspace(-0.1, 0.1, 1000)
 
         # Start with a normal distribution
-        self.n0 = (1.0 / ((4 * mlxarr.pi * 2e-4 * 0.1) ** 0.5)
-                   * mlxarr.exp(-x ** 2 / (4 * 2e-4 * 0.1)))
+        self.n0 = (1.0 / ((4 * mx.pi * 2e-4 * 0.1) ** 0.5)
+                   * mx.exp(-x ** 2 / (4 * 2e-4 * 0.1)))
         self.p, = ax.plot(x, self.n0)
 
         self.animation = animation.FuncAnimation(

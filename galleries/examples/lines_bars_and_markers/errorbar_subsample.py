@@ -9,15 +9,15 @@ data points with similar errors.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # example data
-x = mlxarr.arange(0.1, 4, 0.1)
-y1 = mlxarr.exp(-1.0 * x)
-y2 = mlxarr.exp(-0.5 * x)
+x = mx.arange(0.1, 4, 0.1)
+y1 = mx.exp(-1.0 * x)
+y2 = mx.exp(-0.5 * x)
 
 # example variable error bar values
-y1err = 0.1 + 0.1 * mlxarr.sqrt(x)
-y2err = 0.1 + 0.1 * mlxarr.sqrt(x/2)
+y1err = 0.1 + 0.1 * mx.sqrt(x)
+y2err = 0.1 + 0.1 * mx.sqrt(x/2)
 
 
 fig, (ax0, ax1, ax2) = plt.subplots(nrows=1, ncols=3, sharex=True,

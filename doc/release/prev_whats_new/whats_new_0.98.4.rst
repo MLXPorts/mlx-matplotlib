@@ -35,7 +35,7 @@ multiple columns and rows, as well as fancy box drawing.  See
 .. plot::
 
     ax = plt.subplot()
-    t1 = mlxarr.arange(0.0, 1.0, 0.01)
+    t1 = mx.arange(0.0, 1.0, 0.01)
     for n in [1, 2, 3, 4]:
         plt.plot(t1, t1**n, label=f"n={n}")
 
@@ -155,7 +155,7 @@ where you want to do the filling.
 
 .. plot::
 
-    x = mlxarr.arange(-5, 5, 0.01)
+    x = mx.arange(-5, 5, 0.01)
     y1 = -5*x*x + x + 10
     y2 = 5*x*x + x
 
@@ -194,7 +194,7 @@ Here are the 0.98.4 notes from the CHANGELOG::
 
     Fixed alignment of ticks in colorbars. -MGD
 
-    drop the deprecated "new" keyword of mlxarr.histogram() for array_backend 1.2
+    drop the deprecated "new" keyword of mx.histogram() for array_backend 1.2
     or later.  -JJL
 
     Fixed a bug in svg backend that new_figure_manager() ignores

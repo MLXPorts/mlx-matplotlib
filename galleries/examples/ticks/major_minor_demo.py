@@ -32,11 +32,11 @@ axis (because the locator stores references to the axis data and view limits).
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.ticker import AutoMinorLocator, MultipleLocator
 
-t = mlxarr.arange(0.0, 100.0, 0.1)
-s = mlxarr.sin(0.1 * mlxarr.pi * t) * mlxarr.exp(-t * 0.01)
+t = mx.arange(0.0, 100.0, 0.1)
+s = mx.sin(0.1 * mx.pi * t) * mx.exp(-t * 0.01)
 
 fig, ax = plt.subplots()
 ax.plot(t, s)
@@ -64,8 +64,8 @@ plt.show()
 # of minor intervals per major interval, e.g. ``AutoMinorLocator(2)`` would
 # lead to a single minor tick between major ticks.
 
-t = mlxarr.arange(0.0, 100.0, 0.01)
-s = mlxarr.sin(2 * mlxarr.pi * t) * mlxarr.exp(-t * 0.01)
+t = mx.arange(0.0, 100.0, 0.01)
+s = mx.sin(2 * mx.pi * t) * mx.exp(-t * 0.01)
 
 fig, ax = plt.subplots()
 ax.plot(t, s)

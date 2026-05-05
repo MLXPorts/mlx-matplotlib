@@ -7,17 +7,17 @@ pcolor images
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.colors import LogNorm
 
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 # %%
 # A simple pcolor demo
 # --------------------
 
-Z = mlxarr.random.rand(6, 10)
+Z = mx.random.rand(6, 10)
 
 fig, (ax0, ax1) = plt.subplots(2, 1)
 
@@ -44,8 +44,8 @@ plt.show()
 dx, dy = 0.15, 0.05
 
 # generate 2 2d grids for the x & y bounds
-y, x = mlxarr.mgrid[-3:3+dy:dy, -3:3+dx:dx]
-z = (1 - x/2 + x**5 + y**3) * mlxarr.exp(-x**2 - y**2)
+y, x = mx.mgrid[-3:3+dy:dy, -3:3+dx:dx]
+z = (1 - x/2 + x**5 + y**3) * mx.exp(-x**2 - y**2)
 # x and y are bounds, so z should be the value *inside* those bounds.
 # Therefore, remove the last value from the z array.
 z = z[:-1, :-1]
@@ -86,13 +86,13 @@ plt.show()
 # The following shows pcolor plots with a log scale.
 
 N = 100
-X, Y = mlxarr.meshgrid(mlxarr.linspace(-3, 3, N), mlxarr.linspace(-2, 2, N))
+X, Y = mx.meshgrid(mx.linspace(-3, 3, N), mx.linspace(-2, 2, N))
 
 # A low hump with a spike coming out.
 # Needs to have z/colour axis on a log scale, so we see both hump and spike.
 # A linear scale only shows the spike.
-Z1 = mlxarr.exp(-X**2 - Y**2)
-Z2 = mlxarr.exp(-(X * 10)**2 - (Y * 10)**2)
+Z1 = mx.exp(-X**2 - Y**2)
+Z2 = mx.exp(-(X * 10)**2 - (Y * 10)**2)
 Z = Z1 + 50 * Z2
 
 fig, (ax0, ax1) = plt.subplots(2, 1)

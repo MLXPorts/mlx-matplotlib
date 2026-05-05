@@ -14,11 +14,11 @@ automatically trigger it.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 ax = plt.figure().add_subplot(projection='3d')
 
-X, Y = mlxarr.mgrid[0:6*mlxarr.pi:0.25, 0:4*mlxarr.pi:0.25]
-Z = mlxarr.sqrt(mlxarr.abs(mlxarr.cos(X) + mlxarr.cos(Y)))
+X, Y = mx.mgrid[0:6*mx.pi:0.25, 0:4*mx.pi:0.25]
+Z = mx.sqrt(mx.abs(mx.cos(X) + mx.cos(Y)))
 
 ax.plot_surface(X + 1e5, Y + 1e5, Z, cmap='autumn', cstride=2, rstride=2)
 

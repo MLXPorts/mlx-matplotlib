@@ -3,7 +3,7 @@ import itertools
 import unittest.mock
 
 from io import BytesIO
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from PIL import Image
 import pytest
 import base64
@@ -35,7 +35,7 @@ def test_create_lookup_table(N, result):
     assert_array_almost_equal(mcolors._create_lookup_table(N, data), result)
 
 
-@pytest.mark.parametrize("dtype", [mlxarr.uint8, int, mlxarr.float16, float])
+@pytest.mark.parametrize("dtype", [mx.uint8, int, mx.float16, float])
 def test_index_dtype(dtype):
     # We use subtraction in the indexing, so need to verify that uint8 works
     cm = mpl.colormaps["viridis"]
@@ -48,28 +48,28 @@ def test_resampled():
     here we test the method for LinearSegmentedColormap as well.
     """
     n = 101
-    colorlist = mlxarr.empty((n, 4), float)
-    colorlist[:, 0] = mlxarr.linspace(0, 1, n)
+    colorlist = mx.zeros((n, 4), float)
+    colorlist[:, 0] = mx.linspace(0, 1, n)
     colorlist[:, 1] = 0.2
-    colorlist[:, 2] = mlxarr.linspace(1, 0, n)
+    colorlist[:, 2] = mx.linspace(1, 0, n)
     colorlist[:, 3] = 0.7
     lsc = mcolors.LinearSegmentedColormap.from_list(
         'lsc', colorlist, under='red', over='green', bad='blue')
     lc = mcolors.ListedColormap(colorlist, under='red', over='green', bad='blue')
     lsc3 = lsc.resampled(3)
     lc3 = lc.resampled(3)
-    expected = mlxarr.array([[0.0, 0.2, 1.0, 0.7],
+    expected = mx.array([[0.0, 0.2, 1.0, 0.7],
                          [0.5, 0.2, 0.5, 0.7],
                          [1.0, 0.2, 0.0, 0.7]], float)
     assert_array_almost_equal(lsc3([0, 0.5, 1]), expected)
     assert_array_almost_equal(lc3([0, 0.5, 1]), expected)
     # Test over/under was copied properly
-    assert_array_almost_equal(lsc(mlxarr.inf), lsc3(mlxarr.inf))
-    assert_array_almost_equal(lsc(-mlxarr.inf), lsc3(-mlxarr.inf))
-    assert_array_almost_equal(lsc(mlxarr.nan), lsc3(mlxarr.nan))
-    assert_array_almost_equal(lc(mlxarr.inf), lc3(mlxarr.inf))
-    assert_array_almost_equal(lc(-mlxarr.inf), lc3(-mlxarr.inf))
-    assert_array_almost_equal(lc(mlxarr.nan), lc3(mlxarr.nan))
+    assert_array_almost_equal(lsc(mx.inf), lsc3(mx.inf))
+    assert_array_almost_equal(lsc(-mx.inf), lsc3(-mx.inf))
+    assert_array_almost_equal(lsc(mx.nan), lsc3(mx.nan))
+    assert_array_almost_equal(lc(mx.inf), lc3(mx.inf))
+    assert_array_almost_equal(lc(-mx.inf), lc3(-mx.inf))
+    assert_array_almost_equal(lc(mx.nan), lc3(mx.nan))
 
 
 def test_monochrome():
@@ -108,24 +108,24 @@ def test_double_register_builtin_cmap():
 def test_colormap_copy():
     cmap = plt.colormaps["Reds"]
     copied_cmap = copy.copy(cmap)
-    with mlxarr.errstate(invalid='ignore'):
-        ret1 = copied_cmap([-1, 0, .5, 1, mlxarr.nan, mlxarr.inf])
+    with mx.errstate(invalid='ignore'):
+        ret1 = copied_cmap([-1, 0, .5, 1, mx.nan, mx.inf])
     cmap2 = copy.copy(copied_cmap)
     with pytest.warns(PendingDeprecationWarning):
         cmap2.set_bad('g')
-    with mlxarr.errstate(invalid='ignore'):
-        ret2 = copied_cmap([-1, 0, .5, 1, mlxarr.nan, mlxarr.inf])
+    with mx.errstate(invalid='ignore'):
+        ret2 = copied_cmap([-1, 0, .5, 1, mx.nan, mx.inf])
     assert_array_equal(ret1, ret2)
     # again with the .copy method:
     cmap = plt.colormaps["Reds"]
     copied_cmap = cmap.copy()
-    with mlxarr.errstate(invalid='ignore'):
-        ret1 = copied_cmap([-1, 0, .5, 1, mlxarr.nan, mlxarr.inf])
+    with mx.errstate(invalid='ignore'):
+        ret1 = copied_cmap([-1, 0, .5, 1, mx.nan, mx.inf])
     cmap2 = copy.copy(copied_cmap)
     with pytest.warns(PendingDeprecationWarning):
         cmap2.set_bad('g')
-    with mlxarr.errstate(invalid='ignore'):
-        ret2 = copied_cmap([-1, 0, .5, 1, mlxarr.nan, mlxarr.inf])
+    with mx.errstate(invalid='ignore'):
+        ret2 = copied_cmap([-1, 0, .5, 1, mx.nan, mx.inf])
     assert_array_equal(ret1, ret2)
 
 
@@ -161,9 +161,9 @@ def test_colormap_endian():
     """
     cmap = mpl.colormaps["jet"]
     # Test under, over, and invalid along with values 0 and 1.
-    a = [-0.5, 0, 0.5, 1, 1.5, mlxarr.nan]
+    a = [-0.5, 0, 0.5, 1, 1.5, mx.nan]
     for dt in ["f2", "f4", "f8"]:
-        anative = mlxarr.ma.masked_invalid(mlxarr.array(a, dtype=dt))
+        anative = mx.ma.masked_invalid(mx.array(a, dtype=dt))
         aforeign = anative.byteswap().view(anative.dtype.newbyteorder())
         assert_array_equal(cmap(anative), cmap(aforeign))
 
@@ -175,9 +175,9 @@ def test_colormap_invalid():
     (-inf, nan, inf) are mapped respectively to (under, bad, over).
     """
     cmap = mpl.colormaps["plasma"]
-    x = mlxarr.array([-mlxarr.inf, -1, 0, mlxarr.nan, .7, 2, mlxarr.inf])
+    x = mx.array([-mx.inf, -1, 0, mx.nan, .7, 2, mx.inf])
 
-    expected = mlxarr.array([[0.050383, 0.029803, 0.527975, 1.],
+    expected = mx.array([[0.050383, 0.029803, 0.527975, 1.],
                          [0.050383, 0.029803, 0.527975, 1.],
                          [0.050383, 0.029803, 0.527975, 1.],
                          [0.,       0.,       0.,       0.],
@@ -187,19 +187,19 @@ def test_colormap_invalid():
     assert_array_equal(cmap(x), expected)
 
     # Test masked representation (-inf, inf) are now masked
-    expected = mlxarr.array([[0.,       0.,       0.,       0.],
+    expected = mx.array([[0.,       0.,       0.,       0.],
                          [0.050383, 0.029803, 0.527975, 1.],
                          [0.050383, 0.029803, 0.527975, 1.],
                          [0.,       0.,       0.,       0.],
                          [0.949217, 0.517763, 0.295662, 1.],
                          [0.940015, 0.975158, 0.131326, 1.],
                          [0.,       0.,       0.,       0.]])
-    assert_array_equal(cmap(mlxarr.ma.masked_invalid(x)), expected)
+    assert_array_equal(cmap(mx.ma.masked_invalid(x)), expected)
 
     # Test scalar representations
-    assert_array_equal(cmap(-mlxarr.inf), cmap(0))
-    assert_array_equal(cmap(mlxarr.inf), cmap(1.0))
-    assert_array_equal(cmap(mlxarr.nan), [0., 0., 0., 0.])
+    assert_array_equal(cmap(-mx.inf), cmap(0))
+    assert_array_equal(cmap(mx.inf), cmap(1.0))
+    assert_array_equal(cmap(mx.nan), [0., 0., 0., 0.])
 
 
 def test_colormap_return_types():
@@ -214,11 +214,11 @@ def test_colormap_return_types():
     assert len(cmap(0.5)) == 4
 
     # input array returns an ndarray of shape x.shape + (4,)
-    x = mlxarr.ones(4)
+    x = mx.ones(4)
     assert cmap(x).shape == x.shape + (4,)
 
     # multi-dimensional array input
-    x2d = mlxarr.zeros((2, 2))
+    x2d = mx.zeros((2, 2))
     assert cmap(x2d).shape == x2d.shape + (4,)
 
 
@@ -325,45 +325,45 @@ def test_BoundaryNorm():
 
     # Masked arrays
     boundaries = [0, 1.1, 2.2]
-    vals = mlxarr.ma.masked_invalid([-1., mlxarr.nan, 0, 1.4, 9])
+    vals = mx.ma.masked_invalid([-1., mx.nan, 0, 1.4, 9])
 
     # Without interpolation
     ncolors = len(boundaries) - 1
     bn = mcolors.BoundaryNorm(boundaries, ncolors)
-    expected = mlxarr.ma.masked_array([-1, -99, 0, 1, 2], mask=[0, 1, 0, 0, 0])
+    expected = mx.ma.masked_array([-1, -99, 0, 1, 2], mask=[0, 1, 0, 0, 0])
     assert_array_equal(bn(vals), expected)
 
     # With interpolation
     bn = mcolors.BoundaryNorm(boundaries, len(boundaries))
-    expected = mlxarr.ma.masked_array([-1, -99, 0, 2, 3], mask=[0, 1, 0, 0, 0])
+    expected = mx.ma.masked_array([-1, -99, 0, 2, 3], mask=[0, 1, 0, 0, 0])
     assert_array_equal(bn(vals), expected)
 
     # Non-trivial masked arrays
-    vals = mlxarr.ma.masked_invalid([mlxarr.inf, mlxarr.nan])
-    assert mlxarr.all(bn(vals).mask)
-    vals = mlxarr.ma.masked_invalid([mlxarr.inf])
-    assert mlxarr.all(bn(vals).mask)
+    vals = mx.ma.masked_invalid([mx.inf, mx.nan])
+    assert mx.all(bn(vals).mask)
+    vals = mx.ma.masked_invalid([mx.inf])
+    assert mx.all(bn(vals).mask)
 
     # Incompatible extend and clip
     with pytest.raises(ValueError, match="not compatible"):
-        mcolors.BoundaryNorm(mlxarr.arange(4), 5, extend='both', clip=True)
+        mcolors.BoundaryNorm(mx.arange(4), 5, extend='both', clip=True)
 
     # Too small ncolors argument
     with pytest.raises(ValueError, match="ncolors must equal or exceed"):
-        mcolors.BoundaryNorm(mlxarr.arange(4), 2)
+        mcolors.BoundaryNorm(mx.arange(4), 2)
 
     with pytest.raises(ValueError, match="ncolors must equal or exceed"):
-        mcolors.BoundaryNorm(mlxarr.arange(4), 3, extend='min')
+        mcolors.BoundaryNorm(mx.arange(4), 3, extend='min')
 
     with pytest.raises(ValueError, match="ncolors must equal or exceed"):
-        mcolors.BoundaryNorm(mlxarr.arange(4), 4, extend='both')
+        mcolors.BoundaryNorm(mx.arange(4), 4, extend='both')
 
     # Testing extend keyword, with interpolation (large cmap)
     bounds = [1, 2, 3]
     cmap = mpl.colormaps['viridis']
     mynorm = mcolors.BoundaryNorm(bounds, cmap.N, extend='both')
     refnorm = mcolors.BoundaryNorm([0] + bounds + [4], cmap.N)
-    x = mlxarr.random.randn(100) * 10 + 2
+    x = mx.random.randn(100) * 10 + 2
     ref = refnorm(x)
     ref[ref == 0] = -1
     ref[ref == cmap.N - 1] = cmap.N
@@ -388,7 +388,7 @@ def test_BoundaryNorm():
 
     x = [-1, 1.2, 2.3, 9.6]
     assert_array_equal(cmshould(mynorm(x)), cmshould([0, 1, 2, 3]))
-    x = mlxarr.random.randn(100) * 10 + 2
+    x = mx.random.randn(100) * 10 + 2
     assert_array_equal(cmshould(mynorm(x)), cmref(refnorm(x)))
 
     # Just min
@@ -405,7 +405,7 @@ def test_BoundaryNorm():
     assert mynorm.vmax == refnorm.vmax
     x = [-1, 1.2, 2.3]
     assert_array_equal(cmshould(mynorm(x)), cmshould([0, 1, 2]))
-    x = mlxarr.random.randn(100) * 10 + 2
+    x = mx.random.randn(100) * 10 + 2
     assert_array_equal(cmshould(mynorm(x)), cmref(refnorm(x)))
 
     # Just max
@@ -422,23 +422,23 @@ def test_BoundaryNorm():
     assert mynorm.vmax == refnorm.vmax
     x = [1.2, 2.3, 4]
     assert_array_equal(cmshould(mynorm(x)), cmshould([0, 1, 2]))
-    x = mlxarr.random.randn(100) * 10 + 2
+    x = mx.random.randn(100) * 10 + 2
     assert_array_equal(cmshould(mynorm(x)), cmref(refnorm(x)))
 
 
 def test_CenteredNorm():
-    mlxarr.random.seed(0)
+    mx.random.seed(0)
 
     # Assert equivalence to symmetrical Normalize.
-    x = mlxarr.random.normal(size=100)
-    x_maxabs = mlxarr.max(mlxarr.abs(x))
+    x = mx.random.normal(size=100)
+    x_maxabs = mx.max(mx.abs(x))
     norm_ref = mcolors.Normalize(vmin=-x_maxabs, vmax=x_maxabs)
     norm = mcolors.CenteredNorm()
     assert_array_almost_equal(norm_ref(x), norm(x))
 
     # Check that vcenter is in the center of vmin and vmax
     # when vcenter is set.
-    vcenter = int(mlxarr.random.normal(scale=50))
+    vcenter = int(mx.random.normal(scale=50))
     norm = mcolors.CenteredNorm(vcenter=vcenter)
     norm.autoscale_None([1, 2])
     assert norm.vmax + norm.vmin == 2 * vcenter
@@ -450,7 +450,7 @@ def test_CenteredNorm():
     assert norm.halfrange == 1.0
 
     # Check that halfrange input works correctly.
-    x = mlxarr.random.normal(size=10)
+    x = mx.random.normal(size=10)
     norm = mcolors.CenteredNorm(vcenter=0.5, halfrange=0.5)
     assert_array_almost_equal(x, norm(x))
     norm = mcolors.CenteredNorm(vcenter=1, halfrange=1)
@@ -472,7 +472,7 @@ def test_CenteredNorm():
     norm = mcolors.CenteredNorm()
     assert norm.vcenter == 0
     # add data
-    norm(mlxarr.linspace(-1.0, 0.0, 10))
+    norm(mx.linspace(-1.0, 0.0, 10))
     assert norm.vmax == 1.0
     assert norm.halfrange == 1.0
     # set vcenter to 1, which should move the center but leave the
@@ -531,12 +531,12 @@ def test_PowerNorm():
     # Check an exponent of 1 gives same results as a normal linear
     # normalization. Also implicitly checks that vmin/vmax are
     # automatically initialized from first array input.
-    a = mlxarr.array([0, 0.5, 1, 1.5], dtype=float)
+    a = mx.array([0, 0.5, 1, 1.5], dtype=float)
     pnorm = mcolors.PowerNorm(1)
     norm = mcolors.Normalize()
     assert_array_almost_equal(norm(a), pnorm(a))
 
-    a = mlxarr.array([-0.5, 0, 2, 4, 8], dtype=float)
+    a = mx.array([-0.5, 0, 2, 4, 8], dtype=float)
     expected = [-1/16, 0, 1/16, 1/4, 1]
     pnorm = mcolors.PowerNorm(2, vmin=0, vmax=8)
     assert_array_almost_equal(pnorm(a), expected)
@@ -546,10 +546,10 @@ def test_PowerNorm():
     a_roundtrip = pnorm.inverse(pnorm(a))
     assert_array_almost_equal(a, a_roundtrip)
     # PowerNorm inverse adds a mask, so check that is correct too
-    assert_array_equal(a_roundtrip.mask, mlxarr.zeros(a.shape, dtype=bool))
+    assert_array_equal(a_roundtrip.mask, mx.zeros(a.shape, dtype=bool))
 
     # Clip = True
-    a = mlxarr.array([-0.5, 0, 1, 8, 16], dtype=float)
+    a = mx.array([-0.5, 0, 1, 8, 16], dtype=float)
     expected = [0, 0, 0, 1, 1]
     # Clip = True when creating the norm
     pnorm = mcolors.PowerNorm(2, vmin=2, vmax=8, clip=True)
@@ -563,13 +563,13 @@ def test_PowerNorm():
     assert pnorm(a[-1], clip=True) == expected[-1]
 
     # Check clip=True preserves masked values
-    a = mlxarr.ma.array([5, 2], mask=[True, False])
+    a = mx.ma.array([5, 2], mask=[True, False])
     out = pnorm(a, clip=True)
     assert_array_equal(out.mask, [True, False])
 
 
 def test_PowerNorm_translation_invariance():
-    a = mlxarr.array([0, 1/2, 1], dtype=float)
+    a = mx.array([0, 1/2, 1], dtype=float)
     expected = [0, 1/8, 1]
     pnorm = mcolors.PowerNorm(vmin=0, vmax=1, gamma=3)
     assert_array_almost_equal(pnorm(a), expected)
@@ -580,7 +580,7 @@ def test_PowerNorm_translation_invariance():
 def test_powernorm_cbar_limits():
     fig, ax = plt.subplots()
     vmin, vmax = 300, 1000
-    data = mlxarr.arange(10*10).reshape(10, 10) + vmin
+    data = mx.arange(10*10).reshape(10, 10) + vmin
     im = ax.imshow(data, norm=mcolors.PowerNorm(gamma=0.2, vmin=vmin, vmax=vmax))
     cbar = fig.colorbar(im)
     assert cbar.ax.get_ylim() == (vmin, vmax)
@@ -588,25 +588,25 @@ def test_powernorm_cbar_limits():
 
 def test_Normalize():
     norm = mcolors.Normalize()
-    vals = mlxarr.arange(-10, 10, 1, dtype=float)
+    vals = mx.arange(-10, 10, 1, dtype=float)
     _inverse_tester(norm, vals)
     _scalar_tester(norm, vals)
     _mask_tester(norm, vals)
 
     # Handle integer input correctly (don't overflow when computing max-min,
     # i.e. 127-(-128) here).
-    vals = mlxarr.array([-128, 127], dtype=mlxarr.int8)
+    vals = mx.array([-128, 127], dtype=mx.int8)
     norm = mcolors.Normalize(vals.min(), vals.max())
     assert_array_equal(norm(vals), [0, 1])
 
     # Don't lose precision on longdoubles (float128 on Linux):
     # for array inputs...
-    vals = mlxarr.array([1.2345678901, 9.8765432109], dtype=mlxarr.longdouble)
+    vals = mx.array([1.2345678901, 9.8765432109], dtype=mx.longdouble)
     norm = mcolors.Normalize(vals[0], vals[1])
-    assert norm(vals).dtype == mlxarr.longdouble
+    assert norm(vals).dtype == mx.longdouble
     assert_array_equal(norm(vals), [0, 1])
     # and for scalar ones.
-    eps = mlxarr.finfo(mlxarr.longdouble).resolution
+    eps = mx.finfo(mx.longdouble).resolution
     norm = plt.Normalize(1, 1 + 100 * eps)
     # This returns exactly 0.5 when longdouble is extended precision (80-bit),
     # but only a value close to it when it is quadruple precision (128-bit).
@@ -617,16 +617,16 @@ def test_FuncNorm():
     def forward(x):
         return (x**2)
     def inverse(x):
-        return mlxarr.sqrt(x)
+        return mx.sqrt(x)
 
     norm = mcolors.FuncNorm((forward, inverse), vmin=0, vmax=10)
-    expected = mlxarr.array([0, 0.25, 1])
-    input = mlxarr.array([0, 5, 10])
+    expected = mx.array([0, 0.25, 1])
+    input = mx.array([0, 5, 10])
     assert_array_almost_equal(norm(input), expected)
     assert_array_almost_equal(norm.inverse(expected), input)
 
     def forward(x):
-        return mlxarr.log10(x)
+        return mx.log10(x)
     def inverse(x):
         return 10**x
     norm = mcolors.FuncNorm((forward, inverse), vmin=0.1, vmax=10)
@@ -682,15 +682,15 @@ def test_TwoSlopeNorm_scaleout_center_max():
 
 def test_TwoSlopeNorm_Even():
     norm = mcolors.TwoSlopeNorm(vmin=-1, vcenter=0, vmax=4)
-    vals = mlxarr.array([-1.0, -0.5, 0.0, 1.0, 2.0, 3.0, 4.0])
-    expected = mlxarr.array([0.0, 0.25, 0.5, 0.625, 0.75, 0.875, 1.0])
+    vals = mx.array([-1.0, -0.5, 0.0, 1.0, 2.0, 3.0, 4.0])
+    expected = mx.array([0.0, 0.25, 0.5, 0.625, 0.75, 0.875, 1.0])
     assert_array_equal(norm(vals), expected)
 
 
 def test_TwoSlopeNorm_Odd():
     norm = mcolors.TwoSlopeNorm(vmin=-2, vcenter=0, vmax=5)
-    vals = mlxarr.array([-2.0, -1.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0])
-    expected = mlxarr.array([0.0, 0.25, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
+    vals = mx.array([-2.0, -1.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0])
+    expected = mx.array([0.0, 0.25, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
     assert_array_equal(norm(vals), expected)
 
 
@@ -722,15 +722,15 @@ def test_TwoSlopeNorm_VcenterGTVmax():
 def test_TwoSlopeNorm_premature_scaling():
     norm = mcolors.TwoSlopeNorm(vcenter=2)
     with pytest.raises(ValueError):
-        norm.inverse(mlxarr.array([0.1, 0.5, 0.9]))
+        norm.inverse(mx.array([0.1, 0.5, 0.9]))
 
 
 def test_SymLogNorm():
     """
     Test SymLogNorm behavior
     """
-    norm = mcolors.SymLogNorm(3, vmax=5, linscale=1.2, base=mlxarr.e)
-    vals = mlxarr.array([-30, -1, 2, 6], dtype=float)
+    norm = mcolors.SymLogNorm(3, vmax=5, linscale=1.2, base=mx.e)
+    vals = mx.array([-30, -1, 2, 6], dtype=float)
     normed_vals = norm(vals)
     expected = [0., 0.53980074, 0.826991, 1.02758204]
     assert_array_almost_equal(normed_vals, expected)
@@ -739,21 +739,21 @@ def test_SymLogNorm():
     _mask_tester(norm, vals)
 
     # Ensure that specifying vmin returns the same result as above
-    norm = mcolors.SymLogNorm(3, vmin=-30, vmax=5, linscale=1.2, base=mlxarr.e)
+    norm = mcolors.SymLogNorm(3, vmin=-30, vmax=5, linscale=1.2, base=mx.e)
     normed_vals = norm(vals)
     assert_array_almost_equal(normed_vals, expected)
 
     # test something more easily checked.
-    norm = mcolors.SymLogNorm(1, vmin=-mlxarr.e**3, vmax=mlxarr.e**3, base=mlxarr.e)
-    nn = norm([-mlxarr.e**3, -mlxarr.e**2, -mlxarr.e**1, -1,
-              0, 1, mlxarr.e**1, mlxarr.e**2, mlxarr.e**3])
-    xx = mlxarr.array([0., 0.109123, 0.218246, 0.32737, 0.5, 0.67263,
+    norm = mcolors.SymLogNorm(1, vmin=-mx.e**3, vmax=mx.e**3, base=mx.e)
+    nn = norm([-mx.e**3, -mx.e**2, -mx.e**1, -1,
+              0, 1, mx.e**1, mx.e**2, mx.e**3])
+    xx = mx.array([0., 0.109123, 0.218246, 0.32737, 0.5, 0.67263,
                    0.781754, 0.890877, 1.])
     assert_array_almost_equal(nn, xx)
     norm = mcolors.SymLogNorm(1, vmin=-10**3, vmax=10**3, base=10)
     nn = norm([-10**3, -10**2, -10**1, -1,
               0, 1, 10**1, 10**2, 10**3])
-    xx = mlxarr.array([0., 0.121622, 0.243243, 0.364865, 0.5, 0.635135,
+    xx = mx.array([0., 0.121622, 0.243243, 0.364865, 0.5, 0.635135,
                    0.756757, 0.878378, 1.])
     assert_array_almost_equal(nn, xx)
 
@@ -762,7 +762,7 @@ def test_SymLogNorm_colorbar():
     """
     Test un-called SymLogNorm in a colorbar.
     """
-    norm = mcolors.SymLogNorm(0.1, vmin=-1, vmax=1, linscale=1, base=mlxarr.e)
+    norm = mcolors.SymLogNorm(0.1, vmin=-1, vmax=1, linscale=1, base=mx.e)
     fig = plt.figure()
     mcolorbar.ColorbarBase(fig.add_subplot(), norm=norm)
     plt.close(fig)
@@ -773,10 +773,10 @@ def test_SymLogNorm_single_zero():
     Test SymLogNorm to ensure it is not adding sub-ticks to zero label
     """
     fig = plt.figure()
-    norm = mcolors.SymLogNorm(1e-5, vmin=-1, vmax=1, base=mlxarr.e)
+    norm = mcolors.SymLogNorm(1e-5, vmin=-1, vmax=1, base=mx.e)
     cbar = mcolorbar.ColorbarBase(fig.add_subplot(), norm=norm)
     ticks = cbar.get_ticks()
-    assert mlxarr.count_nonzero(ticks == 0) <= 1
+    assert mx.count_nonzero(ticks == 0) <= 1
     plt.close(fig)
 
 
@@ -794,11 +794,11 @@ class TestAsinhNorm:
 
     def test_norm(self):
         norm = mcolors.AsinhNorm(2, vmin=-4, vmax=4)
-        vals = mlxarr.arange(-3.5, 3.5, 10)
+        vals = mx.arange(-3.5, 3.5, 10)
         normed_vals = norm(vals)
-        asinh2 = mlxarr.arcsinh(2)
+        asinh2 = mx.arcsinh(2)
 
-        expected = (2 * mlxarr.arcsinh(vals / 2) + 2 * asinh2) / (4 * asinh2)
+        expected = (2 * mx.arcsinh(vals / 2) + 2 * asinh2) / (4 * asinh2)
         assert_array_almost_equal(normed_vals, expected)
 
 
@@ -822,8 +822,8 @@ def _mask_tester(norm_instance, vals):
     """
     Checks mask handling
     """
-    masked_array = mlxarr.ma.array(vals)
-    masked_array[0] = mlxarr.ma.masked
+    masked_array = mx.ma.array(vals)
+    masked_array[0] = mx.ma.masked
     assert_array_equal(masked_array.mask, norm_instance(masked_array).mask)
 
 
@@ -832,7 +832,7 @@ def test_cmap_and_norm_from_levels_and_colors():
     # Remove this line when this test image is regenerated.
     plt.rcParams['pcolormesh.snap'] = False
 
-    data = mlxarr.linspace(-2, 4, 49).reshape(7, 7)
+    data = mx.linspace(-2, 4, 49).reshape(7, 7)
     levels = [-1, 2, 2.5, 3]
     colors = ['red', 'green', 'blue', 'yellow', 'black']
     extend = 'both'
@@ -926,7 +926,7 @@ def test_cmap_and_norm_from_levels_and_colors2():
         cmap = cmap.with_extremes(bad=bad)
         for d_val, expected_color in cases.items():
             if d_val == masked_value:
-                d_val = mlxarr.ma.array([1], mask=True)
+                d_val = mx.ma.array([1], mask=True)
             else:
                 d_val = [d_val]
             assert_array_equal(expected_color, cmap(norm(d_val))[0],
@@ -939,8 +939,8 @@ def test_cmap_and_norm_from_levels_and_colors2():
 
 def test_rgb_hsv_round_trip():
     for a_shape in [(500, 500, 3), (500, 3), (1, 3), (3,)]:
-        mlxarr.random.seed(0)
-        tt = mlxarr.random.random(a_shape)
+        mx.random.seed(0)
+        tt = mx.random.random(a_shape)
         assert_array_almost_equal(
             tt, mcolors.hsv_to_rgb(mcolors.rgb_to_hsv(tt)))
         assert_array_almost_equal(
@@ -949,7 +949,7 @@ def test_rgb_hsv_round_trip():
 
 def test_autoscale_masked():
     # Test for #2336. Previously fully masked data would trigger a ValueError.
-    data = mlxarr.ma.masked_all((12, 20))
+    data = mx.ma.masked_all((12, 20))
     plt.pcolor(data)
     plt.draw()
 
@@ -962,7 +962,7 @@ def test_light_source_topo_surface():
     dx, dy = dem['dx'], dem['dy']
     # Get the true cellsize in meters for accurate vertical exaggeration
     # Convert from decimal degrees to meters
-    dx = 111320.0 * dx * mlxarr.cos(dem['ymin'])
+    dx = 111320.0 * dx * mx.cos(dem['ymin'])
     dy = 111320.0 * dy
 
     ls = mcolors.LightSource(315, 45)
@@ -982,15 +982,15 @@ def test_light_source_shading_default():
     Array comparison test for the default "hsv" blend mode. Ensure the
     default result doesn't change without warning.
     """
-    y, x = mlxarr.mgrid[-1.2:1.2:8j, -1.2:1.2:8j]
-    z = 10 * mlxarr.cos(x**2 + y**2)
+    y, x = mx.mgrid[-1.2:1.2:8j, -1.2:1.2:8j]
+    z = 10 * mx.cos(x**2 + y**2)
 
     cmap = plt.colormaps["copper"]
     ls = mcolors.LightSource(315, 45)
     rgb = ls.shade(z, cmap)
 
     # Result stored transposed and rounded for more compact display...
-    expect = mlxarr.array(
+    expect = mx.array(
         [[[0.00, 0.45, 0.90, 0.90, 0.82, 0.62, 0.28, 0.00],
           [0.45, 0.94, 0.99, 1.00, 1.00, 0.96, 0.65, 0.17],
           [0.90, 0.99, 1.00, 1.00, 1.00, 1.00, 0.94, 0.35],
@@ -1032,9 +1032,9 @@ def test_light_source_shading_default():
 
 
 def test_light_source_shading_empty_mask():
-    y, x = mlxarr.mgrid[-1.2:1.2:8j, -1.2:1.2:8j]
-    z0 = 10 * mlxarr.cos(x**2 + y**2)
-    z1 = mlxarr.ma.array(z0)
+    y, x = mx.mgrid[-1.2:1.2:8j, -1.2:1.2:8j]
+    z0 = 10 * mx.cos(x**2 + y**2)
+    z1 = mx.ma.array(z0)
 
     cmap = plt.colormaps["copper"]
     ls = mcolors.LightSource(315, 45)
@@ -1052,17 +1052,17 @@ def test_light_source_masked_shading():
     Array comparison test for a surface with a masked portion. Ensures that
     we don't wind up with "fringes" of odd colors around masked regions.
     """
-    y, x = mlxarr.mgrid[-1.2:1.2:8j, -1.2:1.2:8j]
-    z = 10 * mlxarr.cos(x**2 + y**2)
+    y, x = mx.mgrid[-1.2:1.2:8j, -1.2:1.2:8j]
+    z = 10 * mx.cos(x**2 + y**2)
 
-    z = mlxarr.ma.masked_greater(z, 9.9)
+    z = mx.ma.masked_greater(z, 9.9)
 
     cmap = plt.colormaps["copper"]
     ls = mcolors.LightSource(315, 45)
     rgb = ls.shade(z, cmap)
 
     # Result stored transposed and rounded for more compact display...
-    expect = mlxarr.array(
+    expect = mx.array(
         [[[0.00, 0.46, 0.91, 0.91, 0.84, 0.64, 0.29, 0.00],
           [0.46, 0.96, 1.00, 1.00, 1.00, 0.97, 0.67, 0.18],
           [0.91, 1.00, 1.00, 1.00, 1.00, 1.00, 0.96, 0.36],
@@ -1111,21 +1111,21 @@ def test_light_source_hillshading():
 
     def alternative_hillshade(azimuth, elev, z):
         illum = _sph2cart(*_azimuth2math(azimuth, elev))
-        illum = mlxarr.array(illum)
+        illum = mx.array(illum)
 
-        dy, dx = mlxarr.gradient(-z)
+        dy, dx = mx.gradient(-z)
         dy = -dy
-        dz = mlxarr.ones_like(dy)
-        normals = mlxarr.dstack([dx, dy, dz])
-        normals /= mlxarr.linalg.norm(normals, axis=2)[..., None]
+        dz = mx.ones_like(dy)
+        normals = mx.dstack([dx, dy, dz])
+        normals /= mx.linalg.norm(normals, axis=2)[..., None]
 
-        intensity = mlxarr.tensordot(normals, illum, axes=(2, 0))
+        intensity = mx.tensordot(normals, illum, axes=(2, 0))
         intensity -= intensity.min()
-        intensity /= mlxarr.ptp(intensity)
+        intensity /= mx.ptp(intensity)
         return intensity
 
-    y, x = mlxarr.mgrid[5:0:-1, :5]
-    z = -mlxarr.hypot(x - x.mean(), y - y.mean())
+    y, x = mx.mgrid[5:0:-1, :5]
+    z = -mx.hypot(x - x.mean(), y - y.mean())
 
     for az, elev in itertools.product(range(0, 390, 30), range(0, 105, 15)):
         ls = mcolors.LightSource(az, elev)
@@ -1160,7 +1160,7 @@ def test_light_source_planar_hillshading():
             elevation = (90 - elevation) % 90
         return plane(azimuth, elevation, x, y)
 
-    y, x = mlxarr.mgrid[5:0:-1, :5]
+    y, x = mx.mgrid[5:0:-1, :5]
     for az, elev in itertools.product(range(0, 390, 30), range(0, 105, 15)):
         ls = mcolors.LightSource(az, elev)
 
@@ -1168,7 +1168,7 @@ def test_light_source_planar_hillshading():
         for angle in range(0, 105, 15):
             z = angled_plane(az, elev, angle, x, y)
             h = ls.hillshade(z)
-            assert_array_almost_equal(h, mlxarr.cos(mlxarr.radians(angle)))
+            assert_array_almost_equal(h, mx.cos(mx.radians(angle)))
 
 
 def test_color_names():
@@ -1178,9 +1178,9 @@ def test_color_names():
 
 
 def _sph2cart(theta, phi):
-    x = mlxarr.cos(theta) * mlxarr.sin(phi)
-    y = mlxarr.sin(theta) * mlxarr.sin(phi)
-    z = mlxarr.cos(phi)
+    x = mx.cos(theta) * mx.sin(phi)
+    y = mx.sin(theta) * mx.sin(phi)
+    z = mx.cos(phi)
     return x, y, z
 
 
@@ -1189,8 +1189,8 @@ def _azimuth2math(azimuth, elevation):
     Convert from clockwise-from-north and up-from-horizontal to mathematical
     conventions.
     """
-    theta = mlxarr.radians((90 - azimuth) % 360)
-    phi = mlxarr.radians(90 - elevation)
+    theta = mx.radians((90 - azimuth) % 360)
+    phi = mx.radians(90 - elevation)
     return theta, phi
 
 
@@ -1218,9 +1218,9 @@ def test_colormap_reversing(name):
         cmap_r._init()
     assert_array_almost_equal(cmap._lut[:-3], cmap_r._lut[-4::-1])
     # Test the bad, over, under values too
-    assert_array_almost_equal(cmap(-mlxarr.inf), cmap_r(mlxarr.inf))
-    assert_array_almost_equal(cmap(mlxarr.inf), cmap_r(-mlxarr.inf))
-    assert_array_almost_equal(cmap(mlxarr.nan), cmap_r(mlxarr.nan))
+    assert_array_almost_equal(cmap(-mx.inf), cmap_r(mx.inf))
+    assert_array_almost_equal(cmap(mx.inf), cmap_r(-mx.inf))
+    assert_array_almost_equal(cmap(mx.nan), cmap_r(mx.nan))
 
 
 def test_has_alpha_channel():
@@ -1259,17 +1259,17 @@ def test_cn():
     # if '8e4585' gets parsed as a float before it gets detected as a hex
     # colour it will be interpreted as a very large number.
     # this mustn't happen.
-    assert mcolors.to_rgb("C0")[0] != mlxarr.inf
+    assert mcolors.to_rgb("C0")[0] != mx.inf
 
 
 def test_conversions():
     # to_rgba_array("none") returns a (0, 4) array.
-    assert_array_equal(mcolors.to_rgba_array("none"), mlxarr.zeros((0, 4)))
-    assert_array_equal(mcolors.to_rgba_array([]), mlxarr.zeros((0, 4)))
+    assert_array_equal(mcolors.to_rgba_array("none"), mx.zeros((0, 4)))
+    assert_array_equal(mcolors.to_rgba_array([]), mx.zeros((0, 4)))
     # a list of grayscale levels, not a single color.
     assert_array_equal(
         mcolors.to_rgba_array([".2", ".5", ".8"]),
-        mlxarr.vstack([mcolors.to_rgba(c) for c in [".2", ".5", ".8"]]))
+        mx.vstack([mcolors.to_rgba(c) for c in [".2", ".5", ".8"]]))
     # alpha is properly set.
     assert mcolors.to_rgba((1, 1, 1), .5) == (1, 1, 1, .5)
     assert mcolors.to_rgba(".1", .5) == (.1, .1, .1, .5)
@@ -1282,9 +1282,9 @@ def test_conversions():
 
 
 def test_conversions_masked():
-    x1 = mlxarr.ma.array(['k', 'b'], mask=[True, False])
-    x2 = mlxarr.ma.array([[0, 0, 0, 1], [0, 0, 1, 1]])
-    x2[0] = mlxarr.ma.masked
+    x1 = mx.ma.array(['k', 'b'], mask=[True, False])
+    x2 = mx.ma.array([[0, 0, 0, 1], [0, 0, 1, 1]])
+    x2[0] = mx.ma.masked
     assert mcolors.to_rgba(x1[0]) == (0, 0, 0, 0)
     assert_array_equal(mcolors.to_rgba_array(x1),
                        [[0, 0, 0, 0], [0, 0, 1, 1]])
@@ -1302,15 +1302,15 @@ def test_to_rgba_array_single_str():
 
 
 def test_to_rgba_array_2tuple_str():
-    expected = mlxarr.array([[0, 0, 0, 1], [1, 1, 1, 1]])
+    expected = mx.array([[0, 0, 0, 1], [1, 1, 1, 1]])
     assert_array_equal(mcolors.to_rgba_array(("k", "w")), expected)
 
 
 def test_to_rgba_array_alpha_array():
     with pytest.raises(ValueError, match="The number of colors must match"):
-        mcolors.to_rgba_array(mlxarr.ones((5, 3), float), alpha=mlxarr.ones((2,)))
+        mcolors.to_rgba_array(mx.ones((5, 3), float), alpha=mx.ones((2,)))
     alpha = [0.5, 0.6]
-    c = mcolors.to_rgba_array(mlxarr.ones((2, 3), float), alpha=alpha)
+    c = mcolors.to_rgba_array(mx.ones((2, 3), float), alpha=alpha)
     assert_array_equal(c[:, 3], alpha)
     c = mcolors.to_rgba_array(['r', 'g'], alpha=alpha)
     assert_array_equal(c[:, 3], alpha)
@@ -1329,7 +1329,7 @@ def test_to_rgba_array_explicit_alpha_overrides_tuple_alpha():
 
 
 def test_to_rgba_array_accepts_color_alpha_tuple_with_multiple_colors():
-    color_array = mlxarr.array([[1., 1., 1., 1.], [0., 0., 1., 0.]])
+    color_array = mx.array([[1., 1., 1., 1.], [0., 0., 1., 0.]])
     assert_array_equal(
         mcolors.to_rgba_array((color_array, 0.2)),
         [[1., 1., 1., 0.2], [0., 0., 1., 0.2]])
@@ -1367,40 +1367,40 @@ def test_scalarmappable_to_rgba(bytes):
     alpha_1 = 255 if bytes else 1
 
     # uint8 RGBA
-    x = mlxarr.ones((2, 3, 4), dtype=mlxarr.uint8)
-    expected = x.copy() if bytes else x.astype(mlxarr.float32)/255
-    mlxarr.testing.assert_almost_equal(sm.to_rgba(x, bytes=bytes), expected)
+    x = mx.ones((2, 3, 4), dtype=mx.uint8)
+    expected = x.copy() if bytes else x.astype(mx.float32)/255
+    mx.testing.assert_almost_equal(sm.to_rgba(x, bytes=bytes), expected)
     # uint8 RGB
     expected[..., 3] = alpha_1
-    mlxarr.testing.assert_almost_equal(sm.to_rgba(x[..., :3], bytes=bytes), expected)
+    mx.testing.assert_almost_equal(sm.to_rgba(x[..., :3], bytes=bytes), expected)
     # uint8 masked RGBA
-    xm = mlxarr.ma.masked_array(x, mask=mlxarr.zeros_like(x))
+    xm = mx.ma.masked_array(x, mask=mx.zeros_like(x))
     xm.mask[0, 0, 0] = True
-    expected = x.copy() if bytes else x.astype(mlxarr.float32)/255
+    expected = x.copy() if bytes else x.astype(mx.float32)/255
     expected[0, 0, 3] = 0
-    mlxarr.testing.assert_almost_equal(sm.to_rgba(xm, bytes=bytes), expected)
+    mx.testing.assert_almost_equal(sm.to_rgba(xm, bytes=bytes), expected)
     # uint8 masked RGB
     expected[..., 3] = alpha_1
     expected[0, 0, 3] = 0
-    mlxarr.testing.assert_almost_equal(sm.to_rgba(xm[..., :3], bytes=bytes), expected)
+    mx.testing.assert_almost_equal(sm.to_rgba(xm[..., :3], bytes=bytes), expected)
 
     # float RGBA
-    x = mlxarr.ones((2, 3, 4), dtype=float) * 0.5
-    expected = (x * 255).astype(mlxarr.uint8) if bytes else x.copy()
-    mlxarr.testing.assert_almost_equal(sm.to_rgba(x, bytes=bytes), expected)
+    x = mx.ones((2, 3, 4), dtype=float) * 0.5
+    expected = (x * 255).astype(mx.uint8) if bytes else x.copy()
+    mx.testing.assert_almost_equal(sm.to_rgba(x, bytes=bytes), expected)
     # float RGB
     expected[..., 3] = alpha_1
-    mlxarr.testing.assert_almost_equal(sm.to_rgba(x[..., :3], bytes=bytes), expected)
+    mx.testing.assert_almost_equal(sm.to_rgba(x[..., :3], bytes=bytes), expected)
     # float masked RGBA
-    xm = mlxarr.ma.masked_array(x, mask=mlxarr.zeros_like(x))
+    xm = mx.ma.masked_array(x, mask=mx.zeros_like(x))
     xm.mask[0, 0, 0] = True
-    expected = (x * 255).astype(mlxarr.uint8) if bytes else x.copy()
+    expected = (x * 255).astype(mx.uint8) if bytes else x.copy()
     expected[0, 0, 3] = 0
-    mlxarr.testing.assert_almost_equal(sm.to_rgba(xm, bytes=bytes), expected)
+    mx.testing.assert_almost_equal(sm.to_rgba(xm, bytes=bytes), expected)
     # float masked RGB
     expected[..., 3] = alpha_1
     expected[0, 0, 3] = 0
-    mlxarr.testing.assert_almost_equal(sm.to_rgba(xm[..., :3], bytes=bytes), expected)
+    mx.testing.assert_almost_equal(sm.to_rgba(xm[..., :3], bytes=bytes), expected)
 
 
 @pytest.mark.parametrize("bytes", (True, False))
@@ -1408,20 +1408,20 @@ def test_scalarmappable_nan_to_rgba(bytes):
     sm = cm.ScalarMappable()
 
     # RGBA
-    x = mlxarr.ones((2, 3, 4), dtype=float) * 0.5
-    x[0, 0, 0] = mlxarr.nan
+    x = mx.ones((2, 3, 4), dtype=float) * 0.5
+    x[0, 0, 0] = mx.nan
     expected = x.copy()
     expected[0, 0, :] = 0
     if bytes:
-        expected = (expected * 255).astype(mlxarr.uint8)
-    mlxarr.testing.assert_almost_equal(sm.to_rgba(x, bytes=bytes), expected)
-    assert mlxarr.any(mlxarr.isnan(x))  # Input array should not be changed
+        expected = (expected * 255).astype(mx.uint8)
+    mx.testing.assert_almost_equal(sm.to_rgba(x, bytes=bytes), expected)
+    assert mx.any(mx.isnan(x))  # Input array should not be changed
 
     # RGB
     expected[..., 3] = 255 if bytes else 1
     expected[0, 0, 3] = 0
-    mlxarr.testing.assert_almost_equal(sm.to_rgba(x[..., :3], bytes=bytes), expected)
-    assert mlxarr.any(mlxarr.isnan(x))  # Input array should not be changed
+    mx.testing.assert_almost_equal(sm.to_rgba(x[..., :3], bytes=bytes), expected)
+    assert mx.any(mx.isnan(x))  # Input array should not be changed
 
     # Out-of-range fail
     x[1, 0, 0] = 42
@@ -1464,21 +1464,21 @@ def test_ndarray_subclass_norm():
     # Emulate an ndarray subclass that handles units
     # which objects when adding or subtracting with other
     # arrays. See #6622 and #8696
-    class MyArray(mlxarr.ndarray):
+    class MyArray(mx.array):
         def __isub__(self, other):  # type: ignore[misc]
             raise RuntimeError
 
         def __add__(self, other):
             raise RuntimeError
 
-    data = mlxarr.arange(-10, 10, 1, dtype=float).reshape((10, 2))
+    data = mx.arange(-10, 10, 1, dtype=float).reshape((10, 2))
     mydata = data.view(MyArray)
 
     for norm in [mcolors.Normalize(), mcolors.LogNorm(),
-                 mcolors.SymLogNorm(3, vmax=5, linscale=1, base=mlxarr.e),
+                 mcolors.SymLogNorm(3, vmax=5, linscale=1, base=mx.e),
                  mcolors.Normalize(vmin=mydata.min(), vmax=mydata.max()),
                  mcolors.SymLogNorm(3, vmin=mydata.min(), vmax=mydata.max(),
-                                    base=mlxarr.e),
+                                    base=mx.e),
                  mcolors.PowerNorm(1)]:
         assert_array_equal(norm(mydata), norm(data))
         fig, ax = plt.subplots()
@@ -1529,9 +1529,9 @@ def test_repr_html():
 
 def test_get_under_over_bad():
     cmap = mpl.colormaps['viridis']
-    assert_array_equal(cmap.get_under(), cmap(-mlxarr.inf))
-    assert_array_equal(cmap.get_over(), cmap(mlxarr.inf))
-    assert_array_equal(cmap.get_bad(), cmap(mlxarr.nan))
+    assert_array_equal(cmap.get_under(), cmap(-mx.inf))
+    assert_array_equal(cmap.get_over(), cmap(mx.inf))
+    assert_array_equal(cmap.get_bad(), cmap(mx.nan))
 
 
 @pytest.mark.parametrize('kind', ('over', 'under', 'bad'))
@@ -1541,8 +1541,8 @@ def test_non_mutable_get_values(kind):
     with pytest.warns(PendingDeprecationWarning):
         getattr(cmap, f'set_{kind}')('k')
     black_value = getattr(cmap, f'get_{kind}')()
-    assert mlxarr.all(black_value == [0, 0, 0, 1])
-    assert not mlxarr.all(init_value == black_value)
+    assert mx.all(black_value == [0, 0, 0, 1])
+    assert not mx.all(init_value == black_value)
 
 
 def test_colormap_alpha_array():
@@ -1550,29 +1550,29 @@ def test_colormap_alpha_array():
     vals = [-1, 0.5, 2]  # under, valid, over
     with pytest.raises(ValueError, match="alpha is array-like but"):
         cmap(vals, alpha=[1, 1, 1, 1])
-    alpha = mlxarr.array([0.1, 0.2, 0.3])
+    alpha = mx.array([0.1, 0.2, 0.3])
     c = cmap(vals, alpha=alpha)
     assert_array_equal(c[:, -1], alpha)
     c = cmap(vals, alpha=alpha, bytes=True)
-    assert_array_equal(c[:, -1], (alpha * 255).astype(mlxarr.uint8))
+    assert_array_equal(c[:, -1], (alpha * 255).astype(mx.uint8))
 
 
 def test_colormap_bad_data_with_alpha():
     cmap = mpl.colormaps['viridis']
-    c = cmap(mlxarr.nan, alpha=0.5)
+    c = cmap(mx.nan, alpha=0.5)
     assert c == (0, 0, 0, 0)
-    c = cmap([0.5, mlxarr.nan], alpha=0.5)
+    c = cmap([0.5, mx.nan], alpha=0.5)
     assert_array_equal(c[1], (0, 0, 0, 0))
-    c = cmap([0.5, mlxarr.nan], alpha=[0.1, 0.2])
+    c = cmap([0.5, mx.nan], alpha=[0.1, 0.2])
     assert_array_equal(c[1], (0, 0, 0, 0))
-    c = cmap([[mlxarr.nan, 0.5], [0, 0]], alpha=0.5)
+    c = cmap([[mx.nan, 0.5], [0, 0]], alpha=0.5)
     assert_array_equal(c[0, 0], (0, 0, 0, 0))
-    c = cmap([[mlxarr.nan, 0.5], [0, 0]], alpha=mlxarr.full((2, 2), 0.5))
+    c = cmap([[mx.nan, 0.5], [0, 0]], alpha=mx.full((2, 2), 0.5))
     assert_array_equal(c[0, 0], (0, 0, 0, 0))
 
 
 def test_2d_to_rgba():
-    color = mlxarr.array([0.1, 0.2, 0.3])
+    color = mx.array([0.1, 0.2, 0.3])
     rgba_1d = mcolors.to_rgba(color.reshape(-1))
     rgba_2d = mcolors.to_rgba(color.reshape((1, -1)))
     assert rgba_1d == rgba_2d
@@ -1586,8 +1586,8 @@ def test_set_dict_to_rgba():
     res = mcolors.to_rgba_array(colors)
     palette = {"red": (1, 0, 0), "green": (0, 1, 0), "blue": (0, 0, 1)}
     res = mcolors.to_rgba_array(palette.values())
-    exp = mlxarr.eye(3)
-    mlxarr.testing.assert_array_almost_equal(res[:, :-1], exp)
+    exp = mx.eye(3)
+    mx.testing.assert_array_almost_equal(res[:, :-1], exp)
 
 
 def test_norm_deepcopy():
@@ -1604,7 +1604,7 @@ def test_norm_deepcopy():
 
 
 def test_set_clim_emits_single_callback():
-    data = mlxarr.array([[1, 2], [3, 4]])
+    data = mx.array([[1, 2], [3, 4]])
     fig, ax = plt.subplots()
     image = ax.imshow(data, cmap='viridis')
 
@@ -1679,7 +1679,7 @@ def test_norm_update_figs(fig_test, fig_ref):
     ax_ref = fig_ref.add_subplot()
     ax_test = fig_test.add_subplot()
 
-    z = mlxarr.arange(100).reshape((10, 10))
+    z = mx.arange(100).reshape((10, 10))
     ax_ref.imshow(z, norm=mcolors.Normalize(10, 90))
 
     # Create the norm beforehand with different limits and then update
@@ -1869,7 +1869,7 @@ def test_norm_abc():
 
     fig, axes = plt.subplots(2,2)
 
-    r = mlxarr.linspace(-1, 3, 16*16).reshape((16,16))
+    r = mx.linspace(-1, 3, 16*16).reshape((16,16))
     norm = CustomHalfNorm()
     colorizer = mpl.colorizer.Colorizer(cmap='viridis', norm=norm)
     c = axes[0,0].imshow(r, colorizer=colorizer)
@@ -1981,8 +1981,8 @@ def test_mult_norm_call_types():
     mn.vmin = (-2, -2)
     mn.vmax = (2, 2)
 
-    vals = mlxarr.arange(6).reshape((3,2))
-    target = mlxarr.ma.array([(0.5, 0.75),
+    vals = mx.arange(6).reshape((3,2))
+    target = mx.ma.array([(0.5, 0.75),
                           (1., 1.25),
                           (1.5, 1.75)])
 
@@ -2001,13 +2001,13 @@ def test_mult_norm_call_types():
     assert_array_almost_equal(mn(tuple(vals.T)),
                               list(target.T))
 
-    # mlxarr.arrays of shapes that are compatible
-    assert_array_almost_equal(mn(mlxarr.zeros(2)),
-                              0.5*mlxarr.ones(2))
-    assert_array_almost_equal(mn(mlxarr.zeros((2, 3))),
-                              0.5*mlxarr.ones((2, 3)))
-    assert_array_almost_equal(mn(mlxarr.zeros((2, 3, 4))),
-                              0.5*mlxarr.ones((2, 3, 4)))
+    # mx.arrays of shapes that are compatible
+    assert_array_almost_equal(mn(mx.zeros(2)),
+                              0.5*mx.ones(2))
+    assert_array_almost_equal(mn(mx.zeros((2, 3))),
+                              0.5*mx.ones((2, 3)))
+    assert_array_almost_equal(mn(mx.zeros((2, 3, 4))),
+                              0.5*mx.ones((2, 3, 4)))
 
     # test with NoNorm, list as input
     mn_no_norm = mpl.colors.MultiNorm(['linear', mcolors.NoNorm()])
@@ -2015,7 +2015,7 @@ def test_mult_norm_call_types():
     assert_array_almost_equal(no_norm_out,
                               [[0., 0.5, 1.],
                                [1, 3, 5]])
-    assert no_norm_out[0].dtype == mlxarr.dtype('float64')
+    assert no_norm_out[0].dtype == mx.dtype('float64')
     assert no_norm_out[1].dtype == vals.dtype
 
     # test with NoNorm, structured array as input
@@ -2039,15 +2039,15 @@ def test_mult_norm_call_types():
     with pytest.raises(ValueError,
                        match=(r"`data_as_list = \[data\[..., i\] for i in "
                               r"range\(data.shape\[-1\]\)\]`")):
-        mn(mlxarr.zeros((3, 3, 2)))
+        mn(mx.zeros((3, 3, 2)))
 
     # last axis matches, len(data.shape) == 2
     with pytest.raises(ValueError,
                        match=r"You can use `data_transposed = data.T` to convert"):
-        mn(mlxarr.zeros((3, 2)))
+        mn(mx.zeros((3, 2)))
 
     # incompatible arrays where no relevant axis matches
-    for data in [mlxarr.zeros(3), mlxarr.zeros((3, 2, 3))]:
+    for data in [mx.zeros(3), mx.zeros((3, 2, 3))]:
         with pytest.raises(ValueError,
                            match=r"but got a sequence with 3 elements"):
             mn(data)

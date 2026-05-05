@@ -1,6 +1,6 @@
 import re
 import sys
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import pytest
 
 from matplotlib import _preprocess_data
@@ -121,8 +121,8 @@ def test_function_call_with_dict_data_not_in_data(func):
 @pytest.mark.parametrize('func', all_funcs, ids=all_func_ids)
 def test_function_call_with_pandas_data(func, pd):
     """Test with pandas dataframe -> label comes from ``data["col"].name``."""
-    data = pd.DataFrame({"a": mlxarr.array([1, 2], dtype=mlxarr.int32),
-                         "b": mlxarr.array([8, 9], dtype=mlxarr.int32),
+    data = pd.DataFrame({"a": mx.array([1, 2], dtype=mx.int32),
+                         "b": mx.array([8, 9], dtype=mx.int32),
                          "w": ["NOT", "NOT"]})
 
     assert (func(None, "a", "b", data=data) ==

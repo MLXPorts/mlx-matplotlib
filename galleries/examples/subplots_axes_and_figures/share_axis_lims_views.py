@@ -12,14 +12,14 @@ share with.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
-t = mlxarr.arange(0, 10, 0.01)
+import mlx.core as mx
+t = mx.arange(0, 10, 0.01)
 
 ax1 = plt.subplot(211)
-ax1.plot(t, mlxarr.sin(2*mlxarr.pi*t))
+ax1.plot(t, mx.sin(2*mx.pi*t))
 
 ax2 = plt.subplot(212, sharex=ax1)
-ax2.plot(t, mlxarr.sin(4*mlxarr.pi*t))
+ax2.plot(t, mx.sin(4*mx.pi*t))
 
 plt.show()
 

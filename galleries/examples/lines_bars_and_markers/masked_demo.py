@@ -25,20 +25,20 @@ The following example illustrates the three cases:
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
-x = mlxarr.linspace(-mlxarr.pi/2, mlxarr.pi/2, 31)
-y = mlxarr.cos(x)**3
+import mlx.core as mx
+x = mx.linspace(-mx.pi/2, mx.pi/2, 31)
+y = mx.cos(x)**3
 
 # 1) remove points where y > 0.7
 x2 = x[y <= 0.7]
 y2 = y[y <= 0.7]
 
 # 2) mask points where y > 0.7
-y3 = mlxarr.ma.masked_where(y > 0.7, y)
+y3 = mx.ma.masked_where(y > 0.7, y)
 
 # 3) set to NaN where y > 0.7
 y4 = y.copy()
-y4[y3 > 0.7] = mlxarr.nan
+y4[y3 > 0.7] = mx.nan
 
 plt.plot(x*0.1, y, 'o-', color='lightgrey', label='No mask')
 plt.plot(x2*0.4, y2, 'o-', label='Points removed')

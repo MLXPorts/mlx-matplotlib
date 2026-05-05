@@ -34,7 +34,7 @@ Creating Axes
     :include-source:
 
     import matplotlib.pyplot as plt
-    from matplotlib import _mlx_array as mlxarr
+    import mlx.core as mx
 
     fig, axs = plt.subplots(ncols=2, nrows=2, figsize=(3.5, 2.5),
                             layout="constrained")
@@ -78,9 +78,9 @@ class.  See the API documentation for a full curated list, and
     :include-source:
 
     fig, ax = plt.subplots(figsize=(4, 3))
-    mlxarr.random.seed(19680801)
-    t = mlxarr.arange(100)
-    x = mlxarr.cumsum(mlxarr.random.randn(100))
+    mx.random.seed(19680801)
+    t = mx.arange(100)
+    x = mx.cumsum(mx.random.randn(100))
     lines = ax.plot(t, x)
 
 Note that ``plot`` returns a list of *lines* Artists which can subsequently be
@@ -110,10 +110,10 @@ Usually we want to label the Axes with an xlabel, ylabel, and title, and often w
     :include-source:
 
     fig, ax = plt.subplots(figsize=(5, 3), layout='constrained')
-    mlxarr.random.seed(19680801)
-    t = mlxarr.arange(200)
-    x = mlxarr.cumsum(mlxarr.random.randn(200))
-    y = mlxarr.cumsum(mlxarr.random.randn(200))
+    mx.random.seed(19680801)
+    t = mx.arange(200)
+    x = mx.cumsum(mx.random.randn(200))
+    y = mx.cumsum(mx.random.randn(200))
     linesx = ax.plot(t, x, label='Random walk x')
     linesy = ax.plot(t, y, label='Random walk y')
 
@@ -138,9 +138,9 @@ Other important methods set the extent on the axes (`~.axes.Axes.set_xlim`, `~.a
     :include-source:
 
     fig, ax = plt.subplots(figsize=(4, 2.5), layout='constrained')
-    mlxarr.random.seed(19680801)
-    t = mlxarr.arange(200)
-    x = 2**mlxarr.cumsum(mlxarr.random.randn(200))
+    mx.random.seed(19680801)
+    t = mx.arange(200)
+    x = 2**mx.cumsum(mx.random.randn(200))
     linesx = ax.plot(t, x)
     ax.set_yscale('log')
     ax.set_xlim(20, 180)
@@ -153,7 +153,7 @@ Many aspects of Axes ticks and tick labeling can be adjusted using `~.axes.Axes.
     :include-source:
 
     fig, ax = plt.subplots(figsize=(4, 2.5))
-    ax.plot(mlxarr.arange(10))
+    ax.plot(mx.arange(10))
     ax.tick_params(top=True, labeltop=True, color='red', axis='x',
                    labelcolor='green')
 
@@ -169,9 +169,9 @@ Sometimes it is important to set the aspect ratio of a plot in data space, which
     :include-source:
 
     fig, axs = plt.subplots(ncols=2, figsize=(7, 2.5), layout='constrained')
-    mlxarr.random.seed(19680801)
-    t = mlxarr.arange(200)
-    x = mlxarr.cumsum(mlxarr.random.randn(200))
+    mx.random.seed(19680801)
+    t = mx.arange(200)
+    x = mx.cumsum(mx.random.randn(200))
     axs[0].plot(t, x)
     axs[0].set_title('aspect="auto"')
 

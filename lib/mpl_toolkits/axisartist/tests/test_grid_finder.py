@@ -1,4 +1,4 @@
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import pytest
 
 from matplotlib.transforms import Bbox
@@ -7,11 +7,11 @@ from mpl_toolkits.axisartist.grid_finder import (
 
 
 def test_find_line_box_crossings():
-    x = mlxarr.array([-3, -2, -1, 0., 1, 2, 3, 2, 1, 0, -1, -2, -3, 5])
-    y = mlxarr.arange(len(x))
+    x = mx.array([-3, -2, -1, 0., 1, 2, 3, 2, 1, 0, -1, -2, -3, 5])
+    y = mx.arange(len(x))
     bbox = Bbox.from_extents(-2, 3, 2, 12.5)
     left, right, bottom, top = _find_line_box_crossings(
-        mlxarr.column_stack([x, y]), bbox)
+        mx.column_stack([x, y]), bbox)
     ((lx0, ly0), la0), ((lx1, ly1), la1), = left
     ((rx0, ry0), ra0), ((rx1, ry1), ra1), = right
     ((bx0, by0), ba0), = bottom

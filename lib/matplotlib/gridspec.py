@@ -13,7 +13,8 @@ methods like `~.pyplot.subplots`, `~.pyplot.subplot_mosaic` and
 import copy
 import logging
 from numbers import Integral
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
+import numpy as np
 import matplotlib as mpl
 from matplotlib import _api, _pylab_helpers, _tight_layout
 from matplotlib._api import UNSET as _UNSET
@@ -173,7 +174,9 @@ class GridSpecBase:
         norm = cell_h * nrows / sum(self._row_height_ratios)
         cell_heights = [r * norm for r in self._row_height_ratios]
         sep_heights = [0] + ([sep_h] * (nrows-1))
-        cell_hs = mlxarr.cumsum(mlxarr.column_stack([sep_heights, cell_heights]).flat)
+        cell_hs = mx.cumsum(mx.array([
+            value for pair in zip(sep_heights, cell_heights) for value in pair
+        ]))
 
         # calculate accumulated widths of rows
         cell_w = tot_width / (ncols + wspace*(ncols-1))
@@ -181,7 +184,9 @@ class GridSpecBase:
         norm = cell_w * ncols / sum(self._col_width_ratios)
         cell_widths = [r * norm for r in self._col_width_ratios]
         sep_widths = [0] + ([sep_w] * (ncols-1))
-        cell_ws = mlxarr.cumsum(mlxarr.column_stack([sep_widths, cell_widths]).flat)
+        cell_ws = mx.cumsum(mx.array([
+            value for pair in zip(sep_widths, cell_widths) for value in pair
+        ]))
 
         fig_tops, fig_bottoms = (top - cell_hs).reshape((-1, 2)).T
         fig_lefts, fig_rights = (left + cell_ws).reshape((-1, 2)).T
@@ -237,9 +242,10 @@ class GridSpecBase:
                 k1, k2 = key
             except ValueError as err:
                 raise ValueError("Unrecognized subplot spec") from err
-            num1, num2 = mlxarr.ravel_multi_index(
-                [_normalize(k1, nrows, 0), _normalize(k2, ncols, 1)],
-                (nrows, ncols))
+            row0, row1 = _normalize(k1, nrows, 0)
+            col0, col1 = _normalize(k2, ncols, 1)
+            num1 = row0 * ncols + col0
+            num2 = row1 * ncols + col1
         else:  # Single key
             num1, num2 = _normalize(key, nrows * ncols, None)
 
@@ -272,7 +278,7 @@ class GridSpecBase:
         subplot_kw = subplot_kw.copy()
 
         # Create array to hold all Axes.
-        axarr = mlxarr.empty((self._nrows, self._ncols), dtype=object)
+        axarr = np.empty((self._nrows, self._ncols), dtype=object)
         for row in range(self._nrows):
             for col in range(self._ncols):
                 shared_with = {"none": None, "all": axarr[0, 0],
@@ -659,14 +665,15 @@ class SubplotSpec:
         """
         gridspec = self.get_gridspec()
         nrows, ncols = gridspec.get_geometry()
-        rows, cols = mlxarr.unravel_index([self.num1, self.num2], (nrows, ncols))
+        row0, col0 = divmod(self.num1, ncols)
+        row1, col1 = divmod(self.num2, ncols)
         fig_bottoms, fig_tops, fig_lefts, fig_rights = \
             gridspec.get_grid_positions(figure)
 
-        fig_bottom = fig_bottoms[rows].min()
-        fig_top = fig_tops[rows].max()
-        fig_left = fig_lefts[cols].min()
-        fig_right = fig_rights[cols].max()
+        fig_bottom = mx.min(fig_bottoms[row0:row1 + 1])
+        fig_top = mx.max(fig_tops[row0:row1 + 1])
+        fig_left = mx.min(fig_lefts[col0:col1 + 1])
+        fig_right = mx.max(fig_rights[col0:col1 + 1])
         return Bbox.from_extents(fig_left, fig_bottom, fig_right, fig_top)
 
     def get_topmost_subplotspec(self):

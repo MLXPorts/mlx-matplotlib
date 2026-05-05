@@ -8,7 +8,7 @@ from operator import attrgetter
 import re
 import textwrap
 import types
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib as mpl
 from matplotlib import _api, cbook, _docstring, offsetbox
 import matplotlib.artist as martist
@@ -383,7 +383,7 @@ class _process_plot_var_args:
         # modify the kwargs dictionary.
         self._setdefaults(default_dict, kwargs)
 
-        seg = mpatches.Polygon(mlxarr.column_stack((x, y)),
+        seg = mpatches.Polygon(mx.column_stack((x, y)),
                                facecolor=facecolor,
                                fill=kwargs.get('fill', True),
                                closed=kw['closed'])
@@ -494,9 +494,9 @@ class _process_plot_var_args:
             raise ValueError(f"x and y can be no greater than 2D, but have "
                              f"shapes {x.shape} and {y.shape}")
         if x.ndim == 1:
-            x = x[:, mlxarr.newaxis]
+            x = x[:, mx.newaxis]
         if y.ndim == 1:
-            y = y[:, mlxarr.newaxis]
+            y = y[:, mx.newaxis]
 
         if self.output == 'Line2D':
             make_artist = self._make_line
@@ -669,7 +669,7 @@ class _AxesBase(martist.Artist):
         subplotspec = None
         if len(args) == 1 and isinstance(args[0], mtransforms.Bbox):
             self._position = args[0].frozen()
-        elif len(args) == 1 and mlxarr.iterable(args[0]):
+        elif len(args) == 1 and cbook.iterable(args[0]):
             self._position = mtransforms.Bbox.from_bounds(*args[0])
         else:
             self._position = self._originalPosition = mtransforms.Bbox.unit()
@@ -1709,7 +1709,7 @@ class _AxesBase(martist.Artist):
             aspect = 1
         if not cbook._str_equal(aspect, 'auto'):
             aspect = float(aspect)  # raise ValueError if necessary
-            if aspect <= 0 or not mlxarr.isfinite(aspect):
+            if aspect <= 0 or not mx.isfinite(aspect):
                 raise ValueError("aspect must be finite and positive ")
 
         if share:
@@ -1972,7 +1972,7 @@ class _AxesBase(martist.Artist):
         values.
 
         >>> fig, ax = plt.subplots()
-        >>> ax.imshow(mlxarr.zeros((3, 3)))
+        >>> ax.imshow(mx.zeros((3, 3)))
         >>> ax.bbox.width, ax.bbox.height
         (496.0, 369.59999999999997)
         >>> ax.apply_aspect()
@@ -2185,7 +2185,7 @@ class _AxesBase(martist.Artist):
                     self.set_autoscale_on(False)
                     xlim = self.get_xlim()
                     ylim = self.get_ylim()
-                    edge_size = max(mlxarr.diff(xlim), mlxarr.diff(ylim))[0]
+                    edge_size = max(mx.diff(xlim), mx.diff(ylim))[0]
                     self.set_xlim(xlim[0], xlim[0] + edge_size,
                                   emit=emit, auto=False)
                     self.set_ylim(ylim[0], ylim[0] + edge_size,
@@ -2372,13 +2372,13 @@ class _AxesBase(martist.Artist):
             self._unstale_viewLim()
             datalim = collection.get_datalim(self.transData)
             points = datalim.get_points()
-            if not mlxarr.isinf(datalim.minpos).all():
+            if not mx.isinf(datalim.minpos).all():
                 # By definition, if minpos (minimum positive value) is set
                 # (i.e., non-inf), then min(points) <= minpos <= max(points),
                 # and minpos would be superfluous. However, we add minpos to
                 # the call so that self.dataLim will update its own minpos.
                 # This ensures that log scales see the correct minimum.
-                points = mlxarr.concatenate([points, [datalim.minpos]])
+                points = mx.concatenate([points, [datalim.minpos]])
             # only update the dataLim for x/y if the collection uses transData
             # in this direction.
             x_is_data, y_is_data = (collection.get_transform()
@@ -2526,7 +2526,7 @@ class _AxesBase(martist.Artist):
             vertices.append(curve([0, *dzeros, 1]))
 
         if len(vertices):
-            vertices = mlxarr.vstack(vertices)
+            vertices = mx.concatenate(vertices, axis=0)
 
         patch_trf = patch.get_transform()
         updatex, updatey = patch_trf.contains_branch_separately(self.transData)
@@ -2622,8 +2622,8 @@ class _AxesBase(martist.Artist):
         updatex, updatey : bool, default: True
             Whether to update the x/y limits.
         """
-        xys = mlxarr.asarray(xys)
-        if not mlxarr.any(mlxarr.isfinite(xys)):
+        xys = mx.asarray(xys)
+        if not mx.any(mx.isfinite(xys)):
             return
         self.dataLim.update_from_data_xy(xys, self.ignore_existing_data_limits,
                                          updatex=updatex, updatey=updatey)
@@ -3009,15 +3009,15 @@ class _AxesBase(martist.Artist):
         if tight is not None:
             self._tight = bool(tight)
 
-        x_stickies = y_stickies = mlxarr.array([])
+        x_stickies = y_stickies = mx.array([])
         if self.use_sticky_edges:
             if self._xmargin and scalex and self.get_autoscalex_on():
-                x_stickies = mlxarr.sort(mlxarr.concatenate([
+                x_stickies = mx.sort(mx.concatenate([
                     artist.sticky_edges.x
                     for ax in self._shared_axes["x"].get_siblings(self)
                     for artist in ax.get_children()]))
             if self._ymargin and scaley and self.get_autoscaley_on():
-                y_stickies = mlxarr.sort(mlxarr.concatenate([
+                y_stickies = mx.sort(mx.concatenate([
                     artist.sticky_edges.y
                     for ax in self._shared_axes["y"].get_siblings(self)
                     for artist in ax.get_children()]))
@@ -3037,7 +3037,7 @@ class _AxesBase(martist.Artist):
             # finite data limit among all the shared_axes and intervals.
             values = [val for ax in shared
                       for val in getattr(ax.dataLim, f"interval{name}")
-                      if mlxarr.isfinite(val)]
+                      if mx.isfinite(val)]
             if values:
                 x0, x1 = (min(values), max(values))
             elif getattr(self._viewLim, f"mutated{name}")():
@@ -3045,7 +3045,7 @@ class _AxesBase(martist.Artist):
                 # in mutatedx or mutatedy.
                 return
             else:
-                x0, x1 = (-mlxarr.inf, mlxarr.inf)
+                x0, x1 = (-mx.inf, mx.inf)
             # If x0 and x1 are nonfinite, get default limits from the locator.
             locator = axis.get_major_locator()
             x0, x1 = locator.nonsingular(x0, x1)
@@ -3073,7 +3073,7 @@ class _AxesBase(martist.Artist):
             x0, x1 = axis._scale.limit_range_for_scale(x0, x1, minimum_minpos)
             x0t, x1t = transform.transform([x0, x1])
             delta = (x1t - x0t) * margin
-            if not mlxarr.isfinite(delta):
+            if not mx.isfinite(delta):
                 delta = 0  # If a bound isn't finite, set margin to zero.
             x0, x1 = inverse_trans.transform([x0t - delta, x1t + delta])
 
@@ -3122,7 +3122,7 @@ class _AxesBase(martist.Artist):
             locator = ax.get_axes_locator()
             ax.apply_aspect(locator(self, renderer) if locator else None)
 
-        top = -mlxarr.inf
+        top = -mx.inf
         for ax in axs:
             bb = None
             if (ax.xaxis.get_ticks_position() in ['top', 'unknown'] or
@@ -3213,7 +3213,7 @@ class _AxesBase(martist.Artist):
 
         if (rasterization_zorder is not None and
                 artists and artists[0].zorder < rasterization_zorder):
-            split_index = mlxarr.searchsorted(
+            split_index = mx.searchsorted(
                 [art.zorder for art in artists],
                 rasterization_zorder, side='right'
             )
@@ -3720,7 +3720,7 @@ class _AxesBase(martist.Artist):
         get_xlim, set_xlim
         invert_xaxis, xaxis_inverted
         """
-        if upper is None and mlxarr.iterable(lower):
+        if upper is None and cbook.iterable(lower):
             lower, upper = lower
 
         old_lower, old_upper = self.get_xbound()
@@ -3767,10 +3767,10 @@ class _AxesBase(martist.Artist):
         """
         if limit is not None:
             converted_limit = convert(limit)
-            if isinstance(converted_limit, mlxarr.ndarray):
+            if isinstance(converted_limit, mx.array):
                 converted_limit = converted_limit.squeeze()
             if (isinstance(converted_limit, Real)
-                    and not mlxarr.isfinite(converted_limit)):
+                    and not mx.isfinite(converted_limit)):
                 raise ValueError("Axis limits cannot be NaN or Inf")
             return converted_limit
 
@@ -3840,7 +3840,7 @@ class _AxesBase(martist.Artist):
 
         >>> set_xlim(5000, 0)
         """
-        if right is None and mlxarr.iterable(left):
+        if right is None and cbook.iterable(left):
             left, right = left
         if xmin is not None:
             if left is not None:
@@ -3988,7 +3988,7 @@ class _AxesBase(martist.Artist):
         get_ylim, set_ylim
         invert_yaxis, yaxis_inverted
         """
-        if upper is None and mlxarr.iterable(lower):
+        if upper is None and cbook.iterable(lower):
             lower, upper = lower
 
         old_lower, old_upper = self.get_ybound()
@@ -4089,7 +4089,7 @@ class _AxesBase(martist.Artist):
 
         >>> set_ylim(5000, 0)
         """
-        if top is None and mlxarr.iterable(bottom):
+        if top is None and cbook.iterable(bottom):
             bottom, top = bottom
         if ymin is not None:
             if bottom is not None:
@@ -4273,7 +4273,7 @@ class _AxesBase(martist.Artist):
                 scl = 1/scl
             # get the limits of the axes
             (xmin, ymin), (xmax, ymax) = self.transData.transform(
-                mlxarr.transpose([self.get_xlim(), self.get_ylim()]))
+                mx.transpose([self.get_xlim(), self.get_ylim()]))
             # set the range
             xwidth = xmax - xmin
             ywidth = ymax - ymin
@@ -4299,8 +4299,8 @@ class _AxesBase(martist.Artist):
         (startx, starty), (stopx, stopy) = self.transData.inverted().transform(
             [(startx, starty), (stopx, stopy)])
         # Clip to axes limits.
-        xmin, xmax = mlxarr.clip(sorted([startx, stopx]), xmin0, xmax0)
-        ymin, ymax = mlxarr.clip(sorted([starty, stopy]), ymin0, ymax0)
+        xmin, xmax = mx.clip(sorted([startx, stopx]), xmin0, xmax0)
+        ymin, ymax = mx.clip(sorted([starty, stopy]), ymin0, ymax0)
         # Don't double-zoom twinned axes or if zooming only the other axis.
         if twinx or mode == "y":
             xmin, xmax = xmin0, xmax0
@@ -4455,8 +4455,8 @@ class _AxesBase(martist.Artist):
                 dx, dy = format_deltas(key, dx, dy)
                 if self.get_aspect() != 'auto':
                     dx = dy = 0.5 * (dx + dy)
-                alpha = mlxarr.power(10.0, (dx, dy))
-                start = mlxarr.array([p.x, p.y])
+                alpha = mx.power(10.0, (dx, dy))
+                start = mx.array([p.x, p.y])
                 oldpoints = p.lim.transformed(p.trans)
                 newpoints = start + alpha * (oldpoints - start)
                 result = (mtransforms.Bbox(newpoints)
@@ -4467,7 +4467,7 @@ class _AxesBase(martist.Artist):
         else:
             return
 
-        valid = mlxarr.isfinite(result.transformed(p.trans))
+        valid = mx.isfinite(result.transformed(p.trans))
         points = result.get_points().astype(object)
         # Just ignore invalid limits (typically, underflow in log-scale).
         points[~valid] = None
@@ -4631,8 +4631,8 @@ class _AxesBase(martist.Artist):
         for a in bbox_artists:
             bbox = a.get_tightbbox(renderer)
             if (bbox is not None
-                    and 0 < bbox.width < mlxarr.inf
-                    and 0 < bbox.height < mlxarr.inf):
+                    and 0 < bbox.width < mx.inf
+                    and 0 < bbox.height < mx.inf):
                 bb.append(bbox)
         return mtransforms.Bbox.union(
             [b for b in bb if b.width != 0 or b.height != 0])

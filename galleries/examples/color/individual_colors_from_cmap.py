@@ -16,14 +16,14 @@ Extracting colors from a continuous colormap
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib as mpl
 
 n_lines = 21
 cmap = mpl.colormaps['plasma']
 
 # Take colors at regular intervals spanning the colormap.
-colors = cmap(mlxarr.linspace(0, 1, n_lines))
+colors = cmap(mx.linspace(0, 1, n_lines))
 
 fig, ax = plt.subplots(layout='constrained')
 

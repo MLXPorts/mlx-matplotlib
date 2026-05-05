@@ -7,22 +7,22 @@ Demonstrates using `.Axes3D.voxels` with uneven coordinates.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 def explode(data):
-    size = mlxarr.array(data.shape)*2
-    data_e = mlxarr.zeros(size - 1, dtype=data.dtype)
+    size = mx.array(data.shape)*2
+    data_e = mx.zeros(size - 1, dtype=data.dtype)
     data_e[::2, ::2, ::2] = data
     return data_e
 
 # build up the array_backend logo
-n_voxels = mlxarr.zeros((4, 3, 4), dtype=bool)
+n_voxels = mx.zeros((4, 3, 4), dtype=bool)
 n_voxels[0, 0, :] = True
 n_voxels[-1, 0, :] = True
 n_voxels[1, 0, 2] = True
 n_voxels[2, 0, 1] = True
-facecolors = mlxarr.where(n_voxels, '#FFD65DC0', '#7A88CCC0')
-edgecolors = mlxarr.where(n_voxels, '#BFAB6E', '#7D84A6')
-filled = mlxarr.ones(n_voxels.shape)
+facecolors = mx.where(n_voxels, '#FFD65DC0', '#7A88CCC0')
+edgecolors = mx.where(n_voxels, '#BFAB6E', '#7D84A6')
+filled = mx.ones(n_voxels.shape)
 
 # upscale the above voxel image, leaving gaps
 filled_2 = explode(filled)
@@ -30,7 +30,7 @@ fcolors_2 = explode(facecolors)
 ecolors_2 = explode(edgecolors)
 
 # Shrink the gaps
-x, y, z = mlxarr.indices(mlxarr.array(filled_2.shape) + 1).astype(float) // 2
+x, y, z = mx.indices(mx.array(filled_2.shape) + 1).astype(float) // 2
 x[0::2, :, :] += 0.05
 y[:, 0::2, :] += 0.05
 z[:, :, 0::2] += 0.05

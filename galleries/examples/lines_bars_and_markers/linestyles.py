@@ -21,7 +21,7 @@ and passing a list of dash sequences using the keyword *dashes* to the
 cycler in :ref:`property_cycle <color_cycle>`.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 linestyle_str = [
      ('solid', 'solid'),      # Same as (0, ()) or '-'
      ('dotted', 'dotted'),    # Same as ':'
@@ -48,7 +48,7 @@ linestyle_tuple = [
 
 
 def plot_linestyles(ax, linestyles, title):
-    X, Y = mlxarr.linspace(0, 100, 10), mlxarr.zeros(10)
+    X, Y = mx.linspace(0, 100, 10), mx.zeros(10)
     yticklabels = []
 
     for i, (name, linestyle) in enumerate(linestyles):
@@ -57,7 +57,7 @@ def plot_linestyles(ax, linestyles, title):
 
     ax.set_title(title)
     ax.set(ylim=(-0.5, len(linestyles)-0.5),
-           yticks=mlxarr.arange(len(linestyles)),
+           yticks=mx.arange(len(linestyles)),
            yticklabels=yticklabels)
     ax.tick_params(left=False, bottom=False, labelbottom=False)
     ax.spines[:].set_visible(False)

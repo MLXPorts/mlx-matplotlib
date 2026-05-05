@@ -10,9 +10,9 @@ Radius error bars are straight lines oriented towards center with
 perpendicular caps.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
-theta = mlxarr.arange(0, 2 * mlxarr.pi, mlxarr.pi / 4)
-r = theta / mlxarr.pi / 2 + 0.5
+import mlx.core as mx
+theta = mx.arange(0, 2 * mx.pi, mx.pi / 4)
+r = theta / mx.pi / 2 + 0.5
 
 fig = plt.figure(figsize=(10, 10))
 ax = fig.add_subplot(projection='polar')

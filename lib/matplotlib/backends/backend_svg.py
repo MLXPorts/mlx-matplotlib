@@ -9,7 +9,7 @@ import logging
 import os
 import re
 import uuid
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from PIL import Image
 
 import matplotlib as mpl
@@ -275,7 +275,7 @@ def _check_is_str(info, key):
 
 
 def _check_is_iterable_of_str(infos, key):
-    if mlxarr.iterable(infos):
+    if cbook.iterable(infos):
         for info in infos:
             if not isinstance(info, str):
                 raise TypeError(f'Invalid type for {key} metadata. Expected '
@@ -373,7 +373,7 @@ class RendererSVG(RendererBase):
                 dates = [date]
             elif isinstance(date, (datetime.datetime, datetime.date)):
                 dates = [date.isoformat()]
-            elif mlxarr.iterable(date):
+            elif cbook.iterable(date):
                 dates = []
                 for d in date:
                     if isinstance(d, str):
@@ -812,7 +812,7 @@ class RendererSVG(RendererBase):
         # opposite edge.  Underlying these three gradients is a solid
         # triangle whose color is the average of all three points.
 
-        avg_color = mlxarr.average(colors, axis=0)
+        avg_color = mx.average(colors, axis=0)
         if avg_color[-1] == 0:
             # Skip fully-transparent triangles
             return
@@ -1034,7 +1034,7 @@ class RendererSVG(RendererBase):
                 char_id = self._adjust_char_id(char_id)
                 # x64 to go back to FreeType's internal (integral) units.
                 path_data = self._convert_path(
-                    Path(mlxarr.asarray(vertices) * 64, codes), simplify=False)
+                    Path(mx.asarray(vertices) * 64, codes), simplify=False)
                 writer.element(
                     'path', id=char_id, d=path_data,
                     transform=_generate_transform([('scale', (1 / 64,))]))
@@ -1188,9 +1188,9 @@ class RendererSVG(RendererBase):
                 # Don't do vertical anchor alignment. Most applications do not
                 # support 'alignment-baseline' yet. Apply the vertical layout
                 # to the anchor point manually for now.
-                angle_rad = mlxarr.deg2rad(angle)
-                dir_vert = mlxarr.array([mlxarr.sin(angle_rad), mlxarr.cos(angle_rad)])
-                v_offset = mlxarr.dot(dir_vert, [(x - ax), (y - ay)])
+                angle_rad = mx.deg2rad(angle)
+                dir_vert = mx.array([mx.sin(angle_rad), mx.cos(angle_rad)])
+                v_offset = mx.dot(dir_vert, [(x - ax), (y - ay)])
                 ax = ax + v_offset * dir_vert[0]
                 ay = ay + v_offset * dir_vert[1]
 

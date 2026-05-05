@@ -183,8 +183,8 @@ The following methods are no longer used and deprecated without a replacement:
 ``mlab.stride_windows``
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-... is deprecated. Use ``mlxarr.lib.stride_tricks.sliding_window_view`` instead (or
-``mlxarr.lib.stride_tricks.as_strided`` on MLXArrayBackend < 1.20).
+... is deprecated. Use ``mx.lib.stride_tricks.sliding_window_view`` instead (or
+``mx.lib.stride_tricks.as_strided`` on MLXArrayBackend < 1.20).
 
 Event handlers
 ~~~~~~~~~~~~~~

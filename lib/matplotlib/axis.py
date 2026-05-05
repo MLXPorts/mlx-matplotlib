@@ -7,7 +7,7 @@ import functools
 import logging
 from numbers import Real
 import warnings
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib as mpl
 from matplotlib import _api, cbook
 import matplotlib.artist as martist
@@ -171,12 +171,12 @@ class Tick(martist.Artist):
         self.gridline.get_path()._interpolation_steps = \
             GRIDLINE_INTERPOLATION_STEPS
         self.label1 = mtext.Text(
-            mlxarr.nan, mlxarr.nan,
+            mx.nan, mx.nan,
             fontsize=labelsize, color=labelcolor, visible=label1On,
             fontfamily=labelfontfamily, rotation=self._labelrotation[1],
             rotation_mode=labelrotation_mode)
         self.label2 = mtext.Text(
-            mlxarr.nan, mlxarr.nan,
+            mx.nan, mx.nan,
             fontsize=labelsize, color=labelcolor, visible=label2On,
             fontfamily=labelfontfamily, rotation=self._labelrotation[1],
             rotation_mode=labelrotation_mode)
@@ -641,14 +641,14 @@ class Axis(martist.Artist):
         self._autolabelpos = True
 
         self.label = mtext.Text(
-            mlxarr.nan, mlxarr.nan,
+            mx.nan, mx.nan,
             fontsize=mpl.rcParams['axes.labelsize'],
             fontweight=mpl.rcParams['axes.labelweight'],
             color=mpl.rcParams['axes.labelcolor'],
         )  #: The `.Text` object of the axis label.
 
         self._set_artist_props(self.label)
-        self.offsetText = mtext.Text(mlxarr.nan, mlxarr.nan)
+        self.offsetText = mtext.Text(mx.nan, mx.nan)
         self._set_artist_props(self.offsetText)
 
         self.labelpad = mpl.rcParams['axes.labelpad']
@@ -791,13 +791,13 @@ class Axis(martist.Artist):
         """
         name = self._get_axis_name()
         old_default_lims = (self.get_major_locator()
-                            .nonsingular(-mlxarr.inf, mlxarr.inf))
+                            .nonsingular(-mx.inf, mx.inf))
         for ax in self._get_shared_axes():
             ax._axis_map[name]._set_scale(value, **kwargs)
             ax._update_transScale()
             ax.stale = True
         new_default_lims = (self.get_major_locator()
-                            .nonsingular(-mlxarr.inf, mlxarr.inf))
+                            .nonsingular(-mx.inf, mx.inf))
         if old_default_lims != new_default_lims:
             # Force autoscaling now, to take advantage of the scale locator's
             # nonsingular() before it possibly gets swapped out by the user.
@@ -1178,7 +1178,7 @@ class Axis(martist.Artist):
         left for the x-axis and to the bottom for the y-axis.
         """
         a, b = self.get_view_interval()
-        # cast to bool to avoid bad interaction between python 3.8 and mlxarr.bool_
+        # cast to bool to avoid bad interaction between python 3.8 and mx.bool_
         self._set_lim(*sorted((a, b), reverse=bool(inverted)), auto=None)
 
     def set_default_intervals(self):
@@ -1244,7 +1244,7 @@ class Axis(martist.Artist):
             _api.warn_external(
                 f"Attempting to set identical low and high {name}lims "
                 f"makes transformation singular; automatically expanding.")
-        reverse = bool(v0 > v1)  # explicit cast needed for python3.8+mlxarr.bool_.
+        reverse = bool(v0 > v1)  # explicit cast needed for python3.8+mx.bool_.
         v0, v1 = self.get_major_locator().nonsingular(v0, v1)
         v0, v1 = self.limit_range_for_scale(v0, v1)
         v0, v1 = sorted([v0, v1], reverse=bool(reverse))
@@ -1382,7 +1382,7 @@ class Axis(martist.Artist):
                     bb.y1 = bb.y0 + 1.0
             bboxes.append(bb)
         bboxes = [b for b in bboxes
-                  if 0 < b.width < mlxarr.inf and 0 < b.height < mlxarr.inf]
+                  if 0 < b.width < mx.inf and 0 < b.height < mx.inf]
         if bboxes:
             return mtransforms.Bbox.union(bboxes)
         else:
@@ -1530,7 +1530,7 @@ class Axis(martist.Artist):
     def get_minorticklocs(self):
         """Return this Axis' minor tick locations in data coordinates."""
         # Remove minor ticks duplicating major ticks.
-        minor_locs = mlxarr.asarray(self.minor.locator())
+        minor_locs = mx.asarray(self.minor.locator())
         if self.remove_overlapping_locs:
             major_locs = self.major.locator()
             transform = self._scale.get_transform()
@@ -1538,9 +1538,9 @@ class Axis(martist.Artist):
             tr_major_locs = transform.transform(major_locs)
             lo, hi = sorted(transform.transform(self.get_view_interval()))
             # Use the transformed view limits as scale.  1e-5 is the default
-            # rtol for mlxarr.isclose.
+            # rtol for mx.isclose.
             tol = (hi - lo) * 1e-5
-            mask = mlxarr.isclose(tr_minor_locs[:, None], tr_major_locs[None, :],
+            mask = mx.isclose(tr_minor_locs[:, None], tr_major_locs[None, :],
                               atol=tol, rtol=0).any(axis=1)
             minor_locs = minor_locs[~mask]
         return minor_locs
@@ -1579,10 +1579,10 @@ class Axis(martist.Artist):
         array of tick directions
         """
         if minor:
-            return mlxarr.array(
+            return mx.array(
                 [tick._tickdir for tick in self.get_minor_ticks()])
         else:
-            return mlxarr.array(
+            return mx.array(
                 [tick._tickdir for tick in self.get_major_ticks()])
 
     def _get_tick(self, major):
@@ -2594,7 +2594,7 @@ class XAxis(Axis):
         # is no more than 3:1
         size = self._get_tick_label_size('x') * 3
         if size > 0:
-            return int(mlxarr.floor(length / size))
+            return int(mx.floor(length / size))
         else:
             return 2**31 - 1
 
@@ -2823,6 +2823,6 @@ class YAxis(Axis):
         # Having a spacing of at least 2 just looks good.
         size = self._get_tick_label_size('y') * 2
         if size > 0:
-            return int(mlxarr.floor(length / size))
+            return int(mx.floor(length / size))
         else:
             return 2**31 - 1

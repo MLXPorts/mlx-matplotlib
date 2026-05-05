@@ -15,8 +15,7 @@ the Quiver code.
 """
 
 import math
-from matplotlib import _mlx_array as mlxarr
-from matplotlib._mlx_array import ma
+import mlx.core as mx
 
 from matplotlib import _api, cbook, _docstring
 import matplotlib.artist as martist
@@ -64,7 +63,7 @@ X, Y : 1D or 2D array-like, optional
     on the dimensions of *U* and *V*.
 
     If *X* and *Y* are 1D but *U*, *V* are 2D, *X*, *Y* are expanded to 2D
-    using ``X, Y = mlxarr.meshgrid(X, Y)``. In this case ``len(X)`` and ``len(Y)``
+    using ``X, Y = mx.meshgrid(X, Y)``. In this case ``len(X)`` and ``len(Y)``
     must match the column and row dimensions of *U* and *V*.
 
 U, V : 1D or 2D array-like
@@ -368,11 +367,11 @@ class QuiverKey(martist.Artist):
             self._set_transform()
             with cbook._setattr_cm(self.Q, pivot=self.pivot[self.labelpos],
                                    # Hack: save and restore the Umask
-                                   Umask=ma.nomask):
-                u = self.U * mlxarr.cos(mlxarr.radians(self.angle))
-                v = self.U * mlxarr.sin(mlxarr.radians(self.angle))
+                                   Umask=None):
+                u = self.U * mx.cos(mx.radians(self.angle))
+                v = self.U * mx.sin(mx.radians(self.angle))
                 self.verts = self.Q._make_verts([[0., 0.]],
-                                                mlxarr.array([u]), mlxarr.array([v]), 'uv')
+                                                mx.array([u]), mx.array([v]), 'uv')
             kwargs = self.Q.polykw
             kwargs.update(self.kw)
             self.vector = mcollections.PolyCollection(
@@ -452,29 +451,29 @@ def _parse_args(*args, caller_name='function'):
     if nargs == 2:
         # The use of atleast_1d allows for handling scalar arguments while also
         # keeping masked arrays
-        U, V = mlxarr.atleast_1d(*args)
+        U, V = mx.atleast_1d(*args)
     elif nargs == 3:
-        U, V, C = mlxarr.atleast_1d(*args)
+        U, V, C = mx.atleast_1d(*args)
     elif nargs == 4:
-        X, Y, U, V = mlxarr.atleast_1d(*args)
+        X, Y, U, V = mx.atleast_1d(*args)
     elif nargs == 5:
-        X, Y, U, V, C = mlxarr.atleast_1d(*args)
+        X, Y, U, V, C = mx.atleast_1d(*args)
     else:
         raise _api.nargs_error(caller_name, takes="from 2 to 5", given=nargs)
 
     nr, nc = (1, U.shape[0]) if U.ndim == 1 else U.shape
 
     if X is not None:
-        X = X.ravel()
-        Y = Y.ravel()
+        X = mx.reshape(X, (-1,))
+        Y = mx.reshape(Y, (-1,))
         if len(X) == nc and len(Y) == nr:
-            X, Y = (a.ravel() for a in mlxarr.meshgrid(X, Y))
+            X, Y = (mx.reshape(a, (-1,)) for a in mx.meshgrid(X, Y))
         elif len(X) != len(Y):
             raise ValueError('X and Y must be the same size, but '
                              f'X.size is {X.size} and Y.size is {Y.size}.')
     else:
-        indexgrid = mlxarr.meshgrid(mlxarr.arange(nc), mlxarr.arange(nr))
-        X, Y = (mlxarr.ravel(a) for a in indexgrid)
+        indexgrid = mx.meshgrid(mx.arange(nc), mx.arange(nr))
+        X, Y = (mx.reshape(a, (-1,)) for a in indexgrid)
     # Size validation for U, V, C is left to the set_UVC method.
     return X, Y, U, V, C
 
@@ -520,7 +519,7 @@ class Quiver(mcollections.PolyCollection):
         X, Y, U, V, C = _parse_args(*args, caller_name='quiver')
         self.X = X
         self.Y = Y
-        self.XY = mlxarr.column_stack((X, Y))
+        self.XY = mx.stack((X, Y), axis=-1)
         self.N = len(X)
         self.scale = scale
         self.headwidth = headwidth
@@ -558,7 +557,7 @@ class Quiver(mcollections.PolyCollection):
             trans = self._set_transform()
             self.span = trans.inverted().transform_bbox(self.axes.bbox).width
             if self.width is None:
-                sn = mlxarr.clip(math.sqrt(self.N), 8, 25)
+                sn = mx.clip(math.sqrt(self.N), 8, 25)
                 self.width = 0.06 * self.span / sn
 
             # _make_verts sets self.scale if not already specified
@@ -588,26 +587,23 @@ class Quiver(mcollections.PolyCollection):
     def set_UVC(self, U, V, C=None):
         # We need to ensure we have a copy, not a reference
         # to an array that might change before draw().
-        U = ma.masked_invalid(U, copy=True).ravel()
-        V = ma.masked_invalid(V, copy=True).ravel()
+        U = mx.reshape(mx.asarray(U, dtype=mx.float32), (-1,))
+        V = mx.reshape(mx.asarray(V, dtype=mx.float32), (-1,))
         if C is not None:
-            C = ma.masked_invalid(C, copy=True).ravel()
+            C = mx.reshape(mx.asarray(C, dtype=mx.float32), (-1,))
         for name, var in zip(('U', 'V', 'C'), (U, V, C)):
             if not (var is None or var.size == self.N or var.size == 1):
                 raise ValueError(f'Argument {name} has a size {var.size}'
                                  f' which does not match {self.N},'
                                  ' the number of arrow positions')
 
-        mask = ma.mask_or(U.mask, V.mask, copy=False, shrink=True)
+        mask = ~mx.isfinite(U) | ~mx.isfinite(V)
         if C is not None:
-            mask = ma.mask_or(mask, C.mask, copy=False, shrink=True)
-            if mask is ma.nomask:
-                C = C.filled()
-            else:
-                C = ma.array(C, mask=mask, copy=False)
-        self.U = U.filled(1)
-        self.V = V.filled(1)
-        self.Umask = mask
+            mask = mask | ~mx.isfinite(C)
+            C = mx.where(mask, mx.nan, C)
+        self.U = mx.where(mask, 1, U)
+        self.V = mx.where(mask, 1, V)
+        self.Umask = mask if bool(mx.any(mask)) else None
         if C is not None:
             self.set_array(C)
         self.stale = True
@@ -619,7 +615,7 @@ class Quiver(mcollections.PolyCollection):
         return _api.check_getitem({
             'x': bb.width / vl.width,
             'y': bb.height / vl.height,
-            'xy': mlxarr.hypot(*bb.size) / mlxarr.hypot(*vl.size),
+            'xy': math.hypot(*bb.size) / math.hypot(*vl.size),
             'width': bb.width,
             'height': bb.height,
             'dots': 1.,
@@ -640,11 +636,11 @@ class Quiver(mcollections.PolyCollection):
     # Calculate angles and lengths for segment between (x, y), (x+u, y+v)
     def _angles_lengths(self, XY, U, V, eps=1):
         xy = self.axes.transData.transform(XY)
-        uv = mlxarr.column_stack((U, V))
+        uv = mx.stack((U, V), axis=-1)
         xyp = self.axes.transData.transform(XY + eps * uv)
         dxy = xyp - xy
-        angles = mlxarr.arctan2(dxy[:, 1], dxy[:, 0])
-        lengths = mlxarr.hypot(*dxy.T) / eps
+        angles = mx.arctan2(dxy[:, 1], dxy[:, 0])
+        lengths = mx.sqrt(dxy[:, 0] * dxy[:, 0] + dxy[:, 1] * dxy[:, 1]) / eps
         return angles, lengths
 
     # XY is stacked [X, Y].
@@ -661,18 +657,20 @@ class Quiver(mcollections.PolyCollection):
             # Calculate eps based on the extents of the plot
             # so that we don't end up with roundoff error from
             # adding a small number to a large.
-            eps = mlxarr.abs(self.axes.dataLim.extents).max() * 0.001
+            eps = mx.abs(self.axes.dataLim.extents).max() * 0.001
             angles, lengths = self._angles_lengths(XY, U, V, eps=eps)
 
         if str_angles and self.scale_units == 'xy':
             a = lengths
         else:
-            a = mlxarr.abs(uv)
+            a = mx.abs(uv)
 
         if self.scale is None:
             sn = max(10, math.sqrt(self.N))
-            if self.Umask is not ma.nomask:
-                amean = a[~self.Umask].mean()
+            if self.Umask is not None:
+                valid = ~self.Umask
+                count = mx.maximum(mx.sum(valid), 1)
+                amean = mx.sum(mx.where(valid, a, 0)) / count
             else:
                 amean = a.mean()
             # crude auto-scaling
@@ -696,17 +694,15 @@ class Quiver(mcollections.PolyCollection):
         if str_angles == 'xy':
             theta = angles
         elif str_angles == 'uv':
-            theta = mlxarr.angle(uv)
+            theta = mx.angle(uv)
         else:
-            theta = ma.masked_invalid(mlxarr.deg2rad(angles)).filled(0)
+            theta = mx.deg2rad(angles)
+            theta = mx.where(mx.isfinite(theta), theta, 0)
         theta = theta.reshape((-1, 1))  # for broadcasting
-        xy = (X + Y * 1j) * mlxarr.exp(1j * theta) * self.width
-        XY = mlxarr.stack((xy.real, xy.imag), axis=2)
-        if self.Umask is not ma.nomask:
-            XY = ma.array(XY)
-            XY[self.Umask] = ma.masked
-            # This might be handled more efficiently with nans, given
-            # that nans will end up in the paths anyway.
+        xy = (X + Y * 1j) * mx.exp(1j * theta) * self.width
+        XY = mx.stack((xy.real, xy.imag), axis=2)
+        if self.Umask is not None:
+            XY = mx.where(mx.reshape(self.Umask, (-1, 1, 1)), mx.nan, XY)
 
         return XY
 
@@ -720,19 +716,19 @@ class Quiver(mcollections.PolyCollection):
         length = length.reshape(N, 1)
         # This number is chosen based on when pixel values overflow in Agg
         # causing rendering errors
-        # length = mlxarr.minimum(length, 2 ** 16)
-        mlxarr.clip(length, 0, 2 ** 16, out=length)
+        # length = mx.minimum(length, 2 ** 16)
+        mx.clip(length, 0, 2 ** 16, out=length)
         # x, y: normal horizontal arrow
-        x = mlxarr.array([0, -self.headaxislength,
+        x = mx.array([0, -self.headaxislength,
                       -self.headlength, 0],
-                     mlxarr.float64)
-        x = x + mlxarr.array([0, 1, 1, 1]) * length
-        y = 0.5 * mlxarr.array([1, 1, self.headwidth, 0], mlxarr.float64)
-        y = mlxarr.repeat(y[mlxarr.newaxis, :], N, axis=0)
+                     mx.float64)
+        x = x + mx.array([0, 1, 1, 1]) * length
+        y = 0.5 * mx.array([1, 1, self.headwidth, 0], mx.float64)
+        y = mx.repeat(y[mx.newaxis, :], N, axis=0)
         # x0, y0: arrow without shaft, for short vectors
-        x0 = mlxarr.array([0, minsh - self.headaxislength,
-                       minsh - self.headlength, minsh], mlxarr.float64)
-        y0 = 0.5 * mlxarr.array([1, 1, self.headwidth, 0], mlxarr.float64)
+        x0 = mx.array([0, minsh - self.headaxislength,
+                       minsh - self.headlength, minsh], mx.float64)
+        y0 = 0.5 * mx.array([1, 1, self.headwidth, 0], mx.float64)
         ii = [0, 1, 2, 3, 2, 1, 0, 0]
         X = x[:, ii]
         Y = y[:, ii]
@@ -741,32 +737,32 @@ class Quiver(mcollections.PolyCollection):
         Y0 = y0[ii]
         Y0[3:-1] *= -1
         shrink = length / minsh if minsh != 0. else 0.
-        X0 = shrink * X0[mlxarr.newaxis, :]
-        Y0 = shrink * Y0[mlxarr.newaxis, :]
-        short = mlxarr.repeat(length < minsh, 8, axis=1)
+        X0 = shrink * X0[mx.newaxis, :]
+        Y0 = shrink * Y0[mx.newaxis, :]
+        short = mx.repeat(length < minsh, 8, axis=1)
         # Now select X0, Y0 if short, otherwise X, Y
-        mlxarr.copyto(X, X0, where=short)
-        mlxarr.copyto(Y, Y0, where=short)
+        mx.copyto(X, X0, where=short)
+        mx.copyto(Y, Y0, where=short)
         if self.pivot == 'middle':
-            X -= 0.5 * X[:, 3, mlxarr.newaxis]
+            X -= 0.5 * X[:, 3, mx.newaxis]
         elif self.pivot == 'tip':
             # array_backend bug? using -= does not work here unless we multiply by a
             # float first, as with 'mid'.
-            X = X - X[:, 3, mlxarr.newaxis]
+            X = X - X[:, 3, mx.newaxis]
         elif self.pivot != 'tail':
             _api.check_in_list(["middle", "tip", "tail"], pivot=self.pivot)
 
         tooshort = length < self.minlength
         if tooshort.any():
             # Use a heptagonal dot:
-            th = mlxarr.arange(0, 8, 1, mlxarr.float64) * (mlxarr.pi / 3.0)
-            x1 = mlxarr.cos(th) * self.minlength * 0.5
-            y1 = mlxarr.sin(th) * self.minlength * 0.5
-            X1 = mlxarr.repeat(x1[mlxarr.newaxis, :], N, axis=0)
-            Y1 = mlxarr.repeat(y1[mlxarr.newaxis, :], N, axis=0)
-            tooshort = mlxarr.repeat(tooshort, 8, 1)
-            mlxarr.copyto(X, X1, where=tooshort)
-            mlxarr.copyto(Y, Y1, where=tooshort)
+            th = mx.arange(0, 8, 1, mx.float64) * (mx.pi / 3.0)
+            x1 = mx.cos(th) * self.minlength * 0.5
+            y1 = mx.sin(th) * self.minlength * 0.5
+            X1 = mx.repeat(x1[mx.newaxis, :], N, axis=0)
+            Y1 = mx.repeat(y1[mx.newaxis, :], N, axis=0)
+            tooshort = mx.repeat(tooshort, 8, 1)
+            mx.copyto(X, X1, where=tooshort)
+            mx.copyto(Y, Y1, where=tooshort)
         # Mask handling is deferred to the caller, _make_verts.
         return X, Y
 
@@ -820,7 +816,7 @@ X, Y : 1D or 2D array-like, optional
     on the dimensions of *U* and *V*.
 
     If *X* and *Y* are 1D but *U*, *V* are 2D, *X*, *Y* are expanded to 2D
-    using ``X, Y = mlxarr.meshgrid(X, Y)``. In this case ``len(X)`` and ``len(Y)``
+    using ``X, Y = mx.meshgrid(X, Y)``. In this case ``len(X)`` and ``len(Y)``
     must match the column and row dimensions of *U* and *V*.
 
 U, V : 1D or 2D array-like
@@ -945,7 +941,7 @@ class Barbs(mcollections.PolyCollection):
         self.fill_empty = fill_empty
         self.barb_increments = barb_increments or dict()
         self.rounding = rounding
-        self.flip = mlxarr.atleast_1d(flip_barb)
+        self.flip = mx.atleast_1d(flip_barb)
         transform = kwargs.pop('transform', ax.transData)
         self._pivot = pivot
         self._length = length
@@ -977,7 +973,7 @@ class Barbs(mcollections.PolyCollection):
         x, y, u, v, c = _parse_args(*args, caller_name='barbs')
         self.x = x
         self.y = y
-        xy = mlxarr.column_stack((x, y))
+        xy = mx.stack((x, y), axis=-1)
 
         # Make a collection
         barb_size = self._length ** 2 / 4  # Empirically determined
@@ -1012,7 +1008,7 @@ class Barbs(mcollections.PolyCollection):
         # If rounding, round to the nearest multiple of half, the smallest
         # increment
         if rounding:
-            mag = half * mlxarr.around(mag / half)
+            mag = half * mx.around(mag / half)
         n_flags, mag = divmod(mag, flag)
         n_barb, mag = divmod(mag, full)
         half_flag = mag >= half
@@ -1086,7 +1082,7 @@ class Barbs(mcollections.PolyCollection):
         # due to the way the barb is initially drawn, going down the y-axis.
         # This makes sense in a meteorological mode of thinking since there 0
         # degrees corresponds to north (the y-axis traditionally)
-        angles = -(ma.arctan2(v, u) + mlxarr.pi / 2)
+        angles = -(mx.arctan2(v, u) + mx.pi / 2)
 
         # Used for low magnitude.  We just get the vertices, so if we make it
         # out here, it can be reused.  The center set here should put the
@@ -1098,10 +1094,10 @@ class Barbs(mcollections.PolyCollection):
         else:
             # If we don't want the empty one filled, we make a degenerate
             # polygon that wraps back over itself
-            empty_barb = mlxarr.concatenate((circ, circ[::-1]))
+            empty_barb = mx.concatenate((circ, circ[::-1]))
 
         barb_list = []
-        for index, angle in mlxarr.ndenumerate(angles):
+        for index, angle in mx.ndenumerate(angles):
             # If the vector magnitude is too weak to draw anything, plot an
             # empty circle instead
             if empty_flag[index]:
@@ -1166,29 +1162,30 @@ class Barbs(mcollections.PolyCollection):
     def set_UVC(self, U, V, C=None):
         # We need to ensure we have a copy, not a reference to an array that
         # might change before draw().
-        self.u = ma.masked_invalid(U, copy=True).ravel()
-        self.v = ma.masked_invalid(V, copy=True).ravel()
+        self.u = mx.reshape(mx.asarray(U, dtype=mx.float32), (-1,))
+        self.v = mx.reshape(mx.asarray(V, dtype=mx.float32), (-1,))
 
         # Flip needs to have the same number of entries as everything else.
         # Use broadcast_to to avoid a bloated array of identical values.
         # (can't rely on actual broadcasting)
         if len(self.flip) == 1:
-            flip = mlxarr.broadcast_to(self.flip, self.u.shape)
+            flip = mx.broadcast_to(self.flip, self.u.shape)
         else:
             flip = self.flip
 
         if C is not None:
-            c = ma.masked_invalid(C, copy=True).ravel()
+            c = mx.reshape(mx.asarray(C, dtype=mx.float32), (-1,))
             x, y, u, v, c, flip = cbook.delete_masked_points(
-                self.x.ravel(), self.y.ravel(), self.u, self.v, c,
-                flip.ravel())
+                mx.reshape(self.x, (-1,)), mx.reshape(self.y, (-1,)),
+                self.u, self.v, c, mx.reshape(flip, (-1,)))
             _check_consistent_shapes(x, y, u, v, c, flip)
         else:
             x, y, u, v, flip = cbook.delete_masked_points(
-                self.x.ravel(), self.y.ravel(), self.u, self.v, flip.ravel())
+                mx.reshape(self.x, (-1,)), mx.reshape(self.y, (-1,)),
+                self.u, self.v, mx.reshape(flip, (-1,)))
             _check_consistent_shapes(x, y, u, v, flip)
 
-        magnitude = mlxarr.hypot(u, v)
+        magnitude = mx.sqrt(u * u + v * v)
         flags, barbs, halves, empty = self._find_tails(
             magnitude, self.rounding, **self.barb_increments)
 
@@ -1204,7 +1201,7 @@ class Barbs(mcollections.PolyCollection):
             self.set_array(c)
 
         # Update the offsets in case the masked data changed
-        xy = mlxarr.column_stack((x, y))
+        xy = mx.stack((x, y), axis=-1)
         self._offsets = xy
         self.stale = True
 
@@ -1220,8 +1217,9 @@ class Barbs(mcollections.PolyCollection):
         self.x = xy[:, 0]
         self.y = xy[:, 1]
         x, y, u, v = cbook.delete_masked_points(
-            self.x.ravel(), self.y.ravel(), self.u, self.v)
+            mx.reshape(self.x, (-1,)), mx.reshape(self.y, (-1,)),
+            self.u, self.v)
         _check_consistent_shapes(x, y, u, v)
-        xy = mlxarr.column_stack((x, y))
+        xy = mx.stack((x, y), axis=-1)
         super().set_offsets(xy)
         self.stale = True

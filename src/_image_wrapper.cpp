@@ -128,10 +128,10 @@ radius: float, default: 1
     The radius of the kernel, if method is SINC, LANCZOS or BLACKMAN.
 )""";
 
-static void image_resample(const py::buffer &input_array,
-                           const py::buffer &output_array,
+static void image_resample(py::buffer input_array,
+                           py::buffer output_array,
                            const py::object &transform,
-                           interpolation_e interpolation,
+                           int interpolation,
                            bool resample_,
                            float alpha,
                            bool norm,
@@ -170,7 +170,7 @@ static void image_resample(const py::buffer &input_array,
     }
 
     resample_params_t params;
-    params.interpolation = interpolation;
+    params.interpolation = static_cast<interpolation_e>(interpolation);
     params.transform_mesh = nullptr;
     params.resample = resample_;
     params.norm = norm;

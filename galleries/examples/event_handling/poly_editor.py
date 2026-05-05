@@ -14,7 +14,7 @@ Matplotlib event handling to interact with objects on the canvas.
     You can copy and paste individual parts, or download the entire example
     using the link at the bottom of the page.
 """
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.artist import Artist
 from matplotlib.lines import Line2D
 
@@ -27,10 +27,10 @@ def dist_point_to_segment(p, s0, s1):
     s01 = s1 - s0
     s0p = p - s0
     if (s01 == 0).all():
-        return mlxarr.hypot(*s0p)
+        return mx.hypot(*s0p)
     # Project onto segment, without going past segment ends.
-    p1 = s0 + mlxarr.clip((s0p @ s01) / (s01 @ s01), 0, 1) * s01
-    return mlxarr.hypot(*(p - p1))
+    p1 = s0 + mx.clip((s0p @ s01) / (s01 @ s01), 0, 1) * s01
+    return mx.hypot(*(p - p1))
 
 
 class PolygonInteractor:
@@ -96,11 +96,11 @@ class PolygonInteractor:
         if no point is within ``self.epsilon`` to the event position.
         """
         # display coords
-        xy = mlxarr.asarray(self.poly.xy)
+        xy = mx.asarray(self.poly.xy)
         xyt = self.poly.get_transform().transform(xy)
         xt, yt = xyt[:, 0], xyt[:, 1]
-        d = mlxarr.hypot(xt - event.x, yt - event.y)
-        indseq, = mlxarr.nonzero(d == d.min())
+        d = mx.hypot(xt - event.x, yt - event.y)
+        indseq, = mx.nonzero(d == d.min())
         ind = indseq[0]
 
         if d[ind] >= self.epsilon:
@@ -138,7 +138,7 @@ class PolygonInteractor:
         elif event.key == 'd':
             ind = self.get_ind_under_point(event)
             if ind is not None:
-                self.poly.xy = mlxarr.delete(self.poly.xy,
+                self.poly.xy = mx.delete(self.poly.xy,
                                          ind, axis=0)
                 self.line.set_data(zip(*self.poly.xy))
         elif event.key == 'i':
@@ -149,7 +149,7 @@ class PolygonInteractor:
                 s1 = xys[i + 1]
                 d = dist_point_to_segment(p, s0, s1)
                 if d <= self.epsilon:
-                    self.poly.xy = mlxarr.insert(
+                    self.poly.xy = mx.insert(
                         self.poly.xy, i+1,
                         [event.xdata, event.ydata],
                         axis=0)
@@ -188,13 +188,13 @@ if __name__ == '__main__':
 
     from matplotlib.patches import Polygon
 
-    theta = mlxarr.arange(0, 2*mlxarr.pi, 0.1)
+    theta = mx.arange(0, 2*mx.pi, 0.1)
     r = 1.5
 
-    xs = r * mlxarr.cos(theta)
-    ys = r * mlxarr.sin(theta)
+    xs = r * mx.cos(theta)
+    ys = r * mx.sin(theta)
 
-    poly = Polygon(mlxarr.column_stack([xs, ys]), animated=True)
+    poly = Polygon(mx.column_stack([xs, ys]), animated=True)
 
     fig, ax = plt.subplots()
     ax.add_patch(poly)

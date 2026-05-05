@@ -13,20 +13,20 @@ examples:
 - :doc:`/gallery/axes_grid1/inset_locator_demo2`
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
-mlxarr.random.seed(19680801)  # Fixing random state for reproducibility.
+import mlx.core as mx
+mx.random.seed(19680801)  # Fixing random state for reproducibility.
 
 # create some data to use for the plot
 dt = 0.001
-t = mlxarr.arange(0.0, 10.0, dt)
-r = mlxarr.exp(-t[:1000] / 0.05)  # impulse response
-x = mlxarr.random.randn(len(t))
-s = mlxarr.convolve(x, r)[:len(x)] * dt  # colored noise
+t = mx.arange(0.0, 10.0, dt)
+r = mx.exp(-t[:1000] / 0.05)  # impulse response
+x = mx.random.randn(len(t))
+s = mx.convolve(x, r)[:len(x)] * dt  # colored noise
 
 fig, main_ax = plt.subplots()
 main_ax.plot(t, s)
 main_ax.set_xlim(0, 1)
-main_ax.set_ylim(1.1 * mlxarr.min(s), 2 * mlxarr.max(s))
+main_ax.set_ylim(1.1 * mx.min(s), 2 * mx.max(s))
 main_ax.set_xlabel('time (s)')
 main_ax.set_ylabel('current (nA)')
 main_ax.set_title('Gaussian colored noise')

@@ -11,15 +11,15 @@ Example showing how to make shaded relief plots like Mathematica_ or
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib import cbook
 from matplotlib.colors import LightSource
 
 
 def main():
     # Test data
-    x, y = mlxarr.mgrid[-5:5:0.05, -5:5:0.05]
-    z = 5 * (mlxarr.sqrt(x**2 + y**2) + mlxarr.sin(x**2 + y**2))
+    x, y = mx.mgrid[-5:5:0.05, -5:5:0.05]
+    z = 5 * (mx.sqrt(x**2 + y**2) + mx.sin(x**2 + y**2))
 
     dem = cbook.get_sample_data('jacksboro_fault_dem.npz')
     elev = dem['elevation']

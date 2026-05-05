@@ -23,7 +23,7 @@ But this approach is not suitable if the planes intersect.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.colors import Normalize
 
 
@@ -56,16 +56,16 @@ def imshow3d(ax, array, value_direction='z', pos=0, norm=None, cmap=None):
 
     if value_direction == 'x':
         nz, ny = array.shape
-        zi, yi = mlxarr.mgrid[0:nz + 1, 0:ny + 1]
-        xi = mlxarr.full_like(yi, pos)
+        zi, yi = mx.mgrid[0:nz + 1, 0:ny + 1]
+        xi = mx.full_like(yi, pos)
     elif value_direction == 'y':
         nx, nz = array.shape
-        xi, zi = mlxarr.mgrid[0:nx + 1, 0:nz + 1]
-        yi = mlxarr.full_like(zi, pos)
+        xi, zi = mx.mgrid[0:nx + 1, 0:nz + 1]
+        yi = mx.full_like(zi, pos)
     elif value_direction == 'z':
         ny, nx = array.shape
-        yi, xi = mlxarr.mgrid[0:ny + 1, 0:nx + 1]
-        zi = mlxarr.full_like(xi, pos)
+        yi, xi = mx.mgrid[0:ny + 1, 0:nx + 1]
+        zi = mx.full_like(xi, pos)
     else:
         raise ValueError(f"Invalid value_direction: {value_direction!r}")
     ax.plot_surface(xi, yi, zi, rstride=1, cstride=1, facecolors=colors, shade=False)
@@ -76,9 +76,9 @@ ax = fig.add_subplot(projection='3d')
 ax.set(xlabel="x", ylabel="y", zlabel="z")
 
 nx, ny, nz = 8, 10, 5
-data_xy = mlxarr.arange(ny * nx).reshape(ny, nx) + 15 * mlxarr.random.random((ny, nx))
-data_yz = mlxarr.arange(nz * ny).reshape(nz, ny) + 10 * mlxarr.random.random((nz, ny))
-data_zx = mlxarr.arange(nx * nz).reshape(nx, nz) + 8 * mlxarr.random.random((nx, nz))
+data_xy = mx.arange(ny * nx).reshape(ny, nx) + 15 * mx.random.random((ny, nx))
+data_yz = mx.arange(nz * ny).reshape(nz, ny) + 10 * mx.random.random((nz, ny))
+data_zx = mx.arange(nx * nz).reshape(nx, nz) + 8 * mx.random.random((nx, nz))
 
 imshow3d(ax, data_xy)
 imshow3d(ax, data_yz, value_direction='x', cmap='magma')

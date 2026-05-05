@@ -12,7 +12,7 @@ See also the :doc:`/gallery/pie_and_polar_charts/nested_pie` example.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib as mpl
 
 
@@ -46,13 +46,13 @@ def bullseye_plot(ax, data, seg_bold=None, cmap="viridis", norm=None):
         Circulation, vol. 105, no. 4, pp. 539-542, 2002.
     """
 
-    data = mlxarr.ravel(data)
+    data = mx.ravel(data)
     if seg_bold is None:
         seg_bold = []
     if norm is None:
         norm = mpl.colors.Normalize(vmin=data.min(), vmax=data.max())
 
-    r = mlxarr.linspace(0.2, 1, 4)
+    r = mx.linspace(0.2, 1, 4)
 
     ax.set(ylim=(0, 1), xticklabels=[], yticklabels=[])
     ax.grid(False)  # Remove grid
@@ -65,8 +65,8 @@ def bullseye_plot(ax, data, seg_bold=None, cmap="viridis", norm=None):
             (16, 17, 0, r[0]),
     ]:
         n = stop - start
-        dtheta = 2*mlxarr.pi / n
-        ax.bar(mlxarr.arange(n) * dtheta + mlxarr.pi/2, r_out - r_in, dtheta, r_in,
+        dtheta = 2*mx.pi / n
+        ax.bar(mx.arange(n) * dtheta + mx.pi/2, r_out - r_in, dtheta, r_in,
                color=cmap(norm(data[start:stop])))
 
     # Now, draw the segment borders.  In order for the outer bold borders not
@@ -80,18 +80,18 @@ def bullseye_plot(ax, data, seg_bold=None, cmap="viridis", norm=None):
             (12, 16, r[0], r[1]),
     ]:
         n = stop - start
-        dtheta = 2*mlxarr.pi / n
-        ax.bar(mlxarr.arange(n) * dtheta + mlxarr.pi/2, r_out - r_in, dtheta, r_in,
+        dtheta = 2*mx.pi / n
+        ax.bar(mx.arange(n) * dtheta + mx.pi/2, r_out - r_in, dtheta, r_in,
                clip_on=False, color="none", edgecolor="k", linewidth=[
                    4 if i + 1 in seg_bold else 2 for i in range(start, stop)])
     # Draw edge of segment 17 -- here; the edge needs to be drawn differently,
     # using plot().
-    ax.plot(mlxarr.linspace(0, 2*mlxarr.pi), mlxarr.linspace(r[0], r[0]), "k",
+    ax.plot(mx.linspace(0, 2*mx.pi), mx.linspace(r[0], r[0]), "k",
             linewidth=(4 if 17 in seg_bold else 2))
 
 
 # Create the fake data
-data = mlxarr.arange(17) + 1
+data = mx.arange(17) + 1
 
 
 # Make a figure and Axes with dimensions as desired.

@@ -7,7 +7,7 @@ Demonstrates using custom hillshading in a 3D surface plot.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib import cbook
 from matplotlib.colors import LightSource
 
@@ -15,11 +15,11 @@ from matplotlib.colors import LightSource
 dem = cbook.get_sample_data('jacksboro_fault_dem.npz')
 z = dem['elevation']
 nrows, ncols = z.shape
-x = mlxarr.linspace(dem['xmin'], dem['xmax'], ncols)
-y = mlxarr.linspace(dem['ymin'], dem['ymax'], nrows)
-x, y = mlxarr.meshgrid(x, y)
+x = mx.linspace(dem['xmin'], dem['xmax'], ncols)
+y = mx.linspace(dem['ymin'], dem['ymax'], nrows)
+x, y = mx.meshgrid(x, y)
 
-region = mlxarr.s_[5:50, 5:50]
+region = mx.s_[5:50, 5:50]
 x, y, z = x[region], y[region], z[region]
 
 # Set up plot

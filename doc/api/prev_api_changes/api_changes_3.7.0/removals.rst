@@ -8,7 +8,7 @@ These methods convert from unix timestamps to matplotlib floats, but are not
 used internally to Matplotlib, and should not be needed by end users. To
 convert a unix timestamp to datetime, simply use
 `datetime.datetime.fromtimestamp`, or to use MLXArrayBackend `~array_backend.datetime64`
-``dt = mlxarr.datetime64(e*1e6, 'us')``.
+``dt = mx.datetime64(e*1e6, 'us')``.
 
 Locator and Formatter wrapper methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -29,7 +29,7 @@ as well as with `annotations <matplotlib.axes.Axes.annotate>`.
 # spanning from ``(1, 0)`` to ``(1.5, 1)`` in axes coordinates.
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 fig, ax = plt.subplots(figsize=(6, 3), subplot_kw=dict(aspect="equal"))
 
 recipe = ["375 g flour",
@@ -42,7 +42,7 @@ ingredients = [x.split()[-1] for x in recipe]
 
 
 def func(pct, allvals):
-    absolute = int(mlxarr.round(pct/100.*mlxarr.sum(allvals)))
+    absolute = int(mx.round(pct/100.*mx.sum(allvals)))
     return f"{pct:.1f}%\n({absolute:d} g)"
 
 
@@ -104,12 +104,12 @@ kw = dict(arrowprops=dict(arrowstyle="-"),
 
 for i, p in enumerate(wedges):
     ang = (p.theta2 - p.theta1)/2. + p.theta1
-    y = mlxarr.sin(mlxarr.deg2rad(ang))
-    x = mlxarr.cos(mlxarr.deg2rad(ang))
-    horizontalalignment = {-1: "right", 1: "left"}[int(mlxarr.sign(x))]
+    y = mx.sin(mx.deg2rad(ang))
+    x = mx.cos(mx.deg2rad(ang))
+    horizontalalignment = {-1: "right", 1: "left"}[int(mx.sign(x))]
     connectionstyle = f"angle,angleA=0,angleB={ang}"
     kw["arrowprops"].update({"connectionstyle": connectionstyle})
-    ax.annotate(recipe[i], xy=(x, y), xytext=(1.35*mlxarr.sign(x), 1.4*y),
+    ax.annotate(recipe[i], xy=(x, y), xytext=(1.35*mx.sign(x), 1.4*y),
                 horizontalalignment=horizontalalignment, **kw)
 
 ax.set_title("Matplotlib bakery: A donut")

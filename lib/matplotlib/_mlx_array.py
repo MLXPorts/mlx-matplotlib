@@ -224,7 +224,7 @@ if not hasattr(mx.array, "flags"):
 class DType:
     """A small callable dtype wrapper around an MLX dtype.
 
-    Dtypes like ``mlxarr.uint8`` are both valid ``dtype=`` values and callable
+    Dtypes like ``mx.uint8`` are both valid ``dtype=`` values and callable
     scalar/array constructors. MLX exposes dtype objects but they are not
     callable, so we wrap them here.
     """
@@ -252,7 +252,7 @@ class DType:
         return hash((self.name, self.mx_dtype))
 
     def __repr__(self) -> str:  # pragma: no cover
-        return f"mlxarr.{self.name}"
+        return f"mx.{self.name}"
 
 
 _STRING_TO_MX_DTYPE = {

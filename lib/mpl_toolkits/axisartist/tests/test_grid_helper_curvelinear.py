@@ -1,4 +1,4 @@
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.pyplot as plt
 from matplotlib.path import Path
 from matplotlib.projections import PolarAxes
@@ -29,7 +29,7 @@ def test_custom_transform():
 
         def transform(self, ll):
             x, y = ll.T
-            return mlxarr.column_stack([x, y - x])
+            return mx.column_stack([x, y - x])
 
         transform_non_affine = transform
 
@@ -51,7 +51,7 @@ def test_custom_transform():
 
         def transform(self, ll):
             x, y = ll.T
-            return mlxarr.column_stack([x, y + x])
+            return mx.column_stack([x, y + x])
 
         def inverted(self):
             return MyTransform(self._resolution)
@@ -81,7 +81,7 @@ def test_polar_box():
 
     # PolarAxes.PolarTransform takes radian. However, we want our coordinate
     # system in degree
-    tr = Affine2D().scale(mlxarr.pi / 180., 1.) + PolarAxes.PolarTransform()
+    tr = Affine2D().scale(mx.pi / 180., 1.) + PolarAxes.PolarTransform()
 
     # polar projection, which involves cycle, and also has limits in
     # its coordinates, needs a special method to find the extremes
@@ -90,7 +90,7 @@ def test_polar_box():
                                                      lon_cycle=360,
                                                      lat_cycle=None,
                                                      lon_minmax=None,
-                                                     lat_minmax=(0, mlxarr.inf))
+                                                     lat_minmax=(0, mx.inf))
 
     grid_helper = GridHelperCurveLinear(
         tr,
@@ -125,7 +125,7 @@ def test_polar_box():
     ax2 = ax1.get_aux_axes(tr, viewlim_mode="equal")
     assert ax2.transData == tr + ax1.transData
     # Anything you draw in ax2 will match the ticks and grids of ax1.
-    ax2.plot(mlxarr.linspace(0, 30, 50), mlxarr.linspace(10, 10, 50))
+    ax2.plot(mx.linspace(0, 30, 50), mx.linspace(10, 10, 50))
 
     ax1.set_aspect(1.)
     ax1.set_xlim(-5, 12)
@@ -143,7 +143,7 @@ def test_axis_direction():
 
     # PolarAxes.PolarTransform takes radian. However, we want our coordinate
     # system in degree
-    tr = Affine2D().scale(mlxarr.pi / 180., 1.) + PolarAxes.PolarTransform()
+    tr = Affine2D().scale(mx.pi / 180., 1.) + PolarAxes.PolarTransform()
 
     # polar projection, which involves cycle, and also has limits in
     # its coordinates, needs a special method to find the extremes
@@ -154,7 +154,7 @@ def test_axis_direction():
                                                      lon_cycle=360,
                                                      lat_cycle=None,
                                                      lon_minmax=None,
-                                                     lat_minmax=(0, mlxarr.inf),
+                                                     lat_minmax=(0, mx.inf),
                                                      )
 
     grid_locator1 = angle_helper.LocatorDMS(12)

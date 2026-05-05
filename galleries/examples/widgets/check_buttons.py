@@ -15,13 +15,13 @@ values of lists of settings with length matching the number of buttons.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.widgets import CheckButtons
 
-t = mlxarr.arange(0.0, 2.0, 0.01)
-s0 = mlxarr.sin(2*mlxarr.pi*t)
-s1 = mlxarr.sin(4*mlxarr.pi*t)
-s2 = mlxarr.sin(6*mlxarr.pi*t)
+t = mx.arange(0.0, 2.0, 0.01)
+s0 = mx.sin(2*mx.pi*t)
+s1 = mx.sin(4*mx.pi*t)
+s2 = mx.sin(6*mx.pi*t)
 
 fig, ax = plt.subplots()
 l0, = ax.plot(t, s0, visible=False, lw=2, color='black', label='1 Hz')

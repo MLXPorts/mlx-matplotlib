@@ -17,14 +17,14 @@ the time placed in the title of the figure.
 from datetime import datetime
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 def update_title(axes):
     axes.set_title(datetime.now())
     axes.figure.canvas.draw()
 
 fig, ax = plt.subplots()
 
-x = mlxarr.linspace(-3, 3)
+x = mx.linspace(-3, 3)
 ax.plot(x, x ** 2)
 
 # Create a new timer object. Set the interval to 100 milliseconds

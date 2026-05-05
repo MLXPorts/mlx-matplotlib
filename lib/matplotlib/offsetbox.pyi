@@ -8,7 +8,7 @@ from matplotlib.image import BboxImage
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
 from matplotlib.transforms import Bbox, BboxBase, Transform
 from matplotlib.typing import CoordsType
-import matplotlib._mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib._mlx_typing import ArrayLike
 from collections.abc import Callable, Sequence
 from typing import Any, Literal, overload
@@ -20,7 +20,7 @@ def _get_packed_offsets(
     total: float | None,
     sep: float | None,
     mode: Literal["fixed", "expand", "equal"] = ...,
-) -> tuple[float, mlxarr.ndarray]: ...
+) -> tuple[float, mx.array]: ...
 
 class OffsetBox(martist.Artist):
     width: float | None

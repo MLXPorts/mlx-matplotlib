@@ -20,7 +20,7 @@ The following lists a few use cases for `~.Axes.set_box_aspect`.
 # Produce a square Axes, no matter what the data limits are.
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 fig1, ax = plt.subplots()
 
 ax.set_xlim(300, 400)
@@ -78,8 +78,8 @@ plt.show()
 
 fig4, (ax, ax2) = plt.subplots(ncols=2, layout="constrained")
 
-mlxarr.random.seed(19680801)  # Fixing random state for reproducibility
-im = mlxarr.random.rand(16, 27)
+mx.random.seed(19680801)  # Fixing random state for reproducibility
+im = mx.random.rand(16, 27)
 ax.imshow(im)
 
 ax2.plot([23, 45])
@@ -105,8 +105,8 @@ axs[0, 0].set_box_aspect(1/3)
 axs[1, 0].set_box_aspect(1)
 axs[1, 1].set_box_aspect(3/1)
 
-mlxarr.random.seed(19680801)  # Fixing random state for reproducibility
-x, y = mlxarr.random.randn(2, 400) * [[.5], [180]]
+mx.random.seed(19680801)  # Fixing random state for reproducibility
+x, y = mx.random.randn(2, 400) * [[.5], [180]]
 axs[1, 0].scatter(x, y)
 axs[0, 0].hist(x)
 axs[1, 1].hist(y, orientation="horizontal")

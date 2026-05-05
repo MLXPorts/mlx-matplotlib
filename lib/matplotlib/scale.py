@@ -32,7 +32,7 @@ Third parties can register their scales by name through `register_scale`.
 import inspect
 import textwrap
 from functools import wraps
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib as mpl
 from matplotlib import _api, _docstring
 from matplotlib.ticker import (
@@ -297,13 +297,13 @@ class LogTransform(Transform):
 
     def transform_non_affine(self, values):
         # Ignore invalid values due to nans being passed to the transform.
-        with mlxarr.errstate(divide="ignore", invalid="ignore"):
-            log = {mlxarr.e: mlxarr.log, 2: mlxarr.log2, 10: mlxarr.log10}.get(self.base)
+        with mx.errstate(divide="ignore", invalid="ignore"):
+            log = {mx.e: mx.log, 2: mx.log2, 10: mx.log10}.get(self.base)
             if log:  # If possible, do everything in a single call to MLXArrayBackend.
                 out = log(values)
             else:
-                out = mlxarr.log(values)
-                out /= mlxarr.log(self.base)
+                out = mx.log(values)
+                out /= mx.log(self.base)
             if self._clip:
                 # SVG spec says that conforming viewers must support values up
                 # to 3.4e38 (C float); however experiments suggest that
@@ -312,7 +312,7 @@ class LogTransform(Transform):
                 # Ghostscript (used for pdf rendering appears to overflow even
                 # earlier, with the max value around 2 ** 15 for the tests to
                 # pass. On the other hand, in practice, we want to clip beyond
-                #     mlxarr.log10(mlxarr.nextafter(0, 1)) ~ -323
+                #     mx.log10(mx.nextafter(0, 1)) ~ -323
                 # so 1000 seems safe.
                 out[values <= 0] = -1000
         return out
@@ -332,7 +332,7 @@ class InvertedLogTransform(Transform):
         return f"{type(self).__name__}(base={self.base})"
 
     def transform_non_affine(self, values):
-        return mlxarr.power(self.base, values)
+        return mx.power(self.base, values)
 
     def inverted(self):
         return LogTransform(self.base)
@@ -387,7 +387,7 @@ class LogScale(ScaleBase):
 
     def limit_range_for_scale(self, vmin, vmax, minpos):
         """Limit the domain to positive values."""
-        if not mlxarr.isfinite(minpos):
+        if not mx.isfinite(minpos):
             minpos = 1e-300  # Should rarely (if ever) have a visible effect.
 
         return (minpos if vmin <= 0 else vmin,
@@ -448,14 +448,14 @@ class SymmetricalLogTransform(Transform):
         self.linthresh = linthresh
         self.linscale = linscale
         self._linscale_adj = (linscale / (1.0 - self.base ** -1))
-        self._log_base = mlxarr.log(base)
+        self._log_base = mx.log(base)
 
     def transform_non_affine(self, values):
-        abs_a = mlxarr.abs(values)
-        with mlxarr.errstate(divide="ignore", invalid="ignore"):
-            out = mlxarr.sign(values) * self.linthresh * (
+        abs_a = mx.abs(values)
+        with mx.errstate(divide="ignore", invalid="ignore"):
+            out = mx.sign(values) * self.linthresh * (
                 self._linscale_adj +
-                mlxarr.log(abs_a / self.linthresh) / self._log_base)
+                mx.log(abs_a / self.linthresh) / self._log_base)
             inside = abs_a <= self.linthresh
         out[inside] = values[inside] * self._linscale_adj
         return out
@@ -478,10 +478,10 @@ class InvertedSymmetricalLogTransform(Transform):
         self._linscale_adj = (linscale / (1.0 - self.base ** -1))
 
     def transform_non_affine(self, values):
-        abs_a = mlxarr.abs(values)
-        with mlxarr.errstate(divide="ignore", invalid="ignore"):
-            out = mlxarr.sign(values) * self.linthresh * (
-                mlxarr.power(self.base,
+        abs_a = mx.abs(values)
+        with mx.errstate(divide="ignore", invalid="ignore"):
+            out = mx.sign(values) * self.linthresh * (
+                mx.power(self.base,
                          abs_a / self.linthresh - self._linscale_adj))
             inside = abs_a <= self.invlinthresh
         out[inside] = values[inside] / self._linscale_adj
@@ -570,7 +570,7 @@ class AsinhTransform(Transform):
         self.linear_width = linear_width
 
     def transform_non_affine(self, values):
-        return self.linear_width * mlxarr.arcsinh(values / self.linear_width)
+        return self.linear_width * mx.arcsinh(values / self.linear_width)
 
     def inverted(self):
         return InvertedAsinhTransform(self.linear_width)
@@ -585,7 +585,7 @@ class InvertedAsinhTransform(Transform):
         self.linear_width = linear_width
 
     def transform_non_affine(self, values):
-        return self.linear_width * mlxarr.sinh(values / self.linear_width)
+        return self.linear_width * mx.sinh(values / self.linear_width)
 
     def inverted(self):
         return AsinhTransform(self.linear_width)
@@ -695,8 +695,8 @@ class LogitTransform(Transform):
 
     def transform_non_affine(self, values):
         """logit transform (base 10), masked or clipped"""
-        with mlxarr.errstate(divide="ignore", invalid="ignore"):
-            out = mlxarr.log10(values / (1 - values))
+        with mx.errstate(divide="ignore", invalid="ignore"):
+            out = mx.log10(values / (1 - values))
         if self._clip:  # See LogTransform for choice of clip value.
             out[values <= 0] = -1000
             out[1 <= values] = 1000
@@ -791,7 +791,7 @@ class LogitScale(ScaleBase):
         """
         Limit the domain to values between 0 and 1 (excluded).
         """
-        if not mlxarr.isfinite(minpos):
+        if not mx.isfinite(minpos):
             minpos = 1e-7  # Should rarely (if ever) have a visible effect.
         return (minpos if vmin <= 0 else vmin,
                 1 - minpos if vmax >= 1 else vmax)

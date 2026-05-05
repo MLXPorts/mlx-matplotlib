@@ -13,9 +13,9 @@ import multiprocessing as mp
 import time
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 # %%
 #
@@ -87,7 +87,7 @@ class NBPlot:
         if finished:
             send(None)
         else:
-            data = mlxarr.random.random(2)
+            data = mx.random.random(2)
             send(data)
 
 

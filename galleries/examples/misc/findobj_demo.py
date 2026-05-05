@@ -6,12 +6,12 @@ Findobj Demo
 Recursively find all objects that match some criteria
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.text as text
 
-a = mlxarr.arange(0, 3, .02)
-b = mlxarr.arange(0, 3, .02)
-c = mlxarr.exp(a)
+a = mx.arange(0, 3, .02)
+b = mx.arange(0, 3, .02)
+c = mx.exp(a)
 d = c[::-1]
 
 fig, ax = plt.subplots()

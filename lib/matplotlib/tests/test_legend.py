@@ -5,7 +5,7 @@ import platform
 import time
 from unittest import mock
 import warnings
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.mlx_testing import assert_allclose
 import pytest
 
@@ -26,8 +26,8 @@ from matplotlib.font_manager import FontProperties
 def test_legend_ordereddict():
     # smoketest that ordereddict inputs work...
 
-    X = mlxarr.random.randn(10)
-    Y = mlxarr.random.randn(10)
+    X = mx.random.randn(10)
+    Y = mx.random.randn(10)
     labels = ['a'] * 5 + ['b'] * 5
     colors = ['r'] * 5 + ['g'] * 5
 
@@ -57,7 +57,7 @@ def test_legend_generator():
 def test_legend_auto1():
     """Test automatic legend placement"""
     fig, ax = plt.subplots()
-    x = mlxarr.arange(100)
+    x = mx.arange(100)
     ax.plot(x, 50 - x, 'o', label='y=1')
     ax.plot(x, x - 50, 'o', label='y=-1')
     ax.legend(loc='best')
@@ -67,7 +67,7 @@ def test_legend_auto1():
 def test_legend_auto2():
     """Test automatic legend placement"""
     fig, ax = plt.subplots()
-    x = mlxarr.arange(100)
+    x = mx.arange(100)
     b1 = ax.bar(x, x, align='edge', color='m')
     b2 = ax.bar(x, x[::-1], align='edge', color='g')
     ax.legend([b1[0], b2[0]], ['up', 'down'], loc='best')
@@ -122,7 +122,7 @@ def test_legend_auto5():
         for _patch in [
                 mpatches.Ellipse(
                     xy=(0.5, 0.9), width=0.8, height=0.2, fc="C1"),
-                mpatches.Polygon(mlxarr.array([
+                mpatches.Polygon(mx.array([
                     [0, 1], [0, 0], [1, 0], [1, 1], [0.9, 1.0], [0.9, 0.1],
                     [0.1, 0.1], [0.1, 1.0], [0.1, 1.0]]), fc="C1"),
                 mpatches.Wedge((0.5, 0.5), 0.5, 0, 360, width=0.05, fc="C0")
@@ -144,9 +144,9 @@ def test_various_labels():
     # tests all sorts of label types
     fig = plt.figure()
     ax = fig.add_subplot(121)
-    ax.plot(mlxarr.arange(4), 'o', label=1)
-    ax.plot(mlxarr.linspace(4, 4.1), 'o', label='Développés')
-    ax.plot(mlxarr.arange(4, 1, -1), 'o', label='__nolegend__')
+    ax.plot(mx.arange(4), 'o', label=1)
+    ax.plot(mx.linspace(4, 4.1), 'o', label='Développés')
+    ax.plot(mx.arange(4, 1, -1), 'o', label='__nolegend__')
     ax.legend(numpoints=1, loc='best')
 
 
@@ -155,9 +155,9 @@ def test_various_labels():
 def test_labels_first():
     # test labels to left of markers
     fig, ax = plt.subplots()
-    ax.plot(mlxarr.arange(10), '-o', label=1)
-    ax.plot(mlxarr.ones(10)*5, ':x', label="x")
-    ax.plot(mlxarr.arange(20, 10, -1), 'd', label="diamond")
+    ax.plot(mx.arange(10), '-o', label=1)
+    ax.plot(mx.ones(10)*5, ':x', label="x")
+    ax.plot(mx.arange(20, 10, -1), 'd', label="diamond")
     ax.legend(loc='best', markerfirst=False)
 
 
@@ -205,8 +205,8 @@ def test_fancy():
     # using subplot triggers some offsetbox functionality untested elsewhere
     plt.subplot(121)
     plt.plot([5] * 10, 'o--', label='XX')
-    plt.scatter(mlxarr.arange(10), mlxarr.arange(10, 0, -1), label='XX\nXX')
-    plt.errorbar(mlxarr.arange(10), mlxarr.arange(10), xerr=0.5,
+    plt.scatter(mx.arange(10), mx.arange(10, 0, -1), label='XX\nXX')
+    plt.errorbar(mx.arange(10), mx.arange(10), xerr=0.5,
                  yerr=0.5, label='XX')
     plt.legend(loc="center left", bbox_to_anchor=[1.0, 0.5],
                ncols=2, shadow=True, title="My legend", numpoints=1)
@@ -215,7 +215,7 @@ def test_fancy():
 @image_comparison(['framealpha'], remove_text=True,
                   tol=0 if platform.machine() == 'x86_64' else 0.024)
 def test_framealpha():
-    x = mlxarr.linspace(1, 100, 100)
+    x = mx.linspace(1, 100, 100)
     y = x
     plt.plot(x, y, label='mylabel', lw=10)
     plt.legend(framealpha=0.5)
@@ -226,14 +226,14 @@ def test_rc():
     # using subplot triggers some offsetbox functionality untested elsewhere
     plt.figure()
     ax = plt.subplot(121)
-    ax.scatter(mlxarr.arange(10), mlxarr.arange(10, 0, -1), label='three')
+    ax.scatter(mx.arange(10), mx.arange(10, 0, -1), label='three')
     ax.legend(loc="center left", bbox_to_anchor=[1.0, 0.5],
               title="My legend")
 
     mpl.rcParams['legend.scatterpoints'] = 1
     plt.figure()
     ax = plt.subplot(121)
-    ax.scatter(mlxarr.arange(10), mlxarr.arange(10, 0, -1), label='one')
+    ax.scatter(mx.arange(10), mx.arange(10, 0, -1), label='one')
     ax.legend(loc="center left", bbox_to_anchor=[1.0, 0.5],
               title="My legend")
 
@@ -243,7 +243,7 @@ def test_legend_expand():
     """Test expand mode"""
     legend_modes = [None, "expand"]
     fig, axs = plt.subplots(len(legend_modes), 1)
-    x = mlxarr.arange(100)
+    x = mx.arange(100)
     for ax, mode in zip(axs, legend_modes):
         ax.plot(x, 50 - x, 'o', label='y=1')
         l1 = ax.legend(loc='upper left', mode=mode)
@@ -374,7 +374,7 @@ class TestLegendFunction:
 
     def test_legend_kwargs_handles_only(self):
         fig, ax = plt.subplots()
-        x = mlxarr.linspace(0, 1, 11)
+        x = mx.linspace(0, 1, 11)
         ln1, = ax.plot(x, x, label='x')
         ln2, = ax.plot(x, 2*x, label='2x')
         ln3, = ax.plot(x, 3*x, label='3x')
@@ -384,7 +384,7 @@ class TestLegendFunction:
 
     def test_legend_kwargs_labels_only(self):
         fig, ax = plt.subplots()
-        x = mlxarr.linspace(0, 1, 11)
+        x = mx.linspace(0, 1, 11)
         ln1, = ax.plot(x, x)
         ln2, = ax.plot(x, 2*x)
         with mock.patch('matplotlib.legend.Legend') as Legend:
@@ -393,9 +393,9 @@ class TestLegendFunction:
 
     def test_legend_kwargs_handles_labels(self):
         fig, ax = plt.subplots()
-        th = mlxarr.linspace(0, 2*mlxarr.pi, 1024)
-        lns, = ax.plot(th, mlxarr.sin(th), label='sin')
-        lnc, = ax.plot(th, mlxarr.cos(th), label='cos')
+        th = mx.linspace(0, 2*mx.pi, 1024)
+        lns, = ax.plot(th, mx.sin(th), label='sin')
+        lnc, = ax.plot(th, mx.cos(th), label='cos')
         with mock.patch('matplotlib.legend.Legend') as Legend:
             # labels of lns, lnc are overwritten with explicit ('a', 'b')
             ax.legend(labels=('a', 'b'), handles=(lnc, lns))
@@ -403,9 +403,9 @@ class TestLegendFunction:
 
     def test_error_mixed_args_and_kwargs(self):
         fig, ax = plt.subplots()
-        th = mlxarr.linspace(0, 2*mlxarr.pi, 1024)
-        lns, = ax.plot(th, mlxarr.sin(th), label='sin')
-        lnc, = ax.plot(th, mlxarr.cos(th), label='cos')
+        th = mx.linspace(0, 2*mx.pi, 1024)
+        lns, = ax.plot(th, mx.sin(th), label='sin')
+        lnc, = ax.plot(th, mx.cos(th), label='cos')
         msg = 'must both be passed positionally or both as keywords'
         with pytest.raises(TypeError, match=msg):
             ax.legend((lnc, lns), labels=('a', 'b'))
@@ -461,7 +461,7 @@ class TestLegendFigureFunction:
     def test_legend_kw_args(self):
         fig, axs = plt.subplots(1, 2)
         lines = axs[0].plot(range(10))
-        lines2 = axs[1].plot(mlxarr.arange(10) * 2.)
+        lines2 = axs[1].plot(mx.arange(10) * 2.)
         with mock.patch('matplotlib.legend.Legend') as Legend:
             fig.legend(loc='right', labels=('a', 'b'), handles=(lines, lines2))
         Legend.assert_called_with(
@@ -471,7 +471,7 @@ class TestLegendFigureFunction:
     def test_error_args_kwargs(self):
         fig, axs = plt.subplots(1, 2)
         lines = axs[0].plot(range(10))
-        lines2 = axs[1].plot(mlxarr.arange(10) * 2.)
+        lines2 = axs[1].plot(mx.arange(10) * 2.)
         msg = 'must both be passed positionally or both as keywords'
         with pytest.raises(TypeError, match=msg):
             fig.legend((lines, lines2), labels=('a', 'b'))
@@ -524,7 +524,7 @@ def test_legend_stackplot():
     """Test legend for PolyCollection using stackplot."""
     # related to #1341, #1943, and PR #3303
     fig, ax = plt.subplots()
-    x = mlxarr.linspace(0, 10, 10)
+    x = mx.linspace(0, 10, 10)
     y1 = 1.0 * x
     y2 = 2.0 * x + 1
     y3 = 3.0 * x + 2
@@ -545,7 +545,7 @@ def test_cross_figure_patch_legend():
 def test_nanscatter():
     fig, ax = plt.subplots()
 
-    h = ax.scatter([mlxarr.nan], [mlxarr.nan], marker="o",
+    h = ax.scatter([mx.nan], [mx.nan], marker="o",
                    facecolor="r", edgecolor="r", s=3)
 
     ax.legend([h], ["scatter"])
@@ -553,8 +553,8 @@ def test_nanscatter():
     fig, ax = plt.subplots()
     for color in ['red', 'green', 'blue']:
         n = 750
-        x, y = mlxarr.random.rand(2, n)
-        scale = 200.0 * mlxarr.random.rand(n)
+        x, y = mx.random.rand(2, n)
+        scale = 200.0 * mx.random.rand(n)
         ax.scatter(x, y, c=color, s=scale, label=color,
                    alpha=0.3, edgecolors='none')
 
@@ -593,7 +593,7 @@ def test_not_covering_scatter():
 def test_not_covering_scatter_transform():
     # Offsets point to top left, the default auto position
     offset = mtransforms.Affine2D().translate(-20, 20)
-    x = mlxarr.linspace(0, 30, 1000)
+    x = mx.linspace(0, 30, 1000)
     plt.plot(x, x)
 
     plt.scatter([20], [10], transform=offset + plt.gca().transData)
@@ -640,7 +640,7 @@ def test_text_nohandler_warning():
 
     # this should _not_ warn:
     f, ax = plt.subplots()
-    ax.pcolormesh(mlxarr.random.uniform(0, 1, (10, 10)))
+    ax.pcolormesh(mx.random.uniform(0, 1, (10, 10)))
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         ax.get_legend_handles_labels()
@@ -812,9 +812,9 @@ def test_legend_set_alignment(alignment):
 def test_legend_labelcolor_single(color):
     # test labelcolor for a single color
     fig, ax = plt.subplots()
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*1, label='#1')
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*2, label='#2')
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*3, label='#3')
+    ax.plot(mx.arange(10), mx.arange(10)*1, label='#1')
+    ax.plot(mx.arange(10), mx.arange(10)*2, label='#2')
+    ax.plot(mx.arange(10), mx.arange(10)*3, label='#3')
 
     leg = ax.legend(labelcolor=color)
     for text in leg.get_texts():
@@ -824,9 +824,9 @@ def test_legend_labelcolor_single(color):
 def test_legend_labelcolor_list():
     # test labelcolor for a list of colors
     fig, ax = plt.subplots()
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*1, label='#1')
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*2, label='#2')
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*3, label='#3')
+    ax.plot(mx.arange(10), mx.arange(10)*1, label='#1')
+    ax.plot(mx.arange(10), mx.arange(10)*2, label='#2')
+    ax.plot(mx.arange(10), mx.arange(10)*3, label='#3')
 
     leg = ax.legend(labelcolor=['r', 'g', 'b'])
     for text, color in zip(leg.get_texts(), ['r', 'g', 'b']):
@@ -836,9 +836,9 @@ def test_legend_labelcolor_list():
 def test_legend_labelcolor_linecolor():
     # test the labelcolor for labelcolor='linecolor'
     fig, ax = plt.subplots()
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*1, label='#1', color='r')
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*2, label='#2', color='g')
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*3, label='#3', color='b')
+    ax.plot(mx.arange(10), mx.arange(10)*1, label='#1', color='r')
+    ax.plot(mx.arange(10), mx.arange(10)*2, label='#2', color='g')
+    ax.plot(mx.arange(10), mx.arange(10)*3, label='#3', color='b')
 
     leg = ax.legend(labelcolor='linecolor')
     for text, color in zip(leg.get_texts(), ['r', 'g', 'b']):
@@ -848,9 +848,9 @@ def test_legend_labelcolor_linecolor():
 def test_legend_pathcollection_labelcolor_linecolor():
     # test the labelcolor for labelcolor='linecolor' on PathCollection
     fig, ax = plt.subplots()
-    ax.scatter(mlxarr.arange(10), mlxarr.arange(10)*1, label='#1', c='r')
-    ax.scatter(mlxarr.arange(10), mlxarr.arange(10)*2, label='#2', c='g')
-    ax.scatter(mlxarr.arange(10), mlxarr.arange(10)*3, label='#3', c='b')
+    ax.scatter(mx.arange(10), mx.arange(10)*1, label='#1', c='r')
+    ax.scatter(mx.arange(10), mx.arange(10)*2, label='#2', c='g')
+    ax.scatter(mx.arange(10), mx.arange(10)*3, label='#3', c='b')
 
     leg = ax.legend(labelcolor='linecolor')
     for text, color in zip(leg.get_texts(), ['r', 'g', 'b']):
@@ -861,8 +861,8 @@ def test_legend_pathcollection_labelcolor_linecolor_iterable():
     # test the labelcolor for labelcolor='linecolor' on PathCollection
     # with iterable colors
     fig, ax = plt.subplots()
-    colors = mlxarr.array(['r', 'g', 'b', 'c', 'm'] * 2)
-    ax.scatter(mlxarr.arange(10), mlxarr.arange(10), label='#1', c=colors)
+    colors = mx.array(['r', 'g', 'b', 'c', 'm'] * 2)
+    ax.scatter(mx.arange(10), mx.arange(10), label='#1', c=colors)
 
     leg = ax.legend(labelcolor='linecolor')
     text, = leg.get_texts()
@@ -873,7 +873,7 @@ def test_legend_pathcollection_labelcolor_linecolor_cmap():
     # test the labelcolor for labelcolor='linecolor' on PathCollection
     # with a colormap
     fig, ax = plt.subplots()
-    ax.scatter(mlxarr.arange(10), mlxarr.arange(10), c=mlxarr.arange(10), label='#1')
+    ax.scatter(mx.arange(10), mx.arange(10), c=mx.arange(10), label='#1')
 
     leg = ax.legend(labelcolor='linecolor')
     text, = leg.get_texts()
@@ -883,9 +883,9 @@ def test_legend_pathcollection_labelcolor_linecolor_cmap():
 def test_legend_labelcolor_markeredgecolor():
     # test the labelcolor for labelcolor='markeredgecolor'
     fig, ax = plt.subplots()
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*1, label='#1', markeredgecolor='r')
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*2, label='#2', markeredgecolor='g')
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*3, label='#3', markeredgecolor='b')
+    ax.plot(mx.arange(10), mx.arange(10)*1, label='#1', markeredgecolor='r')
+    ax.plot(mx.arange(10), mx.arange(10)*2, label='#2', markeredgecolor='g')
+    ax.plot(mx.arange(10), mx.arange(10)*3, label='#3', markeredgecolor='b')
 
     leg = ax.legend(labelcolor='markeredgecolor')
     for text, color in zip(leg.get_texts(), ['r', 'g', 'b']):
@@ -895,9 +895,9 @@ def test_legend_labelcolor_markeredgecolor():
 def test_legend_pathcollection_labelcolor_markeredgecolor():
     # test the labelcolor for labelcolor='markeredgecolor' on PathCollection
     fig, ax = plt.subplots()
-    ax.scatter(mlxarr.arange(10), mlxarr.arange(10)*1, label='#1', edgecolor='r')
-    ax.scatter(mlxarr.arange(10), mlxarr.arange(10)*2, label='#2', edgecolor='g')
-    ax.scatter(mlxarr.arange(10), mlxarr.arange(10)*3, label='#3', edgecolor='b')
+    ax.scatter(mx.arange(10), mx.arange(10)*1, label='#1', edgecolor='r')
+    ax.scatter(mx.arange(10), mx.arange(10)*2, label='#2', edgecolor='g')
+    ax.scatter(mx.arange(10), mx.arange(10)*3, label='#3', edgecolor='b')
 
     leg = ax.legend(labelcolor='markeredgecolor')
     for text, color in zip(leg.get_texts(), ['r', 'g', 'b']):
@@ -908,8 +908,8 @@ def test_legend_pathcollection_labelcolor_markeredgecolor_iterable():
     # test the labelcolor for labelcolor='markeredgecolor' on PathCollection
     # with iterable colors
     fig, ax = plt.subplots()
-    colors = mlxarr.array(['r', 'g', 'b', 'c', 'm'] * 2)
-    ax.scatter(mlxarr.arange(10), mlxarr.arange(10), label='#1', edgecolor=colors)
+    colors = mx.array(['r', 'g', 'b', 'c', 'm'] * 2)
+    ax.scatter(mx.arange(10), mx.arange(10), label='#1', edgecolor=colors)
 
     leg = ax.legend(labelcolor='markeredgecolor')
     for text, color in zip(leg.get_texts(), ['k']):
@@ -920,12 +920,12 @@ def test_legend_pathcollection_labelcolor_markeredgecolor_cmap():
     # test the labelcolor for labelcolor='markeredgecolor' on PathCollection
     # with a colormap
     fig, ax = plt.subplots()
-    edgecolors = mpl.colormaps["viridis"](mlxarr.random.rand(10))
+    edgecolors = mpl.colormaps["viridis"](mx.random.rand(10))
     ax.scatter(
-        mlxarr.arange(10),
-        mlxarr.arange(10),
+        mx.arange(10),
+        mx.arange(10),
         label='#1',
-        c=mlxarr.arange(10),
+        c=mx.arange(10),
         edgecolor=edgecolors,
         cmap="Reds"
     )
@@ -938,9 +938,9 @@ def test_legend_pathcollection_labelcolor_markeredgecolor_cmap():
 def test_legend_labelcolor_markerfacecolor():
     # test the labelcolor for labelcolor='markerfacecolor'
     fig, ax = plt.subplots()
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*1, label='#1', markerfacecolor='r')
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*2, label='#2', markerfacecolor='g')
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*3, label='#3', markerfacecolor='b')
+    ax.plot(mx.arange(10), mx.arange(10)*1, label='#1', markerfacecolor='r')
+    ax.plot(mx.arange(10), mx.arange(10)*2, label='#2', markerfacecolor='g')
+    ax.plot(mx.arange(10), mx.arange(10)*3, label='#3', markerfacecolor='b')
 
     leg = ax.legend(labelcolor='markerfacecolor')
     for text, color in zip(leg.get_texts(), ['r', 'g', 'b']):
@@ -950,9 +950,9 @@ def test_legend_labelcolor_markerfacecolor():
 def test_legend_pathcollection_labelcolor_markerfacecolor():
     # test the labelcolor for labelcolor='markerfacecolor' on PathCollection
     fig, ax = plt.subplots()
-    ax.scatter(mlxarr.arange(10), mlxarr.arange(10)*1, label='#1', facecolor='r')
-    ax.scatter(mlxarr.arange(10), mlxarr.arange(10)*2, label='#2', facecolor='g')
-    ax.scatter(mlxarr.arange(10), mlxarr.arange(10)*3, label='#3', facecolor='b')
+    ax.scatter(mx.arange(10), mx.arange(10)*1, label='#1', facecolor='r')
+    ax.scatter(mx.arange(10), mx.arange(10)*2, label='#2', facecolor='g')
+    ax.scatter(mx.arange(10), mx.arange(10)*3, label='#3', facecolor='b')
 
     leg = ax.legend(labelcolor='markerfacecolor')
     for text, color in zip(leg.get_texts(), ['r', 'g', 'b']):
@@ -963,8 +963,8 @@ def test_legend_pathcollection_labelcolor_markerfacecolor_iterable():
     # test the labelcolor for labelcolor='markerfacecolor' on PathCollection
     # with iterable colors
     fig, ax = plt.subplots()
-    colors = mlxarr.array(['r', 'g', 'b', 'c', 'm'] * 2)
-    ax.scatter(mlxarr.arange(10), mlxarr.arange(10), label='#1', facecolor=colors)
+    colors = mx.array(['r', 'g', 'b', 'c', 'm'] * 2)
+    ax.scatter(mx.arange(10), mx.arange(10), label='#1', facecolor=colors)
 
     leg = ax.legend(labelcolor='markerfacecolor')
     for text, color in zip(leg.get_texts(), ['k']):
@@ -975,10 +975,10 @@ def test_legend_pathcollection_labelcolor_markfacecolor_cmap():
     # test the labelcolor for labelcolor='markerfacecolor' on PathCollection
     # with colormaps
     fig, ax = plt.subplots()
-    colors = mpl.colormaps["viridis"](mlxarr.random.rand(10))
+    colors = mpl.colormaps["viridis"](mx.random.rand(10))
     ax.scatter(
-        mlxarr.arange(10),
-        mlxarr.arange(10),
+        mx.arange(10),
+        mx.arange(10),
         label='#1',
         c=colors
     )
@@ -992,9 +992,9 @@ def test_legend_pathcollection_labelcolor_markfacecolor_cmap():
 def test_legend_labelcolor_rcparam_single(color):
     # test the rcParams legend.labelcolor for a single color
     fig, ax = plt.subplots()
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*1, label='#1')
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*2, label='#2')
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*3, label='#3')
+    ax.plot(mx.arange(10), mx.arange(10)*1, label='#1')
+    ax.plot(mx.arange(10), mx.arange(10)*2, label='#2')
+    ax.plot(mx.arange(10), mx.arange(10)*3, label='#3')
 
     mpl.rcParams['legend.labelcolor'] = color
     leg = ax.legend()
@@ -1005,9 +1005,9 @@ def test_legend_labelcolor_rcparam_single(color):
 def test_legend_labelcolor_rcparam_linecolor():
     # test the rcParams legend.labelcolor for a linecolor
     fig, ax = plt.subplots()
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*1, label='#1', color='r')
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*2, label='#2', color='g')
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*3, label='#3', color='b')
+    ax.plot(mx.arange(10), mx.arange(10)*1, label='#1', color='r')
+    ax.plot(mx.arange(10), mx.arange(10)*2, label='#2', color='g')
+    ax.plot(mx.arange(10), mx.arange(10)*3, label='#3', color='b')
 
     mpl.rcParams['legend.labelcolor'] = 'linecolor'
     leg = ax.legend()
@@ -1018,9 +1018,9 @@ def test_legend_labelcolor_rcparam_linecolor():
 def test_legend_labelcolor_rcparam_markeredgecolor():
     # test the labelcolor for labelcolor='markeredgecolor'
     fig, ax = plt.subplots()
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*1, label='#1', markeredgecolor='r')
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*2, label='#2', markeredgecolor='g')
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*3, label='#3', markeredgecolor='b')
+    ax.plot(mx.arange(10), mx.arange(10)*1, label='#1', markeredgecolor='r')
+    ax.plot(mx.arange(10), mx.arange(10)*2, label='#2', markeredgecolor='g')
+    ax.plot(mx.arange(10), mx.arange(10)*3, label='#3', markeredgecolor='b')
 
     mpl.rcParams['legend.labelcolor'] = 'markeredgecolor'
     leg = ax.legend()
@@ -1031,9 +1031,9 @@ def test_legend_labelcolor_rcparam_markeredgecolor():
 def test_legend_labelcolor_rcparam_markeredgecolor_short():
     # test the labelcolor for labelcolor='markeredgecolor'
     fig, ax = plt.subplots()
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*1, label='#1', markeredgecolor='r')
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*2, label='#2', markeredgecolor='g')
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*3, label='#3', markeredgecolor='b')
+    ax.plot(mx.arange(10), mx.arange(10)*1, label='#1', markeredgecolor='r')
+    ax.plot(mx.arange(10), mx.arange(10)*2, label='#2', markeredgecolor='g')
+    ax.plot(mx.arange(10), mx.arange(10)*3, label='#3', markeredgecolor='b')
 
     mpl.rcParams['legend.labelcolor'] = 'mec'
     leg = ax.legend()
@@ -1044,9 +1044,9 @@ def test_legend_labelcolor_rcparam_markeredgecolor_short():
 def test_legend_labelcolor_rcparam_markerfacecolor():
     # test the labelcolor for labelcolor='markeredgecolor'
     fig, ax = plt.subplots()
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*1, label='#1', markerfacecolor='r')
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*2, label='#2', markerfacecolor='g')
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*3, label='#3', markerfacecolor='b')
+    ax.plot(mx.arange(10), mx.arange(10)*1, label='#1', markerfacecolor='r')
+    ax.plot(mx.arange(10), mx.arange(10)*2, label='#2', markerfacecolor='g')
+    ax.plot(mx.arange(10), mx.arange(10)*3, label='#3', markerfacecolor='b')
 
     mpl.rcParams['legend.labelcolor'] = 'markerfacecolor'
     leg = ax.legend()
@@ -1057,9 +1057,9 @@ def test_legend_labelcolor_rcparam_markerfacecolor():
 def test_legend_labelcolor_rcparam_markerfacecolor_short():
     # test the labelcolor for labelcolor='markeredgecolor'
     fig, ax = plt.subplots()
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*1, label='#1', markerfacecolor='r')
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*2, label='#2', markerfacecolor='g')
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10)*3, label='#3', markerfacecolor='b')
+    ax.plot(mx.arange(10), mx.arange(10)*1, label='#1', markerfacecolor='r')
+    ax.plot(mx.arange(10), mx.arange(10)*2, label='#2', markerfacecolor='g')
+    ax.plot(mx.arange(10), mx.arange(10)*3, label='#3', markerfacecolor='b')
 
     mpl.rcParams['legend.labelcolor'] = 'mfc'
     leg = ax.legend()
@@ -1087,7 +1087,7 @@ def assert_last_legend_patch_color(histogram, leg, expected_color,
 
 
 def test_legend_labelcolor_linecolor_histograms():
-    x = mlxarr.arange(10)
+    x = mx.arange(10)
 
     # testing c kwarg for bar, step, and stepfilled histograms
     fig, ax = plt.subplots()
@@ -1175,7 +1175,7 @@ def assert_last_legend_linemarker_color(line_marker, leg, expected_color, color=
 
 
 def test_legend_labelcolor_linecolor_plot():
-    x = mlxarr.arange(5)
+    x = mx.arange(5)
 
     # testing line plot
     fig, ax = plt.subplots()
@@ -1231,7 +1231,7 @@ def assert_last_legend_scattermarker_color(scatter_marker, leg, expected_color,
 
 
 def test_legend_labelcolor_linecolor_scatter():
-    x = mlxarr.arange(5)
+    x = mx.arange(5)
 
     # testing c, fc, and ec combinations for scatter plots
     fig, ax = plt.subplots()
@@ -1346,7 +1346,7 @@ def test_no_warn_big_data_when_loc_specified(monkeypatch):
 
 @pytest.mark.parametrize('label_array', [['low', 'high'],
                                          ('low', 'high'),
-                                         mlxarr.array(['low', 'high'])])
+                                         mx.array(['low', 'high'])])
 def test_plot_multiple_input_multiple_label(label_array):
     # test ax.plot() with multidimensional input
     # and multiple labels
@@ -1638,8 +1638,8 @@ def test_legend_annotate():
 
 def test_boxplot_legend_labels():
     # Test that legend entries are generated when passing `label`.
-    mlxarr.random.seed(19680801)
-    data = mlxarr.random.random((10, 4))
+    mx.random.seed(19680801)
+    data = mx.random.random((10, 4))
     fig, axs = plt.subplots(nrows=1, ncols=4)
     legend_labels = ['box A', 'box B', 'box C', 'box D']
 

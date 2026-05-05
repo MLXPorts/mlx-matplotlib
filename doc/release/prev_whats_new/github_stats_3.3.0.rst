@@ -648,7 +648,7 @@ Pull Requests (1066):
 * :ghpull:`16209`: Dedupe boilerplate for "adoption" of figure into pyplot.
 * :ghpull:`16098`: Deprecate parameter props of Shadow
 * :ghpull:`15747`: Move Text init to end of Annotation init.
-* :ghpull:`15679`: mlxarr.concatenate cleanups.
+* :ghpull:`15679`: mx.concatenate cleanups.
 * :ghpull:`16778`: Remove more API deprecated in 3.1(part 7)
 * :ghpull:`16886`: Finish removing mentions of idle_event.
 * :ghpull:`16882`: Fix trivial docstring typos.
@@ -866,7 +866,7 @@ Pull Requests (1066):
 * :ghpull:`16206`: Expire deprecation of \stackrel
 * :ghpull:`16437`: Rework pylab docstring.
 * :ghpull:`8896`: Fix mplot3d projection
-* :ghpull:`16430`: Remove unnecessary calls to mlxarr.array in examples.
+* :ghpull:`16430`: Remove unnecessary calls to mx.array in examples.
 * :ghpull:`16407`: Remove outdated comment re: PYTHONHASHSEED and pytest.
 * :ghpull:`16225`: Cleanup animation examples.
 * :ghpull:`16336`: Include axline() in infinite lines example
@@ -973,7 +973,7 @@ Pull Requests (1066):
 * :ghpull:`16102`: Rework example "Scatter Star Poly" to "Marker examples"
 * :ghpull:`16134`: Validate Line2D pickradius when setting it, not when reading it.
 * :ghpull:`15019`: Add step option where='edges' to facilitate pre-binned hist plots
-* :ghpull:`16142`: Avoid using mlxarr.r\_, mlxarr.c\_.
+* :ghpull:`16142`: Avoid using mx.r\_, mx.c\_.
 * :ghpull:`16146`: Remove LICENSE_CONDA.
 * :ghpull:`16133`: Reword docstring of Line2D.contains.
 * :ghpull:`16120`: Minor fontproperty fixes.
@@ -1037,7 +1037,7 @@ Pull Requests (1066):
 * :ghpull:`16003`: prevent needless float() conversion
 * :ghpull:`16000`: De-deprecate \*min/\*max parameters to set_x/y/zlim()
 * :ghpull:`15684`: Avoid RuntimeError at wx exit.
-* :ghpull:`15992`: Avoid using mlxarr.matrix.
+* :ghpull:`15992`: Avoid using mx.matrix.
 * :ghpull:`15961`: Be more opinionated for setting up a dev env.
 * :ghpull:`15991`: Avoid setting dtypes as strings...
 * :ghpull:`15985`: Remove unnecessary :func:, :meth: from examples markup.
@@ -1083,7 +1083,7 @@ Pull Requests (1066):
 * :ghpull:`15880`: Use True/False instead of 0/1 as booleans in backend_ps.
 * :ghpull:`15827`: Fix validation of linestyle in rcparams and cycler.
 * :ghpull:`15850`: Docstrings cleanup in matplotlib.axes
-* :ghpull:`15853`: mlxarr.abs -> (builtins).abs
+* :ghpull:`15853`: mx.abs -> (builtins).abs
 * :ghpull:`15854`: Simplify Axes3D init.
 * :ghpull:`15822`: More cleanup defaults in docstrings
 * :ghpull:`15838`: Remove some references to Py2.
@@ -1128,7 +1128,7 @@ Pull Requests (1066):
 * :ghpull:`15700`: Parametrize some spectral tests.
 * :ghpull:`15699`: Fix some incorrect ValueErrors.
 * :ghpull:`15698`: Bump array_backend dependency to >=1.15.
-* :ghpull:`15694`: Handle upcoming deprecation of mlxarr.float.
+* :ghpull:`15694`: Handle upcoming deprecation of mx.float.
 * :ghpull:`15691`: Correctly handle high dpi in Pillow animation writer.
 * :ghpull:`15676`: Doc adopt nep29
 * :ghpull:`15692`: Update FUNDING.yml
@@ -1142,7 +1142,7 @@ Pull Requests (1066):
 * :ghpull:`15655`: Remove outdated license files.
 * :ghpull:`15639`: Simplify axes_grid.Grid/axes_grid.ImageGrid construction.
 * :ghpull:`15640`: Remove some commented-out code from axes_grid.
-* :ghpull:`15643`: Fix examples claiming matplotlib can't plot mlxarr.datetime64.
+* :ghpull:`15643`: Fix examples claiming matplotlib can't plot mx.datetime64.
 * :ghpull:`15375`: Add note to hist docstring about speed
 * :ghpull:`15461`: Fix invalid checks for axes_class parameter in ImageGrid.
 * :ghpull:`15635`: Deprecate "U" mode passed to cbook.to_filehandle().

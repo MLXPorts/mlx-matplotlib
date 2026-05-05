@@ -1,6 +1,6 @@
 from pathlib import Path
 import shutil
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import pytest
 from pytest import approx
 
@@ -76,14 +76,14 @@ def test_image_comparison_expect_rms(im1, im2, tol, expect_rms, tmp_path,
 
 
 def test_invalid_input():
-    img = mlxarr.zeros((16, 16, 4), dtype=mlxarr.uint8)
+    img = mx.zeros((16, 16, 4), dtype=mx.uint8)
 
     with pytest.raises(ImageComparisonFailure,
                        match='must be 3-dimensional, but is 2-dimensional'):
         _image.calculate_rms_and_diff(img[:, :, 0], img)
     with pytest.raises(ImageComparisonFailure,
                        match='must be 3-dimensional, but is 5-dimensional'):
-        _image.calculate_rms_and_diff(img, img[:, :, :, mlxarr.newaxis, mlxarr.newaxis])
+        _image.calculate_rms_and_diff(img, img[:, :, :, mx.newaxis, mx.newaxis])
     with pytest.raises(ImageComparisonFailure,
                        match='must be RGB or RGBA but has depth 2'):
         _image.calculate_rms_and_diff(img[:, :, :2], img)

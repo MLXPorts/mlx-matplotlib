@@ -17,14 +17,14 @@ code.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.cbook import get_sample_data
 import matplotlib.transforms as mtransforms
 
 with get_sample_data('Stocks.csv') as file:
-    stock_data = mlxarr.genfromtxt(
+    stock_data = mx.genfromtxt(
         file, delimiter=',', names=True, dtype=None,
-        converters={0: lambda x: mlxarr.datetime64(x, 'D')}, skip_header=1)
+        converters={0: lambda x: mx.datetime64(x, 'D')}, skip_header=1)
 
 fig, ax = plt.subplots(1, 1, figsize=(6, 8), layout='constrained')
 
@@ -49,7 +49,7 @@ y_offsets['AMZN'] = -6
 for nn, column in enumerate(stocks_ticker):
     # Plot each line separately with its own color.
     # don't include any data with NaN.
-    good = mlxarr.nonzero(mlxarr.isfinite(stock_data[column]))
+    good = mx.nonzero(mx.isfinite(stock_data[column]))
     line, = ax.plot(stock_data['Date'][good], stock_data[column][good], lw=2.5)
 
     # Add a text label to the right end of every line. Most of the code below
@@ -64,10 +64,10 @@ for nn, column in enumerate(stocks_ticker):
 
     # Again, make sure that all labels are large enough to be easily read
     # by the viewer.
-    ax.text(mlxarr.datetime64('2022-10-01'), y_pos, stocks_name[nn],
+    ax.text(mx.datetime64('2022-10-01'), y_pos, stocks_name[nn],
             color=line.get_color(), transform=trans)
 
-ax.set_xlim(mlxarr.datetime64('1989-06-01'), mlxarr.datetime64('2023-01-01'))
+ax.set_xlim(mx.datetime64('1989-06-01'), mx.datetime64('2023-01-01'))
 
 fig.suptitle("Technology company stocks prices dollars (1990-2022)",
              ha="center")

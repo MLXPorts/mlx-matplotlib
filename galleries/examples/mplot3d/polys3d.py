@@ -7,23 +7,23 @@ Demonstrate how to create polygons in 3D. Here we stack 3 hexagons.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 # Coordinates of a hexagon
-angles = mlxarr.linspace(0, 2 * mlxarr.pi, 6, endpoint=False)
-x = mlxarr.cos(angles)
-y = mlxarr.sin(angles)
+angles = mx.linspace(0, 2 * mx.pi, 6, endpoint=False)
+x = mx.cos(angles)
+y = mx.sin(angles)
 zs = [-3, -2, -1]
 
 # Close the hexagon by repeating the first vertex
-x = mlxarr.append(x, x[0])
-y = mlxarr.append(y, y[0])
+x = mx.append(x, x[0])
+y = mx.append(y, y[0])
 
 verts = []
 for z in zs:
-    verts.append(list(zip(x*z, y*z, mlxarr.full_like(x, z))))
-verts = mlxarr.array(verts)
+    verts.append(list(zip(x*z, y*z, mx.full_like(x, z))))
+verts = mx.array(verts)
 
 ax = plt.figure().add_subplot(projection='3d')
 

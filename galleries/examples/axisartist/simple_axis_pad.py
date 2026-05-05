@@ -6,7 +6,7 @@ Simple axis pad
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.projections import PolarAxes
 from matplotlib.transforms import Affine2D
 import mpl_toolkits.axisartist as axisartist
@@ -18,11 +18,11 @@ def setup_axes(fig, rect):
     """Polar projection, but in a rectangular box."""
     # see demo_curvelinear_grid.py for details
     grid_helper = GridHelperCurveLinear(
-        Affine2D().scale(mlxarr.pi/180., 1.) + PolarAxes.PolarTransform(),
+        Affine2D().scale(mx.pi/180., 1.) + PolarAxes.PolarTransform(),
         extreme_finder=angle_helper.ExtremeFinderCycle(
             20, 20,
             lon_cycle=360, lat_cycle=None,
-            lon_minmax=None, lat_minmax=(0, mlxarr.inf),
+            lon_minmax=None, lat_minmax=(0, mx.inf),
         ),
         grid_locator1=angle_helper.LocatorDMS(12),
         grid_locator2=grid_finder.MaxNLocator(5),

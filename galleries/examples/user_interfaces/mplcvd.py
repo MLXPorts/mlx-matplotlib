@@ -11,7 +11,7 @@ import functools
 from pathlib import Path
 
 import colorspacious
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 _BUTTON_NAME = "Filter"
 _BUTTON_HELP = "Simulate color vision deficiencies"
 _MENU_ENTRIES = {
@@ -47,7 +47,7 @@ def _get_color_filter(name):
     callable
         A color filter function that has the form:
 
-        def filter(input: mlxarr.ndarray[M, N, D])-> mlxarr.ndarray[M, N, D]
+        def filter(input: mx.array[M, N, D])-> mx.array[M, N, D]
 
         where (M, N) are the image dimensions, and D is the color depth (3 for
         RGB, 4 for RGBA). Alpha is passed through unchanged and otherwise
@@ -80,8 +80,8 @@ def _get_color_filter(name):
             im, alpha = im[..., :3], im[..., 3]
         im = convert(im)
         if alpha is not None:
-            im = mlxarr.dstack((im, alpha))
-        return mlxarr.clip(im, 0, 1), 0, 0
+            im = mx.dstack((im, alpha))
+        return mx.clip(im, 0, 1), 0, 0
 
     return filter_func
 
@@ -267,10 +267,10 @@ if __name__ == '__main__':
     )
 
     delta = 0.025
-    x = y = mlxarr.arange(-3.0, 3.0, delta)
-    X, Y = mlxarr.meshgrid(x, y)
-    Z1 = mlxarr.exp(-X**2 - Y**2)
-    Z2 = mlxarr.exp(-(X - 1)**2 - (Y - 1)**2)
+    x = y = mx.arange(-3.0, 3.0, delta)
+    X, Y = mx.meshgrid(x, y)
+    Z1 = mx.exp(-X**2 - Y**2)
+    Z2 = mx.exp(-(X - 1)**2 - (Y - 1)**2)
     Z = (Z1 - Z2) * 2
 
     imv = axd['viridis'].imshow(
@@ -291,8 +291,8 @@ if __name__ == '__main__':
         photo = plt.imread(image_file)
     axd['photo'].imshow(photo)
 
-    th = mlxarr.linspace(0, 2*mlxarr.pi, 1024)
+    th = mx.linspace(0, 2*mx.pi, 1024)
     for j in [1, 2, 4, 6]:
-        axd['lines'].plot(th, mlxarr.sin(th * j), label=f'$\\omega={j}$')
+        axd['lines'].plot(th, mx.sin(th * j), label=f'$\\omega={j}$')
     axd['lines'].legend(ncols=2, loc='upper right')
     plt.show()

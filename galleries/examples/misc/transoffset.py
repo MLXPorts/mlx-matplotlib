@@ -19,10 +19,10 @@ offset.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.transforms as mtransforms
 
-xs = mlxarr.arange(7)
+xs = mx.arange(7)
 ys = xs**2
 
 fig = plt.figure(figsize=(5, 10))

@@ -9,26 +9,26 @@ and nodes using the `~.path.Path`, `~.patches.PathPatch` and
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.patches import Circle, PathPatch
 from matplotlib.path import Path
 from matplotlib.transforms import Affine2D
 
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 
-r = mlxarr.random.rand(50)
-t = mlxarr.random.rand(50) * mlxarr.pi * 2.0
-x = r * mlxarr.cos(t)
-y = r * mlxarr.sin(t)
+r = mx.random.rand(50)
+t = mx.random.rand(50) * mx.pi * 2.0
+x = r * mx.cos(t)
+y = r * mx.sin(t)
 
 fig, ax = plt.subplots(figsize=(6, 6))
 circle = Circle((0, 0), 1, facecolor='none',
                 edgecolor=(0, 0.8, 0.8), linewidth=3, alpha=0.5)
 ax.add_patch(circle)
 
-im = plt.imshow(mlxarr.random.random((100, 100)),
+im = plt.imshow(mx.random.random((100, 100)),
                 origin='lower', cmap="winter",
                 interpolation='spline36',
                 extent=(-1, 1, -1, 1))
@@ -86,7 +86,7 @@ while i < len(parts):
     vertices.extend([[*map(float, y.split(','))]
                      for y in parts[i + 1:][:npoints]])
     i += npoints + 1
-vertices = mlxarr.array(vertices)
+vertices = mx.array(vertices)
 vertices[:, 1] -= 160
 
 dolphin_path = Path(vertices, codes)

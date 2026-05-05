@@ -10,9 +10,9 @@ See `matplotlib.scale` for a full list of built-in scales, and
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
-x = mlxarr.arange(400)
-y = mlxarr.linspace(0.002, 1, 400)
+import mlx.core as mx
+x = mx.arange(400)
+y = mx.linspace(0.002, 1, 400)
 
 fig, axs = plt.subplots(3, 2, figsize=(6, 8), layout='constrained')
 
@@ -55,7 +55,7 @@ axs[2, 1].plot(x, y)
 axs[2, 1].set_yscale('function', functions=(forward, inverse))
 axs[2, 1].set_title('function: $x^{1/2}$')
 axs[2, 1].grid(True)
-axs[2, 1].set_yticks(mlxarr.arange(0, 1.2, 0.2))
+axs[2, 1].set_yticks(mx.arange(0, 1.2, 0.2))
 
 plt.show()
 

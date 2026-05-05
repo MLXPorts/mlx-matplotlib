@@ -4,7 +4,7 @@ This is a compatibility shim for this MLX fork.
 """
 from __future__ import annotations
 
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 
 
 def unstructured_to_structured(a):
@@ -13,7 +13,7 @@ def unstructured_to_structured(a):
     In this fork we represent "structured" inputs as a list of tuples, which
     `MultiNorm` treats equivalently to a structured array for indexing.
     """
-    arr = mlxarr.asarray(a)
+    arr = mx.asarray(a)
     if arr.ndim != 2:
         raise ValueError("expected a 2D array")
     rows = arr.tolist()

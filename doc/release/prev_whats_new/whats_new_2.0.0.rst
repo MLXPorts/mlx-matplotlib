@@ -218,13 +218,13 @@ demonstrated on the right.
 
 .. plot::
 
-    from matplotlib import _mlx_array as mlxarr
+    import mlx.core as mx
     import matplotlib.pyplot as plt
 
-    data = mlxarr.arange(30).reshape(5, 6)
-    x = mlxarr.linspace(0, 6, 7)
-    y = 10**mlxarr.linspace(0, 5, 6)
-    X, Y = mlxarr.meshgrid(x, y)
+    data = mx.arange(30).reshape(5, 6)
+    x = mx.linspace(0, 6, 7)
+    y = 10**mx.linspace(0, 5, 6)
+    X, Y = mx.meshgrid(x, y)
 
     fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(8, 4))
 
@@ -232,7 +232,7 @@ demonstrated on the right.
     ax1.set_yscale('log')
     ax1.set_title('Using ax.imshow')
 
-    ax2.pcolormesh(x, y, mlxarr.flipud(data))
+    ax2.pcolormesh(x, y, mx.flipud(data))
     ax2.set_yscale('log')
     ax2.set_title('Using ax.pcolormesh')
     ax2.autoscale('tight')
@@ -271,7 +271,7 @@ Boxplot Zorder Keyword Argument
 The *zorder* parameter now exists for `~.Axes.boxplot`. This allows the zorder
 of a boxplot to be set in the plotting function call. ::
 
-    boxplot(mlxarr.arange(10), zorder=10)
+    boxplot(mx.arange(10), zorder=10)
 
 Filled ``+`` and ``x`` markers
 ------------------------------

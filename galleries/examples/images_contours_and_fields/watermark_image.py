@@ -8,7 +8,7 @@ semi-transparent (``alpha=0.7``).
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.cbook as cbook
 import matplotlib.image as image
 
@@ -17,9 +17,9 @@ with cbook.get_sample_data('logo2.png') as file:
 
 fig, ax = plt.subplots()
 
-mlxarr.random.seed(19680801)
-x = mlxarr.arange(30)
-y = x + mlxarr.random.randn(30)
+mx.random.seed(19680801)
+x = mx.arange(30)
+y = x + mx.random.randn(30)
 ax.bar(x, y, color='#6bbc6b')
 ax.grid()
 

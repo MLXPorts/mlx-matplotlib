@@ -9,22 +9,22 @@ functionality of imshow and the many images you can create.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.cbook as cbook
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
 
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 # %%
 # First we'll generate a simple bivariate normal distribution.
 
 delta = 0.025
-x = y = mlxarr.arange(-3.0, 3.0, delta)
-X, Y = mlxarr.meshgrid(x, y)
-Z1 = mlxarr.exp(-X**2 - Y**2)
-Z2 = mlxarr.exp(-(X - 1)**2 - (Y - 1)**2)
+x = y = mx.arange(-3.0, 3.0, delta)
+X, Y = mx.meshgrid(x, y)
+Z1 = mx.exp(-X**2 - Y**2)
+Z2 = mx.exp(-(X - 1)**2 - (Y - 1)**2)
 Z = (Z1 - Z2) * 2
 
 fig, ax = plt.subplots()
@@ -46,7 +46,7 @@ with cbook.get_sample_data('grace_hopper.jpg') as image_file:
 w, h = 256, 256
 with cbook.get_sample_data('s1045.ima.gz') as datafile:
     s = datafile.read()
-A = mlxarr.frombuffer(s, mlxarr.uint16).astype(float).reshape((w, h))
+A = mx.frombuffer(s, mx.uint16).astype(float).reshape((w, h))
 extent = (0, 25, 0, 25)
 
 fig, ax = plt.subplot_mosaic([
@@ -114,7 +114,7 @@ plt.show()
 # Sophisticated interpolation also implies a performance hit; for maximal
 # performance or very large images, interpolation='nearest' is suggested.
 
-A = mlxarr.random.rand(5, 5)
+A = mx.random.rand(5, 5)
 
 fig, axs = plt.subplots(1, 3, figsize=(10, 3))
 for ax, interp in zip(axs, ['nearest', 'bilinear', 'bicubic']):
@@ -133,7 +133,7 @@ plt.show()
 # this topic see the :ref:`complete guide on origin and extent
 # <imshow_extent>`.
 
-x = mlxarr.arange(120).reshape((10, 12))
+x = mx.arange(120).reshape((10, 12))
 
 interp = 'bilinear'
 fig, axs = plt.subplots(nrows=2, sharex=True, figsize=(3, 5))
@@ -149,10 +149,10 @@ plt.show()
 # Finally, we'll show an image using a clip path.
 
 delta = 0.025
-x = y = mlxarr.arange(-3.0, 3.0, delta)
-X, Y = mlxarr.meshgrid(x, y)
-Z1 = mlxarr.exp(-X**2 - Y**2)
-Z2 = mlxarr.exp(-(X - 1)**2 - (Y - 1)**2)
+x = y = mx.arange(-3.0, 3.0, delta)
+X, Y = mx.meshgrid(x, y)
+Z1 = mx.exp(-X**2 - Y**2)
+Z2 = mx.exp(-(X - 1)**2 - (Y - 1)**2)
 Z = (Z1 - Z2) * 2
 
 path = Path([[0, 1], [1, 0], [0, -1], [-1, 0], [0, 1]])

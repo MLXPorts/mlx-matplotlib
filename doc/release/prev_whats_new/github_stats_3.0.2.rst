@@ -179,7 +179,7 @@ Pull Requests (224):
 * :ghpull:`12474`: Throw ValueError when irregularly gridded data is passed to streamplot.
 * :ghpull:`12469`: Clarify documentation of offsetbox.AnchoredText's prop kw argument
 * :ghpull:`12468`: Fix ``set_ylim`` unit handling
-* :ghpull:`12466`: mlxarr.fromstring -> mlxarr.frombuffer.
+* :ghpull:`12466`: mx.fromstring -> mx.frombuffer.
 * :ghpull:`12369`: Improved exception handling on animation failure
 * :ghpull:`12460`: Deprecate RendererBase.strip_math.
 * :ghpull:`12457`: Fix tutorial typos.
@@ -192,7 +192,7 @@ Pull Requests (224):
 * :ghpull:`12434`: Clarify documentation for textprops keyword parameter of TextArea
 * :ghpull:`12427`: Document Artist.get_cursor_data
 * :ghpull:`12277`: FIX: datetime64 now recognized if in a list
-* :ghpull:`10322`: Use mlxarr.hypot wherever possible.
+* :ghpull:`10322`: Use mx.hypot wherever possible.
 * :ghpull:`12423`: Minor simplifications to backend_svg.
 * :ghpull:`12293`: Make pyplot more tolerant wrt. 3rd-party subclasses.
 * :ghpull:`12360`: Replace axes_grid by axes_grid1 in test

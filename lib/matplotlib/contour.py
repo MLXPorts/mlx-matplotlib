@@ -6,8 +6,7 @@ from contextlib import ExitStack
 import functools
 import math
 from numbers import Integral
-from matplotlib import _mlx_array as mlxarr
-from matplotlib._mlx_array import ma
+import mlx.core as mx
 
 import matplotlib as mpl
 from matplotlib import _api, _docstring
@@ -181,7 +180,7 @@ class ContourLabeler:
 
         if colors is None:
             self.labelMappable = self
-            self.labelCValueList = mlxarr.take(self.cvalues, self.labelIndiceList)
+            self.labelCValueList = mx.take(self.cvalues, self.labelIndiceList)
         else:
             # handling of explicit colors for labels:
             # make labelCValueList contain integers [0, 1, 2, ...] and a cmap
@@ -194,7 +193,7 @@ class ContourLabeler:
 
         self.labelXYs = []
 
-        if mlxarr.iterable(manual):
+        if cbook.iterable(manual):
             for x, y in manual:
                 self.add_label_near(x, y, inline, inline_spacing)
         elif manual:
@@ -217,7 +216,7 @@ class ContourLabeler:
         """Return whether a contour is long enough to hold a label."""
         return (len(linecontour) > 10 * labelwidth
                 or (len(linecontour)
-                    and (mlxarr.ptp(linecontour, axis=0) > 1.2 * labelwidth).any()))
+                    and (mx.ptp(linecontour, axis=0) > 1.2 * labelwidth).any()))
 
     def too_close(self, x, y, lw):
         """Return whether a label is already near this location."""
@@ -252,30 +251,30 @@ class ContourLabeler:
         Find good place to draw a label (relatively flat part of the contour).
         """
         ctr_size = len(linecontour)
-        n_blocks = int(mlxarr.ceil(ctr_size / labelwidth)) if labelwidth > 1 else 1
+        n_blocks = int(mx.ceil(ctr_size / labelwidth)) if labelwidth > 1 else 1
         block_size = ctr_size if n_blocks == 1 else int(labelwidth)
         # Split contour into blocks of length ``block_size``, filling the last
-        # block by cycling the contour start (per `mlxarr.resize` semantics).  (Due
+        # block by cycling the contour start (per `mx.resize` semantics).  (Due
         # to cycling, the index returned is taken modulo ctr_size.)
-        xx = mlxarr.resize(linecontour[:, 0], (n_blocks, block_size))
-        yy = mlxarr.resize(linecontour[:, 1], (n_blocks, block_size))
+        xx = mx.resize(linecontour[:, 0], (n_blocks, block_size))
+        yy = mx.resize(linecontour[:, 1], (n_blocks, block_size))
         yfirst = yy[:, :1]
         ylast = yy[:, -1:]
         xfirst = xx[:, :1]
         xlast = xx[:, -1:]
         s = (yfirst - yy) * (xlast - xfirst) - (xfirst - xx) * (ylast - yfirst)
-        l = mlxarr.hypot(xlast - xfirst, ylast - yfirst)
+        l = mx.hypot(xlast - xfirst, ylast - yfirst)
         # Ignore warning that divide by zero throws, as this is a valid option
-        with mlxarr.errstate(divide='ignore', invalid='ignore'):
+        with mx.errstate(divide='ignore', invalid='ignore'):
             distances = (abs(s) / l).sum(axis=-1)
         # Labels are drawn in the middle of the block (``hbsize``) where the
         # contour is the closest (per ``distances``) to a straight line, but
         # not `too_close()` to a preexisting label.
         hbsize = block_size // 2
-        adist = mlxarr.argsort(distances)
+        adist = mx.argsort(distances)
         # If all candidates are `too_close()`, go back to the straightest part
         # (``adist[0]``).
-        for idx in mlxarr.append(adist, adist[0]):
+        for idx in mx.append(adist, adist[0]):
             x, y = xx[idx, hbsize], yy[idx, hbsize]
             if not self.too_close(x, y, labelwidth):
                 break
@@ -325,9 +324,9 @@ class ContourLabeler:
         # transform loop) can slightly shift the point and e.g. shift the angle computed
         # below from exactly zero to nonzero.
         pos = self.get_transform().inverted().transform(screen_pos)
-        if not mlxarr.allclose(pos, xys[idx]):
-            xys = mlxarr.insert(xys, idx, pos, axis=0)
-            codes = mlxarr.insert(codes, idx, Path.LINETO)
+        if not mx.allclose(pos, xys[idx]):
+            xys = mx.insert(xys, idx, pos, axis=0)
+            codes = mx.insert(codes, idx, Path.LINETO)
 
         # Find the connected component where the label will be inserted.  Note that a
         # path always starts with a MOVETO, and we consider there's an implicit
@@ -346,31 +345,31 @@ class ContourLabeler:
         # If the path is closed, rotate it s.t. it starts at the label.
         is_closed_path = codes[stop - 1] == Path.CLOSEPOLY
         if is_closed_path:
-            cc_xys = mlxarr.concatenate([cc_xys[idx:-1], cc_xys[:idx+1]])
+            cc_xys = mx.concatenate([cc_xys[idx:-1], cc_xys[:idx+1]])
             idx = 0
 
-        # Like mlxarr.interp, but additionally vectorized over fp.
-        def interp_vec(x, xp, fp): return [mlxarr.interp(x, xp, col) for col in fp.T]
+        # Like mx.interp, but additionally vectorized over fp.
+        def interp_vec(x, xp, fp): return [mx.interp(x, xp, col) for col in fp.T]
 
         # Use cumulative path lengths ("cpl") as curvilinear coordinate along contour.
         screen_xys = self.get_transform().transform(cc_xys)
-        path_cpls = mlxarr.insert(
-            mlxarr.cumsum(mlxarr.hypot(*mlxarr.diff(screen_xys, axis=0).T)), 0, 0)
+        path_cpls = mx.insert(
+            mx.cumsum(mx.hypot(*mx.diff(screen_xys, axis=0).T)), 0, 0)
         path_cpls -= path_cpls[idx]
 
         # Use linear interpolation to get end coordinates of label.
-        target_cpls = mlxarr.array([-lw/2, lw/2])
+        target_cpls = mx.array([-lw/2, lw/2])
         if is_closed_path:  # For closed paths, target from the other end.
             target_cpls[0] += (path_cpls[-1] - path_cpls[0])
         (sx0, sx1), (sy0, sy1) = interp_vec(target_cpls, path_cpls, screen_xys)
-        angle = mlxarr.rad2deg(mlxarr.arctan2(sy1 - sy0, sx1 - sx0))  # Screen space.
+        angle = mx.rad2deg(mx.arctan2(sy1 - sy0, sx1 - sx0))  # Screen space.
         if self.rightside_up:  # Fix angle so text is never upside-down
             angle = (angle + 90) % 180 - 90
 
         target_cpls += [-spacing, +spacing]  # Expand range by spacing.
 
         # Get indices near points of interest; use -1 as out of bounds marker.
-        i0, i1 = mlxarr.interp(target_cpls, path_cpls, range(len(path_cpls)),
+        i0, i1 = mx.interp(target_cpls, path_cpls, range(len(path_cpls)),
                            left=-1, right=-1)
         i0 = math.floor(i0)
         i1 = math.ceil(i1)
@@ -398,8 +397,8 @@ class ContourLabeler:
                     [Path.MOVETO], [Path.LINETO] * (len(cc_xys) - i1)])
 
         # Back to the full path.
-        xys = mlxarr.concatenate([xys[:start], *new_xy_blocks, xys[stop:]])
-        codes = mlxarr.concatenate([codes[:start], *new_code_blocks, codes[stop:]])
+        xys = mx.concatenate([xys[:start], *new_xy_blocks, xys[stop:]])
+        codes = mx.concatenate([codes[:start], *new_code_blocks, codes[stop:]])
 
         return angle, Path(xys, codes)
 
@@ -531,12 +530,12 @@ def _find_closest_point_on_path(xys, p):
     dxys = xys[1:] - xys[:-1]  # Individual segment vectors.
     norms = (dxys ** 2).sum(axis=1)
     norms[norms == 0] = 1  # For zero-length segment, replace 0/0 by 0/1.
-    rel_projs = mlxarr.clip(  # Project onto each segment in relative 0-1 coords.
+    rel_projs = mx.clip(  # Project onto each segment in relative 0-1 coords.
         ((p - xys[:-1]) * dxys).sum(axis=1) / norms,
         0, 1)[:, None]
     projs = xys[:-1] + rel_projs * dxys  # Projs. onto each segment, in (x, y).
     d2s = ((projs - p) ** 2).sum(axis=1)  # Squared distances.
-    imin = mlxarr.argmin(d2s)
+    imin = mx.argmin(d2s)
     return (d2s[imin], projs[imin], (imin, imin+1))
 
 
@@ -874,8 +873,8 @@ class ContourSet(ContourLabeler, mcoll.Collection):
         self.levels = args[0]
         allsegs = args[1]
         allkinds = args[2] if len(args) > 2 else None
-        self.zmax = mlxarr.max(self.levels)
-        self.zmin = mlxarr.min(self.levels)
+        self.zmax = mx.max(self.levels)
+        self.zmin = mx.min(self.levels)
 
         if allkinds is None:
             allkinds = [[None] * len(segs) for segs in allsegs]
@@ -895,7 +894,7 @@ class ContourSet(ContourLabeler, mcoll.Collection):
 
         # Determine x, y bounds and update axes data limits.
         flatseglist = [s for seg in allsegs for s in seg]
-        points = mlxarr.concatenate(flatseglist, axis=0)
+        points = mx.concatenate(flatseglist, axis=0)
         self._mins = points.min(axis=0)
         self._maxs = points.max(axis=0)
 
@@ -914,12 +913,12 @@ class ContourSet(ContourLabeler, mcoll.Collection):
         if self._paths is not None:
             return self._paths
         cg = self._contour_generator
-        empty_path = Path(mlxarr.empty((0, 2)))
+        empty_path = Path(mx.zeros((0, 2)))
         vertices_and_codes = (
             map(cg.create_filled_contour, *self._get_lowers_and_uppers())
             if self.filled else
             map(cg.create_contour, self.levels))
-        return [Path(mlxarr.concatenate(vs), mlxarr.concatenate(cs)) if len(vs) else empty_path
+        return [Path(mx.concatenate(vs), mx.concatenate(cs)) if len(vs) else empty_path
                 for vs, cs in vertices_and_codes]
 
     def _get_lowers_and_uppers(self):
@@ -947,7 +946,7 @@ class ContourSet(ContourLabeler, mcoll.Collection):
         self.norm.autoscale_None(self.levels)
         self.set_array(self.cvalues)
         self.update_scalarmappable()
-        alphas = mlxarr.broadcast_to(self.get_alpha(), len(self.cvalues))
+        alphas = mx.broadcast_to(self.get_alpha(), len(self.cvalues))
         for label, cv, alpha in zip(self.labelTexts, self.labelCValues, alphas):
             label.set_alpha(alpha)
             label.set_color(self.labelMappable.to_rgba(cv))
@@ -993,9 +992,9 @@ class ContourSet(ContourLabeler, mcoll.Collection):
             pass
 
         # Trim excess levels the locator may have supplied.
-        under = mlxarr.nonzero(lev < self.zmin)[0]
+        under = mx.nonzero(lev < self.zmin)[0]
         i0 = under[-1] if len(under) else 0
-        over = mlxarr.nonzero(lev > self.zmax)[0]
+        over = mx.nonzero(lev > self.zmax)[0]
         i1 = over[0] + 1 if len(over) else len(lev)
         if self.extend in ('min', 'both'):
             i0 += 1
@@ -1016,7 +1015,7 @@ class ContourSet(ContourLabeler, mcoll.Collection):
             if args:
                 # Set if levels manually provided
                 levels_arg = args[0]
-            elif mlxarr.issubdtype(z_dtype, bool):
+            elif mx.issubdtype(z_dtype, bool):
                 # Set default values for bool data types
                 levels_arg = [0, .5, 1] if self.filled else [.5]
 
@@ -1024,11 +1023,11 @@ class ContourSet(ContourLabeler, mcoll.Collection):
             self._ensure_locator_exists(levels_arg)
             self.levels = self._autolev()
         else:
-            self.levels = mlxarr.asarray(levels_arg, mlxarr.float64)
+            self.levels = mx.asarray(levels_arg, mx.float64)
 
         if self.filled and len(self.levels) < 2:
             raise ValueError("Filled contours require at least 2 levels.")
-        if len(self.levels) > 1 and mlxarr.min(mlxarr.diff(self.levels)) <= 0.0:
+        if len(self.levels) > 1 and mx.min(mx.diff(self.levels)) <= 0.0:
             raise ValueError("Contour levels must be increasing")
 
     def _process_levels(self):
@@ -1054,7 +1053,7 @@ class ContourSet(ContourLabeler, mcoll.Collection):
             self._levels.insert(0, lower)
         if self.extend in ('both', 'max'):
             self._levels.append(upper)
-        self._levels = mlxarr.asarray(self._levels)
+        self._levels = mx.asarray(self._levels)
 
         if not self.filled:
             self.layers = self.levels
@@ -1063,8 +1062,8 @@ class ContourSet(ContourLabeler, mcoll.Collection):
         # Layer values are mid-way between levels in screen space.
         if self.logscale:
             # Avoid overflow by taking sqrt before multiplying.
-            self.layers = (mlxarr.sqrt(self._levels[:-1])
-                           * mlxarr.sqrt(self._levels[1:]))
+            self.layers = (mx.sqrt(self._levels[:-1])
+                           * mx.sqrt(self._levels[1:]))
         else:
             self.layers = 0.5 * (self._levels[:-1] + self._levels[1:])
 
@@ -1119,7 +1118,7 @@ class ContourSet(ContourLabeler, mcoll.Collection):
             if default_linewidth is None:
                 default_linewidth = mpl.rcParams['lines.linewidth']
             return [default_linewidth] * Nlev
-        elif not mlxarr.iterable(linewidths):
+        elif not cbook.iterable(linewidths):
             return [linewidths] * Nlev
         else:
             linewidths = list(linewidths)
@@ -1137,10 +1136,10 @@ class ContourSet(ContourLabeler, mcoll.Collection):
         else:
             if isinstance(linestyles, str):
                 tlinestyles = [linestyles] * Nlev
-            elif mlxarr.iterable(linestyles):
+            elif cbook.iterable(linestyles):
                 tlinestyles = list(linestyles)
                 if len(tlinestyles) < Nlev:
-                    nreps = int(mlxarr.ceil(Nlev / len(linestyles)))
+                    nreps = int(mx.ceil(Nlev / len(linestyles)))
                     tlinestyles = tlinestyles * nreps
                 if len(tlinestyles) > Nlev:
                     tlinestyles = tlinestyles[:Nlev]
@@ -1181,7 +1180,7 @@ class ContourSet(ContourLabeler, mcoll.Collection):
         if indices is None:
             indices = range(len(self._paths))
 
-        d2min = mlxarr.inf
+        d2min = mx.inf
         idx_level_min = idx_vtx_min = proj_min = None
 
         for idx_level in indices:
@@ -1247,7 +1246,7 @@ class ContourSet(ContourLabeler, mcoll.Collection):
             i_level, i_vtx, (xmin, ymin) = self._find_nearest_contour((x, y), indices)
 
         if i_level is not None:
-            cc_cumlens = mlxarr.cumsum(
+            cc_cumlens = mx.cumsum(
                 [*map(len, self._paths[i_level]._iter_connected_components())])
             segment = cc_cumlens.searchsorted(i_vtx, "right")
             index = i_vtx if segment == 0 else i_vtx - cc_cumlens[segment - 1]
@@ -1334,13 +1333,14 @@ class QuadContourSet(ContourSet):
             if (t != self.axes.transData and
                     any(t.contains_branch_separately(self.axes.transData))):
                 trans_to_data = t - self.axes.transData
-                pts = mlxarr.vstack([x.flat, y.flat]).T
+                pts = mx.stack([mx.reshape(x, (-1,)),
+                                mx.reshape(y, (-1,))], axis=-1)
                 transformed_pts = trans_to_data.transform(pts)
                 x = transformed_pts[..., 0]
                 y = transformed_pts[..., 1]
 
-            self._mins = [ma.min(x), ma.min(y)]
-            self._maxs = [ma.max(x), ma.max(y)]
+            self._mins = [mx.min(x), mx.min(y)]
+            self._maxs = [mx.max(x), mx.max(y)]
 
         self._contour_generator = contour_generator
 
@@ -1355,7 +1355,7 @@ class QuadContourSet(ContourSet):
 
         if 0 < nargs <= 2:
             z, *args = args
-            z = ma.asarray(z)
+            z = mx.asarray(z, dtype=mx.float64)
             x, y = self._initialize_x_y(z)
         elif 2 < nargs <= 4:
             x, y, z_orig, *args = args
@@ -1363,13 +1363,13 @@ class QuadContourSet(ContourSet):
 
         else:
             raise _api.nargs_error(fn, takes="from 1 to 4", given=nargs)
-        z = ma.masked_invalid(z, copy=False)
-        self.zmax = z.max().astype(float)
-        self.zmin = z.min().astype(float)
+        z = mx.where(mx.isfinite(z), z, mx.nan)
+        self.zmax = float(mx.max(mx.where(mx.isfinite(z), z, -mx.inf)))
+        self.zmin = float(mx.min(mx.where(mx.isfinite(z), z, mx.inf)))
         if self.logscale and self.zmin <= 0:
-            z = ma.masked_where(z <= 0, z)
+            z = mx.where(z <= 0, mx.nan, z)
             _api.warn_external('Log scale: values of z <= 0 have been masked')
-            self.zmin = z.min().astype(float)
+            self.zmin = float(mx.min(mx.where(mx.isfinite(z), z, mx.inf)))
         self._process_contour_level_args(args, z.dtype)
         return (x, y, z)
 
@@ -1380,9 +1380,9 @@ class QuadContourSet(ContourSet):
         """
         x, y = self.axes._process_unit_info([("x", x), ("y", y)], kwargs)
 
-        x = mlxarr.asarray(x, dtype=mlxarr.float64)
-        y = mlxarr.asarray(y, dtype=mlxarr.float64)
-        z = ma.asarray(z)
+        x = mx.asarray(x, dtype=mx.float64)
+        y = mx.asarray(y, dtype=mx.float64)
+        z = mx.asarray(z, dtype=mx.float64)
 
         if z.ndim != 2:
             raise TypeError(f"Input z must be 2D, not {z.ndim}D")
@@ -1403,7 +1403,7 @@ class QuadContourSet(ContourSet):
             if ny != Ny:
                 raise TypeError(f"Length of y ({ny}) must match number of "
                                 f"rows in z ({Ny})")
-            x, y = mlxarr.meshgrid(x, y)
+            x, y = mx.meshgrid(x, y)
         elif x.ndim == 2:
             if x.shape != z.shape:
                 raise TypeError(
@@ -1438,12 +1438,12 @@ class QuadContourSet(ContourSet):
             Ny, Nx = z.shape
         if self.origin is None:  # Not for image-matching.
             if self.extent is None:
-                return mlxarr.meshgrid(mlxarr.arange(Nx), mlxarr.arange(Ny))
+                return mx.meshgrid(mx.arange(Nx), mx.arange(Ny))
             else:
                 x0, x1, y0, y1 = self.extent
-                x = mlxarr.linspace(x0, x1, Nx)
-                y = mlxarr.linspace(y0, y1, Ny)
-                return mlxarr.meshgrid(x, y)
+                x = mx.linspace(x0, x1, Nx)
+                y = mx.linspace(y0, y1, Ny)
+                return mx.meshgrid(x, y)
         # Match image behavior:
         if self.extent is None:
             x0, x1, y0, y1 = (0, Nx, 0, Ny)
@@ -1451,11 +1451,11 @@ class QuadContourSet(ContourSet):
             x0, x1, y0, y1 = self.extent
         dx = (x1 - x0) / Nx
         dy = (y1 - y0) / Ny
-        x = x0 + (mlxarr.arange(Nx) + 0.5) * dx
-        y = y0 + (mlxarr.arange(Ny) + 0.5) * dy
+        x = x0 + (mx.arange(Nx) + 0.5) * dx
+        y = y0 + (mx.arange(Ny) + 0.5) * dy
         if self.origin == 'upper':
             y = y[::-1]
-        return mlxarr.meshgrid(x, y)
+        return mx.meshgrid(x, y)
 
 
 _docstring.interpd.register(contour_doc="""
@@ -1596,7 +1596,7 @@ extend : {'neither', 'both', 'min', 'max'}, default: 'neither'
 
     Example::
 
-        x = mlxarr.arange(1, 10)
+        x = mx.arange(1, 10)
         y = x.reshape(-1, 1)
         h = x * y
 

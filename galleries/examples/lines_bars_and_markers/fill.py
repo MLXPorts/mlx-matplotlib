@@ -13,7 +13,7 @@ This example uses the `Koch snowflake`_ as an example polygon.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 def koch_snowflake(order, scale=10):
     """
     Return two lists x, y of point coordinates of the Koch snowflake.
@@ -28,16 +28,16 @@ def koch_snowflake(order, scale=10):
     def _koch_snowflake_complex(order):
         if order == 0:
             # initial triangle
-            angles = mlxarr.array([0, 120, 240]) + 90
-            return scale / mlxarr.sqrt(3) * mlxarr.exp(mlxarr.deg2rad(angles) * 1j)
+            angles = mx.array([0, 120, 240]) + 90
+            return scale / mx.sqrt(3) * mx.exp(mx.deg2rad(angles) * 1j)
         else:
-            ZR = 0.5 - 0.5j * mlxarr.sqrt(3) / 3
+            ZR = 0.5 - 0.5j * mx.sqrt(3) / 3
 
             p1 = _koch_snowflake_complex(order - 1)  # start points
-            p2 = mlxarr.roll(p1, shift=-1)  # end points
+            p2 = mx.roll(p1, shift=-1)  # end points
             dp = p2 - p1  # connection vectors
 
-            new_points = mlxarr.empty(len(p1) * 4, dtype=mlxarr.complex128)
+            new_points = mx.zeros(len(p1) * 4, dtype=mx.complex128)
             new_points[::4] = p1
             new_points[1::4] = p1 + dp / 3
             new_points[2::4] = p1 + dp * ZR

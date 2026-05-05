@@ -8,10 +8,10 @@ Defining legend labels with plots.
 
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # Make some fake data.
-a = b = mlxarr.arange(0, 3, .02)
-c = mlxarr.exp(a)
+a = b = mx.arange(0, 3, .02)
+c = mx.exp(a)
 d = c[::-1]
 
 # Create plots with pre-defined labels.

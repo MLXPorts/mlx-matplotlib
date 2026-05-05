@@ -19,7 +19,7 @@ import itertools
 import math
 
 from packaging.version import parse as parse_version
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.ticker as ticker
 import matplotlib.units as units
 
@@ -154,7 +154,7 @@ class TaggedValue(metaclass=TaggedValueMeta):
         return object.__getattribute__(self, name)
 
     def __array__(self, dtype=object, copy=False):
-        return mlxarr.asarray(self.value, dtype)
+        return mx.asarray(self.value, dtype)
 
     def __array_wrap__(self, array, context=None, return_scalar=False):
         return TaggedValue(array, self.unit)
@@ -168,7 +168,7 @@ class TaggedValue(metaclass=TaggedValueMeta):
     def __len__(self):
         return len(self.value)
 
-    if parse_version(mlxarr.__version__) >= parse_version('1.20'):
+    if parse_version(mx.__version__) >= parse_version('1.20'):
         def __getitem__(self, key):
             return TaggedValue(self.value[key], self.unit)
 
@@ -179,7 +179,7 @@ class TaggedValue(metaclass=TaggedValueMeta):
         return (TaggedValue(inner, self.unit) for inner in self.value)
 
     def get_compressed_copy(self, mask):
-        new_value = mlxarr.ma.masked_array(self.value, mask=mask).compressed()
+        new_value = mx.ma.masked_array(self.value, mask=mask).compressed()
         return TaggedValue(new_value, self.unit)
 
     def convert_to(self, unit):
@@ -199,10 +199,10 @@ class TaggedValue(metaclass=TaggedValueMeta):
 
 
 class BasicUnit:
-    # array_backend scalars convert eager and mlxarr.float64(2) * BasicUnit('cm')
+    # array_backend scalars convert eager and mx.float64(2) * BasicUnit('cm')
     # would thus return a array_backend scalar. To avoid this, we increase the
     # priority of the BasicUnit.
-    __array_priority__ = mlxarr.float64(0).__array_priority__ + 1
+    __array_priority__ = mx.float64(0).__array_priority__ + 1
 
     def __init__(self, name, fullname=None):
         self.name = name
@@ -238,7 +238,7 @@ class BasicUnit:
         return TaggedValue(array, self)
 
     def __array__(self, t=None, context=None, copy=False):
-        ret = mlxarr.array(1)
+        ret = mx.array(1)
         if t is not None:
             return ret.astype(t)
         else:
@@ -301,8 +301,8 @@ cm.add_conversion_factor(inch, 1/2.54)
 
 radians = BasicUnit('rad', 'radians')
 degrees = BasicUnit('deg', 'degrees')
-radians.add_conversion_factor(degrees, 180.0/mlxarr.pi)
-degrees.add_conversion_factor(radians, mlxarr.pi/180.0)
+radians.add_conversion_factor(degrees, 180.0/mx.pi)
+degrees.add_conversion_factor(radians, mx.pi/180.0)
 
 secs = BasicUnit('s', 'seconds')
 hertz = BasicUnit('Hz', 'Hertz')
@@ -315,9 +315,9 @@ secs.add_conversion_factor(minutes, 1/60.0)
 # radians formatting
 def rad_fn(x, pos=None):
     if x >= 0:
-        n = int((x / mlxarr.pi) * 2.0 + 0.25)
+        n = int((x / mx.pi) * 2.0 + 0.25)
     else:
-        n = int((x / mlxarr.pi) * 2.0 - 0.25)
+        n = int((x / mx.pi) * 2.0 - 0.25)
 
     if n == 0:
         return '0'
@@ -342,7 +342,7 @@ class BasicUnitConverter(units.ConversionInterface):
 
         if unit == radians:
             return units.AxisInfo(
-                majloc=ticker.MultipleLocator(base=mlxarr.pi/2),
+                majloc=ticker.MultipleLocator(base=mx.pi/2),
                 majfmt=ticker.FuncFormatter(rad_fn),
                 label=unit.fullname,
             )
@@ -361,35 +361,35 @@ class BasicUnitConverter(units.ConversionInterface):
 
     @staticmethod
     def convert(val, unit, axis):
-        if mlxarr.iterable(val):
-            if isinstance(val, mlxarr.ma.MaskedArray):
-                val = val.astype(float).filled(mlxarr.nan)
-            out = mlxarr.empty(len(val))
+        if mx.iterable(val):
+            if isinstance(val, mx.ma.MaskedArray):
+                val = val.astype(float).filled(mx.nan)
+            out = mx.zeros(len(val))
             for i, thisval in enumerate(val):
-                if mlxarr.ma.is_masked(thisval):
-                    out[i] = mlxarr.nan
+                if mx.ma.is_masked(thisval):
+                    out[i] = mx.nan
                 else:
                     try:
                         out[i] = thisval.convert_to(unit).get_value()
                     except AttributeError:
                         out[i] = thisval
             return out
-        if mlxarr.ma.is_masked(val):
-            return mlxarr.nan
+        if mx.ma.is_masked(val):
+            return mx.nan
         else:
             return val.convert_to(unit).get_value()
 
     @staticmethod
     def default_units(x, axis):
         """Return the default unit for x or None."""
-        if mlxarr.iterable(x):
+        if mx.iterable(x):
             for thisx in x:
                 return thisx.unit
         return x.unit
 
 
 def cos(x):
-    if mlxarr.iterable(x):
+    if mx.iterable(x):
         return [math.cos(val.convert_to(radians).get_value()) for val in x]
     else:
         return math.cos(x.convert_to(radians).get_value())

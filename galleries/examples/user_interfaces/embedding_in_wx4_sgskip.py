@@ -7,7 +7,7 @@ An example of how to use wxagg in a wx application with a custom toolbar.
 """
 
 import wx
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wxagg import \
     NavigationToolbar2WxAgg as NavigationToolbar
@@ -29,8 +29,8 @@ class MyNavigationToolbar(NavigationToolbar):
         # add some text to the Axes in a random location in axes coords with a
         # random color
         ax = self.canvas.figure.axes[0]
-        x, y = mlxarr.random.rand(2)  # generate a random location
-        rgb = mlxarr.random.rand(3)  # generate a random color
+        x, y = mx.random.rand(2)  # generate a random location
+        rgb = mx.random.rand(3)  # generate a random color
         ax.text(x, y, 'You clicked me', transform=ax.transAxes, color=rgb)
         self.canvas.draw()
         event.Skip()
@@ -42,8 +42,8 @@ class CanvasFrame(wx.Frame):
 
         self.figure = Figure(figsize=(5, 4), dpi=100)
         self.axes = self.figure.add_subplot()
-        t = mlxarr.arange(0.0, 3.0, 0.01)
-        s = mlxarr.sin(2 * mlxarr.pi * t)
+        t = mx.arange(0.0, 3.0, 0.01)
+        s = mx.sin(2 * mx.pi * t)
 
         self.axes.plot(t, s)
 

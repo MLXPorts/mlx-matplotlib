@@ -1,6 +1,6 @@
 import functools
 import numbers
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib import _api, _docstring, transforms
 import matplotlib.ticker as mticker
 from matplotlib.axes._base import _AxesBase, _TransformedBoundsLocator
@@ -258,7 +258,7 @@ class SecondaryAxis(_AxesBase):
             lims = self._parent.get_ylim()
             set_lim = self.set_ylim
         order = lims[0] < lims[1]
-        lims = self._functions[0](mlxarr.array(lims))
+        lims = self._functions[0](mx.array(lims))
         neworder = lims[0] < lims[1]
         if neworder != order:
             # Flip because the transform will take care of the flipping.

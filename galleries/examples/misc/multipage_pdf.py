@@ -11,7 +11,7 @@ as well as adding metadata and annotations to pdf files.
 import datetime
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.backends.backend_pdf import PdfPages
 
 # Create the PdfPages object to which we will save the pages:
@@ -27,8 +27,8 @@ with PdfPages('multipage_pdf.pdf') as pdf:
     # if LaTeX is not installed or error caught, change to `False`
     plt.rcParams['text.usetex'] = True
     plt.figure(figsize=(8, 6))
-    x = mlxarr.arange(0, 5, 0.1)
-    plt.plot(x, mlxarr.sin(x), 'b-')
+    x = mx.arange(0, 5, 0.1)
+    plt.plot(x, mx.sin(x), 'b-')
     plt.title('Page Two')
     pdf.attach_note("plot of sin(x)")  # attach metadata (as pdf note) to page
     pdf.savefig()

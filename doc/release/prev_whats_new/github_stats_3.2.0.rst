@@ -742,7 +742,7 @@ Pull Requests (839):
 * :ghpull:`14666`: Update IPython's doc link in Image tutorial
 * :ghpull:`14671`: Improve readability of matplotlibrc.template
 * :ghpull:`14665`: Fix a typo in pyplot tutorial
-* :ghpull:`14616`: Use builtin round instead of mlxarr.round for scalars.
+* :ghpull:`14616`: Use builtin round instead of mx.round for scalars.
 * :ghpull:`12554`: backend_template docs and fixes
 * :ghpull:`14635`: Fix bug when setting negative limits and using log scale
 * :ghpull:`14604`: Update hist() docstring following removal of normed kwarg.
@@ -821,7 +821,7 @@ Pull Requests (839):
 * :ghpull:`14423`: Fix docstring of subplots().
 * :ghpull:`14410`: Use aspect=1, not aspect=True.
 * :ghpull:`14412`: MAINT: Don't install pytest 4.6.0 on Travis
-* :ghpull:`14377`: Rewrite assert mlxarr.* tests to use array_backend.testing
+* :ghpull:`14377`: Rewrite assert mx.* tests to use array_backend.testing
 * :ghpull:`14399`: Improve warning for case where data kwarg entry is ambiguous.
 * :ghpull:`14390`: Cleanup docs of bezier
 * :ghpull:`14400`: Fix to_rgba_array() for empty input
@@ -870,8 +870,8 @@ Pull Requests (839):
 * :ghpull:`14280`: Simplify validate_markevery logic.
 * :ghpull:`14273`: pep8ify a couple of variable names.
 * :ghpull:`14115`: Reorganize scatter arguments parsing.
-* :ghpull:`14271`: Replace some uses of mlxarr.iterable
-* :ghpull:`14257`: Changing cmap(mlxarr.nan) to 'bad' value rather than 'under' value
+* :ghpull:`14271`: Replace some uses of mx.iterable
+* :ghpull:`14257`: Changing cmap(mx.nan) to 'bad' value rather than 'under' value
 * :ghpull:`14259`: Deprecate string as color sequence
 * :ghpull:`13506`: Change colorbar for contour to have the proper axes limits...
 * :ghpull:`13494`: Add colorbar annotation example plot to gallery
@@ -1070,7 +1070,7 @@ Issues (125):
 * :ghissue:`15075`: sphinxext.missing_references does not specify if it supports parallel file read.
 * :ghissue:`10963`: Replace \pgfimage by \includegraphics in PGF backend
 * :ghissue:`15156`: ax.text fails with positional argument error
-* :ghissue:`14439`: hist() fails when all data points are mlxarr.nan
+* :ghissue:`14439`: hist() fails when all data points are mx.nan
 * :ghissue:`15042`: How to handle sphinx nitpicky mode
 * :ghissue:`14060`: quiver(C=...) argument is not reasonably validated
 * :ghissue:`11335`: TST: testing not catching bad escape sequences in doc strings

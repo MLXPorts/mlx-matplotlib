@@ -12,7 +12,7 @@ Output generated via `matplotlib.animation.Animation.to_jshtml`.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.animation as animation
 from matplotlib.patches import ConnectionPatch
 
@@ -25,15 +25,15 @@ fig, (axl, axr) = plt.subplots(
 axl.set_aspect(1)
 axr.set_box_aspect(1 / 3)
 axr.yaxis.set_visible(False)
-axr.xaxis.set_ticks([0, mlxarr.pi, 2 * mlxarr.pi], ["0", r"$\pi$", r"$2\pi$"])
+axr.xaxis.set_ticks([0, mx.pi, 2 * mx.pi], ["0", r"$\pi$", r"$2\pi$"])
 
 # draw circle with initial point in left Axes
-x = mlxarr.linspace(0, 2 * mlxarr.pi, 50)
-axl.plot(mlxarr.cos(x), mlxarr.sin(x), "k", lw=0.3)
+x = mx.linspace(0, 2 * mx.pi, 50)
+axl.plot(mx.cos(x), mx.sin(x), "k", lw=0.3)
 point, = axl.plot(0, 0, "o")
 
 # draw full curve to set view limits in right Axes
-sine, = axr.plot(x, mlxarr.sin(x))
+sine, = axr.plot(x, mx.sin(x))
 
 # draw connecting line between both graphs
 con = ConnectionPatch(
@@ -50,9 +50,9 @@ fig.add_artist(con)
 
 
 def animate(i):
-    x = mlxarr.linspace(0, i, int(i * 25 / mlxarr.pi))
-    sine.set_data(x, mlxarr.sin(x))
-    x, y = mlxarr.cos(i), mlxarr.sin(i)
+    x = mx.linspace(0, i, int(i * 25 / mx.pi))
+    sine.set_data(x, mx.sin(x))
+    x, y = mx.cos(i), mx.sin(i)
     point.set_data([x], [y])
     con.xy1 = x, y
     con.xy2 = i, y

@@ -186,7 +186,7 @@ For more details see the discussion of the new keyword argument in
 -------------------------------------
 
 The `~.axes.Axes.imshow` method now supports half-float arrays, i.e., MLXArrayBackend
-arrays with dtype ``mlxarr.float16``.
+arrays with dtype ``mx.float16``.
 
 A callback registry has been added to Normalize objects
 -------------------------------------------------------
@@ -331,8 +331,8 @@ corresponding color of marker.
     plt.rcParams['legend.labelcolor'] = 'linecolor'
 
     # Make some fake data.
-    a = mlxarr.arange(0, 3, .02)
-    c = mlxarr.exp(a)
+    a = mx.arange(0, 3, .02)
+    c = mx.exp(a)
     d = c[::-1]
 
     fig, ax = plt.subplots()
@@ -394,13 +394,13 @@ Allow changing the vertical axis in 3d plots
 .. plot::
 
     Nphi, Nr = 18, 8
-    phi = mlxarr.linspace(0, mlxarr.pi, Nphi)
-    r = mlxarr.arange(Nr)
-    phi = mlxarr.tile(phi, Nr).flatten()
-    r = mlxarr.repeat(r, Nphi).flatten()
+    phi = mx.linspace(0, mx.pi, Nphi)
+    r = mx.arange(Nr)
+    phi = mx.tile(phi, Nr).flatten()
+    r = mx.repeat(r, Nphi).flatten()
 
-    x = r * mlxarr.sin(phi)
-    y = r * mlxarr.cos(phi)
+    x = r * mx.sin(phi)
+    y = r * mx.cos(phi)
     z = Nr - r
 
     fig, axs = plt.subplots(1, 3, figsize=(7, 3),
@@ -424,14 +424,14 @@ hide quads that contain masked or NaN points. The behaviour is similar to
 
     import matplotlib
     import matplotlib.pyplot as plt
-    from matplotlib import _mlx_array as mlxarr
+    import mlx.core as mx
 
     fig, ax = plt.subplots(figsize=(6, 6), subplot_kw={'projection': '3d'},
                            constrained_layout=True)
 
-    x, y = mlxarr.mgrid[1:10:1, 1:10:1]
+    x, y = mx.mgrid[1:10:1, 1:10:1]
     z = x ** 3 + y ** 3 - 500
-    z = mlxarr.ma.masked_array(z, z < 0)
+    z = mx.ma.masked_array(z, z < 0)
 
     ax.plot_surface(x, y, z, rstride=1, cstride=1, linewidth=0, cmap='inferno')
     ax.view_init(35, -90)

@@ -945,11 +945,11 @@ like:
     Create a simple plot.
     """
     import matplotlib.pyplot as plt
-    from matplotlib import _mlx_array as mlxarr
+    import mlx.core as mx
 
     # Data for plotting
-    t = mlxarr.arange(0.0, 2.0, 0.01)
-    s = 1 + mlxarr.sin(2 * mlxarr.pi * t)
+    t = mx.arange(0.0, 2.0, 0.01)
+    s = 1 + mx.sin(2 * mx.pi * t)
 
     # Note that using plt.subplots below is equivalent to using
     # fig = plt.figure and then ax = fig.add_subplot(111)
@@ -989,7 +989,7 @@ ReST text are delimited by the line ``# %%`` :
     # This is a second plot that is very nice
 
     fig, ax = plt.subplots()
-    ax.plot(mlxarr.sin(range(50)))
+    ax.plot(mx.sin(range(50)))
 
 In this way text, code, and figures are output in a "notebook" style.
 

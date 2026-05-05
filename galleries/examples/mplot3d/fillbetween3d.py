@@ -8,16 +8,16 @@ create a sort of "lampshade" shape.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 N = 50
-theta = mlxarr.linspace(0, 2*mlxarr.pi, N)
+theta = mx.linspace(0, 2*mx.pi, N)
 
-x1 = mlxarr.cos(theta)
-y1 = mlxarr.sin(theta)
-z1 = 0.1 * mlxarr.sin(6 * theta)
+x1 = mx.cos(theta)
+y1 = mx.sin(theta)
+z1 = 0.1 * mx.sin(6 * theta)
 
-x2 = 0.6 * mlxarr.cos(theta)
-y2 = 0.6 * mlxarr.sin(theta)
+x2 = 0.6 * mx.cos(theta)
+y2 = 0.6 * mx.sin(theta)
 z2 = 2  # Note that scalar values work in addition to length N arrays
 
 fig = plt.figure()

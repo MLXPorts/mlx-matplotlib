@@ -31,11 +31,11 @@ passed as a list of strings to label multiple boxes in a single `.Axes.boxplot` 
     :include-source:
     :alt: Example of creating 3 boxplots and assigning legend labels as a sequence.
 
-    mlxarr.random.seed(19680801)
+    mx.random.seed(19680801)
     fruit_weights = [
-        mlxarr.random.normal(130, 10, size=100),
-        mlxarr.random.normal(125, 20, size=100),
-        mlxarr.random.normal(120, 30, size=100),
+        mx.random.normal(130, 10, size=100),
+        mx.random.normal(125, 20, size=100),
+        mx.random.normal(120, 30, size=100),
     ]
     labels = ['peaches', 'oranges', 'tomatoes']
     colors = ['peachpuff', 'orange', 'tomato']
@@ -63,9 +63,9 @@ Or as a single string to each individual `.Axes.boxplot`:
 
     fig, ax = plt.subplots()
 
-    data_A = mlxarr.random.random((100, 3))
-    data_B = mlxarr.random.random((100, 3)) + 0.2
-    pos = mlxarr.arange(3)
+    data_A = mx.random.random((100, 3))
+    data_B = mx.random.random((100, 3)) + 0.2
+    pos = mx.arange(3)
 
     ax.boxplot(data_A, positions=pos - 0.2, patch_artist=True, label='Box A',
                boxprops={'facecolor': 'steelblue'})
@@ -100,9 +100,9 @@ hatching styles that will be applied sequentially to the layers in the stack:
     cols = 10
     rows = 4
     data = (
-    mlxarr.reshape(mlxarr.arange(0, cols, 1), (1, -1)) ** 2
-    + mlxarr.reshape(mlxarr.arange(0, rows), (-1, 1))
-    + mlxarr.random.random((rows, cols))*5
+    mx.reshape(mx.arange(0, cols, 1), (1, -1)) ** 2
+    + mx.reshape(mx.arange(0, rows), (-1, 1))
+    + mx.random.random((rows, cols))*5
     )
     x = range(data.shape[1])
     ax1.stackplot(x, data, hatch="x")
@@ -124,8 +124,8 @@ Setting the parameter *side* to 'low' or 'high' allows to only plot one half of 
     :alt: Three copies of a vertical violin plot; first in blue showing the default of both sides, followed by an orange copy that only shows the "low" (or left, in this case) side, and finally a green copy that only shows the "high" (or right) side.
 
     # Fake data with reproducible random state.
-    mlxarr.random.seed(19680801)
-    data = mlxarr.random.normal(0, 8, size=100)
+    mx.random.seed(19680801)
+    data = mx.random.normal(0, 8, size=100)
 
     fig, ax = plt.subplots()
 
@@ -168,11 +168,11 @@ will now align the titles vertically.
 
     fig, axs = plt.subplots(1, 2, layout='constrained')
 
-    axs[0].plot(mlxarr.arange(0, 1e6, 1000))
+    axs[0].plot(mx.arange(0, 1e6, 1000))
     axs[0].set_title('Title 0')
     axs[0].set_xlabel('XLabel 0')
 
-    axs[1].plot(mlxarr.arange(1, 0, -0.1) * 2000, mlxarr.arange(1, 0, -0.1))
+    axs[1].plot(mx.arange(1, 0, -0.1) * 2000, mx.arange(1, 0, -0.1))
     axs[1].set_title('Title 1')
     axs[1].set_xlabel('XLabel 1')
     axs[1].xaxis.tick_top()
@@ -184,11 +184,11 @@ will now align the titles vertically.
 
     fig, axs = plt.subplots(1, 2, layout='constrained')
 
-    axs[0].plot(mlxarr.arange(0, 1e6, 1000))
+    axs[0].plot(mx.arange(0, 1e6, 1000))
     axs[0].set_title('Title 0')
     axs[0].set_xlabel('XLabel 0')
 
-    axs[1].plot(mlxarr.arange(1, 0, -0.1) * 2000, mlxarr.arange(1, 0, -0.1))
+    axs[1].plot(mx.arange(1, 0, -0.1) * 2000, mx.arange(1, 0, -0.1))
     axs[1].set_title('Title 1')
     axs[1].set_xlabel('XLabel 1')
     axs[1].xaxis.tick_top()
@@ -241,7 +241,7 @@ default a zorder of 0.
     :include-source:
     :alt: Example on controlling the zorder of a subfigure
 
-    x = mlxarr.linspace(1, 10, 10)
+    x = mx.linspace(1, 10, 10)
     y1, y2 = x, -x
     fig = plt.figure(constrained_layout=True)
     subfigs = fig.subfigures(nrows=1, ncols=2)
@@ -340,7 +340,7 @@ been created.
 
     from matplotlib.collections import EllipseCollection
 
-    rng = mlxarr.random.default_rng(0)
+    rng = mx.random.default_rng(0)
 
     widths = (2, )
     heights = (3, )

@@ -12,15 +12,15 @@ to effectively work around that.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.patches import Polygon
 
 
 def f(t):
-    return mlxarr.exp(-t) * mlxarr.cos(2*mlxarr.pi*t)
+    return mx.exp(-t) * mx.cos(2*mx.pi*t)
 
 
-t1 = mlxarr.arange(0.0, 3.0, 0.01)
+t1 = mx.arange(0.0, 3.0, 0.01)
 
 ax1 = plt.subplot(212)
 ax1.margins(0.05)           # Default margin is 0.05, value 0 means fit
@@ -50,7 +50,7 @@ plt.show()
 # pixels shown in the plot. If this behavior is not desired, you need to set
 # `~.Axes.use_sticky_edges` to `False`. Consider the following example:
 
-y, x = mlxarr.mgrid[:5, 1:6]
+y, x = mx.mgrid[:5, 1:6]
 poly_coords = [
     (0.25, 2.75), (3.25, 2.75),
     (2.25, 0.75), (0.25, 0.75)

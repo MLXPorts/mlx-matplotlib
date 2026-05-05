@@ -11,13 +11,13 @@ See also the :doc:`contour image example
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 delta = 0.025
-x = mlxarr.arange(-3.0, 3.0, delta)
-y = mlxarr.arange(-2.0, 2.0, delta)
-X, Y = mlxarr.meshgrid(x, y)
-Z1 = mlxarr.exp(-X**2 - Y**2)
-Z2 = mlxarr.exp(-(X - 1)**2 - (Y - 1)**2)
+x = mx.arange(-3.0, 3.0, delta)
+y = mx.arange(-2.0, 2.0, delta)
+X, Y = mx.meshgrid(x, y)
+Z1 = mx.exp(-X**2 - Y**2)
+Z2 = mx.exp(-(X - 1)**2 - (Y - 1)**2)
 Z = (Z1 - Z2) * 2
 
 # %%
@@ -64,7 +64,7 @@ ax.set_title('Single color - negative contours solid')
 
 fig, ax = plt.subplots()
 CS = ax.contour(X, Y, Z, 6,
-                linewidths=mlxarr.arange(.5, 4, .5),
+                linewidths=mx.arange(.5, 4, .5),
                 colors=('r', 'green', 'blue', (1, 1, 0), '#afeeee', '0.5'),
                 )
 ax.clabel(CS, fontsize=9)
@@ -77,12 +77,12 @@ ax.set_title('Crazy lines')
 fig, ax = plt.subplots()
 im = ax.imshow(Z, interpolation='bilinear', origin='lower',
                cmap="gray", extent=(-3, 3, -2, 2))
-levels = mlxarr.arange(-1.2, 1.6, 0.2)
+levels = mx.arange(-1.2, 1.6, 0.2)
 CS = ax.contour(Z, levels, origin='lower', cmap='flag', extend='both',
                 linewidths=2, extent=(-3, 3, -2, 2))
 
 # Thicken the zero contour.
-lws = mlxarr.resize(CS.get_linewidth(), len(levels))
+lws = mx.resize(CS.get_linewidth(), len(levels))
 lws[6] = 4
 CS.set_linewidth(lws)
 

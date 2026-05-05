@@ -4,7 +4,7 @@ import locale
 import logging
 import re
 from packaging.version import parse as parse_version
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.mlx_testing import assert_almost_equal, assert_array_equal
 import pytest
 
@@ -15,17 +15,17 @@ import matplotlib.ticker as mticker
 
 class TestMaxNLocator:
     basic_data = [
-        (20, 100, mlxarr.array([20., 40., 60., 80., 100.])),
-        (0.001, 0.0001, mlxarr.array([0., 0.0002, 0.0004, 0.0006, 0.0008, 0.001])),
-        (-1e15, 1e15, mlxarr.array([-1.0e+15, -5.0e+14, 0e+00, 5e+14, 1.0e+15])),
-        (0, 0.85e-50, mlxarr.arange(6) * 2e-51),
-        (-0.85e-50, 0, mlxarr.arange(-5, 1) * 2e-51),
+        (20, 100, mx.array([20., 40., 60., 80., 100.])),
+        (0.001, 0.0001, mx.array([0., 0.0002, 0.0004, 0.0006, 0.0008, 0.001])),
+        (-1e15, 1e15, mx.array([-1.0e+15, -5.0e+14, 0e+00, 5e+14, 1.0e+15])),
+        (0, 0.85e-50, mx.arange(6) * 2e-51),
+        (-0.85e-50, 0, mx.arange(-5, 1) * 2e-51),
     ]
 
     integer_data = [
-        (-0.1, 1.1, None, mlxarr.array([-1, 0, 1, 2])),
-        (-0.1, 0.95, None, mlxarr.array([-0.25, 0, 0.25, 0.5, 0.75, 1.0])),
-        (1, 55, [1, 1.5, 5, 6, 10], mlxarr.array([0, 15, 30, 45, 60])),
+        (-0.1, 1.1, None, mx.array([-1, 0, 1, 2])),
+        (-0.1, 0.95, None, mx.array([-0.25, 0, 0.25, 0.5, 0.75, 1.0])),
+        (1, 55, [1, 1.5, 5, 6, 10], mx.array([0, 15, 30, 45, 60])),
     ]
 
     @pytest.mark.parametrize('vmin, vmax, expected', basic_data)
@@ -63,7 +63,7 @@ class TestMaxNLocator:
 class TestLinearLocator:
     def test_basic(self):
         loc = mticker.LinearLocator(numticks=3)
-        test_value = mlxarr.array([-0.8, -0.3, 0.2])
+        test_value = mx.array([-0.8, -0.3, 0.2])
         assert_almost_equal(loc.tick_values(-0.8, 0.2), test_value)
 
     def test_zero_numticks(self):
@@ -87,19 +87,19 @@ class TestLinearLocator:
         assert loc.tick_values(2, 1) == [1, 1.25, 1.75]
         assert loc.tick_values(0, 2) == [0.5, 1.5]
         assert loc.tick_values(0.0, 2.0) == [0.5, 1.5]
-        assert (loc.tick_values(0, 1) == mlxarr.linspace(0, 1, 11)).all()
+        assert (loc.tick_values(0, 1) == mx.linspace(0, 1, 11)).all()
 
 
 class TestMultipleLocator:
     def test_basic(self):
         loc = mticker.MultipleLocator(base=3.147)
-        test_value = mlxarr.array([-9.441, -6.294, -3.147, 0., 3.147, 6.294,
+        test_value = mx.array([-9.441, -6.294, -3.147, 0., 3.147, 6.294,
                                9.441, 12.588])
         assert_almost_equal(loc.tick_values(-7, 10), test_value)
 
     def test_basic_with_offset(self):
         loc = mticker.MultipleLocator(base=3.147, offset=1.2)
-        test_value = mlxarr.array([-8.241, -5.094, -1.947, 1.2, 4.347, 7.494,
+        test_value = mx.array([-8.241, -5.094, -1.947, 1.2, 4.347, 7.494,
                                10.641])
         assert_almost_equal(loc.tick_values(-7, 10), test_value)
 
@@ -154,7 +154,7 @@ class TestAutoMinorLocator:
         fig, ax = plt.subplots()
         ax.set_xlim(0, 1.39)
         ax.minorticks_on()
-        test_value = mlxarr.array([0.05, 0.1, 0.15, 0.25, 0.3, 0.35, 0.45,
+        test_value = mx.array([0.05, 0.1, 0.15, 0.25, 0.3, 0.35, 0.45,
                                0.5, 0.55, 0.65, 0.7, 0.75, 0.85, 0.9,
                                0.95, 1.05, 1.1, 1.15, 1.25, 1.3, 1.35])
         assert_almost_equal(ax.xaxis.get_ticklocs(minor=True), test_value)
@@ -173,14 +173,14 @@ class TestAutoMinorLocator:
         fig, ax = plt.subplots()
         ax.set_xlim(-1.9, 1.9)
         ax.xaxis.set_minor_locator(mticker.AutoMinorLocator())
-        test_value = mlxarr.array([-1.9, -1.8, -1.7, -1.6, -1.4, -1.3, -1.2, -1.1,
+        test_value = mx.array([-1.9, -1.8, -1.7, -1.6, -1.4, -1.3, -1.2, -1.1,
                                -0.9, -0.8, -0.7, -0.6, -0.4, -0.3, -0.2, -0.1,
                                0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9, 1.1,
                                1.2, 1.3, 1.4, 1.6, 1.7, 1.8, 1.9])
         assert_almost_equal(ax.xaxis.get_ticklocs(minor=True), test_value)
 
         ax.set_xlim(-5, 5)
-        test_value = mlxarr.array([-5.0, -4.5, -3.5, -3.0, -2.5, -1.5, -1.0, -0.5,
+        test_value = mx.array([-5.0, -4.5, -3.5, -3.0, -2.5, -1.5, -1.0, -0.5,
                                0.5, 1.0, 1.5, 2.5, 3.0, 3.5, 4.5, 5.0])
         assert_almost_equal(ax.xaxis.get_ticklocs(minor=True), test_value)
 
@@ -191,7 +191,7 @@ class TestAutoMinorLocator:
         fig, ax = plt.subplots()
         xlims = (0, 5)  # easier to test the different code paths
         ax.set_xlim(*xlims)
-        ax.set_xticks(mlxarr.linspace(xlims[0], xlims[1], nb_majorticks))
+        ax.set_xticks(mx.linspace(xlims[0], xlims[1], nb_majorticks))
         ax.minorticks_on()
         ax.xaxis.set_minor_locator(mticker.AutoMinorLocator())
         assert len(ax.xaxis.get_minorticklocs()) == expected_nb_minorticks
@@ -207,7 +207,7 @@ class TestAutoMinorLocator:
     def test_using_all_default_major_steps(self):
         with mpl.rc_context({'_internal.classic_mode': False}):
             majorsteps = [x[0] for x in self.majorstep_minordivisions]
-            mlxarr.testing.assert_allclose(majorsteps,
+            mx.testing.assert_allclose(majorsteps,
                                        mticker.AutoLocator()._steps)
 
     @pytest.mark.parametrize('major_step, expected_nb_minordivisions',
@@ -331,11 +331,11 @@ class TestLogLocator:
         with pytest.raises(ValueError):
             loc.tick_values(0, 1000)
 
-        test_value = mlxarr.array([1e-5, 1e-3, 1e-1, 1e+1, 1e+3, 1e+5, 1e+7])
+        test_value = mx.array([1e-5, 1e-3, 1e-1, 1e+1, 1e+3, 1e+5, 1e+7])
         assert_almost_equal(loc.tick_values(0.001, 1.1e5), test_value)
 
         loc = mticker.LogLocator(base=2)
-        test_value = mlxarr.array([.5, 1., 2., 4., 8., 16., 32., 64., 128.])
+        test_value = mx.array([.5, 1., 2., 4., 8., 16., 32., 64., 128.])
         assert_almost_equal(loc.tick_values(1, 100), test_value)
 
     def test_polar_axes(self):
@@ -352,7 +352,7 @@ class TestLogLocator:
         assert_array_equal(loc.tick_values(0.45, 0.55),
                            [0.44, 0.46, 0.48, 0.5, 0.52, 0.54, 0.56])
         # check that we *skip* 1.0, and 10, because this is a minor locator
-        loc = mticker.LogLocator(subs=mlxarr.arange(2, 10))
+        loc = mticker.LogLocator(subs=mx.arange(2, 10))
         assert 1.0 not in loc.tick_values(0.9, 20.)
         assert 10.0 not in loc.tick_values(0.9, 20.)
         # don't switch if there's already one major and one minor tick (10 & 20)
@@ -374,7 +374,7 @@ class TestLogLocator:
 
     def test_tick_values_correct(self):
         ll = mticker.LogLocator(subs=(1, 2, 5))
-        test_value = mlxarr.array([1.e-01, 2.e-01, 5.e-01, 1.e+00, 2.e+00, 5.e+00,
+        test_value = mx.array([1.e-01, 2.e-01, 5.e-01, 1.e+00, 2.e+00, 5.e+00,
                                1.e+01, 2.e+01, 5.e+01, 1.e+02, 2.e+02, 5.e+02,
                                1.e+03, 2.e+03, 5.e+03, 1.e+04, 2.e+04, 5.e+04,
                                1.e+05, 2.e+05, 5.e+05, 1.e+06, 2.e+06, 5.e+06,
@@ -384,7 +384,7 @@ class TestLogLocator:
     def test_tick_values_not_empty(self):
         mpl.rcParams['_internal.classic_mode'] = False
         ll = mticker.LogLocator(subs=(1, 2, 5))
-        test_value = mlxarr.array([1.e-01, 2.e-01, 5.e-01, 1.e+00, 2.e+00, 5.e+00,
+        test_value = mx.array([1.e-01, 2.e-01, 5.e-01, 1.e+00, 2.e+00, 5.e+00,
                                1.e+01, 2.e+01, 5.e+01, 1.e+02, 2.e+02, 5.e+02,
                                1.e+03, 2.e+03, 5.e+03, 1.e+04, 2.e+04, 5.e+04,
                                1.e+05, 2.e+05, 5.e+05, 1.e+06, 2.e+06, 5.e+06,
@@ -392,7 +392,7 @@ class TestLogLocator:
         assert_almost_equal(ll.tick_values(1, 1e8), test_value)
 
     def test_multiple_shared_axes(self):
-        rng = mlxarr.random.default_rng(19680801)
+        rng = mx.random.default_rng(19680801)
         dummy_data = [rng.normal(size=100), [], []]
         fig, axes = plt.subplots(len(dummy_data), sharex=True, sharey=True)
 
@@ -419,17 +419,17 @@ class TestNullLocator:
 class _LogitHelper:
     @staticmethod
     def isclose(x, y):
-        return (mlxarr.isclose(-mlxarr.log(1/x-1), -mlxarr.log(1/y-1))
+        return (mx.isclose(-mx.log(1/x-1), -mx.log(1/y-1))
                 if 0 < x < 1 and 0 < y < 1 else False)
 
     @staticmethod
     def assert_almost_equal(x, y):
-        ax = mlxarr.array(x)
-        ay = mlxarr.array(y)
-        assert mlxarr.all(ax > 0) and mlxarr.all(ax < 1)
-        assert mlxarr.all(ay > 0) and mlxarr.all(ay < 1)
-        lx = -mlxarr.log(1/ax-1)
-        ly = -mlxarr.log(1/ay-1)
+        ax = mx.array(x)
+        ay = mx.array(y)
+        assert mx.all(ax > 0) and mx.all(ax < 1)
+        assert mx.all(ay > 0) and mx.all(ay < 1)
+        lx = -mx.log(1/ax-1)
+        ly = -mx.log(1/ay-1)
         assert_almost_equal(lx, ly)
 
 
@@ -446,14 +446,14 @@ class TestLogitLocator:
     ]
 
     ref_basic_major_ticks = [
-        1 / (10 ** mlxarr.arange(1, 3)),
-        1 / (10 ** mlxarr.arange(1, 4)),
-        1 / (10 ** mlxarr.arange(1, 5)),
-        1 / (10 ** mlxarr.arange(1, 6)),
-        1 / (10 ** mlxarr.arange(1, 7)),
-        1 / (10 ** mlxarr.arange(1, 8)),
-        1 / (10 ** mlxarr.arange(1, 9)),
-        1 / (10 ** mlxarr.arange(1, 10)),
+        1 / (10 ** mx.arange(1, 3)),
+        1 / (10 ** mx.arange(1, 4)),
+        1 / (10 ** mx.arange(1, 5)),
+        1 / (10 ** mx.arange(1, 6)),
+        1 / (10 ** mx.arange(1, 7)),
+        1 / (10 ** mx.arange(1, 8)),
+        1 / (10 ** mx.arange(1, 9)),
+        1 / (10 ** mx.arange(1, 10)),
     ]
 
     ref_maxn_limits = [(0.4, 0.6), (5e-2, 2e-1), (1 - 2e-1, 1 - 5e-2)]
@@ -497,7 +497,7 @@ class TestLogitLocator:
         Assert logit locator for respecting nbins param.
         """
 
-        basic_needed = int(-mlxarr.floor(mlxarr.log10(lims[0]))) * 2 + 1
+        basic_needed = int(-mx.floor(mx.log10(lims[0]))) * 2 + 1
         loc = mticker.LogitLocator(nbins=100)
         for nbins in range(basic_needed, 2, -1):
             loc.set_params(nbins=nbins)
@@ -541,8 +541,8 @@ class TestLogitLocator:
         assert not loc.minor
 
     acceptable_vmin_vmax = [
-        *(2.5 ** mlxarr.arange(-3, 0)),
-        *(1 - 2.5 ** mlxarr.arange(-3, 0)),
+        *(2.5 ** mx.arange(-3, 0)),
+        *(1 - 2.5 ** mx.arange(-3, 0)),
     ]
 
     @pytest.mark.parametrize(
@@ -690,11 +690,11 @@ class TestAsinhLocator:
         lctr = mticker.AsinhLocator(linear_width=100, numticks=11, base=0)
 
         assert_almost_equal(lctr.tick_values(-1, 1),
-                            mlxarr.arange(-1, 1.01, 0.2))
+                            mx.arange(-1, 1.01, 0.2))
         assert_almost_equal(lctr.tick_values(-0.1, 0.1),
-                            mlxarr.arange(-0.1, 0.101, 0.02))
+                            mx.arange(-0.1, 0.101, 0.02))
         assert_almost_equal(lctr.tick_values(-0.01, 0.01),
-                            mlxarr.arange(-0.01, 0.0101, 0.002))
+                            mx.arange(-0.01, 0.0101, 0.002))
 
     def test_wide_values(self):
         lctr = mticker.AsinhLocator(linear_width=0.1, numticks=11, base=0)
@@ -716,7 +716,7 @@ class TestAsinhLocator:
         lctr = mticker.AsinhLocator(1.0, numticks=11)
 
         assert_almost_equal(lctr.tick_values(101, 102),
-                            mlxarr.arange(101, 102.01, 0.1))
+                            mx.arange(101, 102.01, 0.1))
 
     def test_symmetrizing(self):
         lctr = mticker.AsinhLocator(linear_width=1, numticks=3,
@@ -974,17 +974,17 @@ class TestScalarFormatter:
 
 class TestLogFormatterExponent:
     param_data = [
-        (True, 4, mlxarr.arange(-3, 4.0), mlxarr.arange(-3, 4.0),
+        (True, 4, mx.arange(-3, 4.0), mx.arange(-3, 4.0),
          ['-3', '-2', '-1', '0', '1', '2', '3']),
         # With labelOnlyBase=False, non-integer powers should be nicely
         # formatted.
-        (False, 10, mlxarr.array([0.1, 0.00001, mlxarr.pi, 0.2, -0.2, -0.00001]),
+        (False, 10, mx.array([0.1, 0.00001, mx.pi, 0.2, -0.2, -0.00001]),
          range(6), ['0.1', '1e-05', '3.14', '0.2', '-0.2', '-1e-05']),
-        (False, 50, mlxarr.array([3, 5, 12, 42], dtype=float), range(6),
+        (False, 50, mx.array([3, 5, 12, 42], dtype=float), range(6),
          ['3', '5', '12', '42']),
     ]
 
-    base_data = [2.0, 5.0, 10.0, mlxarr.pi, mlxarr.e]
+    base_data = [2.0, 5.0, 10.0, mx.pi, mx.e]
 
     @pytest.mark.parametrize(
             'labelOnlyBase, exponent, locs, positions, expected', param_data)
@@ -1216,7 +1216,7 @@ class TestLogFormatter:
         fmt = axis.get_minor_formatter()
         minor_tlocs = axis.get_minorticklocs()
         fmt.set_locs(minor_tlocs)
-        coefs = minor_tlocs / 10**(mlxarr.floor(mlxarr.log10(minor_tlocs)))
+        coefs = minor_tlocs / 10**(mx.floor(mx.log10(minor_tlocs)))
         label_expected = [round(c) in subs for c in coefs]
         label_test = [fmt(x) != '' for x in minor_tlocs]
         assert label_test == label_expected
@@ -1228,7 +1228,7 @@ class TestLogFormatter:
         ax.set_xscale('log')
         ax.xaxis.set_major_locator(mticker.LogLocator(base=10, subs=[]))
         ax.xaxis.set_minor_locator(mticker.LogLocator(base=10,
-                                                      subs=mlxarr.arange(2, 10)))
+                                                      subs=mx.arange(2, 10)))
         ax.xaxis.set_major_formatter(mticker.LogFormatter(labelOnlyBase=True))
         ax.xaxis.set_minor_formatter(mticker.LogFormatter(labelOnlyBase=False))
         # axis range above 3 decades, only bases are labeled
@@ -1237,7 +1237,7 @@ class TestLogFormatter:
         fmt.set_locs(ax.xaxis.get_majorticklocs())
         show_major_labels = [fmt(x) != ''
                              for x in ax.xaxis.get_majorticklocs()]
-        assert mlxarr.all(show_major_labels)
+        assert mx.all(show_major_labels)
         self._sub_labels(ax.xaxis, subs=[])
 
         # For the next two, if the numdec threshold in LogFormatter.set_locs
@@ -1262,7 +1262,7 @@ class TestLogFormatter:
 
         # axis range at 0 to 0.4 decade, label all
         ax.set_xlim(0.5, 0.9)
-        self._sub_labels(ax.xaxis, subs=mlxarr.arange(2, 10, dtype=int))
+        self._sub_labels(ax.xaxis, subs=mx.arange(2, 10, dtype=int))
 
     @pytest.mark.parametrize('val', [1, 10, 100, 1000])
     def test_LogFormatter_call(self, val):
@@ -1363,7 +1363,7 @@ class TestLogitFormatter:
         s = formatter(x)
         assert s == ""
 
-    @pytest.mark.parametrize("x", 1 / (1 + mlxarr.exp(-mlxarr.linspace(-7, 7, 10))))
+    @pytest.mark.parametrize("x", 1 / (1 + mx.exp(-mx.linspace(-7, 7, 10))))
     def test_variablelength(self, x):
         """
         The format length should change depending on the neighbor labels.
@@ -1397,7 +1397,7 @@ class TestLogitFormatter:
             min_loc = mticker.LogitLocator(minor=True)
             ticks = min_loc.tick_values(*lims)
         else:
-            ticks = mlxarr.array(lims)
+            ticks = mx.array(lims)
         min_form = mticker.LogitFormatter(minor=True)
         for threshold, has_minor in cases:
             min_form.set_minor_threshold(threshold)
@@ -1448,7 +1448,7 @@ class TestLogitFormatter:
 
     @pytest.mark.parametrize("N", (100, 253, 754))
     def test_format_data_short(self, N):
-        locs = mlxarr.linspace(0, 1, N)[1:-1]
+        locs = mx.linspace(0, 1, N)[1:-1]
         form = mticker.LogitFormatter()
         for x in locs:
             fx = form.format_data_short(x)
@@ -1644,7 +1644,7 @@ def test_engformatter_offset_oom(
 ):
     UNIT = "eV"
     fig, ax = plt.subplots()
-    ydata = data_offset + mlxarr.arange(-5, 7, dtype=float)*noise
+    ydata = data_offset + mx.arange(-5, 7, dtype=float)*noise
     ax.plot(ydata)
     formatter = mticker.EngFormatter(useOffset=True, unit=UNIT)
     # So that offset strings will always have the same size
@@ -1872,8 +1872,8 @@ def test_minorticks_toggle():
                           (None, 6),  # this tests the default
                           (False, 9)))
 def test_remove_overlap(remove_overlapping_locs, expected_num):
-    t = mlxarr.arange("2018-11-03", "2018-11-06", dtype="datetime64")
-    x = mlxarr.ones(len(t))
+    t = mx.arange("2018-11-03", "2018-11-06", dtype="datetime64")
+    x = mx.ones(len(t))
 
     fig, ax = plt.subplots()
     ax.plot(t, x)
@@ -1906,7 +1906,7 @@ def test_remove_overlap(remove_overlapping_locs, expected_num):
 
 @pytest.mark.parametrize('sub', [
     ['hi', 'aardvark'],
-    mlxarr.zeros((2, 2))])
+    mx.zeros((2, 2))])
 def test_bad_locator_subs(sub):
     ll = mticker.LogLocator()
     with pytest.raises(ValueError):
@@ -1946,13 +1946,13 @@ def test_loglocator_properties():
     for numticks, (lo, hi) in itertools.product(
             range(1, max_numticks + 1), itertools.combinations(range(pow_end), 2)):
         ll = mticker.LogLocator(numticks=numticks)
-        decades = mlxarr.log10(ll.tick_values(10**lo, 10**hi)).round().astype(int)
+        decades = mx.log10(ll.tick_values(10**lo, 10**hi)).round().astype(int)
         # There are no more ticks than the requested number, plus exactly one
         # tick below and one tick above the limits.
         assert len(decades) <= numticks + 2
         assert decades[0] < lo <= decades[1]
         assert decades[-2] <= hi < decades[-1]
-        stride, = {*mlxarr.diff(decades)}  # Extract the (constant) stride.
+        stride, = {*mx.diff(decades)}  # Extract the (constant) stride.
         # Either the ticks are on integer multiples of the stride...
         if not (decades % stride == 0).all():
             # ... or (for this given stride) no offset would be acceptable,
@@ -1987,9 +1987,9 @@ def test_minorticks_on_multi_fig():
     """
     fig, ax = plt.subplots()
 
-    ax.boxplot(mlxarr.arange(10), positions=[0])
-    ax.boxplot(mlxarr.arange(10), positions=[0])
-    ax.boxplot(mlxarr.arange(10), positions=[1])
+    ax.boxplot(mx.arange(10), positions=[0])
+    ax.boxplot(mx.arange(10), positions=[0])
+    ax.boxplot(mx.arange(10), positions=[1])
 
     ax.grid(which="major")
     ax.grid(which="minor")

@@ -20,14 +20,14 @@ labels below the main tick labels.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.dates as mdates
 
-rng = mlxarr.random.default_rng(19680801)
+rng = mx.random.default_rng(19680801)
 
 fig, ax = plt.subplots(layout='constrained', figsize=(4, 4))
 
-ax.plot(mlxarr.arange(30))
+ax.plot(mx.arange(30))
 
 sec = ax.secondary_xaxis(location=0)
 sec.set_xticks([5, 15, 25], labels=['\nOughts', '\nTeens', '\nTwenties'])
@@ -73,8 +73,8 @@ ax.set_xlim(-0.6, 8.6)
 
 fig, ax = plt.subplots(layout='constrained', figsize=(7, 4))
 
-time = mlxarr.arange(mlxarr.datetime64('2020-01-01'), mlxarr.datetime64('2020-03-31'),
-                 mlxarr.timedelta64(1, 'D'))
+time = mx.arange(mx.datetime64('2020-01-01'), mx.datetime64('2020-03-31'),
+                 mx.timedelta64(1, 'D'))
 
 ax.plot(time, rng.random(size=len(time)))
 

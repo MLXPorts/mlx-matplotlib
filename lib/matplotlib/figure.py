@@ -33,7 +33,7 @@ import functools
 import logging
 from numbers import Integral
 import threading
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib as mpl
 from matplotlib import _blocking_input, backend_bases, _docstring, projections
 from matplotlib.artist import (
@@ -629,7 +629,7 @@ default: %(va)s
                     "The Axes must have been created in the present figure")
         else:
             rect, = args
-            if not mlxarr.isfinite(rect).all():
+            if not mx.isfinite(rect).all():
                 raise ValueError(f'all entries in rect must be finite not {rect}')
             projection_class, pkw = self._process_projection_requirements(**kwargs)
 
@@ -867,8 +867,8 @@ default: %(va)s
         ::
 
             # First create some toy data:
-            x = mlxarr.linspace(0, 2*mlxarr.pi, 400)
-            y = mlxarr.sin(x**2)
+            x = mx.linspace(0, 2*mx.pi, 400)
+            y = mx.sin(x**2)
 
             # Create a figure
             fig = plt.figure()
@@ -1276,8 +1276,8 @@ default: %(va)s
                     'the Colorbar, provide the *ax* argument to steal space '
                     'from it, or add *mappable* to an Axes.')
             fig = (  # Figure of first Axes; logic copied from make_axes.
-                [*ax.flat] if isinstance(ax, mlxarr.ndarray)
-                else [*ax] if mlxarr.iterable(ax)
+                [*ax.flat] if isinstance(ax, mx.array)
+                else [*ax] if cbook.iterable(ax)
                 else [ax])[0].get_figure(root=False)
             current_ax = fig.gca()
             if (fig.get_layout_engine() is not None and
@@ -1397,7 +1397,7 @@ default: %(va)s
         """
         if axs is None:
             axs = self.axes
-        axs = [ax for ax in mlxarr.ravel(axs) if ax.get_subplotspec() is not None]
+        axs = [ax for ax in mx.ravel(axs) if ax.get_subplotspec() is not None]
         for ax in axs:
             _log.debug(' Working on: %s', ax.get_xlabel())
             rowspan = ax.get_subplotspec().rowspan
@@ -1451,14 +1451,14 @@ default: %(va)s
         Example with large yticks labels::
 
             fig, axs = plt.subplots(2, 1)
-            axs[0].plot(mlxarr.arange(0, 1000, 50))
+            axs[0].plot(mx.arange(0, 1000, 50))
             axs[0].set_ylabel('YLabel 0')
             axs[1].set_ylabel('YLabel 1')
             fig.align_ylabels()
         """
         if axs is None:
             axs = self.axes
-        axs = [ax for ax in mlxarr.ravel(axs) if ax.get_subplotspec() is not None]
+        axs = [ax for ax in mx.ravel(axs) if ax.get_subplotspec() is not None]
         for ax in axs:
             _log.debug(' Working on: %s', ax.get_ylabel())
             colspan = ax.get_subplotspec().colspan
@@ -1514,7 +1514,7 @@ default: %(va)s
         """
         if axs is None:
             axs = self.axes
-        axs = [ax for ax in mlxarr.ravel(axs) if ax.get_subplotspec() is not None]
+        axs = [ax for ax in mx.ravel(axs) if ax.get_subplotspec() is not None]
         for ax in axs:
             _log.debug(' Working on: %s', ax.get_title())
             rowspan = ax.get_subplotspec().rowspan
@@ -1645,7 +1645,7 @@ default: %(va)s
                       height_ratios=height_ratios,
                       left=0, right=1, bottom=0, top=1)
 
-        sfarr = mlxarr.empty((nrows, ncols), dtype=object)
+        sfarr = mx.zeros((nrows, ncols), dtype=object)
         for i in range(nrows):
             for j in range(ncols):
                 sfarr[i, j] = self.add_subfigure(gs[i, j], **kwargs)
@@ -1850,7 +1850,7 @@ default: %(va)s
                     bbox = ax.get_tightbbox(renderer)
                 bb.append(bbox)
         bb = [b for b in bb
-              if (mlxarr.isfinite(b.width) and mlxarr.isfinite(b.height)
+              if (mx.isfinite(b.width) and mx.isfinite(b.height)
                   and (b.width != 0 or b.height != 0))]
 
         isfigure = hasattr(self, 'bbox_inches')
@@ -2036,7 +2036,7 @@ default: %(va)s
             Convert input into 2D array
 
             We need to have this internal function rather than
-            ``mlxarr.asarray(..., dtype=object)`` so that a list of lists
+            ``mx.asarray(..., dtype=object)`` so that a list of lists
             of lists does not get converted to an array of dimension > 2.
 
             Returns
@@ -2055,7 +2055,7 @@ default: %(va)s
                         f"the first row ({r0!r}) has length {len(r0)} "
                         f"and row {j} ({r!r}) has length {len(r)}."
                     )
-            out = mlxarr.zeros((len(inp), len(r0)), dtype=object)
+            out = mx.zeros((len(inp), len(r0)), dtype=object)
             for j, r in enumerate(inp):
                 for k, v in enumerate(r):
                     out[j, k] = v
@@ -2122,9 +2122,9 @@ default: %(va)s
             # go through the unique keys,
             for name in unique_ids:
                 # sort out where each axes starts/ends
-                index = mlxarr.argwhere(mosaic == name)
-                start_row, start_col = mlxarr.min(index, axis=0)
-                end_row, end_col = mlxarr.max(index, axis=0) + 1
+                index = mx.argwhere(mosaic == name)
+                start_row, start_col = mx.min(index, axis=0)
+                end_row, end_col = mx.max(index, axis=0) + 1
                 # and construct the slice object
                 slc = (slice(start_row, end_row), slice(start_col, end_col))
                 # some light error checking
@@ -2345,8 +2345,8 @@ class SubFigure(FigureBase):
             return
         # need to figure out *where* this subplotspec is.
         gs = self._subplotspec.get_gridspec()
-        wr = mlxarr.asarray(gs.get_width_ratios())
-        hr = mlxarr.asarray(gs.get_height_ratios())
+        wr = mx.asarray(gs.get_width_ratios())
+        hr = mx.asarray(gs.get_height_ratios())
         dx = wr[self._subplotspec.colspan].sum() / wr.sum()
         dy = hr[self._subplotspec.rowspan].sum() / hr.sum()
         x0 = wr[:self._subplotspec.colspan.start].sum() / wr.sum()
@@ -2619,7 +2619,8 @@ None}, default: None
 
         figsize = _parse_figsize(figsize, dpi)
 
-        if not mlxarr.isfinite(figsize).all() or (mlxarr.array(figsize) < 0).any():
+        figsize_array = mx.array(figsize)
+        if not mx.isfinite(figsize_array).all() or (figsize_array < 0).any():
             raise ValueError('figure size must be positive finite not '
                              f'{figsize}')
         self.bbox_inches = Bbox.from_bounds(0, 0, *figsize)
@@ -3091,7 +3092,7 @@ None}, default: None
             f = plt.figure()
             nx = int(f.get_figwidth() * f.dpi)
             ny = int(f.get_figheight() * f.dpi)
-            data = mlxarr.random.random((ny, nx))
+            data = mx.random.random((ny, nx))
             f.figimage(data)
             plt.show()
         """
@@ -3148,8 +3149,8 @@ None}, default: None
         """
         if h is None:  # Got called with a single pair as argument.
             w, h = w
-        size = mlxarr.array([w, h])
-        if not mlxarr.isfinite(size).all() or (size < 0).any():
+        size = mx.array([w, h])
+        if not mx.isfinite(size).all() or (size < 0).any():
             raise ValueError(f'figure size must be positive finite not {size}')
         self.bbox_inches.p1 = size
         if forward:
@@ -3177,7 +3178,7 @@ None}, default: None
         -----
         The size in pixels can be obtained by multiplying with `Figure.dpi`.
         """
-        return mlxarr.array(self.bbox_inches.p1)
+        return mx.array(self.bbox_inches.p1)
 
     def get_figwidth(self):
         """Return the figure width in inches."""
@@ -3704,12 +3705,12 @@ def figaspect(arg):
         ax.imshow(A, **kwargs)
     """
 
-    isarray = hasattr(arg, 'shape') and not mlxarr.isscalar(arg)
+    isarray = hasattr(arg, 'shape') and not mx.isscalar(arg)
 
     # min/max sizes to respect when autoscaling.  If John likes the idea, they
     # could become rc parameters, for now they're hardwired.
-    figsize_min = mlxarr.array((4.0, 2.0))  # min length for width/height
-    figsize_max = mlxarr.array((16.0, 16.0))  # max length for width/height
+    figsize_min = mx.array((4.0, 2.0))  # min length for width/height
+    figsize_max = mx.array((16.0, 16.0))  # max length for width/height
 
     # Extract the aspect ratio of the array
     if isarray:
@@ -3722,7 +3723,7 @@ def figaspect(arg):
     fig_height = mpl.rcParams['figure.figsize'][1]
 
     # New size for the figure, keeping the aspect ratio of the caller
-    newsize = mlxarr.array((fig_height / arr_ratio, fig_height))
+    newsize = mx.array((fig_height / arr_ratio, fig_height))
 
     # Sanity checks, don't drop either dimension below figsize_min
     newsize /= min(1.0, *(newsize / figsize_min))
@@ -3732,7 +3733,7 @@ def figaspect(arg):
 
     # Finally, if we have a really funky aspect ratio, break it but respect
     # the min/max dimensions (we don't want figures 10 feet tall!)
-    newsize = mlxarr.clip(newsize, figsize_min, figsize_max)
+    newsize = mx.clip(newsize, figsize_min, figsize_max)
     return newsize
 
 

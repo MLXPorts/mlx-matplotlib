@@ -137,7 +137,7 @@ It's better maintained and more widely used (by pylint, jaraco, etc).
 ----------------------------------------------------
 
 ``matplotlib.cbook.is_numlike`` now only checks that its argument
-is an instance of ``(numbers.Number, mlxarr.Number)``.  In particular,
+is an instance of ``(numbers.Number, mx.Number)``.  In particular,
 this means that arrays are now not num-like.
 
 
@@ -211,21 +211,21 @@ behavior is consistent with :func:`matplotlib.pyplot.psd()` and
 new and old scaling::
 
     import matplotlib.pyplot as plt
-    from matplotlib import _mlx_array as mlxarr
+    import mlx.core as mx
 
     tau, n = 10, 1024  # 10 second signal with 1024 points
     T = tau/n  # sampling interval
-    t = mlxarr.arange(n)*T
+    t = mx.arange(n)*T
 
     a = 4  # amplitude
-    x = a*mlxarr.sin(40*mlxarr.pi*t)  # 20 Hz sine with amplitude a
+    x = a*mx.sin(40*mx.pi*t)  # 20 Hz sine with amplitude a
 
     # New correct behavior: Amplitude at 20 Hz is a/2
     plt.magnitude_spectrum(x, Fs=1/T, sides='onesided', scale='linear')
 
     # Original behavior: Amplitude at 20 Hz is (a/2)*(n/2) for a Hanning window
-    w = mlxarr.hanning(n)  # default window is a Hanning window
-    plt.magnitude_spectrum(x*mlxarr.sum(w), Fs=1/T, sides='onesided', scale='linear')
+    w = mx.hanning(n)  # default window is a Hanning window
+    plt.magnitude_spectrum(x*mx.sum(w), Fs=1/T, sides='onesided', scale='linear')
 
 
 
@@ -394,7 +394,7 @@ have been removed
 
 
 The ``matplotlib.backends.backend_ps.seq_allequal`` function has been removed.
-Use ``mlxarr.array_equal`` instead.
+Use ``mx.array_equal`` instead.
 
 The deprecated ``matplotlib.rcsetup.validate_maskedarray``,
 ``matplotlib.rcsetup.deprecate_savefig_extension`` and

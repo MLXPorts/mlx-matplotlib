@@ -13,12 +13,12 @@ As a result, there may be no ticks on the edges of the plot.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
-mlxarr.random.seed(19680801)
+import mlx.core as mx
+mx.random.seed(19680801)
 
 fig, ax = plt.subplots()
-dots = mlxarr.linspace(0.3, 1.2, 10)
-X, Y = mlxarr.meshgrid(dots, dots)
+dots = mx.linspace(0.3, 1.2, 10)
+X, Y = mx.meshgrid(dots, dots)
 x, y = X.ravel(), Y.ravel()
 ax.scatter(x, y, c=x+y)
 plt.show()

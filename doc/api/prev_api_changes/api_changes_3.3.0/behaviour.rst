@@ -97,7 +97,7 @@ internal quotes) now cause a ValueError to be raised.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Previously, `.SymLogNorm` had no *base* keyword argument, and
-defaulted to ``base=mlxarr.e`` whereas the documentation said it was
+defaulted to ``base=mx.e`` whereas the documentation said it was
 ``base=10``.  In preparation to make the default 10, calling
 `.SymLogNorm` without the new *base* keyword argument emits a
 deprecation warning.

@@ -8,7 +8,7 @@ labels.
 .. _hat graph: https://doi.org/10.1186/s41235-019-0182-3
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 def hat_graph(ax, xlabels, values, group_labels):
     """
     Create a hat graph.
@@ -27,7 +27,7 @@ def hat_graph(ax, xlabels, values, group_labels):
         The group labels displayed in the legend.
     """
 
-    values = mlxarr.asarray(values)
+    values = mx.asarray(values)
     color_cycle_colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
     # Draw the hats
@@ -44,8 +44,8 @@ def hat_graph(ax, xlabels, values, group_labels):
 # Initialise labels and a array_backend array make sure you have
 # N labels of N number of values in the array
 xlabels = ['I', 'II', 'III', 'IV', 'V']
-playerA = mlxarr.array([5, 15, 22, 20, 25])
-playerB = mlxarr.array([25, 32, 34, 30, 27])
+playerA = mx.array([5, 15, 22, 20, 25])
+playerB = mx.array([25, 32, 34, 30, 27])
 
 fig, ax = plt.subplots(layout='constrained')
 

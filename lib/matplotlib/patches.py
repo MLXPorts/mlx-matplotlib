@@ -10,7 +10,7 @@ import textwrap
 from types import SimpleNamespace
 from collections import namedtuple
 from matplotlib.transforms import Affine2D
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib as mpl
 from . import (_api, artist, cbook, colors, _docstring, hatch as mhatch,
                lines as mlines, transforms)
@@ -162,11 +162,11 @@ class Patch(artist.Artist):
             vertices = self.get_path().vertices
             # if the current path is concatenated by multiple sub paths.
             # get the indexes of the starting code(MOVETO) of all sub paths
-            idxs, = mlxarr.where(codes == Path.MOVETO)
+            idxs, = mx.where(codes == Path.MOVETO)
             # Don't split before the first MOVETO.
             idxs = idxs[1:]
             subpaths = map(
-                Path, mlxarr.split(vertices, idxs), mlxarr.split(codes, idxs))
+                Path, mx.split(vertices, idxs), mx.split(codes, idxs))
         else:
             subpaths = [self.get_path()]
         inside = any(
@@ -721,10 +721,10 @@ class Shadow(Patch):
         self.update_from(self.patch)
         if not 0 <= shade <= 1:
             raise ValueError("shade must be between 0 and 1.")
-        color = (1 - shade) * mlxarr.asarray(colors.to_rgb(self.patch.get_facecolor()))
+        color = (1 - shade) * mx.asarray(colors.to_rgb(self.patch.get_facecolor()))
         self.update({'facecolor': color, 'edgecolor': color, 'alpha': 0.5,
                      # Place shadow patch directly behind the inherited patch.
-                     'zorder': mlxarr.nextafter(self.patch.zorder, -mlxarr.inf),
+                     'zorder': mx.nextafter(self.patch.zorder, -mx.inf),
                      **kwargs})
 
     def _update_transform(self, renderer):
@@ -1076,14 +1076,14 @@ class StepPatch(PathPatch):
             %(Patch:kwdoc)s
         """
         self.orientation = orientation
-        self._edges = mlxarr.asarray(edges)
-        self._values = mlxarr.asarray(values)
-        self._baseline = mlxarr.asarray(baseline) if baseline is not None else None
+        self._edges = mx.asarray(edges)
+        self._values = mx.asarray(values)
+        self._baseline = mx.asarray(baseline) if baseline is not None else None
         self._update_path()
         super().__init__(self._path, **kwargs)
 
     def _update_path(self):
-        if mlxarr.isnan(mlxarr.sum(self._edges)):
+        if mx.isnan(mx.sum(self._edges)):
             raise ValueError('Nan values in "edges" are disallowed')
         if self._edges.size - 1 != self._values.size:
             raise ValueError('Size mismatch between "values" and "edges". '
@@ -1091,32 +1091,32 @@ class StepPatch(PathPatch):
                              f"`len(values) = {self._values.size}` and "
                              f"`len(edges) = {self._edges.size}`.")
         # Initializing with empty arrays allows supporting empty stairs.
-        verts, codes = [mlxarr.empty((0, 2))], [mlxarr.empty(0, dtype=Path.code_type)]
+        verts, codes = [mx.zeros((0, 2))], [mx.zeros(0, dtype=Path.code_type)]
 
-        _nan_mask = mlxarr.isnan(self._values)
+        _nan_mask = mx.isnan(self._values)
         if self._baseline is not None:
-            _nan_mask |= mlxarr.isnan(self._baseline)
+            _nan_mask |= mx.isnan(self._baseline)
         for idx0, idx1 in cbook.contiguous_regions(~_nan_mask):
-            x = mlxarr.repeat(self._edges[idx0:idx1+1], 2)
-            y = mlxarr.repeat(self._values[idx0:idx1], 2)
+            x = mx.repeat(self._edges[idx0:idx1+1], 2)
+            y = mx.repeat(self._values[idx0:idx1], 2)
             if self._baseline is None:
-                y = mlxarr.concatenate([y[:1], y, y[-1:]])
+                y = mx.concatenate([y[:1], y, y[-1:]])
             elif self._baseline.ndim == 0:  # single baseline value
-                y = mlxarr.concatenate([[self._baseline], y, [self._baseline]])
+                y = mx.concatenate([[self._baseline], y, [self._baseline]])
             elif self._baseline.ndim == 1:  # baseline array
-                base = mlxarr.repeat(self._baseline[idx0:idx1], 2)[::-1]
-                x = mlxarr.concatenate([x, x[::-1]])
-                y = mlxarr.concatenate([base[-1:], y, base[:1],
+                base = mx.repeat(self._baseline[idx0:idx1], 2)[::-1]
+                x = mx.concatenate([x, x[::-1]])
+                y = mx.concatenate([base[-1:], y, base[:1],
                                     base[:1], base, base[-1:]])
             else:  # no baseline
                 raise ValueError('Invalid `baseline` specified')
             if self.orientation == 'vertical':
-                xy = mlxarr.column_stack([x, y])
+                xy = mx.column_stack([x, y])
             else:
-                xy = mlxarr.column_stack([y, x])
+                xy = mx.column_stack([y, x])
             verts.append(xy)
             codes.append([Path.MOVETO] + [Path.LINETO]*(len(xy)-1))
-        self._path = Path(mlxarr.concatenate(verts), mlxarr.concatenate(codes))
+        self._path = Path(mx.concatenate(verts), mx.concatenate(codes))
 
     def get_data(self):
         """Get `.StepPatch` values, edges and baseline as namedtuple."""
@@ -1137,11 +1137,11 @@ class StepPatch(PathPatch):
         if values is None and edges is None and baseline is None:
             raise ValueError("Must set *values*, *edges* or *baseline*.")
         if values is not None:
-            self._values = mlxarr.asarray(values)
+            self._values = mx.asarray(values)
         if edges is not None:
-            self._edges = mlxarr.asarray(edges)
+            self._edges = mx.asarray(edges)
         if baseline is not None:
-            self._baseline = mlxarr.asarray(baseline)
+            self._baseline = mx.asarray(baseline)
         self._update_path()
         self.stale = True
 
@@ -1224,7 +1224,7 @@ class Polygon(Patch):
         equal to the first, we assume that the user has not explicitly passed a
         ``CLOSEPOLY`` vertex, and add it ourselves.
         """
-        xy = mlxarr.asarray(xy)
+        xy = mx.asarray(xy)
         nverts, _ = xy.shape
         if self._closed:
             # if the first and last vertex are the "same", then we assume that
@@ -1232,7 +1232,7 @@ class Polygon(Patch):
             # have to append one since the last vertex will be "ignored" by
             # Path
             if nverts == 1 or nverts > 1 and (xy[0] != xy[-1]).any():
-                xy = mlxarr.concatenate([xy, [xy[0]]])
+                xy = mx.concatenate([xy, [xy[0]]])
         else:
             # if we aren't closed, and the last vertex matches the first, then
             # we assume we have an unnecessary CLOSEPOLY vertex and remove it
@@ -1290,11 +1290,11 @@ class Wedge(Patch):
             # followed by a reversed and scaled inner ring
             v1 = arc.vertices
             v2 = arc.vertices[::-1] * (self.r - self.width) / self.r
-            v = mlxarr.concatenate([v1, v2, [(0, 0)]])
+            v = mx.concatenate([v1, v2, [(0, 0)]])
             c = [*arc.codes, connector, *arc.codes[1:], Path.CLOSEPOLY]
         else:
             # Wedge doesn't need an inner ring
-            v = mlxarr.concatenate([arc.vertices, [(0, 0), (0, 0)]])
+            v = mx.concatenate([arc.vertices, [(0, 0), (0, 0)]])
             c = [*arc.codes, connector, Path.CLOSEPOLY]
 
         # Shift and scale the wedge to the final location.
@@ -1409,8 +1409,8 @@ class Arrow(Patch):
             self._width = width
         self._patch_transform = (
             transforms.Affine2D()
-            .scale(mlxarr.hypot(self._dx, self._dy), self._width)
-            .rotate(mlxarr.arctan2(self._dy, self._dx))
+            .scale(mx.hypot(self._dx, self._dy), self._width)
+            .rotate(mx.arctan2(self._dy, self._dx))
             .translate(self._x, self._y)
             .frozen())
 
@@ -1531,19 +1531,21 @@ class FancyArrow(Polygon):
         else:
             head_length = self._head_length
 
-        distance = mlxarr.hypot(self._dx, self._dy)
+        dx = mx.asarray(self._dx)
+        dy = mx.asarray(self._dy)
+        distance = mx.sqrt(dx * dx + dy * dy)
 
         if self._length_includes_head:
             length = distance
         else:
             length = distance + head_length
-        if mlxarr.size(length) == 0:
-            self.verts = mlxarr.empty([0, 2])  # display nothing if empty
+        if length.size == 0:
+            self.verts = mx.zeros([0, 2])  # display nothing if empty
         else:
             # start by drawing horizontal arrow, point at (0, 0)
             hw, hl = head_width, head_length
             hs, lw = self._overhang, self._width
-            left_half_arrow = mlxarr.array([
+            left_half_arrow = mx.array([
                 [0.0, 0.0],                 # tip
                 [-hl, -hw / 2],             # leftmost
                 [-hl * (1 - hs), -lw / 2],  # meets stem
@@ -1552,22 +1554,25 @@ class FancyArrow(Polygon):
             ])
             # if we're not including the head, shift up by head length
             if not self._length_includes_head:
-                left_half_arrow += [head_length, 0]
+                left_half_arrow = left_half_arrow + mx.array(
+                    [head_length, 0], dtype=left_half_arrow.dtype)
             # if the head starts at 0, shift up by another head length
             if self._head_starts_at_zero:
-                left_half_arrow += [head_length / 2, 0]
+                left_half_arrow = left_half_arrow + mx.array(
+                    [head_length / 2, 0], dtype=left_half_arrow.dtype)
             # figure out the shape, and complete accordingly
             if self._shape == 'left':
                 coords = left_half_arrow
             else:
-                right_half_arrow = left_half_arrow * [1, -1]
+                right_half_arrow = left_half_arrow * mx.array(
+                    [1, -1], dtype=left_half_arrow.dtype)
                 if self._shape == 'right':
                     coords = right_half_arrow
                 elif self._shape == 'full':
                     # The half-arrows contain the midpoint of the stem,
                     # which we can omit from the full arrow. Including it
                     # twice caused a problem with xpdf.
-                    coords = mlxarr.concatenate([left_half_arrow[:-1],
+                    coords = mx.concatenate([left_half_arrow[:-1],
                                              right_half_arrow[-2::-1]])
                 else:
                     raise ValueError(f"Got unknown shape: {self._shape!r}")
@@ -1578,10 +1583,8 @@ class FancyArrow(Polygon):
                 # Account for division by zero
                 cx, sx = 0, 1
             M = [[cx, sx], [-sx, cx]]
-            self.verts = mlxarr.dot(coords, M) + [
-                self._x + self._dx,
-                self._y + self._dy,
-            ]
+            self.verts = mx.matmul(coords, mx.array(M, dtype=coords.dtype)) + mx.array(
+                [self._x + self._dx, self._y + self._dy], dtype=coords.dtype)
 
 
 _docstring.interpd.register(
@@ -1937,9 +1940,9 @@ class Annulus(Patch):
             - If float: radius of the outer circle.
             - If two floats: semi-major and -minor axes of outer ellipse.
         """
-        if mlxarr.shape(r) == (2,):
+        if mx.shape(r) == (2,):
             self.a, self.b = r
-        elif mlxarr.shape(r) == ():
+        elif mx.shape(r) == ():
             self.a = self.b = float(r)
         else:
             raise ValueError("Parameter 'r' must be one or two floats.")
@@ -1969,8 +1972,8 @@ class Annulus(Patch):
         a, b, w = self.a, self.b, self.width
         v1 = self._transform_verts(arc.vertices, a, b)
         v2 = self._transform_verts(arc.vertices[::-1], a - w, b - w)
-        v = mlxarr.vstack([v1, v2, v1[0, :], (0, 0)])
-        c = mlxarr.hstack([arc.codes, Path.MOVETO,
+        v = mx.vstack([v1, v2, v1[0, :], (0, 0)])
+        c = mx.hstack([arc.codes, Path.MOVETO,
                        arc.codes[1:], Path.MOVETO,
                        Path.CLOSEPOLY])
         self._path = Path(v, c)
@@ -2162,15 +2165,15 @@ class Arc(Ellipse):
             D2 = D * D
             discrim = dr2 - D2
             if discrim >= 0.0:
-                sign_dy = mlxarr.copysign(1, dy)  # +/-1, never 0.
-                sqrt_discrim = mlxarr.sqrt(discrim)
-                return mlxarr.array(
+                sign_dy = mx.copysign(1, dy)  # +/-1, never 0.
+                sqrt_discrim = mx.sqrt(discrim)
+                return mx.array(
                     [[(D * dy + sign_dy * dx * sqrt_discrim) / dr2,
                       (-D * dx + abs(dy) * sqrt_discrim) / dr2],
                      [(D * dy - sign_dy * dx * sqrt_discrim) / dr2,
                       (-D * dx - abs(dy) * sqrt_discrim) / dr2]])
             else:
-                return mlxarr.empty((0, 2))
+                return mx.zeros((0, 2))
 
         def segment_circle_intersect(x0, y0, x1, y1):
             epsilon = 1e-9
@@ -2204,14 +2207,14 @@ class Arc(Ellipse):
             x, y = xy.T
             # arctan2 return [-pi, pi), the rest of our angles are in
             # [0, 360], adjust as needed.
-            theta = (mlxarr.rad2deg(mlxarr.arctan2(y, x)) + 360) % 360
+            theta = (mx.rad2deg(mx.arctan2(y, x)) + 360) % 360
             thetas.update(
                 theta[(self._theta1 < theta) & (theta < self._theta2)])
         thetas = sorted(thetas) + [self._theta2]
         last_theta = self._theta1
-        theta1_rad = mlxarr.deg2rad(self._theta1)
+        theta1_rad = mx.deg2rad(self._theta1)
         inside = box_path.contains_point(
-            (mlxarr.cos(theta1_rad), mlxarr.sin(theta1_rad))
+            (mx.cos(theta1_rad), mx.sin(theta1_rad))
         )
 
         # save original path
@@ -2242,10 +2245,10 @@ class Arc(Ellipse):
         # If the width and height of ellipse are not equal, take into account
         # stretching when calculating angles to draw between
         def theta_stretch(theta, scale):
-            theta = mlxarr.deg2rad(theta)
-            x = mlxarr.cos(theta)
-            y = mlxarr.sin(theta)
-            stheta = mlxarr.rad2deg(mlxarr.arctan2(scale * y, x))
+            theta = mx.deg2rad(theta)
+            x = mx.cos(theta)
+            y = mx.sin(theta)
+            stheta = mx.rad2deg(mx.arctan2(scale * y, x))
             # arctan2 has the range [-pi, pi], we expect [0, 2*pi]
             return (stheta + 360) % 360
 
@@ -2728,16 +2731,16 @@ class BoxStyle(_Style):
             x1, y1 = x0 + width, y0 + height
 
             xs = [
-                x0, *mlxarr.linspace(x0 + hsz, x1 - hsz, 2 * dsx_n + 1),  # bottom
+                x0, *mx.linspace(x0 + hsz, x1 - hsz, 2 * dsx_n + 1),  # bottom
                 *([x1, x1 + hsz, x1, x1 - hsz] * dsy_n)[:2*dsy_n+2],  # right
-                x1, *mlxarr.linspace(x1 - hsz, x0 + hsz, 2 * dsx_n + 1),  # top
+                x1, *mx.linspace(x1 - hsz, x0 + hsz, 2 * dsx_n + 1),  # top
                 *([x0, x0 - hsz, x0, x0 + hsz] * dsy_n)[:2*dsy_n+2],  # left
             ]
             ys = [
                 *([y0, y0 - hsz, y0, y0 + hsz] * dsx_n)[:2*dsx_n+2],  # bottom
-                y0, *mlxarr.linspace(y0 + hsz, y1 - hsz, 2 * dsy_n + 1),  # right
+                y0, *mx.linspace(y0 + hsz, y1 - hsz, 2 * dsy_n + 1),  # right
                 *([y1, y1 + hsz, y1, y1 - hsz] * dsx_n)[:2*dsx_n+2],  # top
-                y1, *mlxarr.linspace(y1 - hsz, y0 + hsz, 2 * dsy_n + 1),  # left
+                y1, *mx.linspace(y1 - hsz, y0 + hsz, 2 * dsy_n + 1),  # left
             ]
 
             return [*zip(xs, ys), (xs[0], ys[0])]
@@ -2756,7 +2759,7 @@ class BoxStyle(_Style):
                                                        width, height,
                                                        mutation_size)
             # Add a trailing vertex to allow us to close the polygon correctly
-            saw_vertices = mlxarr.concatenate([saw_vertices, [saw_vertices[0]]])
+            saw_vertices = mx.concatenate([saw_vertices, [saw_vertices[0]]])
             codes = ([Path.MOVETO] +
                      [Path.CURVE3, Path.CURVE3] * ((len(saw_vertices)-1)//2) +
                      [Path.CLOSEPOLY])
@@ -2989,10 +2992,10 @@ class ConnectionStyle(_Style):
                 codes.append(Path.LINETO)
             else:
                 dx1, dy1 = x1 - cx, y1 - cy
-                d1 = mlxarr.hypot(dx1, dy1)
+                d1 = mx.hypot(dx1, dy1)
                 f1 = self.rad / d1
                 dx2, dy2 = x2 - cx, y2 - cy
-                d2 = mlxarr.hypot(dx2, dy2)
+                d2 = mx.hypot(dx2, dy2)
                 f2 = self.rad / d2
                 vertices.extend([(cx + dx1 * f1, cy + dy1 * f1),
                                  (cx, cy),
@@ -3143,7 +3146,7 @@ class ConnectionStyle(_Style):
             armA, armB = self.armA, self.armB
 
             if self.angle is not None:
-                theta0 = mlxarr.deg2rad(self.angle)
+                theta0 = mx.deg2rad(self.angle)
                 dtheta = theta1 - theta0
                 dl = dd * math.sin(dtheta)
                 dL = dd * math.cos(dtheta)
@@ -3296,7 +3299,7 @@ class ArrowStyle(_Style):
                 path_mutated, fillable = self.transmute(path_shrunk,
                                                         mutation_size,
                                                         linewidth)
-                if mlxarr.iterable(fillable):
+                if cbook.iterable(fillable):
                     # Restore the height
                     path_list = [Path(p.vertices * [1, aspect_ratio], p.codes)
                                  for p in path_mutated]
@@ -3392,7 +3395,7 @@ class ArrowStyle(_Style):
             # arrow from x0, y0 to x1, y1
             dx, dy = x0 - x1, y0 - y1
 
-            cp_distance = mlxarr.hypot(dx, dy)
+            cp_distance = mx.hypot(dx, dy)
 
             # pad_projected : amount of pad to account the
             # overshooting of the projection of the wedge
@@ -3453,7 +3456,7 @@ class ArrowStyle(_Style):
             if self._beginarrow_head or self._endarrow_head:
                 head_length = self.head_length * mutation_size
                 head_width = self.head_width * mutation_size
-                head_dist = mlxarr.hypot(head_length, head_width)
+                head_dist = mx.hypot(head_length, head_width)
                 cos_t, sin_t = head_length / head_dist, head_width / head_dist
 
             scaleA = mutation_size if self.scaleA is None else self.scaleA
@@ -3487,7 +3490,7 @@ class ArrowStyle(_Style):
 
             # This simple code will not work if ddx, ddy is greater than the
             # separation between vertices.
-            paths = [Path(mlxarr.concatenate([[(x0 + ddxA, y0 + ddyA)],
+            paths = [Path(mx.concatenate([[(x0 + ddxA, y0 + ddyA)],
                                           path.vertices[1:-1],
                                           [(x3 + ddxB, y3 + ddyB)]]),
                           path.codes)]
@@ -4484,7 +4487,7 @@ default: 'arc3'
         # The path is generated in display coordinates, then converted back to
         # data coordinates.
         _path, fillable = self._get_path_in_displaycoord()
-        if mlxarr.iterable(fillable):
+        if cbook.iterable(fillable):
             _path = Path.make_compound_path(*_path)
         return self.get_transform().inverted().transform_path(_path)
 
@@ -4523,7 +4526,7 @@ default: 'arc3'
         self._dpi_cor = renderer.points_to_pixels(1.)
         path, fillable = self._get_path_in_displaycoord()
 
-        if not mlxarr.iterable(fillable):
+        if not cbook.iterable(fillable):
             path = [path]
             fillable = [fillable]
 
@@ -4653,8 +4656,8 @@ class ConnectionPatch(FancyArrowPatch):
             axes = self.axes
 
         # preserve mixed type input (such as str, int)
-        x = mlxarr.array(xy[0])
-        y = mlxarr.array(xy[1])
+        x = mx.array(xy[0])
+        y = mx.array(xy[1])
 
         fig = self.get_figure(root=False)
         if s in ["figure points", "axes points"]:
@@ -4681,8 +4684,8 @@ class ConnectionPatch(FancyArrowPatch):
                 + xy * self.get_figure(root=True).dpi / 72)  # converted offset
         elif s == 'polar':
             theta, r = x, y
-            x = r * mlxarr.cos(theta)
-            y = r * mlxarr.sin(theta)
+            x = r * mx.cos(theta)
+            y = r * mx.sin(theta)
             trans = axes.transData
             return trans.transform((x, y))
         elif s == 'figure pixels':

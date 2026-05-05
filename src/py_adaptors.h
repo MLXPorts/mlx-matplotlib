@@ -9,6 +9,7 @@
  */
 
 #include <pybind11/pybind11.h>
+#include <vector>
 
 #include "agg_basics.h"
 #include "py_buffer.h"
@@ -35,6 +36,9 @@ class PathIterator
     py::buffer m_codes;
     mpl::BufferView<double, 2> m_vertices_view;
     mpl::BufferView<uint8_t, 1> m_codes_view;
+    std::vector<double> m_vertices_copy;
+    py::ssize_t m_vertices_n = 0;
+    bool m_use_vertices_copy = false;
 
     unsigned m_iterator;
     unsigned m_total_vertices;
@@ -72,7 +76,10 @@ class PathIterator
     {
         m_vertices = other.m_vertices;
         m_codes = other.m_codes;
-        if (m_vertices) {
+        m_vertices_copy = other.m_vertices_copy;
+        m_vertices_n = other.m_vertices_n;
+        m_use_vertices_copy = other.m_use_vertices_copy;
+        if (m_vertices && !m_use_vertices_copy) {
             m_vertices_view = mpl::BufferView<double, 2>(m_vertices);
         }
         if (m_codes) {
@@ -93,11 +100,33 @@ class PathIterator
         m_simplify_threshold = simplify_threshold;
 
         m_vertices = py::reinterpret_borrow<py::buffer>(vertices);
-        m_vertices_view = mpl::BufferView<double, 2>(m_vertices);
-        if (m_vertices_view.ndim() != 2 || m_vertices_view.shape(1) != 2) {
+        auto vertices_info = m_vertices.request(false);
+        if (vertices_info.ndim != 2 || vertices_info.shape[1] != 2) {
             throw py::value_error("Invalid vertices array");
         }
-        m_total_vertices = static_cast<unsigned>(m_vertices_view.shape(0));
+        m_vertices_n = vertices_info.shape[0];
+        m_total_vertices = static_cast<unsigned>(m_vertices_n);
+        m_vertices_copy.clear();
+        if (vertices_info.itemsize == static_cast<py::ssize_t>(sizeof(double)) &&
+            vertices_info.format == py::format_descriptor<double>::format()) {
+            m_use_vertices_copy = false;
+            m_vertices_view = mpl::BufferView<double, 2>(m_vertices);
+        } else if (vertices_info.itemsize == static_cast<py::ssize_t>(sizeof(float)) &&
+                   vertices_info.format == py::format_descriptor<float>::format()) {
+            m_use_vertices_copy = true;
+            auto *base = static_cast<unsigned char *>(vertices_info.ptr);
+            auto stride0 = vertices_info.strides[0];
+            auto stride1 = vertices_info.strides[1];
+            m_vertices_copy.reserve(static_cast<size_t>(m_vertices_n) * 2);
+            for (py::ssize_t i = 0; i < m_vertices_n; ++i) {
+                for (py::ssize_t j = 0; j < 2; ++j) {
+                    auto *value = reinterpret_cast<float *>(base + i * stride0 + j * stride1);
+                    m_vertices_copy.push_back(static_cast<double>(*value));
+                }
+            }
+        } else {
+            throw py::value_error("Unexpected vertices buffer format");
+        }
 
         if (!codes.is_none()) {
             m_codes = py::reinterpret_borrow<py::buffer>(codes);
@@ -127,8 +156,13 @@ class PathIterator
 
         const size_t idx = m_iterator++;
 
-        *x = m_vertices_view(static_cast<py::ssize_t>(idx), 0);
-        *y = m_vertices_view(static_cast<py::ssize_t>(idx), 1);
+        if (m_use_vertices_copy) {
+            *x = m_vertices_copy[idx * 2];
+            *y = m_vertices_copy[idx * 2 + 1];
+        } else {
+            *x = m_vertices_view(static_cast<py::ssize_t>(idx), 0);
+            *y = m_vertices_view(static_cast<py::ssize_t>(idx), 1);
+        }
 
         if (m_codes) {
             return m_codes_view(static_cast<py::ssize_t>(idx));
@@ -164,7 +198,7 @@ class PathIterator
 
     inline void *get_id()
     {
-        return (void *)m_vertices.ptr();
+        return m_use_vertices_copy ? (void *)m_vertices_copy.data() : (void *)m_vertices.ptr();
     }
 };
 

@@ -29,7 +29,7 @@ import matplotlib.dates as mdates
 
 # Load a array_backend record array from yahoo csv data with fields date, open, high,
 # low, close, volume, adj_close from the mpl-data/sample_data directory. The
-# record array stores the date as an mlxarr.datetime64 with a day unit ('D') in
+# record array stores the date as an mx.datetime64 with a day unit ('D') in
 # the date column.
 data = cbook.get_sample_data('goog.npz')['price_data']
 

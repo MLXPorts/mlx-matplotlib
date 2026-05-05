@@ -14,14 +14,14 @@ where you'd normally pass in your data.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
-mlxarr.random.seed(19680801)
+import mlx.core as mx
+mx.random.seed(19680801)
 
-data = {'a': mlxarr.arange(50),
-        'c': mlxarr.random.randint(0, 50, 50),
-        'd': mlxarr.random.randn(50)}
-data['b'] = data['a'] + 10 * mlxarr.random.randn(50)
-data['d'] = mlxarr.abs(data['d']) * 100
+data = {'a': mx.arange(50),
+        'c': mx.random.randint(0, 50, 50),
+        'd': mx.random.randn(50)}
+data['b'] = data['a'] + 10 * mx.random.randn(50)
+data['d'] = mx.abs(data['d']) * 100
 
 fig, ax = plt.subplots()
 ax.scatter('a', 'b', c='c', s='d', data=data)

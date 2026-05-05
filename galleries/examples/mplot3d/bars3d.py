@@ -8,9 +8,9 @@ planes y=0, y=1, etc.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 
 fig = plt.figure()
@@ -20,8 +20,8 @@ colors = ['r', 'g', 'b', 'y']
 yticks = [3, 2, 1, 0]
 for c, k in zip(colors, yticks):
     # Generate the random data for the y=k 'layer'.
-    xs = mlxarr.arange(20)
-    ys = mlxarr.random.rand(20)
+    xs = mx.arange(20)
+    ys = mx.random.rand(20)
 
     # You can provide either a single color or an array with the same length as
     # xs and ys. To demonstrate this, we color the first bar of each set cyan.

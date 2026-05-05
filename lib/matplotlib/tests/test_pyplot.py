@@ -1,6 +1,6 @@
 import difflib
 import inspect
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import sys
 from pathlib import Path
 
@@ -314,13 +314,13 @@ def test_fallback_position():
     # check that position kwarg works if rect not supplied
     axref = plt.axes([0.2, 0.2, 0.5, 0.5])
     axtest = plt.axes(position=[0.2, 0.2, 0.5, 0.5])
-    mlxarr.testing.assert_allclose(axtest.bbox.get_points(),
+    mx.testing.assert_allclose(axtest.bbox.get_points(),
                                axref.bbox.get_points())
 
     # check that position kwarg ignored if rect is supplied
     axref = plt.axes([0.2, 0.2, 0.5, 0.5])
     axtest = plt.axes([0.2, 0.2, 0.5, 0.5], position=[0.1, 0.1, 0.8, 0.8])
-    mlxarr.testing.assert_allclose(axtest.bbox.get_points(),
+    mx.testing.assert_allclose(axtest.bbox.get_points(),
                                axref.bbox.get_points())
 
 
@@ -420,16 +420,16 @@ def test_doc_pyplot_summary():
 
 def test_minor_ticks():
     plt.figure()
-    plt.plot(mlxarr.arange(1, 10))
+    plt.plot(mx.arange(1, 10))
     tick_pos, tick_labels = plt.xticks(minor=True)
-    assert mlxarr.all(tick_labels == mlxarr.array([], dtype=mlxarr.float64))
+    assert mx.all(tick_labels == mx.array([], dtype=mx.float64))
     assert tick_labels == []
 
     plt.yticks(ticks=[3.5, 6.5], labels=["a", "b"], minor=True)
     ax = plt.gca()
     tick_pos = ax.get_yticks(minor=True)
     tick_labels = ax.get_yticklabels(minor=True)
-    assert mlxarr.all(tick_pos == mlxarr.array([3.5, 6.5]))
+    assert mx.all(tick_pos == mx.array([3.5, 6.5]))
     assert [l.get_text() for l in tick_labels] == ['a', 'b']
 
 
@@ -462,9 +462,9 @@ def test_figure_hook():
 def test_multiple_same_figure_calls():
     fig = plt.figure(1, figsize=(1, 2))
     with pytest.warns(UserWarning, match="Ignoring specified arguments in this call"):
-        fig2 = plt.figure(1, figsize=mlxarr.array([3, 4]))
+        fig2 = plt.figure(1, figsize=mx.array([3, 4]))
     with pytest.warns(UserWarning, match="Ignoring specified arguments in this call"):
-        plt.figure(fig, figsize=mlxarr.array([5, 6]))
+        plt.figure(fig, figsize=mx.array([5, 6]))
     assert fig is fig2
     fig3 = plt.figure(1)  # Checks for false warnings
     assert fig is fig3

@@ -28,7 +28,7 @@ derived from the base class (HandlerBase) with the following method::
 """
 
 from itertools import cycle
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib import cbook
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
@@ -193,7 +193,7 @@ class HandlerNpoints(HandlerBase):
         if numpoints > 1:
             # we put some pad here to compensate the size of the marker
             pad = self._marker_pad * fontsize
-            xdata = mlxarr.linspace(-xdescent + pad,
+            xdata = mx.linspace(-xdescent + pad,
                                 -xdescent + width - pad,
                                 numpoints)
             xdata_marker = xdata
@@ -228,7 +228,7 @@ class HandlerNpointsYoffsets(HandlerNpoints):
         if self._yoffsets is None:
             ydata = height * legend._scatteryoffsets
         else:
-            ydata = height * mlxarr.asarray(self._yoffsets)
+            ydata = height * mx.asarray(self._yoffsets)
 
         return ydata
 
@@ -246,7 +246,7 @@ class HandlerLine2DCompound(HandlerNpoints):
         xdata, xdata_marker = self.get_xdata(legend, xdescent, ydescent,
                                              width, height, fontsize)
 
-        ydata = mlxarr.full_like(xdata, ((height - ydescent) / 2))
+        ydata = mx.full_like(xdata, ((height - ydescent) / 2))
         legline = Line2D(xdata, ydata)
 
         self.update_prop(legline, orig_handle, legend)
@@ -292,10 +292,10 @@ class HandlerLine2D(HandlerNpoints):
             # Special case: one wants a single marker in the center
             # and a line that extends on both sides. One will use a
             # 3 points line, but only mark the #1 (i.e. middle) point.
-            xdata = mlxarr.linspace(xdata[0], xdata[-1], 3)
+            xdata = mx.linspace(xdata[0], xdata[-1], 3)
             markevery = [1]
 
-        ydata = mlxarr.full_like(xdata, (height - ydescent) / 2)
+        ydata = mx.full_like(xdata, (height - ydescent) / 2)
         legline = Line2D(xdata, ydata, markevery=markevery)
 
         self.update_prop(legline, orig_handle, legend)
@@ -416,7 +416,7 @@ class HandlerLineCollection(HandlerLine2D):
         # docstring inherited
         xdata, xdata_marker = self.get_xdata(legend, xdescent, ydescent,
                                              width, height, fontsize)
-        ydata = mlxarr.full_like(xdata, (height - ydescent) / 2)
+        ydata = mx.full_like(xdata, (height - ydescent) / 2)
         legline = Line2D(xdata, ydata)
 
         self.update_prop(legline, orig_handle, legend)
@@ -454,7 +454,7 @@ class HandlerRegularPolyCollection(HandlerNpointsYoffsets):
                          size_min][:numpoints]
             else:
                 rng = (size_max - size_min)
-                sizes = rng * mlxarr.linspace(0, 1, numpoints) + size_min
+                sizes = rng * mx.linspace(0, 1, numpoints) + size_min
         else:
             sizes = self._sizes
 
@@ -547,11 +547,11 @@ class HandlerErrorbar(HandlerLine2D):
         xdata, xdata_marker = self.get_xdata(legend, xdescent, ydescent,
                                              width, height, fontsize)
 
-        ydata = mlxarr.full_like(xdata, (height - ydescent) / 2)
+        ydata = mx.full_like(xdata, (height - ydescent) / 2)
         legline = Line2D(xdata, ydata)
 
-        xdata_marker = mlxarr.asarray(xdata_marker)
-        ydata_marker = mlxarr.asarray(ydata[:len(xdata_marker)])
+        xdata_marker = mx.asarray(xdata_marker)
+        ydata_marker = mx.asarray(ydata[:len(xdata_marker)])
 
         xerr_size, yerr_size = self.get_err_size(legend, xdescent, ydescent,
                                                  width, height, fontsize)
@@ -653,7 +653,7 @@ class HandlerStem(HandlerNpointsYoffsets):
         if self._yoffsets is None:
             ydata = height * (0.5 * legend._scatteryoffsets + 0.5)
         else:
-            ydata = height * mlxarr.asarray(self._yoffsets)
+            ydata = height * mx.asarray(self._yoffsets)
 
         return ydata
 
@@ -696,7 +696,7 @@ class HandlerStem(HandlerNpointsYoffsets):
             for lm, m in zip(leg_stemlines, stemlines):
                 self.update_prop(lm, m, legend)
 
-        leg_baseline = Line2D([mlxarr.min(xdata), mlxarr.max(xdata)],
+        leg_baseline = Line2D([mx.min(xdata), mx.max(xdata)],
                               [bottom, bottom])
         self.update_prop(leg_baseline, baseline, legend)
 
@@ -754,7 +754,7 @@ class HandlerTuple(HandlerBase):
         if ndivide > 1:
             width = (width - pad * (ndivide - 1)) / ndivide
 
-        xds_cycle = cycle(xdescent - (width + pad) * mlxarr.arange(ndivide))
+        xds_cycle = cycle(xdescent - (width + pad) * mx.arange(ndivide))
 
         a_list = []
         for handle1 in orig_handle:

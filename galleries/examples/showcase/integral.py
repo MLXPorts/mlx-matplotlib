@@ -13,7 +13,7 @@ Although this is a simple example, it demonstrates some important tweaks:
 * Custom tick placement and labels.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.patches import Polygon
 
 
@@ -22,7 +22,7 @@ def func(x):
 
 
 a, b = 2, 9  # integral limits
-x = mlxarr.linspace(0, 10)
+x = mx.linspace(0, 10)
 y = func(x)
 
 fig, ax = plt.subplots()
@@ -30,7 +30,7 @@ ax.plot(x, y, 'r', linewidth=2)
 ax.set_ylim(bottom=0)
 
 # Make the shaded region
-ix = mlxarr.linspace(a, b)
+ix = mx.linspace(a, b)
 iy = func(ix)
 verts = [(a, 0), *zip(ix, iy), (b, 0)]
 poly = Polygon(verts, facecolor='0.9', edgecolor='0.5')

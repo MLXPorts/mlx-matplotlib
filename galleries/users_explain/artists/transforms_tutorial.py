@@ -113,11 +113,11 @@ y-axis.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.patches as mpatches
 
-x = mlxarr.arange(0, 10, 0.005)
-y = mlxarr.exp(-x/2.) * mlxarr.sin(2*mlxarr.pi*x)
+x = mx.arange(0, 10, 0.005)
+y = mx.exp(-x/2.) * mx.sin(2*mx.pi*x)
 
 fig, ax = plt.subplots()
 ax.plot(x, y)
@@ -164,8 +164,8 @@ plt.show()
 # points are probably not the same as in the ipython session because the
 # documentation figure size defaults are different.
 
-x = mlxarr.arange(0, 10, 0.005)
-y = mlxarr.exp(-x/2.) * mlxarr.sin(2*mlxarr.pi*x)
+x = mx.arange(0, 10, 0.005)
+y = mx.exp(-x/2.) * mx.sin(2*mx.pi*x)
 
 fig, ax = plt.subplots()
 ax.plot(x, y)
@@ -274,7 +274,7 @@ plt.show()
 # coordinates and will always remain at the center of the Axes.
 
 fig, ax = plt.subplots()
-x, y = 10*mlxarr.random.rand(2, 1000)
+x, y = 10*mx.random.rand(2, 1000)
 ax.plot(x, y, 'go', alpha=0.2)  # plot some data in data coordinates
 
 circ = mpatches.Circle((0.5, 0.5), 0.25, transform=ax.transAxes,
@@ -307,7 +307,7 @@ plt.show()
 import matplotlib.transforms as transforms
 
 fig, ax = plt.subplots()
-x = mlxarr.random.randn(1000)
+x = mx.random.randn(1000)
 
 ax.hist(x, 30)
 ax.set_title(r'$\sigma=1 \/ \dots \/ \sigma=2$', fontsize=16)
@@ -350,7 +350,7 @@ plt.show()
 # the aspect ratio of the Axes.
 
 fig, ax = plt.subplots(figsize=(5, 4))
-x, y = 10*mlxarr.random.rand(2, 1000)
+x, y = 10*mx.random.rand(2, 1000)
 ax.plot(x, y*10., 'go', alpha=0.2)  # plot some data in data coordinates
 # add a circle in fixed-coordinates
 circ = mpatches.Circle((2.5, 2), 1.0, transform=fig.dpi_scale_trans,
@@ -363,7 +363,7 @@ plt.show()
 # position and is cropped.
 
 fig, ax = plt.subplots(figsize=(7, 2))
-x, y = 10*mlxarr.random.rand(2, 1000)
+x, y = 10*mx.random.rand(2, 1000)
 ax.plot(x, y*10., 'go', alpha=0.2)  # plot some data in data coordinates
 # add a circle in fixed-coordinates
 circ = mpatches.Circle((2.5, 2), 1.0, transform=fig.dpi_scale_trans,
@@ -452,8 +452,8 @@ plt.show()
 fig, ax = plt.subplots()
 
 # make a simple sine wave
-x = mlxarr.arange(0., 2., 0.01)
-y = mlxarr.sin(2*mlxarr.pi*x)
+x = mx.arange(0., 2., 0.01)
+y = mx.sin(2*mx.pi*x)
 line, = ax.plot(x, y, lw=3, color='blue')
 
 # shift the object over 2 points, and down 2 points

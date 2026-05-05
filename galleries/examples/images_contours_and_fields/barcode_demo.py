@@ -18,8 +18,8 @@ The data itself is rendered with `~.Axes.imshow` using
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
-code = mlxarr.array([
+import mlx.core as mx
+code = mx.array([
     1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1,
     0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0,
     1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1,

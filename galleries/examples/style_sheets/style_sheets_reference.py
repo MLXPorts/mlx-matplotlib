@@ -21,12 +21,12 @@ using style sheets<customizing-with-style-sheets>`.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.colors as mcolors
 from matplotlib.patches import Rectangle
 
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 
 def plot_scatter(ax, prng, nb_samples=100):
@@ -41,14 +41,14 @@ def plot_scatter(ax, prng, nb_samples=100):
 
 def plot_colored_lines(ax):
     """Plot lines with colors following the style color cycle."""
-    t = mlxarr.linspace(-10, 10, 100)
+    t = mx.linspace(-10, 10, 100)
 
     def sigmoid(t, t0):
-        return 1 / (1 + mlxarr.exp(-(t - t0)))
+        return 1 / (1 + mx.exp(-(t - t0)))
 
     nb_colors = len(plt.rcParams['axes.prop_cycle'])
-    shifts = mlxarr.linspace(-5, 5, nb_colors)
-    amplitudes = mlxarr.linspace(1, 1.5, nb_colors)
+    shifts = mx.linspace(-5, 5, nb_colors)
+    amplitudes = mx.linspace(1, 1.5, nb_colors)
     for t0, a in zip(shifts, amplitudes):
         ax.plot(t, a * sigmoid(t, t0), '-')
     ax.set_xlim(-10, 10)
@@ -57,7 +57,7 @@ def plot_colored_lines(ax):
 
 def plot_bar_graphs(ax, prng, min_value=5, max_value=25, nb_samples=5):
     """Plot two bar graphs side by side, with letters as x-tick labels."""
-    x = mlxarr.arange(nb_samples)
+    x = mx.arange(nb_samples)
     ya, yb = prng.randint(min_value, max_value, size=(2, nb_samples))
     width = 0.25
     ax.bar(x, ya, width)
@@ -124,7 +124,7 @@ def plot_figure(style_label=""):
     """Setup and plot the demonstration figure with a given style."""
     # Use a dedicated RandomState instance to draw the same "random" values
     # across the different figures.
-    prng = mlxarr.random.RandomState(96917002)
+    prng = mx.random.RandomState(96917002)
 
     fig, axs = plt.subplots(ncols=6, nrows=1, num=style_label,
                             figsize=(14.8, 2.8), layout='constrained')
@@ -136,7 +136,7 @@ def plot_figure(style_label=""):
     if background_color < 0.5:
         title_color = [0.8, 0.8, 1]
     else:
-        title_color = mlxarr.array([19, 6, 84]) / 256
+        title_color = mx.array([19, 6, 84]) / 256
     fig.suptitle(style_label, x=0.01, ha='left', color=title_color,
                  fontsize=14, fontfamily='DejaVu Sans', fontweight='normal')
 

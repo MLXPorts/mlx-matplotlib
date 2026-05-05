@@ -21,31 +21,31 @@ The first plot shows the typical way of visualizing multiple time series by
 overlaying them on top of each other with ``plt.plot`` and a small value of
 ``alpha``. The second and third plots show how to reinterpret the data as a 2d
 histogram, with optional interpolation between data points, by using
-``mlxarr.histogram2d`` and ``plt.pcolormesh``.
+``mx.histogram2d`` and ``plt.pcolormesh``.
 """
 
 import time
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 fig, axes = plt.subplots(nrows=3, figsize=(6, 8), layout='constrained')
 
 # Fix random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 # Make some data; a 1D random walk + small fraction of sine waves
 num_series = 1000
 num_points = 100
 SNR = 0.10  # Signal to Noise Ratio
-x = mlxarr.linspace(0, 4 * mlxarr.pi, num_points)
+x = mx.linspace(0, 4 * mx.pi, num_points)
 # Generate unbiased Gaussian random walks
-Y = mlxarr.cumsum(mlxarr.random.randn(num_series, num_points), axis=-1)
+Y = mx.cumsum(mx.random.randn(num_series, num_points), axis=-1)
 # Generate sinusoidal signals
 num_signal = round(SNR * num_series)
-phi = (mlxarr.pi / 8) * mlxarr.random.randn(num_signal, 1)  # small random offset
+phi = (mx.pi / 8) * mx.random.randn(num_signal, 1)  # small random offset
 Y[-num_signal:] = (
-    mlxarr.sqrt(mlxarr.arange(num_points))  # random walk RMS scaling factor
-    * (mlxarr.sin(x - phi)
-       + 0.05 * mlxarr.random.randn(num_signal, num_points))  # small random noise
+    mx.sqrt(mx.arange(num_points))  # random walk RMS scaling factor
+    * (mx.sin(x - phi)
+       + 0.05 * mx.random.randn(num_signal, num_points))  # small random noise
 )
 
 
@@ -65,9 +65,9 @@ print(f"{toc-tic:.3f} sec. elapsed")
 tic = time.time()
 # Linearly interpolate between the points in each time series
 num_fine = 800
-x_fine = mlxarr.linspace(x.min(), x.max(), num_fine)
-y_fine = mlxarr.concatenate([mlxarr.interp(x_fine, x, y_row) for y_row in Y])
-x_fine = mlxarr.broadcast_to(x_fine, (num_series, num_fine)).ravel()
+x_fine = mx.linspace(x.min(), x.max(), num_fine)
+y_fine = mx.concatenate([mx.interp(x_fine, x, y_row) for y_row in Y])
+x_fine = mx.broadcast_to(x_fine, (num_series, num_fine)).ravel()
 
 
 # Plot (x, y) points in 2d histogram with log colorscale
@@ -75,7 +75,7 @@ x_fine = mlxarr.broadcast_to(x_fine, (num_series, num_fine)).ravel()
 # You can tune vmax to make signal more visible
 cmap = plt.colormaps["plasma"]
 cmap = cmap.with_extremes(bad=cmap(0))
-h, xedges, yedges = mlxarr.histogram2d(x_fine, y_fine, bins=[400, 100])
+h, xedges, yedges = mx.histogram2d(x_fine, y_fine, bins=[400, 100])
 pcm = axes[1].pcolormesh(xedges, yedges, h.T, cmap=cmap,
                          norm="log", vmax=1.5e2, rasterized=True)
 fig.colorbar(pcm, ax=axes[1], label="# points", pad=0)

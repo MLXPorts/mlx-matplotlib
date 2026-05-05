@@ -1,8 +1,8 @@
 from collections.abc import MutableMapping
 import functools
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib as mpl
-from matplotlib import _api, _docstring
+from matplotlib import _api, cbook, _docstring
 from matplotlib.artist import allow_rasterization
 import matplotlib.transforms as mtransforms
 import matplotlib.patches as mpatches
@@ -270,7 +270,7 @@ class Spine(mpatches.Patch):
                 if low > high:
                     low, high = high, low
 
-                self._path = mpath.Path.arc(mlxarr.rad2deg(low), mlxarr.rad2deg(high))
+                self._path = mpath.Path.arc(mx.rad2deg(low), mx.rad2deg(high))
 
                 if self.spine_type == 'bottom':
                     if self.axis is None:
@@ -380,7 +380,7 @@ class Spine(mpatches.Patch):
                               'bottom': (0, -1), 'top': (0, 1),
                               }[self.spine_type]
                 # calculate x and y offset in dots
-                offset_dots = amount * mlxarr.array(offset_vec) / 72
+                offset_dots = amount * mx.array(offset_vec) / 72
                 return (base_transform
                         + mtransforms.ScaledTranslation(
                             *offset_dots, self.get_figure(root=False).dpi_scale_trans))
@@ -430,7 +430,7 @@ class Spine(mpatches.Patch):
         if self.spine_type == 'circle':
             raise ValueError(
                 'set_bounds() method incompatible with circular spines')
-        if high is None and mlxarr.iterable(low):
+        if high is None and cbook.iterable(low):
             low, high = low
         old_low, old_high = self._get_bounds_or_viewLim()
         if low is None:

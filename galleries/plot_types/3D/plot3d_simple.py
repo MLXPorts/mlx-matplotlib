@@ -6,14 +6,14 @@ plot(xs, ys, zs)
 See `~mpl_toolkits.mplot3d.axes3d.Axes3D.plot`.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 plt.style.use('_mpl-gallery')
 
 # Make data
 n = 100
-xs = mlxarr.linspace(0, 1, n)
-ys = mlxarr.sin(xs * 6 * mlxarr.pi)
-zs = mlxarr.cos(xs * 6 * mlxarr.pi)
+xs = mx.linspace(0, 1, n)
+ys = mx.sin(xs * 6 * mx.pi)
+zs = mx.cos(xs * 6 * mx.pi)
 
 # Plot
 fig, ax = plt.subplots(subplot_kw={"projection": "3d"})

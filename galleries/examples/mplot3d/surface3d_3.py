@@ -7,24 +7,24 @@ Demonstrates plotting a 3D surface colored in a checkerboard pattern.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.ticker import LinearLocator
 
 ax = plt.figure().add_subplot(projection='3d')
 
 # Make data.
-X = mlxarr.arange(-5, 5, 0.25)
+X = mx.arange(-5, 5, 0.25)
 xlen = len(X)
-Y = mlxarr.arange(-5, 5, 0.25)
+Y = mx.arange(-5, 5, 0.25)
 ylen = len(Y)
-X, Y = mlxarr.meshgrid(X, Y)
-R = mlxarr.sqrt(X**2 + Y**2)
-Z = mlxarr.sin(R)
+X, Y = mx.meshgrid(X, Y)
+R = mx.sqrt(X**2 + Y**2)
+Z = mx.sin(R)
 
 # Create an empty array of strings with the same shape as the meshgrid, and
 # populate it with two colors in a checkerboard pattern.
 colortuple = ('y', 'b')
-colors = mlxarr.empty(X.shape, dtype=str)
+colors = mx.zeros(X.shape, dtype=str)
 for y in range(ylen):
     for x in range(xlen):
         colors[y, x] = colortuple[(x + y) % len(colortuple)]

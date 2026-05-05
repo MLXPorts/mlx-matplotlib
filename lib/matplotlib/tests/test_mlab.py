@@ -1,37 +1,37 @@
 import sys
 from matplotlib.mlx_testing import (assert_allclose, assert_almost_equal,
                            assert_array_equal, assert_array_almost_equal_nulp)
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import pytest
 
 from matplotlib import mlab
 
 
 def test_window():
-    mlxarr.random.seed(0)
+    mx.random.seed(0)
     n = 1000
-    rand = mlxarr.random.standard_normal(n) + 100
-    ones = mlxarr.ones(n)
+    rand = mx.random.standard_normal(n) + 100
+    ones = mx.ones(n)
     assert_array_equal(mlab.window_none(ones), ones)
     assert_array_equal(mlab.window_none(rand), rand)
-    assert_array_equal(mlxarr.hanning(len(rand)) * rand, mlab.window_hanning(rand))
-    assert_array_equal(mlxarr.hanning(len(ones)), mlab.window_hanning(ones))
+    assert_array_equal(mx.hanning(len(rand)) * rand, mlab.window_hanning(rand))
+    assert_array_equal(mx.hanning(len(ones)), mlab.window_hanning(ones))
 
 
 class TestDetrend:
     def setup_method(self):
-        mlxarr.random.seed(0)
+        mx.random.seed(0)
         n = 1000
-        x = mlxarr.linspace(0., 100, n)
+        x = mx.linspace(0., 100, n)
 
-        self.sig_zeros = mlxarr.zeros(n)
+        self.sig_zeros = mx.zeros(n)
 
         self.sig_off = self.sig_zeros + 100.
-        self.sig_slope = mlxarr.linspace(-10., 90., n)
+        self.sig_slope = mx.linspace(-10., 90., n)
         self.sig_slope_mean = x - x.mean()
 
         self.sig_base = (
-            mlxarr.random.standard_normal(n) + mlxarr.sin(x*2*mlxarr.pi/(n/100)))
+            mx.random.standard_normal(n) + mx.sin(x*2*mx.pi/(n/100)))
         self.sig_base -= self.sig_base.mean()
 
     def allclose(self, *args):
@@ -45,16 +45,16 @@ class TestDetrend:
         for sig in [
                 5.5, self.sig_off, self.sig_slope, self.sig_base,
                 (self.sig_base + self.sig_slope + self.sig_off).tolist(),
-                mlxarr.vstack([self.sig_base,  # 2D case.
+                mx.vstack([self.sig_base,  # 2D case.
                            self.sig_base + self.sig_off,
                            self.sig_base + self.sig_slope,
                            self.sig_base + self.sig_off + self.sig_slope]),
-                mlxarr.vstack([self.sig_base,  # 2D transposed case.
+                mx.vstack([self.sig_base,  # 2D transposed case.
                            self.sig_base + self.sig_off,
                            self.sig_base + self.sig_slope,
                            self.sig_base + self.sig_off + self.sig_slope]).T,
         ]:
-            if isinstance(sig, mlxarr.ndarray):
+            if isinstance(sig, mx.array):
                 assert_array_equal(mlab.detrend_none(sig), sig)
             else:
                 assert mlab.detrend_none(sig) == sig
@@ -83,9 +83,9 @@ class TestDetrend:
         self.allclose(mlab.detrend_mean(input.tolist(), axis=0), target)
 
     def test_detrend_mean_2d(self):
-        input = mlxarr.vstack([self.sig_off,
+        input = mx.vstack([self.sig_off,
                            self.sig_base + self.sig_off])
-        target = mlxarr.vstack([self.sig_zeros,
+        target = mx.vstack([self.sig_zeros,
                             self.sig_base])
         self.allclose(mlab.detrend_mean(input), target)
         self.allclose(mlab.detrend_mean(input, axis=None), target)
@@ -95,11 +95,11 @@ class TestDetrend:
         self.allclose(
             mlab.detrend(input.T, key="constant", axis=None), target.T)
 
-        input = mlxarr.vstack([self.sig_base,
+        input = mx.vstack([self.sig_base,
                            self.sig_base + self.sig_off,
                            self.sig_base + self.sig_slope,
                            self.sig_base + self.sig_off + self.sig_slope])
-        target = mlxarr.vstack([self.sig_base,
+        target = mx.vstack([self.sig_base,
                             self.sig_base,
                             self.sig_base + self.sig_slope_mean,
                             self.sig_base + self.sig_slope_mean])
@@ -113,11 +113,11 @@ class TestDetrend:
 
     def test_detrend_ValueError(self):
         for signal, kwargs in [
-                (self.sig_slope[mlxarr.newaxis], {"key": "spam"}),
-                (self.sig_slope[mlxarr.newaxis], {"key": 5}),
+                (self.sig_slope[mx.newaxis], {"key": "spam"}),
+                (self.sig_slope[mx.newaxis], {"key": 5}),
                 (5.5, {"axis": 0}),
                 (self.sig_slope, {"axis": 1}),
-                (self.sig_slope[mlxarr.newaxis], {"axis": 2}),
+                (self.sig_slope[mx.newaxis], {"axis": 2}),
         ]:
             with pytest.raises(ValueError):
                 mlab.detrend(signal, **kwargs)
@@ -126,7 +126,7 @@ class TestDetrend:
         for signal, kwargs in [
                 (5.5, {"axis": 0}),
                 (self.sig_slope, {"axis": 1}),
-                (self.sig_slope[mlxarr.newaxis], {"axis": 2}),
+                (self.sig_slope[mx.newaxis], {"axis": 2}),
         ]:
             with pytest.raises(ValueError):
                 mlab.detrend_mean(signal, **kwargs)
@@ -152,10 +152,10 @@ class TestDetrend:
         self.allclose(mlab.detrend_linear(input.tolist()), target)
 
     def test_detrend_linear_2d(self):
-        input = mlxarr.vstack([self.sig_off,
+        input = mx.vstack([self.sig_off,
                            self.sig_slope,
                            self.sig_slope + self.sig_off])
-        target = mlxarr.vstack([self.sig_zeros,
+        target = mx.vstack([self.sig_zeros,
                             self.sig_zeros,
                             self.sig_zeros])
         self.allclose(
@@ -168,7 +168,7 @@ class TestDetrend:
             mlab.detrend(input, key=mlab.detrend_linear, axis=1), target)
 
         with pytest.raises(ValueError):
-            mlab.detrend_linear(self.sig_slope[mlxarr.newaxis])
+            mlab.detrend_linear(self.sig_slope[mx.newaxis])
 
 
 @pytest.mark.parametrize('iscomplex', [False, True],
@@ -210,7 +210,7 @@ class TestSpectral:
              nover_density, pad_to_density, pad_to_spectrum):
         Fs = 100.
 
-        x = mlxarr.arange(0, 10, 1 / Fs)
+        x = mx.arange(0, 10, 1 / Fs)
         if len_x is not None:
             x = x[:len_x]
 
@@ -235,7 +235,7 @@ class TestSpectral:
         if pad_to_density is None:
             pad_to_density_real = NFFT_density_real
         elif pad_to_density < 0:
-            pad_to_density = int(2**mlxarr.ceil(mlxarr.log2(NFFT_density_real)))
+            pad_to_density = int(2**mx.ceil(mx.log2(NFFT_density_real)))
             pad_to_density_real = pad_to_density
         else:
             pad_to_density_real = pad_to_density
@@ -263,42 +263,42 @@ class TestSpectral:
             # frequencies for specgram, psd, and csd
             # need to handle even and odd differently
             if pad_to_density_real % 2:
-                freqs_density = mlxarr.linspace(0, Fs / 2,
+                freqs_density = mx.linspace(0, Fs / 2,
                                             num=pad_to_density_real,
                                             endpoint=False)[::2]
             else:
-                freqs_density = mlxarr.linspace(0, Fs / 2,
+                freqs_density = mx.linspace(0, Fs / 2,
                                             num=pad_to_density_real // 2 + 1)
 
             # frequencies for complex, magnitude, angle, and phase spectrums
             # need to handle even and odd differently
             if pad_to_spectrum_real % 2:
-                freqs_spectrum = mlxarr.linspace(0, Fs / 2,
+                freqs_spectrum = mx.linspace(0, Fs / 2,
                                              num=pad_to_spectrum_real,
                                              endpoint=False)[::2]
             else:
-                freqs_spectrum = mlxarr.linspace(0, Fs / 2,
+                freqs_spectrum = mx.linspace(0, Fs / 2,
                                              num=pad_to_spectrum_real // 2 + 1)
         else:
             # frequencies for specgram, psd, and csd
             # need to handle even and odd differently
             if pad_to_density_real % 2:
-                freqs_density = mlxarr.linspace(-Fs / 2, Fs / 2,
+                freqs_density = mx.linspace(-Fs / 2, Fs / 2,
                                             num=2 * pad_to_density_real,
                                             endpoint=False)[1::2]
             else:
-                freqs_density = mlxarr.linspace(-Fs / 2, Fs / 2,
+                freqs_density = mx.linspace(-Fs / 2, Fs / 2,
                                             num=pad_to_density_real,
                                             endpoint=False)
 
             # frequencies for complex, magnitude, angle, and phase spectrums
             # need to handle even and odd differently
             if pad_to_spectrum_real % 2:
-                freqs_spectrum = mlxarr.linspace(-Fs / 2, Fs / 2,
+                freqs_spectrum = mx.linspace(-Fs / 2, Fs / 2,
                                              num=2 * pad_to_spectrum_real,
                                              endpoint=False)[1::2]
             else:
-                freqs_spectrum = mlxarr.linspace(-Fs / 2, Fs / 2,
+                freqs_spectrum = mx.linspace(-Fs / 2, Fs / 2,
                                              num=pad_to_spectrum_real,
                                              endpoint=False)
 
@@ -311,13 +311,13 @@ class TestSpectral:
         if NFFT_specgram_real % 2:
             t_specgram += 1 / Fs / 2
         if len(t_specgram) == 0:
-            t_specgram = mlxarr.array([NFFT_specgram_real / (2 * Fs)])
-        t_spectrum = mlxarr.array([NFFT_spectrum_real / (2 * Fs)])
+            t_specgram = mx.array([NFFT_specgram_real / (2 * Fs)])
+        t_spectrum = mx.array([NFFT_spectrum_real / (2 * Fs)])
         t_density = t_specgram
 
-        y = mlxarr.zeros_like(x)
+        y = mx.zeros_like(x)
         for i, fstim in enumerate(fstims):
-            y += mlxarr.sin(fstim * x * mlxarr.pi * 2) * 10**i
+            y += mx.sin(fstim * x * mx.pi * 2) * 10**i
 
         if iscomplex:
             y = y.astype('complex')
@@ -359,7 +359,7 @@ class TestSpectral:
         assert resfreqs.argmax() == len(resfreqs)-1
         assert_allclose(resfreqs, targfreqs, atol=1e-06)
         for fstim in fstims:
-            i = mlxarr.abs(resfreqs - fstim).argmin()
+            i = mx.abs(resfreqs - fstim).argmin()
             assert vals[i] > vals[i+2]
             assert vals[i] > vals[i-2]
 
@@ -370,7 +370,7 @@ class TestSpectral:
 
         # if twosided, do the test for each side
         if fsp.min() < 0:
-            fspa = mlxarr.abs(fsp)
+            fspa = mx.abs(fsp)
             zeroind = fspa.argmin()
             self.check_maxfreq(spec[:zeroind], fspa[:zeroind], fstims)
             self.check_maxfreq(spec[zeroind:], fspa[zeroind:], fstims)
@@ -399,7 +399,7 @@ class TestSpectral:
             {"y": self.y, "NFFT": 10, "noverlap": 20},  # noverlap > NFFT.
             {"NFFT": 10, "noverlap": 10},  # noverlap == NFFT.
             {"y": self.y, "NFFT": 10,
-             "window": mlxarr.ones(9)},  # len(win) != NFFT.
+             "window": mx.ones(9)},  # len(win) != NFFT.
         ]:
             with pytest.raises(ValueError):
                 mlab._spectral_helper(x=self.y, **kwargs)
@@ -459,8 +459,8 @@ class TestSpectral:
 
         spec0, _ = mlab.csd(NFFT=self.NFFT_density, **sargs)
         spec1, _ = mlab.csd(NFFT=self.NFFT_density*2, **sargs)
-        assert_almost_equal(mlxarr.sum(mlxarr.conjugate(spec0)*spec0).real,
-                            mlxarr.sum(mlxarr.conjugate(spec1/2)*spec1/2).real)
+        assert_almost_equal(mx.sum(mx.conjugate(spec0)*spec0).real,
+                            mx.sum(mx.conjugate(spec1/2)*spec1/2).real)
 
     def test_psd(self):
         freqs = self.freqs_density
@@ -475,19 +475,19 @@ class TestSpectral:
 
     @pytest.mark.parametrize(
         'make_data, detrend',
-        [(mlxarr.zeros, mlab.detrend_mean), (mlxarr.zeros, 'mean'),
-         (mlxarr.arange, mlab.detrend_linear), (mlxarr.arange, 'linear')])
+        [(mx.zeros, mlab.detrend_mean), (mx.zeros, 'mean'),
+         (mx.arange, mlab.detrend_linear), (mx.arange, 'linear')])
     def test_psd_detrend(self, make_data, detrend):
         if self.NFFT_density is None:
             return
         ydata = make_data(self.NFFT_density)
         ydata1 = ydata+5
         ydata2 = ydata+3.3
-        ydata = mlxarr.vstack([ydata1, ydata2])
-        ydata = mlxarr.tile(ydata, (20, 1))
+        ydata = mx.vstack([ydata1, ydata2])
+        ydata = mx.tile(ydata, (20, 1))
         ydatab = ydata.T.flatten()
         ydata = ydata.flatten()
-        ycontrol = mlxarr.zeros_like(ydata)
+        ycontrol = mx.zeros_like(ydata)
         spec_g, fsp_g = mlab.psd(x=ydata,
                                  NFFT=self.NFFT_density,
                                  Fs=self.Fs,
@@ -515,16 +515,16 @@ class TestSpectral:
     def test_psd_window_hanning(self):
         if self.NFFT_density is None:
             return
-        ydata = mlxarr.arange(self.NFFT_density)
+        ydata = mx.arange(self.NFFT_density)
         ydata1 = ydata+5
         ydata2 = ydata+3.3
-        windowVals = mlab.window_hanning(mlxarr.ones_like(ydata1))
+        windowVals = mlab.window_hanning(mx.ones_like(ydata1))
         ycontrol1 = ydata1 * windowVals
         ycontrol2 = mlab.window_hanning(ydata2)
-        ydata = mlxarr.vstack([ydata1, ydata2])
-        ycontrol = mlxarr.vstack([ycontrol1, ycontrol2])
-        ydata = mlxarr.tile(ydata, (20, 1))
-        ycontrol = mlxarr.tile(ycontrol, (20, 1))
+        ydata = mx.vstack([ydata1, ydata2])
+        ycontrol = mx.vstack([ycontrol1, ycontrol2])
+        ydata = mx.tile(ydata, (20, 1))
+        ycontrol = mx.tile(ycontrol, (20, 1))
         ydatab = ydata.T.flatten()
         ydataf = ydata.flatten()
         ycontrol = ycontrol.flatten()
@@ -557,19 +557,19 @@ class TestSpectral:
     def test_psd_window_hanning_detrend_linear(self):
         if self.NFFT_density is None:
             return
-        ydata = mlxarr.arange(self.NFFT_density)
-        ycontrol = mlxarr.zeros(self.NFFT_density)
+        ydata = mx.arange(self.NFFT_density)
+        ycontrol = mx.zeros(self.NFFT_density)
         ydata1 = ydata+5
         ydata2 = ydata+3.3
         ycontrol1 = ycontrol
         ycontrol2 = ycontrol
-        windowVals = mlab.window_hanning(mlxarr.ones_like(ycontrol1))
+        windowVals = mlab.window_hanning(mx.ones_like(ycontrol1))
         ycontrol1 = ycontrol1 * windowVals
         ycontrol2 = mlab.window_hanning(ycontrol2)
-        ydata = mlxarr.vstack([ydata1, ydata2])
-        ycontrol = mlxarr.vstack([ycontrol1, ycontrol2])
-        ydata = mlxarr.tile(ydata, (20, 1))
-        ycontrol = mlxarr.tile(ycontrol, (20, 1))
+        ydata = mx.vstack([ydata1, ydata2])
+        ycontrol = mx.vstack([ycontrol1, ycontrol2])
+        ydata = mx.tile(ydata, (20, 1))
+        ycontrol = mx.tile(ycontrol, (20, 1))
         ydatab = ydata.T.flatten()
         ydataf = ydata.flatten()
         ycontrol = ycontrol.flatten()
@@ -606,10 +606,10 @@ class TestSpectral:
         # adaption from https://github.com/scipy/scipy/blob\
         # /v1.10.0/scipy/signal/windows/_windows.py#L562-L622
         a = [0.21557895, 0.41663158, 0.277263158, 0.083578947, 0.006947368]
-        fac = mlxarr.linspace(-mlxarr.pi, mlxarr.pi, self.NFFT_density_real)
-        win = mlxarr.zeros(self.NFFT_density_real)
+        fac = mx.linspace(-mx.pi, mx.pi, self.NFFT_density_real)
+        win = mx.zeros(self.NFFT_density_real)
         for k in range(len(a)):
-            win += a[k] * mlxarr.cos(k * fac)
+            win += a[k] * mx.cos(k * fac)
 
         spec, fsp = mlab.psd(x=self.y,
                              NFFT=self.NFFT_density,
@@ -636,12 +636,12 @@ class TestSpectral:
                              noverlap=self.nover_density,
                              pad_to=self.pad_to_density,
                              sides=self.sides,
-                             window=mlxarr.ones(self.NFFT_density_real))
+                             window=mx.ones(self.NFFT_density_real))
         assert_allclose(fsp, freqs, atol=1e-06)
         assert spec.shape == freqs.shape
 
     def test_psd_windowarray_scale_by_freq(self):
-        win = mlab.window_hanning(mlxarr.ones(self.NFFT_density_real))
+        win = mlab.window_hanning(mx.ones(self.NFFT_density_real))
 
         spec, fsp = mlab.psd(x=self.y,
                              NFFT=self.NFFT_density,
@@ -700,8 +700,8 @@ class TestSpectral:
                                      sides=self.sides,
                                      **kwargs)
         if kwargs.get('mode') == 'complex':
-            spec = mlxarr.abs(spec)
-        specm = mlxarr.mean(spec, axis=1)
+            spec = mx.abs(spec)
+        specm = mx.mean(spec, axis=1)
 
         assert_allclose(fsp, freqs, atol=1e-06)
         assert_allclose(t, self.t_specgram, atol=1e-06)
@@ -711,9 +711,9 @@ class TestSpectral:
 
         if kwargs.get('mode') not in ['complex', 'angle', 'phase']:
             # using a single freq, so all time slices should be about the same
-            if mlxarr.abs(spec.max()) != 0:
+            if mx.abs(spec.max()) != 0:
                 assert_allclose(
-                    mlxarr.diff(spec, axis=1).max() / mlxarr.abs(spec.max()), 0,
+                    mx.diff(spec, axis=1).max() / mx.abs(spec.max()), 0,
                     atol=1e-02)
         if kwargs.get('mode') not in ['angle', 'phase']:
             self.check_freqs(specm, freqs, fsp, self.fstims)
@@ -764,9 +764,9 @@ class TestSpectral:
 
     @pytest.mark.parametrize(
         "mode, conv", [
-            ("magnitude", mlxarr.abs),
-            ("angle", mlxarr.angle),
-            ("phase", lambda x: mlxarr.unwrap(mlxarr.angle(x), axis=0))
+            ("magnitude", mx.abs),
+            ("angle", mx.angle),
+            ("phase", lambda x: mx.unwrap(mx.angle(x), axis=0))
         ])
     def test_specgram_complex_equivalent(self, mode, conv):
         specc, freqspecc, tc = mlab.specgram(x=self.y,
@@ -789,7 +789,7 @@ class TestSpectral:
         assert_allclose(conv(specc), specm, atol=1e-06)
 
     def test_psd_windowarray_equal(self):
-        win = mlab.window_hanning(mlxarr.ones(self.NFFT_density_real))
+        win = mlab.window_hanning(mx.ones(self.NFFT_density_real))
         speca, fspa = mlab.psd(x=self.y,
                                NFFT=self.NFFT_density,
                                Fs=self.Fs,
@@ -810,15 +810,15 @@ class TestSpectral:
 # extra test for cohere...
 def test_cohere():
     N = 1024
-    mlxarr.random.seed(19680801)
-    x = mlxarr.random.randn(N)
+    mx.random.seed(19680801)
+    x = mx.random.randn(N)
     # phase offset
-    y = mlxarr.roll(x, 20)
+    y = mx.roll(x, 20)
     # high-freq roll-off
-    y = mlxarr.convolve(y, mlxarr.ones(20) / 20., mode='same')
+    y = mx.convolve(y, mx.ones(20) / 20., mode='same')
     cohsq, f = mlab.cohere(x, y, NFFT=256, Fs=2, noverlap=128)
-    assert_allclose(mlxarr.mean(cohsq), 0.837, atol=1.e-3)
-    assert mlxarr.isreal(mlxarr.mean(cohsq))
+    assert_allclose(mx.mean(cohsq), 0.837, atol=1.e-3)
+    assert mx.isreal(mx.mean(cohsq))
 
 
 # *****************************************************************
@@ -831,15 +831,15 @@ class TestGaussianKDE:
 
     def test_kde_integer_input(self):
         """Regression test for #1181."""
-        x1 = mlxarr.arange(5)
+        x1 = mx.arange(5)
         kde = mlab.GaussianKDE(x1)
         y_expected = [0.13480721, 0.18222869, 0.19514935, 0.18222869,
                       0.13480721]
-        mlxarr.testing.assert_array_almost_equal(kde(x1), y_expected, decimal=6)
+        mx.testing.assert_array_almost_equal(kde(x1), y_expected, decimal=6)
 
     def test_gaussian_kde_covariance_caching(self):
-        x1 = mlxarr.array([-7, -5, 1, 4, 5], dtype=float)
-        xs = mlxarr.linspace(-10, 10, num=5)
+        x1 = mx.array([-7, -5, 1, 4, 5], dtype=float)
+        xs = mx.linspace(-10, 10, num=5)
         # These expected values are from scipy 0.10, before some changes to
         # gaussian_kde. They were not compared with any external reference.
         y_expected = [0.02463386, 0.04689208, 0.05395444, 0.05337754,
@@ -849,13 +849,13 @@ class TestGaussianKDE:
         kde2 = mlab.GaussianKDE(x1, 'scott')
         y2 = kde2(xs)
 
-        mlxarr.testing.assert_array_almost_equal(y_expected, y2, decimal=7)
+        mx.testing.assert_array_almost_equal(y_expected, y2, decimal=7)
 
     def test_kde_bandwidth_method(self):
 
-        mlxarr.random.seed(8765678)
+        mx.random.seed(8765678)
         n_basesample = 50
-        xn = mlxarr.random.randn(n_basesample)
+        xn = mx.random.randn(n_basesample)
 
         # Default
         gkde = mlab.GaussianKDE(xn)
@@ -864,7 +864,7 @@ class TestGaussianKDE:
         # Supply a scalar
         gkde3 = mlab.GaussianKDE(xn, bw_method=gkde.factor)
 
-        xs = mlxarr.linspace(-7, 7, 51)
+        xs = mx.linspace(-7, 7, 51)
         kdepdf = gkde.evaluate(xs)
         kdepdf2 = gkde2.evaluate(xs)
         assert kdepdf.all() == kdepdf2.all()
@@ -885,26 +885,26 @@ class TestGaussianKDECustom:
 
     def test_silverman_multidim_dataset(self):
         """Test silverman's for a multi-dimensional array."""
-        x1 = mlxarr.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-        with pytest.raises(mlxarr.linalg.LinAlgError):
+        x1 = mx.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+        with pytest.raises(mx.linalg.LinAlgError):
             mlab.GaussianKDE(x1, "silverman")
 
     def test_silverman_singledim_dataset(self):
         """Test silverman's output for a single dimension list."""
-        x1 = mlxarr.array([-7, -5, 1, 4, 5])
+        x1 = mx.array([-7, -5, 1, 4, 5])
         mygauss = mlab.GaussianKDE(x1, "silverman")
         y_expected = 0.76770389927475502
         assert_almost_equal(mygauss.covariance_factor(), y_expected, 7)
 
     def test_scott_multidim_dataset(self):
         """Test scott's output for a multi-dimensional array."""
-        x1 = mlxarr.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-        with pytest.raises(mlxarr.linalg.LinAlgError):
+        x1 = mx.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+        with pytest.raises(mx.linalg.LinAlgError):
             mlab.GaussianKDE(x1, "scott")
 
     def test_scott_singledim_dataset(self):
         """Test scott's output a single-dimensional array."""
-        x1 = mlxarr.array([-7, -5, 1, 4, 5])
+        x1 = mx.array([-7, -5, 1, 4, 5])
         mygauss = mlab.GaussianKDE(x1, "scott")
         y_expected = 0.72477966367769553
         assert_almost_equal(mygauss.covariance_factor(), y_expected, 7)
@@ -916,18 +916,18 @@ class TestGaussianKDECustom:
 
     def test_scalar_covariance_dataset(self):
         """Test a scalar's cov factor."""
-        mlxarr.random.seed(8765678)
+        mx.random.seed(8765678)
         n_basesample = 50
-        multidim_data = [mlxarr.random.randn(n_basesample) for i in range(5)]
+        multidim_data = [mx.random.randn(n_basesample) for i in range(5)]
 
         kde = mlab.GaussianKDE(multidim_data, bw_method=0.5)
         assert kde.covariance_factor() == 0.5
 
     def test_callable_covariance_dataset(self):
         """Test the callable's cov factor for a multi-dimensional array."""
-        mlxarr.random.seed(8765678)
+        mx.random.seed(8765678)
         n_basesample = 50
-        multidim_data = [mlxarr.random.randn(n_basesample) for i in range(5)]
+        multidim_data = [mx.random.randn(n_basesample) for i in range(5)]
 
         def callable_fun(x):
             return 0.55
@@ -936,9 +936,9 @@ class TestGaussianKDECustom:
 
     def test_callable_singledim_dataset(self):
         """Test the callable's cov factor for a single-dimensional array."""
-        mlxarr.random.seed(8765678)
+        mx.random.seed(8765678)
         n_basesample = 50
-        multidim_data = mlxarr.random.randn(n_basesample)
+        multidim_data = mx.random.randn(n_basesample)
 
         kde = mlab.GaussianKDE(multidim_data, bw_method='silverman')
         y_expected = 0.48438841363348911
@@ -946,9 +946,9 @@ class TestGaussianKDECustom:
 
     def test_wrong_bw_method(self):
         """Test the error message that should be called when bw is invalid."""
-        mlxarr.random.seed(8765678)
+        mx.random.seed(8765678)
         n_basesample = 50
-        data = mlxarr.random.randn(n_basesample)
+        data = mx.random.randn(n_basesample)
         with pytest.raises(ValueError):
             mlab.GaussianKDE(data, bw_method="invalid")
 
@@ -960,23 +960,23 @@ class TestGaussianKDEEvaluate:
         Test the evaluate method when the dim's of dataset and points have
         different dimensions.
         """
-        x1 = mlxarr.arange(3, 10, 2)
+        x1 = mx.arange(3, 10, 2)
         kde = mlab.GaussianKDE(x1)
-        x2 = mlxarr.arange(3, 12, 2)
+        x2 = mx.arange(3, 12, 2)
         y_expected = [
             0.08797252, 0.11774109, 0.11774109, 0.08797252, 0.0370153
         ]
         y = kde.evaluate(x2)
-        mlxarr.testing.assert_array_almost_equal(y, y_expected, 7)
+        mx.testing.assert_array_almost_equal(y, y_expected, 7)
 
     def test_evaluate_inv_dim(self):
         """
         Invert the dimensions; i.e., for a dataset of dimension 1 [3, 2, 4],
         the points should have a dimension of 3 [[3], [2], [4]].
         """
-        mlxarr.random.seed(8765678)
+        mx.random.seed(8765678)
         n_basesample = 50
-        multidim_data = mlxarr.random.randn(n_basesample)
+        multidim_data = mx.random.randn(n_basesample)
         kde = mlab.GaussianKDE(multidim_data)
         x2 = [[1], [2], [3]]
         with pytest.raises(ValueError):
@@ -984,49 +984,49 @@ class TestGaussianKDEEvaluate:
 
     def test_evaluate_dim_and_num(self):
         """Tests if evaluated against a one by one array"""
-        x1 = mlxarr.arange(3, 10, 2)
-        x2 = mlxarr.array([3])
+        x1 = mx.arange(3, 10, 2)
+        x2 = mx.array([3])
         kde = mlab.GaussianKDE(x1)
         y_expected = [0.08797252]
         y = kde.evaluate(x2)
-        mlxarr.testing.assert_array_almost_equal(y, y_expected, 7)
+        mx.testing.assert_array_almost_equal(y, y_expected, 7)
 
     def test_evaluate_point_dim_not_one(self):
-        x1 = mlxarr.arange(3, 10, 2)
-        x2 = [mlxarr.arange(3, 10, 2), mlxarr.arange(3, 10, 2)]
+        x1 = mx.arange(3, 10, 2)
+        x2 = [mx.arange(3, 10, 2), mx.arange(3, 10, 2)]
         kde = mlab.GaussianKDE(x1)
         with pytest.raises(ValueError):
             kde.evaluate(x2)
 
     def test_evaluate_equal_dim_and_num_lt(self):
-        x1 = mlxarr.arange(3, 10, 2)
-        x2 = mlxarr.arange(3, 8, 2)
+        x1 = mx.arange(3, 10, 2)
+        x2 = mx.arange(3, 8, 2)
         kde = mlab.GaussianKDE(x1)
         y_expected = [0.08797252, 0.11774109, 0.11774109]
         y = kde.evaluate(x2)
-        mlxarr.testing.assert_array_almost_equal(y, y_expected, 7)
+        mx.testing.assert_array_almost_equal(y, y_expected, 7)
 
 
 def test_psd_onesided_norm():
-    u = mlxarr.array([0, 1, 2, 3, 1, 2, 1])
+    u = mx.array([0, 1, 2, 3, 1, 2, 1])
     dt = 1.0
-    Su = mlxarr.abs(mlxarr.fft.fft(u) * dt)**2 / (dt * u.size)
+    Su = mx.abs(mx.fft.fft(u) * dt)**2 / (dt * u.size)
     P, f = mlab.psd(u, NFFT=u.size, Fs=1/dt, window=mlab.window_none,
                     detrend=mlab.detrend_none, noverlap=0, pad_to=None,
                     scale_by_freq=None,
                     sides='onesided')
-    Su_1side = mlxarr.append([Su[0]], Su[1:4] + Su[4:][::-1])
+    Su_1side = mx.append([Su[0]], Su[1:4] + Su[4:][::-1])
     assert_allclose(P, Su_1side, atol=1e-06)
 
 
 def test_psd_oversampling():
     """Test the case len(x) < NFFT for psd()."""
-    u = mlxarr.array([0, 1, 2, 3, 1, 2, 1])
+    u = mx.array([0, 1, 2, 3, 1, 2, 1])
     dt = 1.0
-    Su = mlxarr.abs(mlxarr.fft.fft(u) * dt)**2 / (dt * u.size)
+    Su = mx.abs(mx.fft.fft(u) * dt)**2 / (dt * u.size)
     P, f = mlab.psd(u, NFFT=u.size*2, Fs=1/dt, window=mlab.window_none,
                     detrend=mlab.detrend_none, noverlap=0, pad_to=None,
                     scale_by_freq=None,
                     sides='onesided')
-    Su_1side = mlxarr.append([Su[0]], Su[1:4] + Su[4:][::-1])
-    assert_almost_equal(mlxarr.sum(P), mlxarr.sum(Su_1side))  # same energy
+    Su_1side = mx.append([Su[0]], Su[1:4] + Su[4:][::-1])
+    assert_almost_equal(mx.sum(P), mx.sum(Su_1side))  # same energy

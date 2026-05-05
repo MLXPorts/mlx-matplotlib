@@ -18,7 +18,7 @@ handling to interact with and modify objects on the canvas.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.backend_bases import MouseButton
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
@@ -84,7 +84,7 @@ class PathInteractor:
         xy = self.pathpatch.get_path().vertices
         xyt = self.pathpatch.get_transform().transform(xy)  # to display coords
         xt, yt = xyt[:, 0], xyt[:, 1]
-        d = mlxarr.sqrt((xt - event.x)**2 + (yt - event.y)**2)
+        d = mx.sqrt((xt - event.x)**2 + (yt - event.y)**2)
         ind = d.argmin()
         return ind if d[ind] < self.epsilon else None
 

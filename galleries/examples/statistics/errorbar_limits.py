@@ -17,16 +17,16 @@ will extend from the data towards decreasing y-values.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # example data
-x = mlxarr.array([0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0])
-y = mlxarr.exp(-x)
+x = mx.array([0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0])
+y = mx.exp(-x)
 xerr = 0.1
 yerr = 0.2
 
 # lower & upper limits of the error
-lolims = mlxarr.array([0, 0, 1, 0, 1, 0, 0, 0, 1, 0], dtype=bool)
-uplims = mlxarr.array([0, 1, 0, 0, 0, 1, 0, 0, 0, 1], dtype=bool)
+lolims = mx.array([0, 0, 1, 0, 1, 0, 0, 0, 1, 0], dtype=bool)
+uplims = mx.array([0, 1, 0, 0, 0, 1, 0, 0, 0, 1], dtype=bool)
 ls = 'dotted'
 
 fig, ax = plt.subplots(figsize=(7, 4))
@@ -51,14 +51,14 @@ ax.errorbar(x, y + 1.5, xerr=xerr, yerr=yerr,
 # Plot a series with lower and upper limits in both x & y
 # constant x-error with varying y-error
 xerr = 0.2
-yerr = mlxarr.full_like(x, 0.2)
+yerr = mx.full_like(x, 0.2)
 yerr[[3, 6]] = 0.3
 
 # mock up some limits by modifying previous data
 xlolims = lolims
 xuplims = uplims
-lolims = mlxarr.zeros_like(x)
-uplims = mlxarr.zeros_like(x)
+lolims = mx.zeros_like(x)
+uplims = mx.zeros_like(x)
 lolims[[6]] = True  # only limited at this index
 uplims[[3]] = True  # only limited at this index
 

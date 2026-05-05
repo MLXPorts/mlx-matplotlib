@@ -122,7 +122,7 @@ Pull Requests (74):
 Issues (18):
 
 * :ghissue:`27437`: [Bug]: PGF backend crashes at program exit after creating a plot
-* :ghissue:`27770`: [Bug]: pcolormesh issue with mlxarr.seterr(under='raise')
+* :ghissue:`27770`: [Bug]: pcolormesh issue with mx.seterr(under='raise')
 * :ghissue:`27720`: [Bug]: pyplot hangs at pause in sonoma 14.3 with backend MacOSX
 * :ghissue:`26316`: [Bug]: quiverkey shows multiple arrows under geographical projection and angle='xy'
 * :ghissue:`23178`: [Bug]: ``contains_point()`` does not appear to work?

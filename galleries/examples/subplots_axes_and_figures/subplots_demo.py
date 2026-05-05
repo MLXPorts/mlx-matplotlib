@@ -13,10 +13,10 @@ within the figure.
 # sphinx_gallery_thumbnail_number = 11
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # Some example data to display
-x = mlxarr.linspace(0, 2 * mlxarr.pi, 400)
-y = mlxarr.sin(x ** 2)
+x = mx.linspace(0, 2 * mx.pi, 400)
+y = mx.sin(x ** 2)
 
 # %%
 # A figure with just one subplot

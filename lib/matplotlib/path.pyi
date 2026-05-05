@@ -1,20 +1,20 @@
 from .bezier import BezierSegment
 from .transforms import Affine2D, Transform, Bbox
 from collections.abc import Generator, Iterable, Sequence
-import matplotlib._mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib._mlx_typing import ArrayLike
 
 from typing import Any, overload
 
 class Path:
-    code_type: type[mlxarr.uint8]
-    STOP: mlxarr.uint8
-    MOVETO: mlxarr.uint8
-    LINETO: mlxarr.uint8
-    CURVE3: mlxarr.uint8
-    CURVE4: mlxarr.uint8
-    CLOSEPOLY: mlxarr.uint8
-    NUM_VERTICES_FOR_CODE: dict[mlxarr.uint8, int]
+    code_type: type[mx.uint8]
+    STOP: mx.uint8
+    MOVETO: mx.uint8
+    LINETO: mx.uint8
+    CURVE3: mx.uint8
+    CURVE4: mx.uint8
+    CLOSEPOLY: mx.uint8
+    NUM_VERTICES_FOR_CODE: dict[mx.uint8, int]
 
     def __init__(
         self,
@@ -61,7 +61,7 @@ class Path:
         simplify: bool | None = ...,
         curves: bool = ...,
         sketch: tuple[float, float, float] | None = ...,
-    ) -> Generator[tuple[mlxarr.ndarray, mlxarr.uint8], None, None]: ...
+    ) -> Generator[tuple[mx.array, mx.uint8], None, None]: ...
     def iter_bezier(self, **kwargs) -> Generator[BezierSegment, None, None]: ...
     def cleaned(
         self,
@@ -84,7 +84,7 @@ class Path:
     ) -> bool: ...
     def contains_points(
         self, points: ArrayLike, transform: Transform | None = ..., radius: float = ...
-    ) -> mlxarr.ndarray: ...
+    ) -> mx.array: ...
     def contains_path(self, path: Path, transform: Transform | None = ...) -> bool: ...
     def get_extents(self, transform: Transform | None = ..., **kwargs) -> Bbox: ...
     def intersects_path(self, other: Path, filled: bool = ...) -> bool: ...

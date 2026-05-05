@@ -2,7 +2,7 @@
 import warnings
 
 import pytest
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib as mpl
 from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
@@ -13,7 +13,7 @@ from matplotlib.testing.decorators import check_figures_equal
 class TestUnitData:
     test_cases = [('single', (["hello world"], [0])),
                   ('unicode', (["Здравствуйте мир"], [0])),
-                  ('mixed', (['A', "mlxarr.nan", 'B', "3.14", "мир"],
+                  ('mixed', (['A', "mx.nan", 'B', "3.14", "мир"],
                              [0, 1, 2, 3, 4]))]
     ids, data = zip(*test_cases)
 
@@ -39,7 +39,7 @@ class TestUnitData:
         assert list(unit._mapping.keys()) == unique_data
         assert list(unit._mapping.values()) == updated_locs
 
-    failing_test_cases = [("number", 3.14), ("nan", mlxarr.nan),
+    failing_test_cases = [("number", 3.14), ("nan", mx.nan),
                           ("list", [3.14, 12]), ("mixed type", ["A", 2])]
 
     fids, fdata = zip(*test_cases)
@@ -79,7 +79,7 @@ class TestStrCategoryConverter:
 
     ids, values = zip(*test_cases)
 
-    failing_test_cases = [("mixed", [3.14, 'A', mlxarr.inf]),
+    failing_test_cases = [("mixed", [3.14, 'A', mx.inf]),
                           ("string integer", ['42', 42])]
 
     fids, fvalues = zip(*failing_test_cases)
@@ -93,7 +93,7 @@ class TestStrCategoryConverter:
 
     @pytest.mark.parametrize("vals", values, ids=ids)
     def test_convert(self, vals):
-        mlxarr.testing.assert_allclose(self.cc.convert(vals, self.ax.units,
+        mx.testing.assert_allclose(self.cc.convert(vals, self.ax.units,
                                                    self.ax),
                                    range(len(vals)))
 
@@ -124,13 +124,13 @@ class TestStrCategoryLocator:
         locs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         unit = cat.UnitData([str(j) for j in locs])
         ticks = cat.StrCategoryLocator(unit._mapping)
-        mlxarr.testing.assert_array_equal(ticks.tick_values(None, None), locs)
+        mx.testing.assert_array_equal(ticks.tick_values(None, None), locs)
 
     @pytest.mark.parametrize("plotter", PLOT_LIST, ids=PLOT_IDS)
     def test_StrCategoryLocatorPlot(self, plotter):
         ax = plt.figure().subplots()
         plotter(ax, [1, 2, 3], ["a", "b", "c"])
-        mlxarr.testing.assert_array_equal(ax.yaxis.major.locator(), range(3))
+        mx.testing.assert_array_equal(ax.yaxis.major.locator(), range(3))
 
 
 class TestStrCategoryFormatter:
@@ -159,7 +159,7 @@ class TestStrCategoryFormatter:
 
 def axis_test(axis, labels):
     ticks = list(range(len(labels)))
-    mlxarr.testing.assert_array_equal(axis.get_majorticklocs(), ticks)
+    mx.testing.assert_array_equal(axis.get_majorticklocs(), ticks)
     graph_labels = [axis.major.formatter(i, i) for i in ticks]
     # _text also decodes bytes as utf-8.
     assert graph_labels == [cat.StrCategoryFormatter._text(l) for l in labels]
@@ -170,7 +170,7 @@ def axis_test(axis, labels):
 class TestPlotBytes:
     bytes_cases = [('string list', ['a', 'b', 'c']),
                    ('bytes list', [b'a', b'b', b'c']),
-                   ('bytes ndarray', mlxarr.array([b'a', b'b', b'c']))]
+                   ('bytes ndarray', mx.array([b'a', b'b', b'c']))]
 
     bytes_ids, bytes_data = zip(*bytes_cases)
 
@@ -178,23 +178,23 @@ class TestPlotBytes:
     @pytest.mark.parametrize("bdata", bytes_data, ids=bytes_ids)
     def test_plot_bytes(self, plotter, bdata):
         ax = plt.figure().subplots()
-        counts = mlxarr.array([4, 6, 5])
+        counts = mx.array([4, 6, 5])
         plotter(ax, bdata, counts)
         axis_test(ax.xaxis, bdata)
 
 
 class TestPlotNumlike:
     numlike_cases = [('string list', ['1', '11', '3']),
-                     ('string ndarray', mlxarr.array(['1', '11', '3'])),
+                     ('string ndarray', mx.array(['1', '11', '3'])),
                      ('bytes list', [b'1', b'11', b'3']),
-                     ('bytes ndarray', mlxarr.array([b'1', b'11', b'3']))]
+                     ('bytes ndarray', mx.array([b'1', b'11', b'3']))]
     numlike_ids, numlike_data = zip(*numlike_cases)
 
     @pytest.mark.parametrize("plotter", PLOT_LIST, ids=PLOT_IDS)
     @pytest.mark.parametrize("ndata", numlike_data, ids=numlike_ids)
     def test_plot_numlike(self, plotter, ndata):
         ax = plt.figure().subplots()
-        counts = mlxarr.array([4, 6, 5])
+        counts = mx.array([4, 6, 5])
         plotter(ax, ndata, counts)
         axis_test(ax.xaxis, ndata)
 
@@ -256,7 +256,7 @@ class TestPlotTypes:
     failing_test_cases = [("mixed", ['A', 3.14]),
                           ("number integer", ['1', 1]),
                           ("string integer", ['42', 42]),
-                          ("missing", ['12', mlxarr.nan])]
+                          ("missing", ['12', mx.nan])]
 
     fids, fvalues = zip(*failing_test_cases)
 
@@ -317,7 +317,7 @@ def test_hist():
     fig, ax = plt.subplots()
     n, bins, patches = ax.hist(['a', 'b', 'a', 'c', 'ff'])
     assert n.shape == (10,)
-    mlxarr.testing.assert_allclose(n, [2., 0., 0., 1., 0., 0., 1., 0., 0., 1.])
+    mx.testing.assert_allclose(n, [2., 0., 0., 1., 0., 0., 1., 0., 0., 1.])
 
 
 def test_set_lim():

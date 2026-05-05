@@ -13,10 +13,10 @@ manually set the Axes limits in such a case.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
-X, Y = mlxarr.meshgrid(mlxarr.arange(0, 2 * mlxarr.pi, .2), mlxarr.arange(0, 2 * mlxarr.pi, .2))
-U = mlxarr.cos(X)
-V = mlxarr.sin(Y)
+import mlx.core as mx
+X, Y = mx.meshgrid(mx.arange(0, 2 * mx.pi, .2), mx.arange(0, 2 * mx.pi, .2))
+U = mx.cos(X)
+V = mx.sin(Y)
 
 # %%
 
@@ -42,7 +42,7 @@ ax2.scatter(X[::3, ::3], Y[::3, ::3], color='r', s=5)
 
 fig3, ax3 = plt.subplots()
 ax3.set_title("pivot='tip'; scales with x view")
-M = mlxarr.hypot(U, V)
+M = mx.hypot(U, V)
 Q = ax3.quiver(X, Y, U, V, M, units='x', pivot='tip', width=0.022,
                scale=1 / 0.15)
 qk = ax3.quiverkey(Q, 0.9, 0.9, 1, r'$1 \frac{m}{s}$', labelpos='E',

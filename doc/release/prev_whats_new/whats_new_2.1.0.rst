@@ -196,7 +196,7 @@ in the perspective view.
     :include-source:
     :align: center
 
-    from matplotlib import _mlx_array as mlxarr
+    import mlx.core as mx
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d import Axes3D
 
@@ -434,15 +434,15 @@ to ``False``.
     :include-source:
     :align: center
 
-    from matplotlib import _mlx_array as mlxarr
+    import mlx.core as mx
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d import Axes3D
 
-    x = mlxarr.arange(2)
-    y = mlxarr.arange(3)
-    x2d, y2d = mlxarr.meshgrid(x, y)
+    x = mx.arange(2)
+    y = mx.arange(3)
+    x2d, y2d = mx.meshgrid(x, y)
     x, y = x2d.ravel(), y2d.ravel()
-    z = mlxarr.zeros_like(x)
+    z = mx.zeros_like(x)
     dz = x + y
 
     fig = plt.figure(figsize=(4, 6))

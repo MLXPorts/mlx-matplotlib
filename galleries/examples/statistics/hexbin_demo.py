@@ -8,13 +8,13 @@ the color represents the number of data points within each bin.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 n = 100_000
-x = mlxarr.random.standard_normal(n)
-y = 2.0 + 3.0 * x + 4.0 * mlxarr.random.standard_normal(n)
+x = mx.random.standard_normal(n)
+y = 2.0 + 3.0 * x + 4.0 * mx.random.standard_normal(n)
 xlim = x.min(), x.max()
 ylim = y.min(), y.max()
 

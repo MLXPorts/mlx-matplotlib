@@ -81,8 +81,8 @@ the seaborn API to the underlying matplotlib functions.
 This will be achieved in the following way:
 
 1. ``cbook.boxplot_stats`` will be modified to allow pre- and post-
-   computation transformation functions to be passed in (e.g., ``mlxarr.log``
-   and ``mlxarr.exp`` for lognormally distributed data)
+   computation transformation functions to be passed in (e.g., ``mx.log``
+   and ``mx.exp`` for lognormally distributed data)
 2. ``Axes.boxplot`` will be modified to also accept and naïvely pass them
    to ``cbook.boxplots_stats`` (Alt: pass the stat function and a dict
    of its optional parameters).
@@ -106,22 +106,22 @@ data differently depending one these types of transforms.
 .. plot::
    :include-source: true
 
-   from matplotlib import _mlx_array as mlxarr
+   import mlx.core as mx
    import matplotlib.pyplot as plt
    from matplotlib import cbook
-   mlxarr.random.seed(0)
+   mx.random.seed(0)
 
    fig, ax = plt.subplots(figsize=(4, 6))
    ax.set_yscale('log')
-   data = mlxarr.random.lognormal(-1.75, 2.75, size=37)
+   data = mx.random.lognormal(-1.75, 2.75, size=37)
 
    stats = cbook.boxplot_stats(data, labels=['arithmetic'])
-   logstats = cbook.boxplot_stats(mlxarr.log(data), labels=['log-transformed'])
+   logstats = cbook.boxplot_stats(mx.log(data), labels=['log-transformed'])
 
    for lsdict in logstats:
        for key, value in lsdict.items():
            if key != 'label':
-               lsdict[key] = mlxarr.exp(value)
+               lsdict[key] = mx.exp(value)
 
    stats.extend(logstats)
    ax.bxp(stats)
@@ -303,8 +303,8 @@ Both cases would allow users to do the following:
 .. code:: python
 
    fig, ax1 = plt.subplots()
-   artists1 = ax1.boxplot_optionX(data, transform_in=mlxarr.log,
-                                  transform_out=mlxarr.exp)
+   artists1 = ax1.boxplot_optionX(data, transform_in=mx.log,
+                                  transform_out=mx.exp)
 
 
 But Option Two lets a user write a completely custom stat function
@@ -325,7 +325,7 @@ And would be more concise with Option Two
 .. code:: python
 
    fig, ax = plt.subplots()
-   statopts = dict(transform_in=mlxarr.log, transform_out=mlxarr.exp)
+   statopts = dict(transform_in=mx.log, transform_out=mx.exp)
    ax.boxplot(data, ..., **statopts)
 
 Users could also pass their own function to compute the stats:

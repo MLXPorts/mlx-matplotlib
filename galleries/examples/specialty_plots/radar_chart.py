@@ -15,7 +15,7 @@ polygon is not aligned with the radial axis.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.patches import Circle, RegularPolygon
 from matplotlib.path import Path
 from matplotlib.projections import register_projection
@@ -39,7 +39,7 @@ def radar_factory(num_vars, frame='circle'):
 
     """
     # calculate evenly-spaced axis angles
-    theta = mlxarr.linspace(0, 2*mlxarr.pi, num_vars, endpoint=False)
+    theta = mx.linspace(0, 2*mx.pi, num_vars, endpoint=False)
 
     class RadarTransform(PolarAxes.PolarTransform):
 
@@ -75,12 +75,12 @@ def radar_factory(num_vars, frame='circle'):
             x, y = line.get_data()
             # FIXME: markers at x[0], y[0] get doubled-up
             if x[0] != x[-1]:
-                x = mlxarr.append(x, x[0])
-                y = mlxarr.append(y, y[0])
+                x = mx.append(x, x[0])
+                y = mx.append(y, y[0])
                 line.set_data(x, y)
 
         def set_varlabels(self, labels):
-            self.set_thetagrids(mlxarr.degrees(theta), labels)
+            self.set_thetagrids(mx.degrees(theta), labels)
 
         def _gen_axes_patch(self):
             # The Axes patch must be centered at (0.5, 0.5) and of radius 0.5

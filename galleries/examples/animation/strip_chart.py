@@ -9,7 +9,7 @@ Output generated via `matplotlib.animation.Animation.to_jshtml`.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.animation as animation
 from matplotlib.lines import Line2D
 
@@ -47,15 +47,15 @@ class Scope:
 def emitter(p=0.1):
     """Return a random value in [0, 1) with probability p, else 0."""
     while True:
-        v = mlxarr.random.rand()
+        v = mx.random.rand()
         if v > p:
             yield 0.
         else:
-            yield mlxarr.random.rand()
+            yield mx.random.rand()
 
 
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801 // 10)
+mx.random.seed(19680801 // 10)
 
 
 fig, ax = plt.subplots()

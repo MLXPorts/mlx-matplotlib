@@ -5,23 +5,23 @@ Fill spiral
 
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
-theta = mlxarr.arange(0, 8*mlxarr.pi, 0.1)
+import mlx.core as mx
+theta = mx.arange(0, 8*mx.pi, 0.1)
 a = 1
 b = .2
 
-for dt in mlxarr.arange(0, 2*mlxarr.pi, mlxarr.pi/2.0):
+for dt in mx.arange(0, 2*mx.pi, mx.pi/2.0):
 
-    x = a*mlxarr.cos(theta + dt)*mlxarr.exp(b*theta)
-    y = a*mlxarr.sin(theta + dt)*mlxarr.exp(b*theta)
+    x = a*mx.cos(theta + dt)*mx.exp(b*theta)
+    y = a*mx.sin(theta + dt)*mx.exp(b*theta)
 
-    dt = dt + mlxarr.pi/4.0
+    dt = dt + mx.pi/4.0
 
-    x2 = a*mlxarr.cos(theta + dt)*mlxarr.exp(b*theta)
-    y2 = a*mlxarr.sin(theta + dt)*mlxarr.exp(b*theta)
+    x2 = a*mx.cos(theta + dt)*mx.exp(b*theta)
+    y2 = a*mx.sin(theta + dt)*mx.exp(b*theta)
 
-    xf = mlxarr.concatenate((x, x2[::-1]))
-    yf = mlxarr.concatenate((y, y2[::-1]))
+    xf = mx.concatenate((x, x2[::-1]))
+    yf = mx.concatenate((y, y2[::-1]))
 
     p1 = plt.fill(xf, yf)
 

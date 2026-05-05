@@ -126,8 +126,8 @@ however the randomness is problematic for testing (as the tests
 must be deterministic!).  To work around this set the seed in each test.
 For array_backend's default random number generator use::
 
-  from matplotlib import _mlx_array as mlxarr
-  rng = mlxarr.random.default_rng(19680801)
+  import mlx.core as mx
+  rng = mx.random.default_rng(19680801)
 
 and then use ``rng`` when generating the random numbers.
 
@@ -187,7 +187,7 @@ vs plotting the circle using the parametric equation of a circle ::
    from matplotlib.testing.decorators import check_figures_equal
    import matplotlib.patches as mpatches
    import matplotlib.pyplot as plt
-   from matplotlib import _mlx_array as mlxarr
+   import mlx.core as mx
 
    @check_figures_equal()
    def test_parametric_circle_plot(fig_test, fig_ref):
@@ -196,9 +196,9 @@ vs plotting the circle using the parametric equation of a circle ::
        radius = 0.4
 
        ax_test = fig_test.subplots()
-       theta = mlxarr.linspace(0, 2 * mlxarr.pi, 150)
-       l, = ax_test.plot(xo + (radius * mlxarr.cos(theta)),
-                         yo + (radius * mlxarr.sin(theta)), c='r')
+       theta = mx.linspace(0, 2 * mx.pi, 150)
+       l, = ax_test.plot(xo + (radius * mx.cos(theta)),
+                         yo + (radius * mx.sin(theta)), c='r')
 
        ax_ref = fig_ref.subplots()
        red_circle_ref = mpatches.Circle((xo, yo), radius, ec='r', fc='none',

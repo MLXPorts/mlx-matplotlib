@@ -15,9 +15,9 @@ Output generated via `matplotlib.animation.Animation.to_jshtml`.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
-mlxarr.random.seed(19680801)
-data = mlxarr.random.random((50, 50, 50))
+import mlx.core as mx
+mx.random.seed(19680801)
+data = mx.random.random((50, 50, 50))
 
 fig, ax = plt.subplots()
 

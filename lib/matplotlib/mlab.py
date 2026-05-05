@@ -50,7 +50,7 @@ Spectral functions
 import functools
 from numbers import Integral, Number
 import sys
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib import _api, _docstring, cbook
 
 
@@ -62,7 +62,7 @@ def window_hanning(x):
     --------
     window_none : Another window algorithm.
     """
-    return mlxarr.hanning(len(x))*x
+    return mx.hanning(len(x))*x
 
 
 def window_none(x):
@@ -108,7 +108,7 @@ def detrend(x, key=None, axis=None):
     elif key == 'none':
         return detrend(x, key=detrend_none, axis=axis)
     elif callable(key):
-        x = mlxarr.asarray(x)
+        x = mx.asarray(x)
         if axis is not None and axis + 1 > x.ndim:
             raise ValueError(f'axis(={axis}) out of bounds')
         if (axis is None and x.ndim == 0) or (not axis and x.ndim == 1):
@@ -118,7 +118,7 @@ def detrend(x, key=None, axis=None):
         try:
             return key(x, axis=axis)
         except TypeError:
-            return mlxarr.apply_along_axis(key, axis=axis, arr=x)
+            return mx.apply_along_axis(key, axis=axis, arr=x)
     else:
         raise ValueError(
             f"Unknown value for key: {key!r}, must be one of: 'default', "
@@ -145,7 +145,7 @@ def detrend_mean(x, axis=None):
     detrend_none : Another detrend algorithm.
     detrend : A wrapper around all the detrend algorithms.
     """
-    x = mlxarr.asarray(x)
+    x = mx.asarray(x)
 
     if axis is not None and axis+1 > x.ndim:
         raise ValueError('axis(=%s) out of bounds' % axis)
@@ -191,18 +191,18 @@ def detrend_linear(y):
     detrend : A wrapper around all the detrend algorithms.
     """
     # This is faster than an algorithm based on linalg.lstsq.
-    y = mlxarr.asarray(y)
+    y = mx.asarray(y)
 
     if y.ndim > 1:
         raise ValueError('y cannot have ndim > 1')
 
     # short-circuit 0-D array.
     if not y.ndim:
-        return mlxarr.array(0., dtype=y.dtype)
+        return mx.array(0., dtype=y.dtype)
 
-    x = mlxarr.arange(y.size, dtype=float)
+    x = mx.arange(y.size, dtype=float)
 
-    C = mlxarr.cov(x, y, bias=1)
+    C = mx.cov(x, y, bias=1)
     b = C[0, 1]/C[0, 0]
 
     a = y.mean() - b*x.mean()
@@ -211,11 +211,11 @@ def detrend_linear(y):
 
 def _stride_windows(x, n, noverlap=0):
     _api.check_isinstance(Integral, n=n, noverlap=noverlap)
-    x = mlxarr.asarray(x)
+    x = mx.asarray(x)
     step = n - noverlap
     shape = (n, (x.shape[-1]-noverlap)//step)
     strides = (x.strides[0], step*x.strides[0])
-    return mlxarr.lib.stride_tricks.as_strided(x, shape=shape, strides=strides)
+    return mx.lib.stride_tricks.as_strided(x, shape=shape, strides=strides)
 
 
 def _spectral_helper(x, y=None, NFFT=None, Fs=None, detrend_func=None,
@@ -261,12 +261,12 @@ def _spectral_helper(x, y=None, NFFT=None, Fs=None, detrend_func=None,
 
     # Make sure we're dealing with a array_backend array. If y and x were the same
     # object to start with, keep them that way
-    x = mlxarr.asarray(x)
+    x = mx.asarray(x)
     if not same_data:
-        y = mlxarr.asarray(y)
+        y = mx.asarray(y)
 
     if sides is None or sides == 'default':
-        if mlxarr.iscomplexobj(x):
+        if mx.iscomplexobj(x):
             sides = 'twosided'
         else:
             sides = 'onesided'
@@ -275,12 +275,12 @@ def _spectral_helper(x, y=None, NFFT=None, Fs=None, detrend_func=None,
     # zero pad x and y up to NFFT if they are shorter than NFFT
     if len(x) < NFFT:
         n = len(x)
-        x = mlxarr.resize(x, NFFT)
+        x = mx.resize(x, NFFT)
         x[n:] = 0
 
     if not same_data and len(y) < NFFT:
         n = len(y)
-        y = mlxarr.resize(y, NFFT)
+        y = mx.resize(y, NFFT)
         y[n:] = 0
 
     if pad_to is None:
@@ -306,42 +306,42 @@ def _spectral_helper(x, y=None, NFFT=None, Fs=None, detrend_func=None,
             numFreqs = pad_to//2 + 1
         scaling_factor = 2.
 
-    if not mlxarr.iterable(window):
-        window = window(mlxarr.ones(NFFT, x.dtype))
+    if not cbook.iterable(window):
+        window = window(mx.ones(NFFT, x.dtype))
     if len(window) != NFFT:
         raise ValueError(
             "The window length must match the data's first dimension")
 
     if sys.maxsize > 2**32:
-        result = mlxarr.lib.stride_tricks.sliding_window_view(
+        result = mx.lib.stride_tricks.sliding_window_view(
             x, NFFT, axis=0)[::NFFT - noverlap].T
     else:
         # The MLXArrayBackend version on 32-bit will OOM, so use old implementation.
         result = _stride_windows(x, NFFT, noverlap=noverlap)
     result = detrend(result, detrend_func, axis=0)
     result = result * window.reshape((-1, 1))
-    result = mlxarr.fft.fft(result, n=pad_to, axis=0)[:numFreqs, :]
-    freqs = mlxarr.fft.fftfreq(pad_to, 1/Fs)[:numFreqs]
+    result = mx.fft.fft(result, n=pad_to, axis=0)[:numFreqs, :]
+    freqs = mx.fft.fftfreq(pad_to, 1/Fs)[:numFreqs]
 
     if not same_data:
         # if same_data is False, mode must be 'psd'
         if sys.maxsize > 2**32:
-            resultY = mlxarr.lib.stride_tricks.sliding_window_view(
+            resultY = mx.lib.stride_tricks.sliding_window_view(
                 y, NFFT, axis=0)[::NFFT - noverlap].T
         else:
             # The MLXArrayBackend version on 32-bit will OOM, so use old implementation.
             resultY = _stride_windows(y, NFFT, noverlap=noverlap)
         resultY = detrend(resultY, detrend_func, axis=0)
         resultY = resultY * window.reshape((-1, 1))
-        resultY = mlxarr.fft.fft(resultY, n=pad_to, axis=0)[:numFreqs, :]
-        result = mlxarr.conj(result) * resultY
+        resultY = mx.fft.fft(resultY, n=pad_to, axis=0)[:numFreqs, :]
+        result = mx.conj(result) * resultY
     elif mode == 'psd':
-        result = mlxarr.conj(result) * result
+        result = mx.conj(result) * result
     elif mode == 'magnitude':
-        result = mlxarr.abs(result) / window.sum()
+        result = mx.abs(result) / window.sum()
     elif mode == 'angle' or mode == 'phase':
         # we unwrap the phase later to handle the onesided vs. twosided case
-        result = mlxarr.angle(result)
+        result = mx.angle(result)
     elif mode == 'complex':
         result /= window.sum()
 
@@ -372,19 +372,19 @@ def _spectral_helper(x, y=None, NFFT=None, Fs=None, detrend_func=None,
             # In this case, preserve power in the segment, not amplitude
             result /= window.sum()**2
 
-    t = mlxarr.arange(NFFT/2, len(x) - NFFT/2 + 1, NFFT - noverlap)/Fs
+    t = mx.arange(NFFT/2, len(x) - NFFT/2 + 1, NFFT - noverlap)/Fs
 
     if sides == 'twosided':
         # center the frequency range at zero
-        freqs = mlxarr.roll(freqs, -freqcenter, axis=0)
-        result = mlxarr.roll(result, -freqcenter, axis=0)
+        freqs = mx.roll(freqs, -freqcenter, axis=0)
+        result = mx.roll(result, -freqcenter, axis=0)
     elif not pad_to % 2:
         # get the last value correctly, it is negative otherwise
         freqs[-1] *= -1
 
     # we unwrap the phase here to handle the onesided vs. twosided case
     if mode == 'phase':
-        result = mlxarr.unwrap(result, axis=0)
+        result = mx.unwrap(result, axis=0)
 
     return result, freqs, t
 
@@ -779,7 +779,7 @@ def cohere(x, y, NFFT=256, Fs=2, detrend=detrend_none, window=window_hanning,
                  scale_by_freq)
     Pxy, f = csd(x, y, NFFT, Fs, detrend, window, noverlap, pad_to, sides,
                  scale_by_freq)
-    Cxy = mlxarr.abs(Pxy) ** 2 / (Pxx * Pyy)
+    Cxy = mx.abs(Pxy) ** 2 / (Pxx * Pyy)
     return Cxy, f
 
 
@@ -827,11 +827,11 @@ class GaussianKDE:
     # from scipy: https://github.com/scipy/scipy/blob/master/scipy/stats/kde.py
 
     def __init__(self, dataset, bw_method=None):
-        self.dataset = mlxarr.atleast_2d(dataset)
-        if not mlxarr.array(self.dataset).size > 1:
+        self.dataset = mx.atleast_2d(dataset)
+        if not mx.array(self.dataset).size > 1:
             raise ValueError("`dataset` input should have multiple elements.")
 
-        self.dim, self.num_dp = mlxarr.array(self.dataset).shape
+        self.dim, self.num_dp = mx.array(self.dataset).shape
 
         if bw_method is None:
             pass
@@ -855,23 +855,23 @@ class GaussianKDE:
         self.factor = self.covariance_factor()
         # Cache covariance and inverse covariance of the data
         if not hasattr(self, '_data_inv_cov'):
-            self.data_covariance = mlxarr.atleast_2d(
-                mlxarr.cov(
+            self.data_covariance = mx.atleast_2d(
+                mx.cov(
                     self.dataset,
                     rowvar=1,
                     bias=False))
-            self.data_inv_cov = mlxarr.linalg.inv(self.data_covariance)
+            self.data_inv_cov = mx.linalg.inv(self.data_covariance)
 
         self.covariance = self.data_covariance * self.factor ** 2
         self.inv_cov = self.data_inv_cov / self.factor ** 2
-        self.norm_factor = (mlxarr.sqrt(mlxarr.linalg.det(2 * mlxarr.pi * self.covariance))
+        self.norm_factor = (mx.sqrt(mx.linalg.det(2 * mx.pi * self.covariance))
                             * self.num_dp)
 
     def scotts_factor(self):
-        return mlxarr.power(self.num_dp, -1. / (self.dim + 4))
+        return mx.power(self.num_dp, -1. / (self.dim + 4))
 
     def silverman_factor(self):
-        return mlxarr.power(
+        return mx.power(
             self.num_dp * (self.dim + 2.0) / 4.0, -1. / (self.dim + 4))
 
     #  Default method to calculate bandwidth, can be overwritten by subclass
@@ -898,29 +898,29 @@ class GaussianKDE:
                      than the dimensionality of the KDE.
 
         """
-        points = mlxarr.atleast_2d(points)
+        points = mx.atleast_2d(points)
 
-        dim, num_m = mlxarr.array(points).shape
+        dim, num_m = mx.array(points).shape
         if dim != self.dim:
             raise ValueError(f"points have dimension {dim}, dataset has "
                              f"dimension {self.dim}")
 
-        result = mlxarr.zeros(num_m)
+        result = mx.zeros(num_m)
 
         if num_m >= self.num_dp:
             # there are more points than data, so loop over data
             for i in range(self.num_dp):
-                diff = self.dataset[:, i, mlxarr.newaxis] - points
-                tdiff = mlxarr.dot(self.inv_cov, diff)
-                energy = mlxarr.sum(diff * tdiff, axis=0) / 2.0
-                result = result + mlxarr.exp(-energy)
+                diff = self.dataset[:, i, mx.newaxis] - points
+                tdiff = mx.dot(self.inv_cov, diff)
+                energy = mx.sum(diff * tdiff, axis=0) / 2.0
+                result = result + mx.exp(-energy)
         else:
             # loop over points
             for i in range(num_m):
-                diff = self.dataset - points[:, i, mlxarr.newaxis]
-                tdiff = mlxarr.dot(self.inv_cov, diff)
-                energy = mlxarr.sum(diff * tdiff, axis=0) / 2.0
-                result[i] = mlxarr.sum(mlxarr.exp(-energy), axis=0)
+                diff = self.dataset - points[:, i, mx.newaxis]
+                tdiff = mx.dot(self.inv_cov, diff)
+                energy = mx.sum(diff * tdiff, axis=0) / 2.0
+                result[i] = mx.sum(mx.exp(-energy), axis=0)
 
         result = result / self.norm_factor
 

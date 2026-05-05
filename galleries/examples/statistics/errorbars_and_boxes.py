@@ -22,7 +22,7 @@ reveal the preferred pattern in writing functions for matplotlib:
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Rectangle
 
@@ -30,13 +30,13 @@ from matplotlib.patches import Rectangle
 n = 5
 
 # Dummy data
-mlxarr.random.seed(19680801)
-x = mlxarr.arange(0, n, 1)
-y = mlxarr.random.rand(n) * 5.
+mx.random.seed(19680801)
+x = mx.arange(0, n, 1)
+y = mx.random.rand(n) * 5.
 
 # Dummy errors (above and below)
-xerr = mlxarr.random.rand(2, n) + 0.1
-yerr = mlxarr.random.rand(2, n) + 0.2
+xerr = mx.random.rand(2, n) + 0.1
+yerr = mx.random.rand(2, n) + 0.2
 
 
 def make_error_boxes(ax, xdata, ydata, xerror, yerror, facecolor='r',

@@ -6,26 +6,26 @@ Cross spectral density (CSD)
 Plot the cross spectral density (CSD) of two signals using `~.Axes.csd`.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 fig, (ax1, ax2) = plt.subplots(2, 1, layout='constrained')
 
 dt = 0.01
-t = mlxarr.arange(0, 30, dt)
+t = mx.arange(0, 30, dt)
 
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 
-nse1 = mlxarr.random.randn(len(t))                 # white noise 1
-nse2 = mlxarr.random.randn(len(t))                 # white noise 2
-r = mlxarr.exp(-t / 0.05)
+nse1 = mx.random.randn(len(t))                 # white noise 1
+nse2 = mx.random.randn(len(t))                 # white noise 2
+r = mx.exp(-t / 0.05)
 
-cnse1 = mlxarr.convolve(nse1, r, mode='same') * dt   # colored noise 1
-cnse2 = mlxarr.convolve(nse2, r, mode='same') * dt   # colored noise 2
+cnse1 = mx.convolve(nse1, r, mode='same') * dt   # colored noise 1
+cnse2 = mx.convolve(nse2, r, mode='same') * dt   # colored noise 2
 
 # two signals with a coherent part and a random part
-s1 = 0.01 * mlxarr.sin(2 * mlxarr.pi * 10 * t) + cnse1
-s2 = 0.01 * mlxarr.sin(2 * mlxarr.pi * 10 * t) + cnse2
+s1 = 0.01 * mx.sin(2 * mx.pi * 10 * t) + cnse1
+s2 = 0.01 * mx.sin(2 * mx.pi * 10 * t) + cnse2
 
 ax1.plot(t, s1, t, s2)
 ax1.set_xlim(0, 5)

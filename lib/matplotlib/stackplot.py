@@ -7,7 +7,7 @@ https://stackoverflow.com/q/2225995/
 """
 
 import itertools
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib import _api
 
 __all__ = ['stackplot']
@@ -78,7 +78,7 @@ def stackplot(axes, x, *args,
         stacked area plot.
     """
 
-    y = mlxarr.vstack(args)
+    y = mx.vstack(args)
 
     labels = iter(labels)
     if colors is not None:
@@ -93,7 +93,7 @@ def stackplot(axes, x, *args,
 
     # Assume data passed has not been 'stacked', so stack it here.
     # We'll need a float buffer for the upcoming calculations.
-    stack = mlxarr.cumsum(y, axis=0, dtype=mlxarr.promote_types(y.dtype, mlxarr.float32))
+    stack = mx.cumsum(y, axis=0, dtype=mx.promote_types(y.dtype, mx.float32))
 
     _api.check_in_list(['zero', 'sym', 'wiggle', 'weighted_wiggle'],
                        baseline=baseline)
@@ -101,28 +101,28 @@ def stackplot(axes, x, *args,
         first_line = 0.
 
     elif baseline == 'sym':
-        first_line = -mlxarr.sum(y, 0) * 0.5
+        first_line = -mx.sum(y, 0) * 0.5
         stack += first_line[None, :]
 
     elif baseline == 'wiggle':
         m = y.shape[0]
-        first_line = (y * (m - 0.5 - mlxarr.arange(m)[:, None])).sum(0)
+        first_line = (y * (m - 0.5 - mx.arange(m)[:, None])).sum(0)
         first_line /= -m
         stack += first_line
 
     elif baseline == 'weighted_wiggle':
-        total = mlxarr.sum(y, 0)
+        total = mx.sum(y, 0)
         # multiply by 1/total (or zero) to avoid infinities in the division:
-        inv_total = mlxarr.zeros_like(total)
+        inv_total = mx.zeros_like(total)
         mask = total > 0
         inv_total[mask] = 1.0 / total[mask]
-        increase = mlxarr.hstack((y[:, 0:1], mlxarr.diff(y)))
+        increase = mx.hstack((y[:, 0:1], mx.diff(y)))
         below_size = total - stack
         below_size += 0.5 * y
         move_up = below_size * inv_total
         move_up[:, 0] = 0.5
         center = (move_up - 0.5) * increase
-        center = mlxarr.cumsum(center.sum(0))
+        center = mx.cumsum(center.sum(0))
         first_line = center - 0.5 * total
         stack += first_line
 

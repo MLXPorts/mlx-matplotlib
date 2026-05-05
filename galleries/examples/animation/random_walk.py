@@ -7,18 +7,18 @@ Output generated via `matplotlib.animation.Animation.to_jshtml`.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.animation as animation
 
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 
 def random_walk(num_steps, max_step=0.05):
     """Return a 3D random walk as (num_steps, 3) array."""
-    start_pos = mlxarr.random.random(3)
-    steps = mlxarr.random.uniform(-max_step, max_step, size=(num_steps, 3))
-    walk = start_pos + mlxarr.cumsum(steps, axis=0)
+    start_pos = mx.random.random(3)
+    steps = mx.random.uniform(-max_step, max_step, size=(num_steps, 3))
+    walk = start_pos + mx.cumsum(steps, axis=0)
     return walk
 
 

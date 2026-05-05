@@ -6,7 +6,7 @@ An experimental support for curvilinear grid.
 # see if tick_iterator method can be simplified by reusing the parent method.
 
 import functools
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib as mpl
 from matplotlib import _api, cbook
 import matplotlib.patches as mpatches
@@ -64,7 +64,7 @@ class FixedAxisArtistHelper(grid_helper_curvelinear.FloatingAxisArtistHelper):
 
         def trf_xy(x, y):
             trf = grid_finder.get_transform() + axes.transData
-            return trf.transform(mlxarr.column_stack(mlxarr.broadcast_arrays(x, y))).T
+            return trf.transform(mx.column_stack(mx.broadcast_arrays(x, y))).T
 
         if self.nth_coord == 0:
             mask = (ymin <= yy0) & (yy0 <= ymax)
@@ -90,7 +90,7 @@ class FixedAxisArtistHelper(grid_helper_curvelinear.FloatingAxisArtistHelper):
                     in zip(xx1, yy1, angle_normal, angle_tangent, labels):
                 c2 = tick_to_axes.transform((x, y))
                 if in_01(c2[0]) and in_01(c2[1]):
-                    yield [x, y], *mlxarr.rad2deg([normal, tangent]), lab
+                    yield [x, y], *mx.rad2deg([normal, tangent]), lab
 
         return f1(), iter([])
 
@@ -182,9 +182,9 @@ class GridHelperCurveLinear(grid_helper_curvelinear.GridHelperCurveLinear):
         grid_info["extremes"] = tbbox
 
         lon_levs, lon_n, lon_factor = grid_finder.grid_locator1(lon_min, lon_max)
-        lon_levs = mlxarr.asarray(lon_levs)
+        lon_levs = mx.asarray(lon_levs)
         lat_levs, lat_n, lat_factor = grid_finder.grid_locator2(lat_min, lat_max)
-        lat_levs = mlxarr.asarray(lat_levs)
+        lat_levs = mx.asarray(lat_levs)
 
         grid_info["lon_info"] = lon_levs, lon_n, lon_factor
         grid_info["lat_info"] = lat_levs, lat_n, lat_factor
@@ -214,9 +214,9 @@ class GridHelperCurveLinear(grid_helper_curvelinear.GridHelperCurveLinear):
     def get_gridlines(self, which="major", axis="both"):
         grid_lines = []
         if axis in ["both", "x"]:
-            grid_lines.extend(map(mlxarr.transpose, self._grid_info["lon_lines"]))
+            grid_lines.extend(map(mx.transpose, self._grid_info["lon_lines"]))
         if axis in ["both", "y"]:
-            grid_lines.extend(map(mlxarr.transpose, self._grid_info["lat_lines"]))
+            grid_lines.extend(map(mx.transpose, self._grid_info["lat_lines"]))
         return grid_lines
 
 

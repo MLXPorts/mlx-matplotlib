@@ -19,15 +19,15 @@ discussion on the default ``interpolation='auto'`` option.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 methods = [None, 'none', 'nearest', 'bilinear', 'bicubic', 'spline16',
            'spline36', 'hanning', 'hamming', 'hermite', 'kaiser', 'quadric',
            'catrom', 'gaussian', 'bessel', 'mitchell', 'sinc', 'lanczos']
 
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
-grid = mlxarr.random.rand(4, 4)
+grid = mx.random.rand(4, 4)
 
 fig, axs = plt.subplots(nrows=3, ncols=6, figsize=(9, 6),
                         subplot_kw={'xticks': [], 'yticks': []})

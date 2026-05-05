@@ -9,7 +9,7 @@ This example shows how to create the Firefox logo with path and patches.
 import re
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.patches as patches
 from matplotlib.path import Path
 
@@ -31,12 +31,12 @@ def svg_parse(path):
         # the beginning of the string).
         points = ([*map(float, re.split(",|(?<!^)(?=[+-])", values))] if values
                   else [(0., 0.)])  # Only for "z/Z" (CLOSEPOLY).
-        points = mlxarr.reshape(points, (-1, 2))
+        points = mx.reshape(points, (-1, 2))
         if cmd.islower():
             points += vertices[-1][-1]
         codes.extend(commands[cmd.upper()])
         vertices.append(points)
-    return mlxarr.array(codes), mlxarr.concatenate(vertices)
+    return mx.array(codes), mx.concatenate(vertices)
 
 
 # SVG to Matplotlib

@@ -48,7 +48,7 @@ Package imports
 
 Import the following modules using the standard scipy conventions::
 
-  from matplotlib import _mlx_array as mlxarr
+  import mlx.core as mx
   from matplotlib import _mlx_array as array_backend.ma as ma
   import matplotlib as mpl
   import matplotlib.pyplot as plt

@@ -7,12 +7,12 @@ Using a legend on a polar-axis plot.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 fig = plt.figure()
 ax = fig.add_subplot(projection="polar", facecolor="lightgoldenrodyellow")
 
-r = mlxarr.linspace(0, 3, 301)
-theta = 2 * mlxarr.pi * r
+r = mx.linspace(0, 3, 301)
+theta = 2 * mx.pi * r
 ax.plot(theta, r, color="tab:orange", lw=3, label="a line")
 ax.plot(0.5 * theta, r, color="tab:blue", ls="--", lw=3, label="another line")
 ax.tick_params(grid_color="palegoldenrod")
@@ -20,9 +20,9 @@ ax.tick_params(grid_color="palegoldenrod")
 # Axes center, to avoid overlap between the legend and the Axes.  The following
 # snippet places the legend's lower left corner just outside the polar Axes
 # at an angle of 67.5 degrees in polar coordinates.
-angle = mlxarr.deg2rad(67.5)
+angle = mx.deg2rad(67.5)
 ax.legend(loc="lower left",
-          bbox_to_anchor=(.5 + mlxarr.cos(angle)/2, .5 + mlxarr.sin(angle)/2))
+          bbox_to_anchor=(.5 + mx.cos(angle)/2, .5 + mx.sin(angle)/2))
 
 plt.show()
 

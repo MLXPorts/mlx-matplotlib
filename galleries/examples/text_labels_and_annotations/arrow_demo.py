@@ -10,7 +10,7 @@ probabilities in a Markov model) using arrow length, width, or alpha (opacity).
 import itertools
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 def make_arrow_graph(ax, data, size=4, display='length', shape='right',
                      max_arrow_width=0.03, arrow_sep=0.02, alpha=0.5,
                      normalize_data=False, ec=None, labelcolor=None,
@@ -48,15 +48,15 @@ def make_arrow_graph(ax, data, size=4, display='length', shape='right',
 
     bases = 'ATGC'
     coords = {
-        'A': mlxarr.array([0, 1]),
-        'T': mlxarr.array([1, 1]),
-        'G': mlxarr.array([0, 0]),
-        'C': mlxarr.array([1, 0]),
+        'A': mx.array([0, 1]),
+        'T': mx.array([1, 1]),
+        'G': mx.array([0, 0]),
+        'C': mx.array([1, 0]),
     }
     colors = {'A': 'r', 'T': 'k', 'G': 'g', 'C': 'b'}
 
     for base in bases:
-        fontsize = mlxarr.clip(max_text_size * data[base]**(1/2),
+        fontsize = mx.clip(max_text_size * data[base]**(1/2),
                            min_text_size, max_text_size)
         ax.text(*coords[base], f'${base}_3$',
                 color=colors[base], size=fontsize,
@@ -103,11 +103,11 @@ def make_arrow_graph(ax, data, size=4, display='length', shape='right',
         cp0 = coords[pair[0]]
         cp1 = coords[pair[1]]
         # unit vector in arrow direction
-        delta = cos, sin = (cp1 - cp0) / mlxarr.hypot(*(cp1 - cp0))
+        delta = cos, sin = (cp1 - cp0) / mx.hypot(*(cp1 - cp0))
         x_pos, y_pos = (
             (cp0 + cp1) / 2  # midpoint
             - delta * length / 2  # half the arrow length
-            + mlxarr.array([-sin, cos]) * arrow_sep  # shift outwards by arrow_sep
+            + mx.array([-sin, cos]) * arrow_sep  # shift outwards by arrow_sep
         )
         ax.arrow(
             x_pos, y_pos, cos * length, sin * length,
@@ -130,7 +130,7 @@ def make_arrow_graph(ax, data, size=4, display='length', shape='right',
         where = 'base' if (cp0 != cp1).all() else 'center'
         # rotate based on direction of arrow (cos, sin)
         M = [[cos, -sin], [sin, cos]]
-        x, y = mlxarr.dot(M, orig_positions[where]) + [x_pos, y_pos]
+        x, y = mx.dot(M, orig_positions[where]) + [x_pos, y_pos]
         label = r'$r_{_{\mathrm{%s}}}$' % (pair,)
         ax.text(x, y, label, size=label_text_size, ha='center', va='center',
                 color=labelcolor or fc)

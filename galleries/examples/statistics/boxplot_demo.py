@@ -13,18 +13,18 @@ the statistics that they use to summarize the data.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.patches import Polygon
 
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 # fake up some data
-spread = mlxarr.random.rand(50) * 100
-center = mlxarr.ones(25) * 50
-flier_high = mlxarr.random.rand(10) * 100 + 100
-flier_low = mlxarr.random.rand(10) * -100
-data = mlxarr.concatenate((spread, center, flier_high, flier_low))
+spread = mx.random.rand(50) * 100
+center = mx.ones(25) * 50
+flier_high = mx.random.rand(10) * 100 + 100
+flier_low = mx.random.rand(10) * -100
+data = mx.concatenate((spread, center, flier_high, flier_low))
 
 fig, axs = plt.subplots(2, 3)
 
@@ -56,11 +56,11 @@ fig.subplots_adjust(left=0.08, right=0.98, bottom=0.05, top=0.9,
                     hspace=0.4, wspace=0.3)
 
 # fake up some more data
-spread = mlxarr.random.rand(50) * 100
-center = mlxarr.ones(25) * 40
-flier_high = mlxarr.random.rand(10) * 100 + 100
-flier_low = mlxarr.random.rand(10) * -100
-d2 = mlxarr.concatenate((spread, center, flier_high, flier_low))
+spread = mx.random.rand(50) * 100
+center = mx.ones(25) * 40
+flier_high = mx.random.rand(10) * 100 + 100
+flier_low = mx.random.rand(10) * -100
+d2 = mx.concatenate((spread, center, flier_high, flier_low))
 # Making a 2-D array only works if all the columns are the
 # same length.  If they are not, then use a list instead.
 # This is actually more efficient because boxplot converts
@@ -85,15 +85,15 @@ random_dists = ['Normal(1, 1)', 'Lognormal(1, 1)', 'Exp(1)', 'Gumbel(6, 4)',
                 'Triangular(2, 9, 11)']
 N = 500
 
-norm = mlxarr.random.normal(1, 1, N)
-logn = mlxarr.random.lognormal(1, 1, N)
-expo = mlxarr.random.exponential(1, N)
-gumb = mlxarr.random.gumbel(6, 4, N)
-tria = mlxarr.random.triangular(2, 9, 11, N)
+norm = mx.random.normal(1, 1, N)
+logn = mx.random.lognormal(1, 1, N)
+expo = mx.random.exponential(1, N)
+gumb = mx.random.gumbel(6, 4, N)
+tria = mx.random.triangular(2, 9, 11, N)
 
 # Generate some random indices that we'll use to resample the original data
 # arrays. For code brevity, just use the same random indices for each array
-bootstrap_indices = mlxarr.random.randint(0, N, N)
+bootstrap_indices = mx.random.randint(0, N, N)
 data = [
     norm, norm[bootstrap_indices],
     logn, logn[bootstrap_indices],
@@ -126,7 +126,7 @@ ax1.set(
 # Now fill the boxes with desired colors
 box_colors = ['darkkhaki', 'royalblue']
 num_boxes = len(data)
-medians = mlxarr.empty(num_boxes)
+medians = mx.zeros(num_boxes)
 for i in range(num_boxes):
     box = bp['boxes'][i]
     box_x = []
@@ -134,7 +134,7 @@ for i in range(num_boxes):
     for j in range(5):
         box_x.append(box.get_xdata()[j])
         box_y.append(box.get_ydata()[j])
-    box_coords = mlxarr.column_stack([box_x, box_y])
+    box_coords = mx.column_stack([box_x, box_y])
     # Alternate between Dark Khaki and Royal Blue
     ax1.add_patch(Polygon(box_coords, facecolor=box_colors[i % 2]))
     # Now draw the median lines back over what we just filled in
@@ -148,7 +148,7 @@ for i in range(num_boxes):
     medians[i] = median_y[0]
     # Finally, overplot the sample averages, with horizontal alignment
     # in the center of each box
-    ax1.plot(mlxarr.average(med.get_xdata()), mlxarr.average(data[i]),
+    ax1.plot(mx.average(med.get_xdata()), mx.average(data[i]),
              color='w', marker='*', markeredgecolor='k')
 
 # Set the axes ranges and axes labels
@@ -156,14 +156,14 @@ ax1.set_xlim(0.5, num_boxes + 0.5)
 top = 40
 bottom = -5
 ax1.set_ylim(bottom, top)
-ax1.set_xticklabels(mlxarr.repeat(random_dists, 2),
+ax1.set_xticklabels(mx.repeat(random_dists, 2),
                     rotation=45, fontsize=8)
 
 # Due to the Y-axis scale being different across samples, it can be
 # hard to compare differences in medians across the samples. Add upper
 # X-axis tick labels with the sample medians to aid in comparison
 # (just use two decimal places of precision)
-pos = mlxarr.arange(num_boxes) + 1
+pos = mx.arange(num_boxes) + 1
 upper_labels = [str(round(s, 2)) for s in medians]
 weights = ['bold', 'semibold']
 for tick, label in zip(range(num_boxes), ax1.get_xticklabels()):
@@ -208,10 +208,10 @@ def fake_bootstrapper(n):
     return med, ci
 
 inc = 0.1
-e1 = mlxarr.random.normal(0, 1, size=500)
-e2 = mlxarr.random.normal(0, 1, size=500)
-e3 = mlxarr.random.normal(0, 1 + inc, size=500)
-e4 = mlxarr.random.normal(0, 1 + 2*inc, size=500)
+e1 = mx.random.normal(0, 1, size=500)
+e2 = mx.random.normal(0, 1, size=500)
+e3 = mx.random.normal(0, 1 + inc, size=500)
+e4 = mx.random.normal(0, 1 + 2*inc, size=500)
 
 treatments = [e1, e2, e3, e4]
 med1, ci1 = fake_bootstrapper(1)
@@ -220,7 +220,7 @@ medians = [None, None, med1, med2]
 conf_intervals = [None, None, ci1, ci2]
 
 fig, ax = plt.subplots()
-pos = mlxarr.arange(len(treatments)) + 1
+pos = mx.arange(len(treatments)) + 1
 bp = ax.boxplot(treatments, sym='k+', positions=pos,
                 notch=True, bootstrap=5000,
                 usermedians=medians,
@@ -236,8 +236,8 @@ plt.show()
 # %%
 # Here we customize the widths of the caps .
 
-x = mlxarr.linspace(-7, 7, 140)
-x = mlxarr.hstack([-25, x, 25])
+x = mx.linspace(-7, 7, 140)
+x = mx.hstack([-25, x, 25])
 fig, ax = plt.subplots()
 
 ax.boxplot([x, x], notch=True, capwidths=[0.01, 0.2])

@@ -20,21 +20,21 @@ hence is up-sampled.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 fig, axs = plt.subplots(1, 2, figsize=(4, 2))
 
 # First we generate a 450x450 pixel image with varying frequency content:
 N = 450
-x = mlxarr.arange(N) / N - 0.5
-y = mlxarr.arange(N) / N - 0.5
-aa = mlxarr.ones((N, N))
+x = mx.arange(N) / N - 0.5
+y = mx.arange(N) / N - 0.5
+aa = mx.ones((N, N))
 aa[::2, :] = -1
 
-X, Y = mlxarr.meshgrid(x, y)
-R = mlxarr.sqrt(X**2 + Y**2)
+X, Y = mx.meshgrid(x, y)
+R = mx.sqrt(X**2 + Y**2)
 f0 = 5
 k = 100
-a = mlxarr.sin(mlxarr.pi * 2 * (f0 * R + k * R**2 / 2))
+a = mx.sin(mx.pi * 2 * (f0 * R + k * R**2 / 2))
 # make the left hand side of this
 a[:int(N / 2), :][R[:int(N / 2), :] < 0.4] = -1
 a[:int(N / 2), :][R[:int(N / 2), :] < 0.3] = 1
@@ -44,8 +44,8 @@ alarge = aa
 axs[0].imshow(alarge, cmap='RdBu_r')
 axs[0].set_title('(450, 450) Down-sampled', fontsize='medium')
 
-mlxarr.random.seed(19680801+9)
-asmall = mlxarr.random.rand(4, 4)
+mx.random.seed(19680801+9)
+asmall = mx.random.rand(4, 4)
 axs[1].imshow(asmall, cmap='viridis')
 axs[1].set_title('(4, 4) Up-sampled', fontsize='medium')
 
@@ -200,8 +200,8 @@ fig.colorbar(im, ax=axs, extend='both', shrink=0.8)
 # If we up-sample, then we can represent a data pixel by many image or screen pixels.
 # In the following example, we greatly over-sample the small data matrix.
 
-mlxarr.random.seed(19680801+9)
-a = mlxarr.random.rand(4, 4)
+mx.random.seed(19680801+9)
+a = mx.random.rand(4, 4)
 
 fig, axs = plt.subplots(1, 2, figsize=(6.5, 4), layout='compressed')
 axs[0].imshow(asmall, cmap='viridis')

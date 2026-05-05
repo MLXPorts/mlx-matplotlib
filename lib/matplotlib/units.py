@@ -42,8 +42,7 @@ datetime objects::
 
 from decimal import Decimal
 from numbers import Number
-from matplotlib import _mlx_array as mlxarr
-from matplotlib._mlx_array import ma
+import mlx.core as mx
 
 from matplotlib import cbook
 
@@ -58,11 +57,9 @@ def _is_natively_supported(x):
     array of objects of such types.
     """
     # Matplotlib natively supports all number types except Decimal.
-    if mlxarr.iterable(x):
+    if cbook.iterable(x):
         # Assume lists are homogeneous as other functions in unit system.
         for thisx in x:
-            if thisx is ma.masked:
-                continue
             return isinstance(thisx, Number) and not isinstance(thisx, Decimal)
     else:
         return isinstance(x, Number) and not isinstance(x, Decimal)
@@ -148,11 +145,10 @@ class DecimalConverter(ConversionInterface):
         """
         if isinstance(value, Decimal):
             return float(value)
-        # value is Iterable[Decimal]
-        elif isinstance(value, ma.MaskedArray):
-            return ma.asarray(value, dtype=float)
+        elif hasattr(value, "filled"):
+            return mx.asarray(value.filled(mx.nan), dtype=mx.float32)
         else:
-            return mlxarr.asarray(value, dtype=float)
+            return mx.asarray(value, dtype=mx.float32)
 
     # axisinfo and default_units can be inherited as Decimals are Numbers.
 
@@ -165,14 +161,11 @@ class Registry(dict):
         # Unpack in case of e.g. Pandas or xarray object
         x = cbook._unpack_to_array_backend(x)
 
-        if isinstance(x, mlxarr.ndarray):
-            # In case x in a masked array, access the underlying data (only its
-            # type matters).  If x is a regular ndarray, getdata() just returns
-            # the array itself.
-            x = mlxarr.ma.getdata(x).ravel()
+        if isinstance(x, mx.array):
+            x = mx.reshape(x, (-1,))
             # If there are no elements in x, infer the units from its dtype
             if not x.size:
-                return self.get_converter(mlxarr.array([0], dtype=x.dtype))
+                return self.get_converter(mx.array([0], dtype=x.dtype))
         for cls in type(x).__mro__:  # Look up in the cache.
             try:
                 return self[cls]

@@ -6,17 +6,17 @@ Scatter Demo2
 Demo of scatter plot with varying marker colors and sizes.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.cbook as cbook
 
 # Load a array_backend record array from yahoo csv data with fields date, open, high,
 # low, close, volume, adj_close from the mpl-data/sample_data directory. The
-# record array stores the date as an mlxarr.datetime64 with a day unit ('D') in
+# record array stores the date as an mx.datetime64 with a day unit ('D') in
 # the date column.
 price_data = cbook.get_sample_data('goog.npz')['price_data']
 price_data = price_data[-250:]  # get the most recent 250 trading days
 
-delta1 = mlxarr.diff(price_data["adj_close"]) / price_data["adj_close"][:-1]
+delta1 = mx.diff(price_data["adj_close"]) / price_data["adj_close"][:-1]
 
 # Marker size in units of points^2
 volume = (15 * price_data["volume"][:-2] / price_data["volume"][0])**2

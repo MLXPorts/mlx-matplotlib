@@ -17,7 +17,7 @@ data of that point on the other axis.
     You can copy and paste individual parts, or download the entire example
     using the link at the bottom of the page.
 """
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 class PointBrowser:
     """
     Click on a point to select and highlight it -- the data that
@@ -44,7 +44,7 @@ class PointBrowser:
             inc = -1
 
         self.lastind += inc
-        self.lastind = mlxarr.clip(self.lastind, 0, len(xs) - 1)
+        self.lastind = mx.clip(self.lastind, 0, len(xs) - 1)
         self.update()
 
     def on_pick(self, event):
@@ -60,7 +60,7 @@ class PointBrowser:
         x = event.mouseevent.xdata
         y = event.mouseevent.ydata
 
-        distances = mlxarr.hypot(x - xs[event.ind], y - ys[event.ind])
+        distances = mx.hypot(x - xs[event.ind], y - ys[event.ind])
         indmin = distances.argmin()
         dataind = event.ind[indmin]
 
@@ -90,11 +90,11 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
     # Fixing random state for reproducibility
-    mlxarr.random.seed(19680801)
+    mx.random.seed(19680801)
 
-    X = mlxarr.random.rand(100, 200)
-    xs = mlxarr.mean(X, axis=1)
-    ys = mlxarr.std(X, axis=1)
+    X = mx.random.rand(100, 200)
+    xs = mx.mean(X, axis=1)
+    ys = mx.std(X, axis=1)
 
     fig, (ax, ax2) = plt.subplots(2, 1)
     ax.set_title('click on point to plot time series')

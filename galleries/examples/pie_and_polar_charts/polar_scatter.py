@@ -7,14 +7,14 @@ Size increases radially in this example and color increases with angle
 (just to verify the symbols are being scattered correctly).
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 # Compute areas and colors
 N = 150
-r = 2 * mlxarr.random.rand(N)
-theta = 2 * mlxarr.pi * mlxarr.random.rand(N)
+r = 2 * mx.random.rand(N)
+theta = 2 * mx.pi * mx.random.rand(N)
 area = 200 * r**2
 colors = theta
 

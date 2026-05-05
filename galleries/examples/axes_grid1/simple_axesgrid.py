@@ -7,13 +7,13 @@ Align multiple images using `~mpl_toolkits.axes_grid1.axes_grid.ImageGrid`.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from mpl_toolkits.axes_grid1 import ImageGrid
 
-im1 = mlxarr.arange(100).reshape((10, 10))
+im1 = mx.arange(100).reshape((10, 10))
 im2 = im1.T
-im3 = mlxarr.flipud(im1)
-im4 = mlxarr.fliplr(im2)
+im3 = mx.flipud(im1)
+im4 = mx.fliplr(im2)
 
 fig = plt.figure(figsize=(4., 4.))
 grid = ImageGrid(fig, 111,  # similar to subplot(111)

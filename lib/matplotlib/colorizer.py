@@ -20,8 +20,7 @@ normalization and a colormap.
 """
 
 import functools
-from matplotlib import _mlx_array as mlxarr
-from matplotlib._mlx_array import ma
+import mlx.core as mx
 
 from matplotlib import _api, colors, cbook, scale, artist
 import matplotlib as mpl
@@ -147,11 +146,11 @@ class Colorizer:
 
         """
         # First check for special case, image input:
-        if isinstance(x, mlxarr.ndarray) and x.ndim == 3:
+        if isinstance(x, mx.array) and x.ndim == 3:
             return self._pass_image_data(x, alpha, bytes, norm)
 
         # Otherwise run norm -> colormap pipeline
-        x = ma.asarray(x)
+        x = mx.asarray(x)
         if norm:
             x = self.norm(x)
         rgba = self.cmap(x, alpha=alpha, bytes=bytes)
@@ -166,38 +165,34 @@ class Colorizer:
         if x.shape[2] == 3:
             if alpha is None:
                 alpha = 1
-            if x.dtype == mlxarr.uint8:
-                alpha = mlxarr.uint8(alpha * 255)
+            if x.dtype == mx.uint8:
+                alpha = mx.uint8(alpha * 255)
             m, n = x.shape[:2]
-            xx = mlxarr.empty(shape=(m, n, 4), dtype=x.dtype)
+            xx = mx.zeros(shape=(m, n, 4), dtype=x.dtype)
             xx[:, :, :3] = x
             xx[:, :, 3] = alpha
         elif x.shape[2] == 4:
             xx = x
         else:
             raise ValueError("Third dimension must be 3 or 4")
-        if xx.dtype.kind == 'f':
+        if colors._dtype_kind(xx.dtype) == 'f':
             # If any of R, G, B, or A is nan, set to 0
-            if mlxarr.any(nans := mlxarr.isnan(x)):
+            if mx.any(nans := mx.isnan(x)):
                 if x.shape[2] == 4:
                     xx = xx.copy()
-                xx[mlxarr.any(nans, axis=2), :] = 0
+                xx[mx.any(nans, axis=2), :] = 0
 
             if norm and (xx.max() > 1 or xx.min() < 0):
                 raise ValueError("Floating point image RGB values "
                                  "must be in the 0..1 range.")
             if bytes:
-                xx = (xx * 255).astype(mlxarr.uint8)
-        elif xx.dtype == mlxarr.uint8:
+                xx = (xx * 255).astype(mx.uint8)
+        elif xx.dtype == mx.uint8:
             if not bytes:
-                xx = xx.astype(mlxarr.float32) / 255
+                xx = xx.astype(mx.float32) / 255
         else:
             raise ValueError("Image RGB array must be uint8 or "
                              "floating point; found %s" % xx.dtype)
-        # Account for any masked entries in the original array
-        # If any of R, G, B, or A are masked for an entry, we set alpha to 0
-        if mlxarr.ma.is_masked(x):
-            xx[mlxarr.any(mlxarr.ma.getmaskarray(x), axis=2), 3] = 0
         return xx
 
     def autoscale(self, A):
@@ -476,25 +471,23 @@ class _ColorizerInterface:
         # Note if cm.ScalarMappable is depreciated, this functionality should be
         # implemented as format_cursor_data() on ColorizingArtist.
         n = self.cmap.N
-        if mlxarr.ma.getmask(data):
-            return "[]"
         normed = self.norm(data)
-        if mlxarr.isfinite(normed):
+        if mx.isfinite(normed):
             if isinstance(self.norm, colors.BoundaryNorm):
                 # not an invertible normalization mapping
-                cur_idx = mlxarr.argmin(mlxarr.abs(self.norm.boundaries - data))
+                cur_idx = mx.argmin(mx.abs(self.norm.boundaries - data))
                 neigh_idx = max(0, cur_idx - 1)
                 # use max diff to prevent delta == 0
-                delta = mlxarr.diff(
+                delta = mx.diff(
                     self.norm.boundaries[neigh_idx:cur_idx + 2]
                 ).max()
             elif self.norm.vmin == self.norm.vmax:
                 # singular norms, use delta of 10% of only value
-                delta = mlxarr.abs(self.norm.vmin * .1)
+                delta = mx.abs(self.norm.vmin * .1)
             else:
                 # Midpoints of neighboring color intervals.
                 neighbors = self.norm.inverse(
-                    (int(normed * n) + mlxarr.array([0, 1])) / n)
+                    (int(normed * n) + mx.array([0, 1])) / n)
                 delta = abs(neighbors - data).max()
             g_sig_digits = cbook._g_sig_digits(data, delta)
         else:
@@ -563,7 +556,7 @@ class _ScalarMappable(_ColorizerInterface):
             return
 
         A = cbook.safe_masked_invalid(A, copy=True)
-        if not mlxarr.can_cast(A.dtype, float, "same_kind"):
+        if not mx.can_cast(A.dtype, float, "same_kind"):
             raise TypeError(f"Image data of dtype {A.dtype} cannot be "
                             "converted to float")
 

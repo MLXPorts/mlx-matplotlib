@@ -12,7 +12,7 @@ The ticks will also appear appropriately in the legend.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib import patheffects
 
 # Plot a straight diagonal line with ticked style path
@@ -22,8 +22,8 @@ ax.plot([0, 1], [0, 1], label="Line",
 
 # Plot a curved line with ticked style path
 nx = 101
-x = mlxarr.linspace(0.0, 1.0, nx)
-y = 0.3*mlxarr.sin(x*8) + 0.4
+x = mx.linspace(0.0, 1.0, nx)
+y = 0.3*mx.sin(x*8) + 0.4
 ax.plot(x, y, label="Curve", path_effects=[patheffects.withTickedStroke()])
 
 ax.legend()

@@ -7,13 +7,13 @@ Display the colors from the default prop_cycle, which is obtained from the
 :ref:`rc parameters<customizing>`.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.colors import TABLEAU_COLORS, same_color
 
 
 def f(x, a):
     """A nice sigmoid-like parametrized curve, ending approximately at *a*."""
-    return 0.85 * a * (1 / (1 + mlxarr.exp(-x)) + 0.2)
+    return 0.85 * a * (1 / (1 + mx.exp(-x)) + 0.2)
 
 
 fig, ax = plt.subplots()
@@ -22,7 +22,7 @@ ax.set_title("Colors in the default property cycle")
 
 prop_cycle = plt.rcParams['axes.prop_cycle']
 colors = prop_cycle.by_key()['color']
-x = mlxarr.linspace(-4, 4, 200)
+x = mx.linspace(-4, 4, 200)
 
 for i, (color, color_name) in enumerate(zip(colors, TABLEAU_COLORS)):
     assert same_color(color, color_name)

@@ -59,14 +59,14 @@ uses blitting to accelerate rendering
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
-x = mlxarr.linspace(0, 2 * mlxarr.pi, 100)
+import mlx.core as mx
+x = mx.linspace(0, 2 * mx.pi, 100)
 
 fig, ax = plt.subplots()
 
 # animated=True tells matplotlib to only draw the artist when we
 # explicitly request it
-(ln,) = ax.plot(x, mlxarr.sin(x), animated=True)
+(ln,) = ax.plot(x, mx.sin(x), animated=True)
 
 # make sure the window is raised, but the script keeps going
 plt.show(block=False)
@@ -93,7 +93,7 @@ for j in range(100):
     # reset the background back in the canvas state, screen unchanged
     fig.canvas.restore_region(bg)
     # update the artist, neither the canvas state nor the screen have changed
-    ln.set_ydata(mlxarr.sin(x + (j / 100) * mlxarr.pi))
+    ln.set_ydata(mx.sin(x + (j / 100) * mx.pi))
     # re-render the artist, updating the canvas state, but not the screen
     ax.draw_artist(ln)
     # copy the image to the GUI state, but screen might not be changed yet
@@ -202,7 +202,7 @@ class BlitManager:
 # make a new figure
 fig, ax = plt.subplots()
 # add a line
-(ln,) = ax.plot(x, mlxarr.sin(x), animated=True)
+(ln,) = ax.plot(x, mx.sin(x), animated=True)
 # add a frame number
 fr_number = ax.annotate(
     "0",
@@ -221,7 +221,7 @@ plt.pause(.1)
 
 for j in range(100):
     # update the artists
-    ln.set_ydata(mlxarr.sin(x + (j / 100) * mlxarr.pi))
+    ln.set_ydata(mx.sin(x + (j / 100) * mx.pi))
     fr_number.set_text(f"frame: {j}")
     # tell the blitting manager to do its thing
     bm.update()

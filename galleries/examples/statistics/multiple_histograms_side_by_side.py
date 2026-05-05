@@ -11,7 +11,7 @@ to violin plots.
 To make this highly specialized plot, we can't use the standard ``hist``
 method. Instead, we use ``barh`` to draw the horizontal bars directly. The
 vertical positions and lengths of the bars are computed via the
-``mlxarr.histogram`` function. The histograms for all the samples are
+``mx.histogram`` function. The histograms for all the samples are
 computed using the same range (min and max values) and number of bins,
 so that the bins for each sample are in the same vertical positions.
 
@@ -22,29 +22,29 @@ http://docs.astropy.org/en/stable/visualization/histogram.html
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
-mlxarr.random.seed(19680801)
+import mlx.core as mx
+mx.random.seed(19680801)
 number_of_bins = 20
 
 # An example of three data sets to compare
 number_of_data_points = 387
 labels = ["A", "B", "C"]
-data_sets = [mlxarr.random.normal(0, 1, number_of_data_points),
-             mlxarr.random.normal(6, 1, number_of_data_points),
-             mlxarr.random.normal(-3, 1, number_of_data_points)]
+data_sets = [mx.random.normal(0, 1, number_of_data_points),
+             mx.random.normal(6, 1, number_of_data_points),
+             mx.random.normal(-3, 1, number_of_data_points)]
 
 # Computed quantities to aid plotting
-hist_range = (mlxarr.min(data_sets), mlxarr.max(data_sets))
+hist_range = (mx.min(data_sets), mx.max(data_sets))
 binned_data_sets = [
-    mlxarr.histogram(d, range=hist_range, bins=number_of_bins)[0]
+    mx.histogram(d, range=hist_range, bins=number_of_bins)[0]
     for d in data_sets
 ]
-binned_maximums = mlxarr.max(binned_data_sets, axis=1)
-x_locations = mlxarr.arange(0, sum(binned_maximums), mlxarr.max(binned_maximums))
+binned_maximums = mx.max(binned_data_sets, axis=1)
+x_locations = mx.arange(0, sum(binned_maximums), mx.max(binned_maximums))
 
 # The bin_edges are the same for all of the histograms
-bin_edges = mlxarr.linspace(hist_range[0], hist_range[1], number_of_bins + 1)
-heights = mlxarr.diff(bin_edges)
+bin_edges = mx.linspace(hist_range[0], hist_range[1], number_of_bins + 1)
+heights = mx.diff(bin_edges)
 centers = bin_edges[:-1] + heights / 2
 
 # Cycle through and plot each histogram

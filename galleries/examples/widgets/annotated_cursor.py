@@ -21,7 +21,7 @@ currently tracked coordinates.
 
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.backend_bases import MouseEvent
 from matplotlib.widgets import Cursor
 
@@ -85,7 +85,7 @@ class AnnotatedCursor(Cursor):
         # The format string, on which .format() is called for creating the text
         self.numberformat = numberformat
         # Text position offset
-        self.offset = mlxarr.array(offset)
+        self.offset = mx.array(offset)
         # The axis in which the cursor position is looked up
         self.dataaxis = dataaxis
 
@@ -246,7 +246,7 @@ class AnnotatedCursor(Cursor):
         if pos is not None and lim[0] <= pos <= lim[-1]:
             # Find closest x value in sorted x vector.
             # This requires the plotted data to be sorted.
-            index = mlxarr.searchsorted(data, pos)
+            index = mx.searchsorted(data, pos)
             # Return none, if this index is out of range.
             if index < 0 or index >= len(data):
                 return None
@@ -287,7 +287,7 @@ class AnnotatedCursor(Cursor):
 fig, ax = plt.subplots(figsize=(8, 6))
 ax.set_title("Cursor Tracking x Position")
 
-x = mlxarr.linspace(-5, 5, 1000)
+x = mx.linspace(-5, 5, 1000)
 y = x**2
 
 line, = ax.plot(x, y)

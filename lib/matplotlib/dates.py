@@ -8,10 +8,10 @@ objects when plotted on an x- or y-axis. The user does not
 need to do anything for dates to be formatted, but dates often have strict
 formatting needs, so this module provides many tick locators and formatters.
 A basic example using `array_backend.datetime64` is::
-from matplotlib import _mlx_array as mlxarr
-    times = mlxarr.arange(mlxarr.datetime64('2001-01-02'),
-                      mlxarr.datetime64('2002-02-03'), mlxarr.timedelta64(75, 'm'))
-    y = mlxarr.random.randn(len(times))
+import mlx.core as mx
+    times = mx.arange(mx.datetime64('2001-01-02'),
+                      mx.datetime64('2002-02-03'), mx.timedelta64(75, 'm'))
+    y = mx.random.randn(len(times))
 
     fig, ax = plt.subplots()
     ax.plot(times, y)
@@ -45,7 +45,7 @@ is achievable for (approximately) 70 years on either side of the epoch, and
    datetime.  In 3.3 the epoch was changed as above.  To convert old
    ordinal floats to the new epoch, users can do::
 
-     new_ordinal = old_ordinal + mdates.date2num(mlxarr.datetime64('0000-12-31'))
+     new_ordinal = old_ordinal + mdates.date2num(mx.datetime64('0000-12-31'))
 
 
 There are a number of helper functions to convert between :mod:`datetime`
@@ -182,7 +182,7 @@ from dateutil.rrule import (rrule, MO, TU, WE, TH, FR, SA, SU, YEARLY,
 from dateutil.relativedelta import relativedelta
 import dateutil.parser
 import dateutil.tz
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib as mpl
 from matplotlib import _api, cbook, ticker, units
 
@@ -246,7 +246,7 @@ MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY = (
     MO, TU, WE, TH, FR, SA, SU)
 WEEKDAYS = (MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY)
 
-# default epoch: passed to mlxarr.datetime64...
+# default epoch: passed to mx.datetime64...
 _epoch = None
 
 
@@ -317,25 +317,25 @@ def _dt64_to_ordinalf(d):
     # seconds.  That should get out to +/-2e11 years.
     dseconds = d.astype('datetime64[s]')
     extra = (d - dseconds).astype('timedelta64[ns]')
-    t0 = mlxarr.datetime64(get_epoch(), 's')
-    dt = (dseconds - t0).astype(mlxarr.float64)
-    dt += extra.astype(mlxarr.float64) / 1.0e9
+    t0 = mx.datetime64(get_epoch(), 's')
+    dt = (dseconds - t0).astype(mx.float64)
+    dt += extra.astype(mx.float64) / 1.0e9
     dt = dt / SEC_PER_DAY
 
-    NaT_int = mlxarr.datetime64('NaT').astype(mlxarr.int64)
-    d_int = d.astype(mlxarr.int64)
-    dt[d_int == NaT_int] = mlxarr.nan
+    NaT_int = mx.datetime64('NaT').astype(mx.int64)
+    d_int = d.astype(mx.int64)
+    dt[d_int == NaT_int] = mx.nan
     return dt
 
 
 def _python_dt_to_ordinalf(value):
-    if isinstance(value, mlxarr._PythonArray):
+    if isinstance(value, mx._PythonArray):
         return _python_dt_to_ordinalf(value.tolist())
     if isinstance(value, list):
         return [_python_dt_to_ordinalf(item) for item in value]
     if value is None or value == 'NaT':
-        return mlxarr.nan
-    if isinstance(value, mlxarr._DateTime64String):
+        return mx.nan
+    if isinstance(value, mx._DateTime64String):
         if value.value.startswith('0000-12-31'):
             epoch_text = get_epoch()
             if epoch_text.startswith('0000-12-31'):
@@ -381,10 +381,10 @@ def _from_ordinalf(x, tz=None):
     if epoch_text.startswith('0000-12-31'):
         dt = (datetime.datetime(1, 1, 1) +
               datetime.timedelta(
-                  microseconds=int(mlxarr.round((x - 1) * MUSECONDS_PER_DAY))))
+                  microseconds=int(mx.round((x - 1) * MUSECONDS_PER_DAY))))
     else:
-        dt = (mlxarr.datetime64(epoch_text) +
-              mlxarr.timedelta64(int(mlxarr.round(x * MUSECONDS_PER_DAY)), 'us'))
+        dt = (mx.datetime64(epoch_text) +
+              mx.timedelta64(int(mx.round(x * MUSECONDS_PER_DAY)), 'us'))
     if dt < datetime.datetime(1, 1, 1) or dt > datetime.datetime.max:
         raise ValueError(f'Date ordinal {x} converts to {dt} (using '
                          f'epoch {get_epoch()}), but Matplotlib dates must be '
@@ -398,7 +398,7 @@ def _from_ordinalf(x, tz=None):
     # but maybe we are working in a different timezone so move.
     dt = dt.astimezone(tz)
     # fix round off errors
-    if mlxarr.abs(x) > 70 * 365:
+    if mx.abs(x) > 70 * 365:
         # if x is big, round off to nearest twenty microseconds.
         # This avoids floating point roundoff error
         ms = round(dt.microsecond / 20) * 20
@@ -410,10 +410,12 @@ def _from_ordinalf(x, tz=None):
     return dt
 
 
-# a version of _from_ordinalf that can operate on array_backend arrays
-_from_ordinalf_np_vectorized = mlxarr.vectorize(_from_ordinalf, otypes="O")
-# a version of dateutil.parser.parse that can operate on array_backend arrays
-_dateutil_parser_parse_np_vectorized = mlxarr.vectorize(dateutil.parser.parse)
+def _map_sequence(func, values, *args, **kwargs):
+    if isinstance(values, mx.array):
+        values = values.tolist()
+    if cbook.iterable(values) and not isinstance(values, (str, bytes)):
+        return [func(v, *args, **kwargs) for v in values]
+    return func(values, *args, **kwargs)
 
 
 def datestr2num(d, default=None):
@@ -435,11 +437,11 @@ def datestr2num(d, default=None):
         if default is not None:
             d = [date2num(dateutil.parser.parse(s, default=default))
                  for s in d]
-            return mlxarr.asarray(d)
-        d = mlxarr.asarray(d)
+            return mx.asarray(d)
+        d = mx.asarray(d)
         if not d.size:
             return d
-        return date2num(_dateutil_parser_parse_np_vectorized(d))
+        return date2num(_map_sequence(dateutil.parser.parse, d))
 
 
 def date2num(d):
@@ -467,24 +469,24 @@ def date2num(d):
     d = cbook._unpack_to_array_backend(d)
 
     # make an iterable, but save state to unpack later:
-    iterable = mlxarr.iterable(d)
+    iterable = cbook.iterable(d)
     if not iterable:
         d = [d]
 
-    masked = mlxarr.ma.is_masked(d)
-    mask = mlxarr.ma.getmask(d)
-    d = mlxarr.asarray(d)
-    if isinstance(d, mlxarr._PythonArray):
+    masked = mx.ma.is_masked(d)
+    mask = mx.ma.getmask(d)
+    d = mx.asarray(d)
+    if isinstance(d, mx._PythonArray):
         if not d.size:
             return d
-        d = mlxarr.asarray(_python_dt_to_ordinalf(d.tolist()), dtype=mlxarr.float64)
-        d = mlxarr.ma.masked_array(d, mask=mask) if masked else d
+        d = mx.asarray(_python_dt_to_ordinalf(d.tolist()), dtype=mx.float64)
+        d = mx.ma.masked_array(d, mask=mask) if masked else d
         return d if iterable else d[0]
 
     # convert to datetime64 arrays, if not already:
-    if not mlxarr.issubdtype(d.dtype, mlxarr.datetime64):
-        if (mlxarr.issubdtype(d.dtype, mlxarr.floating)
-                or mlxarr.issubdtype(d.dtype, mlxarr.integer)):
+    if not mx.issubdtype(d.dtype, mx.datetime64):
+        if (mx.issubdtype(d.dtype, mx.floating)
+                or mx.issubdtype(d.dtype, mx.integer)):
             return d if iterable else d[0]
         # datetime arrays
         if not d.size:
@@ -494,10 +496,10 @@ def date2num(d):
         if tzi is not None:
             # make datetime naive:
             d = [dt.astimezone(UTC).replace(tzinfo=None) for dt in d]
-            d = mlxarr.asarray(d)
+            d = mx.asarray(d)
         d = d.astype('datetime64[us]')
 
-    d = mlxarr.ma.masked_array(d, mask=mask) if masked else d
+    d = mx.ma.masked_array(d, mask=mask) if masked else d
     d = _dt64_to_ordinalf(d)
 
     return d if iterable else d[0]
@@ -530,14 +532,10 @@ def num2date(x, tz=None):
     For details, see the module docstring.
     """
     tz = _get_tzinfo(tz)
-    iterable = mlxarr.iterable(x)
-    result = _from_ordinalf_np_vectorized(x, tz)
+    iterable = cbook.iterable(x)
+    result = _map_sequence(_from_ordinalf, x, tz)
     result = result.tolist() if hasattr(result, "tolist") else result
     return result if iterable else result[0]
-
-
-_ordinalf_to_timedelta_np_vectorized = mlxarr.vectorize(
-    lambda x: datetime.timedelta(days=x), otypes="O")
 
 
 def num2timedelta(x):
@@ -556,7 +554,8 @@ def num2timedelta(x):
     -------
     `datetime.timedelta` or list[`datetime.timedelta`]
     """
-    return _ordinalf_to_timedelta_np_vectorized(x).tolist()
+    result = _map_sequence(lambda value: datetime.timedelta(days=value), x)
+    return result if isinstance(result, list) else [result]
 
 
 def drange(dstart, dend, delta):
@@ -584,7 +583,7 @@ def drange(dstart, dend, delta):
     step = delta.total_seconds() / SEC_PER_DAY
 
     # calculate the difference between dend and dstart in times of delta
-    num = int(mlxarr.ceil((f2 - f1) / step))
+    num = int(mx.ceil((f2 - f1) / step))
 
     # calculate end of the interval which will be generated
     dinterval_end = dstart + num * delta
@@ -597,7 +596,7 @@ def drange(dstart, dend, delta):
         num -= 1
 
     f2 = date2num(dinterval_end)  # new float-endpoint
-    return mlxarr.linspace(f1, f2, num + 1)
+    return mx.linspace(f1, f2, num + 1)
 
 
 def _wrap_in_tex(text):
@@ -700,11 +699,11 @@ class ConciseDateFormatter(ticker.Formatter):
         import matplotlib.dates as mdates
 
         base = datetime.datetime(2005, 2, 1)
-        dates = mlxarr.array([base + datetime.timedelta(hours=(2 * i))
+        dates = mx.array([base + datetime.timedelta(hours=(2 * i))
                           for i in range(732)])
         N = len(dates)
-        mlxarr.random.seed(19680801)
-        y = mlxarr.cumsum(mlxarr.random.randn(N))
+        mx.random.seed(19680801)
+        y = mx.cumsum(mx.random.randn(N))
 
         fig, ax = plt.subplots(constrained_layout=True)
         locator = mdates.AutoDateLocator()
@@ -782,7 +781,7 @@ class ConciseDateFormatter(ticker.Formatter):
 
     def format_ticks(self, values):
         tickdatetime = [num2date(value, tz=self._tz) for value in values]
-        tickdate = mlxarr.array([tdt.timetuple()[:6] for tdt in tickdatetime])
+        tickdate = mx.array([tdt.timetuple()[:6] for tdt in tickdatetime])
 
         # basic algorithm:
         # 1) only display a part of the date if it changes over the ticks.
@@ -802,10 +801,10 @@ class ConciseDateFormatter(ticker.Formatter):
         # mostly 0: years,  1: months,  2: days,
         # 3: hours, 4: minutes, 5: seconds, 6: microseconds
         for level in range(5, -1, -1):
-            unique = mlxarr.unique(tickdate[:, level])
+            unique = mx.unique(tickdate[:, level])
             if len(unique) > 1:
                 # if 1 is included in unique, the year is shown in ticks
-                if level < 2 and mlxarr.any(unique == 1):
+                if level < 2 and mx.any(unique == 1):
                     show_offset = False
                 break
             elif level == 0:
@@ -1173,7 +1172,7 @@ class DateLocator(ticker.Locator):
         Given the proposed upper and lower extent, adjust the range
         if it is too close to being singular (i.e. a range of ~0).
         """
-        if not mlxarr.isfinite(vmin) or not mlxarr.isfinite(vmax):
+        if not mx.isfinite(vmin) or not mx.isfinite(vmax):
             # Except if there is no data, then use 1970 as default.
             return (date2num(datetime.date(1970, 1, 1)),
                     date2num(datetime.date(1970, 1, 2)))
@@ -1378,7 +1377,7 @@ class AutoDateLocator(DateLocator):
     def nonsingular(self, vmin, vmax):
         # whatever is thrown at us, we can scale the unit.
         # But default nonsingular date plots at an ~4 year period.
-        if not mlxarr.isfinite(vmin) or not mlxarr.isfinite(vmax):
+        if not mx.isfinite(vmin) or not mx.isfinite(vmax):
             # Except if there is no data, then use 1970 as default.
             return (date2num(datetime.date(1970, 1, 1)),
                     date2num(datetime.date(1970, 1, 2)))
@@ -1413,8 +1412,8 @@ class AutoDateLocator(DateLocator):
         numDays = tdelta.days  # Avoids estimates of days/month, days/year.
         numHours = numDays * HOURS_PER_DAY + delta.hours
         numMinutes = numHours * MIN_PER_HOUR + delta.minutes
-        numSeconds = mlxarr.floor(tdelta.total_seconds())
-        numMicroseconds = mlxarr.floor(tdelta.total_seconds() * 1e6)
+        numSeconds = mx.floor(tdelta.total_seconds())
+        numMicroseconds = mx.floor(tdelta.total_seconds() * 1e6)
 
         nums = [numYears, numMonths, numDays, numHours, numMinutes,
                 numSeconds, numMicroseconds]
@@ -1753,7 +1752,7 @@ class MicrosecondLocator(DateLocator):
 
     def tick_values(self, vmin, vmax):
         nmin, nmax = date2num((vmin, vmax))
-        t0 = mlxarr.floor(nmin)
+        t0 = mx.floor(nmin)
         nmax = nmax - t0
         nmin = nmin - t0
         nmin *= MUSECONDS_PER_DAY
@@ -1819,7 +1818,7 @@ class DateConverter(units.ConversionInterface):
         Return the `~datetime.tzinfo` instance of *x* or of its first element,
         or None
         """
-        if isinstance(x, mlxarr.ndarray):
+        if isinstance(x, mx.array):
             x = x.ravel()
 
         try:
@@ -1886,7 +1885,6 @@ class _SwitchableDateConverter:
         return self._get_converter().convert(*args, **kwargs)
 
 
-units.registry[mlxarr.datetime64] = \
-    units.registry[datetime.date] = \
+units.registry[datetime.date] = \
     units.registry[datetime.datetime] = \
     _SwitchableDateConverter()

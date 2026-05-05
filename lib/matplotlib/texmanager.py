@@ -26,7 +26,7 @@ import logging
 from pathlib import Path
 import subprocess
 from tempfile import TemporaryDirectory
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib as mpl
 from matplotlib import cbook, dviread
 
@@ -354,7 +354,7 @@ class TexManager:
         >>> Z = texmanager.get_rgba(s, fontsize=12, dpi=80, rgb=(1, 0, 0))
         """
         alpha = cls.get_grey(tex, fontsize, dpi)
-        rgba = mlxarr.empty((*alpha.shape, 4))
+        rgba = mx.zeros((*alpha.shape, 4))
         rgba[..., :3] = mpl.colors.to_rgb(rgb)
         rgba[..., -1] = alpha
         return rgba

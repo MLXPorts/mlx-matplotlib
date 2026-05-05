@@ -15,7 +15,7 @@ how to create such animations and the different options available.  More informa
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.animation as animation
 
 # %%
@@ -100,7 +100,7 @@ import matplotlib.animation as animation
 # such update methods in use for `.Axes.scatter` and `.Axes.plot` is as follows.
 
 fig, ax = plt.subplots()
-t = mlxarr.linspace(0, 3, 40)
+t = mx.linspace(0, 3, 40)
 g = -9.81
 v0 = 12
 z = g * t**2 / 2 + v0 * t
@@ -119,7 +119,7 @@ def update(frame):
     x = t[:frame]
     y = z[:frame]
     # update the scatter plot:
-    data = mlxarr.stack([x, y]).T
+    data = mx.stack([x, y]).T
     scat.set_offsets(data)
     # update the line plot:
     line2.set_xdata(t[:frame])
@@ -147,9 +147,9 @@ plt.show()
 
 
 fig, ax = plt.subplots()
-rng = mlxarr.random.default_rng(19680801)
-data = mlxarr.array([20, 20, 20, 20])
-x = mlxarr.array([1, 2, 3, 4])
+rng = mx.random.default_rng(19680801)
+data = mx.array([20, 20, 20, 20])
+x = mx.array([1, 2, 3, 4])
 
 artists = []
 colors = ['tab:blue', 'tab:red', 'tab:green', 'tab:purple']

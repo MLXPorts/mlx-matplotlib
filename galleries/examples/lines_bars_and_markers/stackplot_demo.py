@@ -14,7 +14,7 @@ Stackplots and streamgraphs
 
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.ticker as mticker
 
 # data from United Nations World Population Prospects (Revision 2019)
@@ -49,24 +49,24 @@ plt.show()
 
 
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 
 def gaussian_mixture(x, n=5):
     """Return a random mixture of *n* Gaussians, evaluated at positions *x*."""
     def add_random_gaussian(a):
-        amplitude = 1 / (.1 + mlxarr.random.random())
+        amplitude = 1 / (.1 + mx.random.random())
         dx = x[-1] - x[0]
-        x0 = (2 * mlxarr.random.random() - .5) * dx
-        z = 10 / (.1 + mlxarr.random.random()) / dx
-        a += amplitude * mlxarr.exp(-(z * (x - x0))**2)
-    a = mlxarr.zeros_like(x)
+        x0 = (2 * mx.random.random() - .5) * dx
+        z = 10 / (.1 + mx.random.random()) / dx
+        a += amplitude * mx.exp(-(z * (x - x0))**2)
+    a = mx.zeros_like(x)
     for j in range(n):
         add_random_gaussian(a)
     return a
 
 
-x = mlxarr.linspace(0, 100, 101)
+x = mx.linspace(0, 100, 101)
 ys = [gaussian_mixture(x) for _ in range(3)]
 
 fig, ax = plt.subplots()

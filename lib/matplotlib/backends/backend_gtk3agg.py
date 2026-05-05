@@ -1,4 +1,4 @@
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from .. import cbook, transforms
 from . import backend_agg, backend_gtk3
 from .backend_gtk3 import GLib, Gtk, _BackendGTK3
@@ -39,7 +39,7 @@ class FigureCanvasGTK3Agg(backend_agg.FigureCanvasAgg,
             height = int(bbox.y1) - int(bbox.y0)
 
             buf = cbook._unmultiplied_rgba8888_to_premultiplied_argb32(
-                mlxarr.asarray(self.copy_from_bbox(bbox)))
+                mx.asarray(self.copy_from_bbox(bbox)))
             image = cairo.ImageSurface.create_for_data(
                 buf.ravel().data, cairo.FORMAT_ARGB32, width, height)
             image.set_device_scale(scale, scale)

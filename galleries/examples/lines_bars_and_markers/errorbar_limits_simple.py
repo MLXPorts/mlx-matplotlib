@@ -10,11 +10,11 @@ Alternatively, you can use 2xN values to draw errorbars in only one direction.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 fig = plt.figure()
-x = mlxarr.arange(10)
-y = 2.5 * mlxarr.sin(x / 20 * mlxarr.pi)
-yerr = mlxarr.linspace(0.05, 0.2, 10)
+x = mx.arange(10)
+y = 2.5 * mx.sin(x / 20 * mx.pi)
+yerr = mx.linspace(0.05, 0.2, 10)
 
 plt.errorbar(x, y + 3, yerr=yerr, label='both limits (default)')
 
@@ -36,7 +36,7 @@ plt.legend(loc='lower right')
 # errorbars.
 
 fig = plt.figure()
-x = mlxarr.arange(10) / 10
+x = mx.arange(10) / 10
 y = (x + 0.1)**2
 
 plt.errorbar(x, y, xerr=0.1, xlolims=True, label='xlolims=True')

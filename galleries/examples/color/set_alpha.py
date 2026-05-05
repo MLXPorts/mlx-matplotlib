@@ -11,14 +11,14 @@ to fine-tune the appearance of a Figure.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # Fixing random state for reproducibility.
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(8, 4))
 
 x_values = [n for n in range(20)]
-y_values = mlxarr.random.randn(20)
+y_values = mx.random.randn(20)
 
 facecolors = ['green' if y > 0 else 'red' for y in y_values]
 edgecolors = facecolors

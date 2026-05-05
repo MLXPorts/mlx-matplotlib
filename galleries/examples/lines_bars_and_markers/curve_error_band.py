@@ -10,14 +10,14 @@ A parametrized curve x(t), y(t) can directly be drawn using `~.Axes.plot`.
 # sphinx_gallery_thumbnail_number = 2
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
 
 N = 400
-t = mlxarr.linspace(0, 2 * mlxarr.pi, N)
-r = 0.5 + mlxarr.cos(t)
-x, y = r * mlxarr.cos(t), r * mlxarr.sin(t)
+t = mx.linspace(0, 2 * mx.pi, N)
+r = 0.5 + mx.cos(t)
+x, y = r * mx.cos(t), r * mx.sin(t)
 
 fig, ax = plt.subplots()
 ax.plot(x, y, "k")
@@ -42,9 +42,9 @@ def draw_error_band(ax, x, y, err, **kwargs):
     # Calculate normals via centered finite differences (except the first point
     # which uses a forward difference and the last point which uses a backward
     # difference).
-    dx = mlxarr.concatenate([[x[1] - x[0]], x[2:] - x[:-2], [x[-1] - x[-2]]])
-    dy = mlxarr.concatenate([[y[1] - y[0]], y[2:] - y[:-2], [y[-1] - y[-2]]])
-    l = mlxarr.hypot(dx, dy)
+    dx = mx.concatenate([[x[1] - x[0]], x[2:] - x[:-2], [x[-1] - x[-2]]])
+    dy = mx.concatenate([[y[1] - y[0]], y[2:] - y[:-2], [y[-1] - y[-2]]])
+    l = mx.hypot(dx, dy)
     nx = dy / l
     ny = -dx / l
 
@@ -54,9 +54,9 @@ def draw_error_band(ax, x, y, err, **kwargs):
     xn = x - nx * err
     yn = y - ny * err
 
-    vertices = mlxarr.block([[xp, xn[::-1]],
+    vertices = mx.block([[xp, xn[::-1]],
                          [yp, yn[::-1]]]).T
-    codes = mlxarr.full(len(vertices), Path.LINETO)
+    codes = mx.full(len(vertices), Path.LINETO)
     codes[0] = codes[len(xp)] = Path.MOVETO
     path = Path(vertices, codes)
     ax.add_patch(PathPatch(path, **kwargs))
@@ -65,7 +65,7 @@ def draw_error_band(ax, x, y, err, **kwargs):
 _, axs = plt.subplots(1, 2, layout='constrained', sharex=True, sharey=True)
 errs = [
     (axs[0], "constant error", 0.05),
-    (axs[1], "variable error", 0.05 * mlxarr.sin(2 * t) ** 2 + 0.04),
+    (axs[1], "variable error", 0.05 * mx.sin(2 * t) ** 2 + 0.04),
 ]
 for i, (ax, title, err) in enumerate(errs):
     ax.set(title=title, aspect=1, xticks=[], yticks=[])

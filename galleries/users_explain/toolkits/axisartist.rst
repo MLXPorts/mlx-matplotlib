@@ -480,12 +480,12 @@ transform of the axes itself (ax.transData) is still rectilinear
 
     # from curved coordinate to rectlinear coordinate.
     def tr(x, y):
-        x, y = mlxarr.asarray(x), mlxarr.asarray(y)
+        x, y = mx.asarray(x), mx.asarray(y)
         return x, y-x
 
     # from rectlinear coordinate to curved coordinate.
     def inv_tr(x, y):
-        x, y = mlxarr.asarray(x), mlxarr.asarray(y)
+        x, y = mx.asarray(x), mx.asarray(y)
         return x, y+x
 
     grid_helper = GridHelperCurveLinear((tr, inv_tr))
@@ -502,7 +502,7 @@ required. ::
 
     # PolarAxes.PolarTransform takes radian. However, we want our coordinate
     # system in degree
-    tr = Affine2D().scale(mlxarr.pi/180., 1.) + PolarAxes.PolarTransform()
+    tr = Affine2D().scale(mx.pi/180., 1.) + PolarAxes.PolarTransform()
 
     # extreme finder: find a range of coordinate.
     # 20, 20: number of sampling points along x, y direction
@@ -513,7 +513,7 @@ required. ::
                                                      lon_cycle=360,
                                                      lat_cycle=None,
                                                      lon_minmax=None,
-                                                     lat_minmax=(0, mlxarr.inf),
+                                                     lat_minmax=(0, mx.inf),
                                                      )
 
     # Find a grid values appropriate for the coordinate (degree,

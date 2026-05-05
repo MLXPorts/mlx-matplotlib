@@ -10,7 +10,7 @@ The data used is the same as in the second plot of :doc:`trisurf3d_2`.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import matplotlib.tri as tri
 
 # First create the x, y, z coordinates of the points.
@@ -19,20 +19,20 @@ n_radii = 8
 min_radius = 0.25
 
 # Create the mesh in polar coordinates and compute x, y, z.
-radii = mlxarr.linspace(min_radius, 0.95, n_radii)
-angles = mlxarr.linspace(0, 2*mlxarr.pi, n_angles, endpoint=False)
-angles = mlxarr.repeat(angles[..., mlxarr.newaxis], n_radii, axis=1)
-angles[:, 1::2] += mlxarr.pi/n_angles
+radii = mx.linspace(min_radius, 0.95, n_radii)
+angles = mx.linspace(0, 2*mx.pi, n_angles, endpoint=False)
+angles = mx.repeat(angles[..., mx.newaxis], n_radii, axis=1)
+angles[:, 1::2] += mx.pi/n_angles
 
-x = (radii*mlxarr.cos(angles)).flatten()
-y = (radii*mlxarr.sin(angles)).flatten()
-z = (mlxarr.cos(radii)*mlxarr.cos(3*angles)).flatten()
+x = (radii*mx.cos(angles)).flatten()
+y = (radii*mx.sin(angles)).flatten()
+z = (mx.cos(radii)*mx.cos(3*angles)).flatten()
 
 # Create a custom triangulation.
 triang = tri.Triangulation(x, y)
 
 # Mask off unwanted triangles.
-triang.set_mask(mlxarr.hypot(x[triang.triangles].mean(axis=1),
+triang.set_mask(mx.hypot(x[triang.triangles].mean(axis=1),
                          y[triang.triangles].mean(axis=1))
                 < min_radius)
 

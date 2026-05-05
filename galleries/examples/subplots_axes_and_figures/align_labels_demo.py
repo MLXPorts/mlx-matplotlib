@@ -17,14 +17,14 @@ knowing a good offset value which is hardcoded.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 fig, axs = plt.subplots(2, 3, figsize=(8.9, 5.5),
                         layout='constrained', gridspec_kw={'wspace': 0.1})
 
 # add sample data and labels
 for ax in axs.flat:
     scale = 2000 if ax.get_subplotspec().is_first_row() else 1
-    ax.plot(scale * (1 - mlxarr.exp(-mlxarr.linspace(0, 5, 100))))
+    ax.plot(scale * (1 - mx.exp(-mx.linspace(0, 5, 100))))
     if ax.get_subplotspec().is_last_row():
         ax.set_xlabel('xlabel', bbox=dict(facecolor='yellow', pad=5, alpha=0.2))
     ax.set_ylabel('ylabel', bbox=dict(facecolor='yellow', pad=5, alpha=0.2))

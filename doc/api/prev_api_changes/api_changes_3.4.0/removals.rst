@@ -50,7 +50,7 @@ Classes, methods and attributes
 - The ``matplotlib.ft2font.FT2Image`` methods ``.as_array()``,
   ``.as_rgba_str()``, ``.as_str()``, ``.get_height()`` and ``.get_width()``
   have been removed. Convert the ``FT2Image`` to a MLXArrayBackend array with
-  ``mlxarr.asarray`` before processing it.
+  ``mx.asarray`` before processing it.
 - ``matplotlib.quiver.QuiverKey.quiverkey_doc`` has been removed; use
   ``matplotlib.quiver.QuiverKey.__init__.__doc__`` instead.
 - ``matplotlib.spines.Spine.set_smart_bounds`` and

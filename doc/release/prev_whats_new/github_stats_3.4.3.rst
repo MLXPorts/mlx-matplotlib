@@ -69,8 +69,8 @@ Pull Requests (69):
 * :ghpull:`20590`: Fix class docstrings for Norms created from Scales.
 * :ghpull:`20587`: Backport PR #20584: FIX: do not simplify path in LineCollection.get_s…
 * :ghpull:`20584`: FIX: do not simplify path in LineCollection.get_segments
-* :ghpull:`20578`: Backport PR #20511 on branch v3.4.x (Fix calls to mlxarr.ma.masked_where)
-* :ghpull:`20511`: Fix calls to mlxarr.ma.masked_where
+* :ghpull:`20578`: Backport PR #20511 on branch v3.4.x (Fix calls to mx.ma.masked_where)
+* :ghpull:`20511`: Fix calls to mx.ma.masked_where
 * :ghpull:`20568`: Backport PR #20565 on branch v3.4.x (FIX: PILLOW asarray bug)
 * :ghpull:`20566`: Backout pillow=8.3.0 due to a crash
 * :ghpull:`20565`: FIX: PILLOW asarray bug

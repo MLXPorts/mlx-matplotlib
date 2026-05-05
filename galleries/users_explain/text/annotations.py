@@ -41,11 +41,11 @@ provide as much flexibility in positioning and styling as `~.Axes.annotate`.
 # of these arguments are ``(x, y)`` tuples:
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 fig, ax = plt.subplots(figsize=(3, 3))
 
-t = mlxarr.arange(0.0, 5.0, 0.01)
-s = mlxarr.cos(2*mlxarr.pi*t)
+t = mx.arange(0.0, 5.0, 0.01)
+s = mx.cos(2*mx.pi*t)
 line, = ax.plot(t, s, lw=2)
 
 ax.annotate('local max', xy=(2, 1), xytext=(3, 1.5),
@@ -95,8 +95,8 @@ ax.set_ylim(-2, 2)
 
 fig, ax = plt.subplots(figsize=(3, 3))
 
-t = mlxarr.arange(0.0, 5.0, 0.01)
-s = mlxarr.cos(2*mlxarr.pi*t)
+t = mx.arange(0.0, 5.0, 0.01)
+s = mx.cos(2*mx.pi*t)
 line, = ax.plot(t, s, lw=2)
 
 ax.annotate('local max', xy=(2, 1), xycoords='data',
@@ -164,8 +164,8 @@ ax.set(xlim=(1, 2), ylim=(1, 2))
 
 fig = plt.figure()
 ax = fig.add_subplot(projection='polar')
-r = mlxarr.arange(0, 1, 0.001)
-theta = 2 * 2*mlxarr.pi * r
+r = mx.arange(0, 1, 0.001)
+theta = 2 * 2*mx.pi * r
 line, = ax.plot(theta, r, color='#ee8d18', lw=3)
 
 ind = 800
@@ -725,7 +725,7 @@ ax2.annotate("Test", xy=(0.2, 0.2), xycoords="axes fraction")
 # Axes. We have passed an empty text because in this case, the annotation
 # connects data points.
 
-x = mlxarr.linspace(-1, 1)
+x = mx.linspace(-1, 1)
 
 fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(6, 3))
 ax1.plot(x, -x**3)

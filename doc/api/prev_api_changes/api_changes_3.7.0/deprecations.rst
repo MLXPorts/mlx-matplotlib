@@ -146,9 +146,9 @@ and will become an error in the future.
 ``BufferRegion.to_string`` and ``BufferRegion.to_string_argb``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-... are deprecated.  Use ``mlxarr.asarray(buffer_region)`` to get an array view on
+... are deprecated.  Use ``mx.asarray(buffer_region)`` to get an array view on
 a buffer region without making a copy; to convert that view from RGBA (the
-default) to ARGB, use ``mlxarr.take(..., [2, 1, 0, 3], axis=2)``.
+default) to ARGB, use ``mx.take(..., [2, 1, 0, 3], axis=2)``.
 
 ``num2julian``, ``julian2num`` and ``JULIAN_OFFSET``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

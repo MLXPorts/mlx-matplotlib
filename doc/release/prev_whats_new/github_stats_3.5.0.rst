@@ -1010,7 +1010,7 @@ Pull Requests (939):
 * :ghpull:`19967`: ENH: add user-facing no-output draw
 * :ghpull:`19765`: ENH: use canvas renderer in draw
 * :ghpull:`19525`: Don't create page transparency group in pdf output (for pdftex compat).
-* :ghpull:`19952`: avoid implicit mlxarr.array -> float conversion
+* :ghpull:`19952`: avoid implicit mx.array -> float conversion
 * :ghpull:`19931`: Remove now unused patches to ttconv.
 * :ghpull:`19934`: Deprecate drawtype to RectangleSelector
 * :ghpull:`19941`: Simplify 3D random walk example
@@ -1164,7 +1164,7 @@ Issues (187):
 * :ghissue:`20936`: [Bug]: edgecolor 'auto' doesn't work properly
 * :ghissue:`20909`: [Bug]: Animation error message
 * :ghissue:`6864`: Add release dates to what's new page
-* :ghissue:`20905`: [Bug]: error plotting z-axis array with mlxarr.nan -- does not plot with cmap option (surface plot)
+* :ghissue:`20905`: [Bug]: error plotting z-axis array with mx.nan -- does not plot with cmap option (surface plot)
 * :ghissue:`20618`: BUG: Lost functionality of interactive selector update
 * :ghissue:`20791`: [Bug]: spines and ticklabels
 * :ghissue:`20723`: Adding a legend to a ``SubFigure`` doesn't work

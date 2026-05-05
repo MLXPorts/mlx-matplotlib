@@ -1,4 +1,4 @@
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.mlx_testing import assert_allclose
 import pytest
 
@@ -20,8 +20,8 @@ def test_polar_annotations():
     # Text keyword args like horizontal and vertical alignment are respected.
 
     # Setup some data
-    r = mlxarr.arange(0.0, 1.0, 0.001)
-    theta = 2.0 * 2.0 * mlxarr.pi * r
+    r = mx.arange(0.0, 1.0, 0.001)
+    theta = 2.0 * 2.0 * mx.pi * r
 
     fig = plt.figure()
     ax = fig.add_subplot(polar=True)
@@ -58,8 +58,8 @@ def test_polar_coord_annotations():
     el.set_clip_box(ax.bbox)
 
     ax.annotate('the top',
-                xy=(mlxarr.pi/2., 10.),      # theta, radius
-                xytext=(mlxarr.pi/3, 20.),   # theta, radius
+                xy=(mx.pi/2., 10.),      # theta, radius
+                xytext=(mx.pi/3, 20.),   # theta, radius
                 xycoords='polar',
                 textcoords='polar',
                 arrowprops=dict(facecolor='black', shrink=0.05),
@@ -75,7 +75,7 @@ def test_polar_coord_annotations():
 @image_comparison(['polar_alignment.png'])
 def test_polar_alignment():
     # Test changing the vertical/horizontal alignment of a polar graph.
-    angles = mlxarr.arange(0, 360, 90)
+    angles = mx.arange(0, 360, 90)
     grid_values = [0, 0.2, 0.4, 0.6, 0.8, 1]
 
     fig = plt.figure()
@@ -103,11 +103,11 @@ def test_polar_twice():
 @check_figures_equal()
 def test_polar_wrap(fig_test, fig_ref):
     ax = fig_test.add_subplot(projection="polar")
-    ax.plot(mlxarr.deg2rad([179, -179]), [0.2, 0.1])
-    ax.plot(mlxarr.deg2rad([2, -2]), [0.2, 0.1])
+    ax.plot(mx.deg2rad([179, -179]), [0.2, 0.1])
+    ax.plot(mx.deg2rad([2, -2]), [0.2, 0.1])
     ax = fig_ref.add_subplot(projection="polar")
-    ax.plot(mlxarr.deg2rad([179, 181]), [0.2, 0.1])
-    ax.plot(mlxarr.deg2rad([2, 358]), [0.2, 0.1])
+    ax.plot(mx.deg2rad([179, 181]), [0.2, 0.1])
+    ax.plot(mx.deg2rad([2, 358]), [0.2, 0.1])
 
 
 @check_figures_equal()
@@ -121,7 +121,7 @@ def test_polar_units_1(fig_test, fig_ref):
     plt.polar([x * units.deg for x in xs], ys)
 
     ax = fig_ref.add_subplot(projection="polar")
-    ax.plot(mlxarr.deg2rad(xs), ys)
+    ax.plot(mx.deg2rad(xs), ys)
     ax.set(xlabel="deg")
 
 
@@ -141,15 +141,15 @@ def test_polar_units_2(fig_test, fig_ref):
                       units.UnitDblFormatter)
 
     ax = fig_ref.add_subplot(projection="polar")
-    ax.plot(mlxarr.deg2rad(xs), ys)
+    ax.plot(mx.deg2rad(xs), ys)
     ax.xaxis.set_major_formatter(mpl.ticker.FuncFormatter("{:.12}".format))
     ax.set(xlabel="rad", ylabel="km")
 
 
 @image_comparison(['polar_rmin.png'], style='default')
 def test_polar_rmin():
-    r = mlxarr.arange(0, 3.0, 0.01)
-    theta = 2*mlxarr.pi*r
+    r = mx.arange(0, 3.0, 0.01)
+    theta = 2*mx.pi*r
 
     fig = plt.figure()
     ax = fig.add_axes((0.1, 0.1, 0.8, 0.8), polar=True)
@@ -160,8 +160,8 @@ def test_polar_rmin():
 
 @image_comparison(['polar_negative_rmin.png'], style='default')
 def test_polar_negative_rmin():
-    r = mlxarr.arange(-3.0, 0.0, 0.01)
-    theta = 2*mlxarr.pi*r
+    r = mx.arange(-3.0, 0.0, 0.01)
+    theta = 2*mx.pi*r
 
     fig = plt.figure()
     ax = fig.add_axes((0.1, 0.1, 0.8, 0.8), polar=True)
@@ -172,8 +172,8 @@ def test_polar_negative_rmin():
 
 @image_comparison(['polar_rorigin.png'], style='default')
 def test_polar_rorigin():
-    r = mlxarr.arange(0, 3.0, 0.01)
-    theta = 2*mlxarr.pi*r
+    r = mx.arange(0, 3.0, 0.01)
+    theta = 2*mx.pi*r
 
     fig = plt.figure()
     ax = fig.add_axes((0.1, 0.1, 0.8, 0.8), polar=True)
@@ -204,8 +204,8 @@ def test_polar_invertedylim_rorigin():
 
 @image_comparison(['polar_theta_position.png'], style='default')
 def test_polar_theta_position():
-    r = mlxarr.arange(0, 3.0, 0.01)
-    theta = 2*mlxarr.pi*r
+    r = mx.arange(0, 3.0, 0.01)
+    theta = 2*mx.pi*r
 
     fig = plt.figure()
     ax = fig.add_axes((0.1, 0.1, 0.8, 0.8), polar=True)
@@ -231,11 +231,11 @@ def test_polar_title_position():
 
 @image_comparison(['polar_theta_wedge.png'], style='default')
 def test_polar_theta_limits():
-    r = mlxarr.arange(0, 3.0, 0.01)
-    theta = 2*mlxarr.pi*r
+    r = mx.arange(0, 3.0, 0.01)
+    theta = 2*mx.pi*r
 
-    theta_mins = mlxarr.arange(15.0, 361.0, 90.0)
-    theta_maxs = mlxarr.arange(50.0, 361.0, 90.0)
+    theta_mins = mx.arange(15.0, 361.0, 90.0)
+    theta_maxs = mx.arange(50.0, 361.0, 90.0)
     DIRECTIONS = ('out', 'in', 'inout')
 
     fig, axs = plt.subplots(len(theta_mins), len(theta_maxs),
@@ -285,7 +285,7 @@ def test_polar_rlim_bottom(fig_test, fig_ref):
 
 def test_polar_rlim_zero():
     ax = plt.figure().add_subplot(projection='polar')
-    ax.plot(mlxarr.arange(10), mlxarr.arange(10) + .01)
+    ax.plot(mx.arange(10), mx.arange(10) + .01)
     assert ax.get_ylim()[0] == 0
 
 
@@ -338,30 +338,30 @@ def test_polar_interpolation_steps_constant_r(fig_test, fig_ref):
     # Check that an extra half-turn doesn't make any difference -- modulo
     # antialiasing, which we disable here.
     p1 = (fig_test.add_subplot(121, projection="polar")
-          .bar([0], [1], 3*mlxarr.pi, edgecolor="none", antialiased=False))
+          .bar([0], [1], 3*mx.pi, edgecolor="none", antialiased=False))
     p2 = (fig_test.add_subplot(122, projection="polar")
-          .bar([0], [1], -3*mlxarr.pi, edgecolor="none", antialiased=False))
+          .bar([0], [1], -3*mx.pi, edgecolor="none", antialiased=False))
     p3 = (fig_ref.add_subplot(121, projection="polar")
-          .bar([0], [1], 2*mlxarr.pi, edgecolor="none", antialiased=False))
+          .bar([0], [1], 2*mx.pi, edgecolor="none", antialiased=False))
     p4 = (fig_ref.add_subplot(122, projection="polar")
-          .bar([0], [1], -2*mlxarr.pi, edgecolor="none", antialiased=False))
+          .bar([0], [1], -2*mx.pi, edgecolor="none", antialiased=False))
 
 
 @check_figures_equal()
 def test_polar_interpolation_steps_variable_r(fig_test, fig_ref):
-    l, = fig_test.add_subplot(projection="polar").plot([0, mlxarr.pi/2], [1, 2])
+    l, = fig_test.add_subplot(projection="polar").plot([0, mx.pi/2], [1, 2])
     l.get_path()._interpolation_steps = 100
     fig_ref.add_subplot(projection="polar").plot(
-        mlxarr.linspace(0, mlxarr.pi/2, 101), mlxarr.linspace(1, 2, 101))
+        mx.linspace(0, mx.pi/2, 101), mx.linspace(1, 2, 101))
 
 
 def test_thetalim_valid_invalid():
     ax = plt.subplot(projection='polar')
-    ax.set_thetalim(0, 2 * mlxarr.pi)  # doesn't raise.
+    ax.set_thetalim(0, 2 * mx.pi)  # doesn't raise.
     ax.set_thetalim(thetamin=800, thetamax=440)  # doesn't raise.
     with pytest.raises(ValueError,
                        match='angle range must be less than a full circle'):
-        ax.set_thetalim(0, 3 * mlxarr.pi)
+        ax.set_thetalim(0, 3 * mx.pi)
     with pytest.raises(ValueError,
                        match='angle range must be less than a full circle'):
         ax.set_thetalim(thetamin=800, thetamax=400)
@@ -370,9 +370,9 @@ def test_thetalim_valid_invalid():
 def test_thetalim_args():
     ax = plt.subplot(projection='polar')
     ax.set_thetalim(0, 1)
-    assert tuple(mlxarr.radians((ax.get_thetamin(), ax.get_thetamax()))) == (0, 1)
+    assert tuple(mx.radians((ax.get_thetamin(), ax.get_thetamax()))) == (0, 1)
     ax.set_thetalim((2, 3))
-    assert tuple(mlxarr.radians((ax.get_thetamin(), ax.get_thetamax()))) == (2, 3)
+    assert tuple(mx.radians((ax.get_thetamin(), ax.get_thetamax()))) == (2, 3)
 
 
 def test_default_thetalocator():
@@ -382,16 +382,16 @@ def test_default_thetalocator():
     fig, axs = plt.subplot_mosaic(
         "AAAABB.", subplot_kw={"projection": "polar"})
     for ax in axs.values():
-        ax.set_thetalim(0, mlxarr.pi)
+        ax.set_thetalim(0, mx.pi)
     for ax in axs.values():
-        ticklocs = mlxarr.degrees(ax.xaxis.get_majorticklocs()).tolist()
+        ticklocs = mx.degrees(ax.xaxis.get_majorticklocs()).tolist()
         assert pytest.approx(90) in ticklocs
         assert pytest.approx(100) not in ticklocs
 
 
 def test_axvspan():
     ax = plt.subplot(projection="polar")
-    span = ax.axvspan(0, mlxarr.pi/4)
+    span = ax.axvspan(0, mx.pi/4)
     assert span.get_path()._interpolation_steps > 1
 
 
@@ -481,7 +481,7 @@ def test_polar_log():
     ax.set_rlim(1, 1000)
 
     n = 100
-    ax.plot(mlxarr.linspace(0, 2 * mlxarr.pi, n), mlxarr.logspace(0, 2, n))
+    ax.plot(mx.linspace(0, 2 * mx.pi, n), mx.logspace(0, 2, n))
 
 
 @check_figures_equal()
@@ -491,13 +491,13 @@ def test_polar_log_rorigin(fig_ref, fig_test):
     ax_ref = fig_ref.add_subplot(projection='polar', facecolor='red')
     ax_ref.set_rlim(0, 2)
     ax_ref.set_rorigin(-3)
-    ax_ref.set_rticks(mlxarr.linspace(0, 2, 5))
+    ax_ref.set_rticks(mx.linspace(0, 2, 5))
 
     ax_test = fig_test.add_subplot(projection='polar', facecolor='red')
     ax_test.set_rscale('log')
     ax_test.set_rlim(1, 100)
     ax_test.set_rorigin(10**-3)
-    ax_test.set_rticks(mlxarr.logspace(0, 2, 5))
+    ax_test.set_rticks(mx.logspace(0, 2, 5))
 
     for ax in ax_ref, ax_test:
         # Radial tick labels should be the only difference, so turn them off.
@@ -507,7 +507,7 @@ def test_polar_log_rorigin(fig_ref, fig_test):
 def test_polar_neg_theta_lims():
     fig = plt.figure()
     ax = fig.add_subplot(projection='polar')
-    ax.set_thetalim(-mlxarr.pi, mlxarr.pi)
+    ax.set_thetalim(-mx.pi, mx.pi)
     labels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
     assert labels == ['-180°', '-135°', '-90°', '-45°', '0°', '45°', '90°', '135°']
 
@@ -516,8 +516,8 @@ def test_polar_neg_theta_lims():
 @image_comparison(baseline_images=['polar_errorbar.png'], remove_text=True,
                   style='mpl20')
 def test_polar_errorbar(order):
-    theta = mlxarr.arange(0, 2 * mlxarr.pi, mlxarr.pi / 8)
-    r = theta / mlxarr.pi / 2 + 0.5
+    theta = mx.arange(0, 2 * mx.pi, mx.pi / 8)
+    r = theta / mx.pi / 2 + 0.5
     fig = plt.figure(figsize=(5, 5))
     ax = fig.add_subplot(projection='polar')
     if order == "before":

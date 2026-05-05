@@ -9,7 +9,7 @@ for an image.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.cbook import get_sample_data
 from matplotlib.image import BboxImage
 from matplotlib.offsetbox import AnchoredOffsetbox, AnnotationBbox, AuxTransformBox
@@ -90,7 +90,7 @@ if __name__ == "__main__":
 
     # EXAMPLE 2
 
-    arr = mlxarr.arange(256).reshape(1, 256)
+    arr = mx.arange(256).reshape(1, 256)
 
     for usetex, xpos, string in [
             (False, 0.25,

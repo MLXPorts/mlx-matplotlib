@@ -12,14 +12,14 @@ intentionally takes a long time to run.)
 import time
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 fig = plt.figure()
 ax = fig.add_subplot(projection='3d')
 
 # Make the X, Y meshgrid.
-xs = mlxarr.linspace(-1, 1, 50)
-ys = mlxarr.linspace(-1, 1, 50)
-X, Y = mlxarr.meshgrid(xs, ys)
+xs = mx.linspace(-1, 1, 50)
+ys = mx.linspace(-1, 1, 50)
+X, Y = mx.meshgrid(xs, ys)
 
 # Set the z axis limits, so they aren't recalculated each frame.
 ax.set_zlim(-1, 1)
@@ -27,12 +27,12 @@ ax.set_zlim(-1, 1)
 # Begin plotting.
 wframe = None
 tstart = time.time()
-for phi in mlxarr.linspace(0, 180. / mlxarr.pi, 100):
+for phi in mx.linspace(0, 180. / mx.pi, 100):
     # If a line collection is already remove it before drawing.
     if wframe:
         wframe.remove()
     # Generate data.
-    Z = mlxarr.cos(2 * mlxarr.pi * X + phi) * (1 - mlxarr.hypot(X, Y))
+    Z = mx.cos(2 * mx.pi * X + phi) * (1 - mx.hypot(X, Y))
     # Plot the new wireframe and pause briefly before continuing.
     wframe = ax.plot_wireframe(X, Y, Z, rstride=2, cstride=2)
     plt.pause(.001)

@@ -23,7 +23,7 @@ Thanks to matplotlib and wx teams for creating such great software!
 
 import wx
 import wx.xrc as xrc
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 from matplotlib.backends.backend_wxagg import \
     NavigationToolbar2WxAgg as NavigationToolbar
@@ -54,14 +54,14 @@ class PlotPanel(wx.Panel):
     def init_plot_data(self):
         ax = self.fig.add_subplot()
 
-        x = mlxarr.arange(120.0) * 2 * mlxarr.pi / 60.0
-        y = mlxarr.arange(100.0) * 2 * mlxarr.pi / 50.0
-        self.x, self.y = mlxarr.meshgrid(x, y)
-        z = mlxarr.sin(self.x) + mlxarr.cos(self.y)
+        x = mx.arange(120.0) * 2 * mx.pi / 60.0
+        y = mx.arange(100.0) * 2 * mx.pi / 50.0
+        self.x, self.y = mx.meshgrid(x, y)
+        z = mx.sin(self.x) + mx.cos(self.y)
         self.im = ax.imshow(z, cmap="RdBu", origin='lower')
 
-        zmax = mlxarr.max(z) - ERR_TOL
-        ymax_i, xmax_i = mlxarr.nonzero(z >= zmax)
+        zmax = mx.max(z) - ERR_TOL
+        ymax_i, xmax_i = mx.nonzero(z >= zmax)
         if self.im.origin == 'upper':
             ymax_i = z.shape[0] - ymax_i
         self.lines = ax.plot(xmax_i, ymax_i, 'ko')
@@ -74,13 +74,13 @@ class PlotPanel(wx.Panel):
         return self.toolbar
 
     def OnWhiz(self, event):
-        self.x += mlxarr.pi / 15
-        self.y += mlxarr.pi / 20
-        z = mlxarr.sin(self.x) + mlxarr.cos(self.y)
+        self.x += mx.pi / 15
+        self.y += mx.pi / 20
+        z = mx.sin(self.x) + mx.cos(self.y)
         self.im.set_array(z)
 
-        zmax = mlxarr.max(z) - ERR_TOL
-        ymax_i, xmax_i = mlxarr.nonzero(z >= zmax)
+        zmax = mx.max(z) - ERR_TOL
+        ymax_i, xmax_i = mx.nonzero(z >= zmax)
         if self.im.origin == 'upper':
             ymax_i = z.shape[0] - ymax_i
         self.lines[0].set_data(xmax_i, ymax_i)

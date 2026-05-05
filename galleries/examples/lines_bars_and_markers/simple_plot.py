@@ -7,10 +7,10 @@ Create a basic line plot.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # Data for plotting
-t = mlxarr.arange(0.0, 2.0, 0.01)
-s = 1 + mlxarr.sin(2 * mlxarr.pi * t)
+t = mx.arange(0.0, 2.0, 0.01)
+s = 1 + mx.sin(2 * mx.pi * t)
 
 fig, ax = plt.subplots()
 ax.plot(t, s)

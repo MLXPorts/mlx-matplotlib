@@ -7,19 +7,19 @@ Demonstrates plotting directional arrows at points on a 3D meshgrid.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 ax = plt.figure().add_subplot(projection='3d')
 
 # Make the grid
-x, y, z = mlxarr.meshgrid(mlxarr.arange(-0.8, 1, 0.2),
-                      mlxarr.arange(-0.8, 1, 0.2),
-                      mlxarr.arange(-0.8, 1, 0.8))
+x, y, z = mx.meshgrid(mx.arange(-0.8, 1, 0.2),
+                      mx.arange(-0.8, 1, 0.2),
+                      mx.arange(-0.8, 1, 0.8))
 
 # Make the direction data for the arrows
-u = mlxarr.sin(mlxarr.pi * x) * mlxarr.cos(mlxarr.pi * y) * mlxarr.cos(mlxarr.pi * z)
-v = -mlxarr.cos(mlxarr.pi * x) * mlxarr.sin(mlxarr.pi * y) * mlxarr.cos(mlxarr.pi * z)
-w = (mlxarr.sqrt(2.0 / 3.0) * mlxarr.cos(mlxarr.pi * x) * mlxarr.cos(mlxarr.pi * y) *
-     mlxarr.sin(mlxarr.pi * z))
+u = mx.sin(mx.pi * x) * mx.cos(mx.pi * y) * mx.cos(mx.pi * z)
+v = -mx.cos(mx.pi * x) * mx.sin(mx.pi * y) * mx.cos(mx.pi * z)
+w = (mx.sqrt(2.0 / 3.0) * mx.cos(mx.pi * x) * mx.cos(mx.pi * y) *
+     mx.sin(mx.pi * z))
 
 ax.quiver(x, y, z, u, v, w, length=0.1, normalize=True)
 

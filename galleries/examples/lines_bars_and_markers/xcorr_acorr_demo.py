@@ -7,12 +7,12 @@ Example use of cross-correlation (`~.Axes.xcorr`) and auto-correlation
 (`~.Axes.acorr`) plots.
 """
 import matplotlib.pyplot as plt
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 # Fixing random state for reproducibility
-mlxarr.random.seed(19680801)
+mx.random.seed(19680801)
 
 
-x, y = mlxarr.random.randn(2, 100)
+x, y = mx.random.randn(2, 100)
 fig, [ax1, ax2] = plt.subplots(2, 1, sharex=True)
 ax1.xcorr(x, y, usevlines=True, maxlags=50, normed=True, lw=2)
 ax1.grid(True)
