@@ -170,7 +170,7 @@ def axis_test(axis, labels):
 class TestPlotBytes:
     bytes_cases = [('string list', ['a', 'b', 'c']),
                    ('bytes list', [b'a', b'b', b'c']),
-                   ('bytes ndarray', mx.array([b'a', b'b', b'c']))]
+                   ('bytes tuple', (b'a', b'b', b'c'))]
 
     bytes_ids, bytes_data = zip(*bytes_cases)
 
@@ -185,9 +185,9 @@ class TestPlotBytes:
 
 class TestPlotNumlike:
     numlike_cases = [('string list', ['1', '11', '3']),
-                     ('string ndarray', mx.array(['1', '11', '3'])),
+                     ('string tuple', ('1', '11', '3')),
                      ('bytes list', [b'1', b'11', b'3']),
-                     ('bytes ndarray', mx.array([b'1', b'11', b'3']))]
+                     ('bytes tuple', (b'1', b'11', b'3'))]
     numlike_ids, numlike_data = zip(*numlike_cases)
 
     @pytest.mark.parametrize("plotter", PLOT_LIST, ids=PLOT_IDS)

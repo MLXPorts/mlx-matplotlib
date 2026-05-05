@@ -297,24 +297,23 @@ class LogTransform(Transform):
 
     def transform_non_affine(self, values):
         # Ignore invalid values due to nans being passed to the transform.
-        with mx.errstate(divide="ignore", invalid="ignore"):
-            log = {mx.e: mx.log, 2: mx.log2, 10: mx.log10}.get(self.base)
-            if log:  # If possible, do everything in a single call to MLXArrayBackend.
-                out = log(values)
-            else:
-                out = mx.log(values)
-                out /= mx.log(self.base)
-            if self._clip:
-                # SVG spec says that conforming viewers must support values up
-                # to 3.4e38 (C float); however experiments suggest that
-                # Inkscape (which uses cairo for rendering) runs into cairo's
-                # 24-bit limit (which is apparently shared by Agg).
-                # Ghostscript (used for pdf rendering appears to overflow even
-                # earlier, with the max value around 2 ** 15 for the tests to
-                # pass. On the other hand, in practice, we want to clip beyond
-                #     mx.log10(mx.nextafter(0, 1)) ~ -323
-                # so 1000 seems safe.
-                out[values <= 0] = -1000
+        log = {mx.e: mx.log, 2: mx.log2, 10: mx.log10}.get(self.base)
+        if log:  # If possible, do everything in a single call to MLXArrayBackend.
+            out = log(values)
+        else:
+            out = mx.log(values)
+            out /= mx.log(self.base)
+        if self._clip:
+            # SVG spec says that conforming viewers must support values up
+            # to 3.4e38 (C float); however experiments suggest that
+            # Inkscape (which uses cairo for rendering) runs into cairo's
+            # 24-bit limit (which is apparently shared by Agg).
+            # Ghostscript (used for pdf rendering appears to overflow even
+            # earlier, with the max value around 2 ** 15 for the tests to
+            # pass. On the other hand, in practice, we want to clip beyond
+            #     mx.log10(mx.nextafter(0, 1)) ~ -323
+            # so 1000 seems safe.
+            out = mx.where(values <= 0, -1000, out)
         return out
 
     def inverted(self):
@@ -452,12 +451,11 @@ class SymmetricalLogTransform(Transform):
 
     def transform_non_affine(self, values):
         abs_a = mx.abs(values)
-        with mx.errstate(divide="ignore", invalid="ignore"):
-            out = mx.sign(values) * self.linthresh * (
-                self._linscale_adj +
-                mx.log(abs_a / self.linthresh) / self._log_base)
-            inside = abs_a <= self.linthresh
-        out[inside] = values[inside] * self._linscale_adj
+        out = mx.sign(values) * self.linthresh * (
+            self._linscale_adj +
+            mx.log(abs_a / self.linthresh) / self._log_base)
+        inside = abs_a <= self.linthresh
+        out = mx.where(inside, values * self._linscale_adj, out)
         return out
 
     def inverted(self):
@@ -479,12 +477,11 @@ class InvertedSymmetricalLogTransform(Transform):
 
     def transform_non_affine(self, values):
         abs_a = mx.abs(values)
-        with mx.errstate(divide="ignore", invalid="ignore"):
-            out = mx.sign(values) * self.linthresh * (
-                mx.power(self.base,
-                         abs_a / self.linthresh - self._linscale_adj))
-            inside = abs_a <= self.invlinthresh
-        out[inside] = values[inside] / self._linscale_adj
+        out = mx.sign(values) * self.linthresh * (
+            mx.power(self.base,
+                     abs_a / self.linthresh - self._linscale_adj))
+        inside = abs_a <= self.invlinthresh
+        out = mx.where(inside, values / self._linscale_adj, out)
         return out
 
     def inverted(self):
@@ -695,11 +692,10 @@ class LogitTransform(Transform):
 
     def transform_non_affine(self, values):
         """logit transform (base 10), masked or clipped"""
-        with mx.errstate(divide="ignore", invalid="ignore"):
-            out = mx.log10(values / (1 - values))
+        out = mx.log10(values / (1 - values))
         if self._clip:  # See LogTransform for choice of clip value.
-            out[values <= 0] = -1000
-            out[1 <= values] = 1000
+            out = mx.where(values <= 0, -1000, out)
+            out = mx.where(1 <= values, 1000, out)
         return out
 
     def inverted(self):

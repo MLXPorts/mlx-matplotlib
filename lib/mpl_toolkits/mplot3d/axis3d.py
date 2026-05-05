@@ -11,13 +11,37 @@ from matplotlib import (
 from . import art3d, proj3d
 
 
+def _ensure_mx_array(value):
+    return value if isinstance(value, mx.array) else mx.array(value)
+
+
+def _replace_coord(coord, index, value):
+    value = value if isinstance(value, mx.array) else mx.array(value, dtype=coord.dtype)
+    return mx.stack([
+        value if axis == index else coord[axis]
+        for axis in range(coord.shape[0])
+    ])
+
+
+def _scalar(value):
+    return value.item() if isinstance(value, mx.array) else value
+
+
 def _move_from_center(coord, centers, deltas, axmask=(True, True, True)):
     """
     For each coordinate where *axmask* is True, move *coord* away from
     *centers* by *deltas*.
     """
-    coord = mx.asarray(coord)
-    return coord + axmask * mx.copysign(1, coord - centers) * deltas
+    coord = _ensure_mx_array(coord)
+    centers = _ensure_mx_array(centers)
+    deltas = _ensure_mx_array(deltas)
+    mask = mx.array(axmask, dtype=mx.bool_)
+    delta_from_center = coord - centers
+    ones = mx.ones_like(coord)
+    signed = mx.where(
+        mx.greater_equal(delta_from_center, mx.zeros_like(delta_from_center)),
+        ones, -ones) * deltas
+    return coord + mx.where(mask, signed, mx.zeros_like(signed))
 
 
 def _tick_update_position(tick, tickxs, tickys, labelpos):
@@ -276,23 +300,29 @@ class Axis(maxis.XAxis):
         bounds_proj = self.axes._transformed_cube(bounds)
 
         # Determine which one of the parallel planes are higher up:
-        means_z0 = mx.zeros(3)
-        means_z1 = mx.zeros(3)
+        means_z0 = []
+        means_z1 = []
         for i in range(3):
-            means_z0[i] = mx.mean(bounds_proj[self._PLANES[2 * i], 2])
-            means_z1[i] = mx.mean(bounds_proj[self._PLANES[2 * i + 1], 2])
-        highs = means_z0 < means_z1
+            plane0 = mx.take(bounds_proj, mx.array(self._PLANES[2 * i],
+                                                   dtype=mx.int32), axis=0)
+            plane1 = mx.take(bounds_proj, mx.array(self._PLANES[2 * i + 1],
+                                                   dtype=mx.int32), axis=0)
+            means_z0.append(mx.mean(plane0[:, 2]))
+            means_z1.append(mx.mean(plane1[:, 2]))
+        means_z0 = mx.stack(means_z0)
+        means_z1 = mx.stack(means_z1)
+        highs = mx.less(means_z0, means_z1)
 
         # Special handling for edge-on views
-        equals = mx.abs(means_z0 - means_z1) <= mx.finfo(float).eps
-        if mx.sum(equals) == 2:
-            vertical = mx.where(~equals)[0][0]
+        equals = mx.less_equal(mx.abs(mx.subtract(means_z0, means_z1)), 1e-7)
+        if int(mx.sum(equals.astype(mx.int32)).item()) == 2:
+            vertical = next(i for i in range(3) if not bool(equals[i].item()))
             if vertical == 2:  # looking at XY plane
-                highs = mx.array([True, True, highs[2]])
+                highs = mx.array([True, True, bool(highs[2].item())])
             elif vertical == 1:  # looking at XZ plane
-                highs = mx.array([True, highs[1], False])
+                highs = mx.array([True, bool(highs[1].item()), False])
             elif vertical == 0:  # looking at YZ plane
-                highs = mx.array([highs[0], False, False])
+                highs = mx.array([bool(highs[0].item()), False, False])
 
         return mins, maxs, bounds_proj, highs
 
@@ -317,16 +347,24 @@ class Axis(maxis.XAxis):
         mm = mm[self.axes._vertical_axis][self._axinfo["i"]]
 
         juggled = self._axinfo["juggled"]
-        edge_point_0 = mm[0].copy()  # origin point
+        edge_point_0 = mm[0]  # origin point
 
-        if ((position == 'lower' and mm[1][juggled[-1]] < mm[0][juggled[-1]]) or
-                (position == 'upper' and mm[1][juggled[-1]] > mm[0][juggled[-1]])):
-            edge_point_0[juggled[-1]] = mm[1][juggled[-1]]
+        def _with_component(point, dim, value):
+            return mx.stack([
+                value if i == dim else point[i] for i in range(3)])
+
+        lower = bool(mx.less(mm[1][juggled[-1]], mm[0][juggled[-1]]).item())
+        upper = bool(mx.greater(mm[1][juggled[-1]], mm[0][juggled[-1]]).item())
+        if ((position == 'lower' and lower) or
+                (position == 'upper' and upper)):
+            edge_point_0 = _with_component(
+                edge_point_0, juggled[-1], mm[1][juggled[-1]])
         else:
-            edge_point_0[juggled[0]] = mm[1][juggled[0]]
+            edge_point_0 = _with_component(
+                edge_point_0, juggled[0], mm[1][juggled[0]])
 
-        edge_point_1 = edge_point_0.copy()
-        edge_point_1[juggled[1]] = mm[1][juggled[1]]
+        edge_point_1 = _with_component(
+            edge_point_0, juggled[1], mm[1][juggled[1]])
 
         return edge_point_0, edge_point_1
 
@@ -374,8 +412,9 @@ class Axis(maxis.XAxis):
 
         # TODO: Move somewhere else where it's triggered less:
         tickdirs_base = [v["tickdir"] for v in self._AXINFO.values()]  # default
-        elev_mod = mx.mod(self.axes.elev + 180, 360) - 180
-        azim_mod = mx.mod(self.axes.azim, 360)
+        elev_mod = mx.subtract(mx.remainder(self.axes.elev + 180, 360),
+                               180).item()
+        azim_mod = mx.remainder(self.axes.azim, 360).item()
         if position == 'upper':
             if elev_mod >= 0:
                 tickdirs_base = [2, 2, 0]
@@ -396,7 +435,11 @@ class Axis(maxis.XAxis):
         vert_ax = self.axes._vertical_axis
         j = vert_ax - 2
         # default: tickdir = [[1, 2, 1], [2, 2, 0], [1, 0, 0]][vert_ax][i]
-        tickdir = mx.roll(info_i, -j)[mx.roll(tickdirs_base, j)][i]
+        def _roll_list(values, shift):
+            shift %= len(values)
+            return values[-shift:] + values[:-shift]
+
+        tickdir = _roll_list(info_i, -j)[_roll_list(tickdirs_base, j)[i]]
         return tickdir
 
     def active_pane(self):
@@ -457,17 +500,16 @@ class Axis(maxis.XAxis):
         points = deltas_per_point * deltas
         for tick in ticks:
             # Get tick line positions
-            pos = edgep1.copy()
-            pos[index] = tick.get_loc()
-            pos[tickdir] = out_tickdir
+            pos = _replace_coord(edgep1, index, tick.get_loc())
+            pos = _replace_coord(pos, tickdir, out_tickdir)
             x1, y1, z1 = proj3d.proj_transform(*pos, self.axes.M)
-            pos[tickdir] = in_tickdir
+            pos = _replace_coord(pos, tickdir, in_tickdir)
             x2, y2, z2 = proj3d.proj_transform(*pos, self.axes.M)
 
             # Get position of label
             labeldeltas = (tick.get_pad() + default_label_offset) * points
 
-            pos[tickdir] = edgep1_tickdir
+            pos = _replace_coord(pos, tickdir, edgep1_tickdir)
             pos = _move_from_center(pos, centers, labeldeltas, self._axmask())
             lx, ly, lz = proj3d.proj_transform(*pos, self.axes.M)
 
@@ -497,7 +539,7 @@ class Axis(maxis.XAxis):
         olx, oly, olz = proj3d.proj_transform(*pos, self.axes.M)
         self.offsetText.set_text(self.major.formatter.get_offset())
         self.offsetText.set_position((olx, oly))
-        angle = art3d._norm_text_angle(mx.rad2deg(mx.arctan2(dy, dx)))
+        angle = art3d._norm_text_angle(mx.degrees(mx.arctan2(dy, dx)))
         self.offsetText.set_rotation(angle)
         # Must set rotation mode to "anchor" so that
         # the alignment point is used as the "fulcrum" for rotation.
@@ -519,13 +561,15 @@ class Axis(maxis.XAxis):
         # from the variable 'highs'.
         # ---------------------------------------------------------------------
         centpt = proj3d.proj_transform(*centers, self.axes.M)
+        highs_count_even = _scalar(mx.sum(highs.astype(mx.int32))) % 2 == 0
         if centpt[tickdir] > pep[tickdir, outerindex]:
             # if FT and if highs has an even number of Trues
             if (centpt[index] <= pep[index, outerindex]
-                    and mx.count_nonzero(highs) % 2 == 0):
+                    and highs_count_even):
                 # Usually, this means align right, except for the FTT case,
                 # in which offset for axis 1 and 2 are aligned left.
-                if highs.tolist() == [False, True, True] and index in (1, 2):
+                if (not _scalar(highs[0]) and _scalar(highs[1])
+                        and _scalar(highs[2]) and index in (1, 2)):
                     align = 'left'
                 else:
                     align = 'right'
@@ -535,7 +579,7 @@ class Axis(maxis.XAxis):
         else:
             # if TF and if highs has an even number of Trues
             if (centpt[index] > pep[index, outerindex]
-                    and mx.count_nonzero(highs) % 2 == 0):
+                    and highs_count_even):
                 # Usually mean align left, except if it is axis 2
                 align = 'right' if index == 2 else 'left'
             else:
@@ -555,7 +599,7 @@ class Axis(maxis.XAxis):
         tlx, tly, tlz = proj3d.proj_transform(*lxyz, self.axes.M)
         self.label.set_position((tlx, tly))
         if self.get_rotate_label(self.label.get_text()):
-            angle = art3d._norm_text_angle(mx.rad2deg(mx.arctan2(dy, dx)))
+            angle = art3d._norm_text_angle(mx.degrees(mx.arctan2(dy, dx)))
             self.label.set_rotation(angle)
         self.label.set_va(label['va'])
         self.label.set_ha(label['ha'])
@@ -589,7 +633,7 @@ class Axis(maxis.XAxis):
                                            minmax, maxmin, self._tick_position)):
             # Project the edge points along the current position
             pep = proj3d._proj_trans_points([edgep1, edgep2], self.axes.M)
-            pep = mx.asarray(pep)
+            pep = mx.stack(pep, axis=0)
 
             # The transAxes transform is used because the Text object
             # rotates the text relative to the display coordinate system.
@@ -617,7 +661,7 @@ class Axis(maxis.XAxis):
                                            minmax, maxmin, self._label_position)):
             # See comments above
             pep = proj3d._proj_trans_points([edgep1, edgep2], self.axes.M)
-            pep = mx.asarray(pep)
+            pep = mx.stack(pep, axis=0)
             dx, dy = (self.axes.transAxes.transform([pep[0:2, 1]]) -
                       self.axes.transAxes.transform([pep[0:2, 0]]))[0]
 
@@ -645,17 +689,32 @@ class Axis(maxis.XAxis):
             minmax = mx.where(highs, maxs, mins)
             maxmin = mx.where(~highs, maxs, mins)
 
+            tick_locs = mx.array([tick.get_loc() for tick in ticks],
+                                 dtype=mins.dtype)
+
+            def _filled_column(value):
+                return mx.broadcast_to(value, (len(ticks),))
+
             # Grid points where the planes meet
-            xyz0 = mx.tile(minmax, (len(ticks), 1))
-            xyz0[:, index] = [tick.get_loc() for tick in ticks]
+            xyz0 = mx.stack([
+                tick_locs if dim == index else _filled_column(minmax[dim])
+                for dim in range(3)], axis=1)
 
             # Grid lines go from the end of one plane through the plane
             # intersection (at xyz0) to the end of the other plane.  The first
             # point (0) differs along dimension index-2 and the last (2) along
             # dimension index-1.
-            lines = mx.stack([xyz0, xyz0, xyz0], axis=1)
-            lines[:, 0, index - 2] = maxmin[index - 2]
-            lines[:, 2, index - 1] = maxmin[index - 1]
+            def _with_component(points, dim, value):
+                dim %= 3
+                return mx.stack([
+                    _filled_column(value) if j == dim else points[:, j]
+                    for j in range(3)], axis=1)
+
+            lines = mx.stack([
+                _with_component(xyz0, index - 2, maxmin[index - 2]),
+                xyz0,
+                _with_component(xyz0, index - 1, maxmin[index - 1])],
+                axis=1)
             self.gridlines.set_segments(lines)
             gridinfo = info['grid']
             self.gridlines.set_color(gridinfo['color'])

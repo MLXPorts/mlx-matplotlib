@@ -1530,7 +1530,9 @@ class Axis(martist.Artist):
     def get_minorticklocs(self):
         """Return this Axis' minor tick locations in data coordinates."""
         # Remove minor ticks duplicating major ticks.
-        minor_locs = mx.asarray(self.minor.locator())
+        minor_locs_raw = self.minor.locator()
+        minor_locs = (minor_locs_raw if isinstance(minor_locs_raw, mx.array)
+                      else mx.array(minor_locs_raw))
         if self.remove_overlapping_locs:
             major_locs = self.major.locator()
             transform = self._scale.get_transform()
@@ -1542,7 +1544,9 @@ class Axis(martist.Artist):
             tol = (hi - lo) * 1e-5
             mask = mx.isclose(tr_minor_locs[:, None], tr_major_locs[None, :],
                               atol=tol, rtol=0).any(axis=1)
-            minor_locs = minor_locs[~mask]
+            keep = mx.logical_not(mask)
+            keep_count = int(mx.sum(keep).item())
+            minor_locs = mx.sort(mx.where(keep, minor_locs, mx.inf))[:keep_count]
         return minor_locs
 
     def get_ticklocs(self, *, minor=False):

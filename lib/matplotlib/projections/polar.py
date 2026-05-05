@@ -65,7 +65,7 @@ class PolarTransform(mtransforms.Transform):
         if self._use_rmin and self._axis is not None:
             r = (r - self._get_rorigin()) * self._axis.get_rsign()
         r = mx.where(r >= 0, r, mx.nan)
-        return mx.column_stack([r * mx.cos(theta), r * mx.sin(theta)])
+        return mx.stack([r * mx.cos(theta), r * mx.sin(theta)], axis=1)
 
     def transform_path_non_affine(self, path):
         # docstring inherited
@@ -85,7 +85,7 @@ class PolarTransform(mtransforms.Transform):
                     # The following is complicated by Path.arc() being
                     # "helpful" and unwrapping the angles, but we don't want
                     # that behavior here.
-                    last_td, td = mx.rad2deg([last_t, t])
+                    last_td, td = mx.degrees(mx.stack([last_t, t]))
                     if self._use_rmin and self._axis is not None:
                         r = ((r - self._get_rorigin())
                              * self._axis.get_rsign())
@@ -111,7 +111,10 @@ class PolarTransform(mtransforms.Transform):
                         codes.extend(arc.codes[1:])
                 else:  # Interpolate.
                     trs = cbook.simple_linear_interpolation(
-                        mx.vstack([(last_t, last_r), trs]),
+                        mx.concatenate([
+                            mx.reshape(mx.stack([last_t, last_r]), (1, 2)),
+                            trs,
+                        ], axis=0),
                         path._interpolation_steps)[1:]
                     xys.extend(self.transform_non_affine(trs))
                     codes.extend([Path.LINETO] * len(trs))
@@ -224,9 +227,9 @@ class ThetaFormatter(mticker.Formatter):
 
     def __call__(self, x, pos=None):
         vmin, vmax = self.axis.get_view_interval()
-        d = mx.rad2deg(abs(vmax - vmin))
+        d = mx.degrees(abs(vmax - vmin))
         digits = max(-int(mx.log10(d) - 1.5), 0)
-        return f"{mx.rad2deg(x):0.{digits}f}\N{DEGREE SIGN}"
+        return f"{mx.degrees(x):0.{digits}f}\N{DEGREE SIGN}"
 
 
 class _AxisWrapper:
@@ -234,19 +237,19 @@ class _AxisWrapper:
         self._axis = axis
 
     def get_view_interval(self):
-        return mx.rad2deg(self._axis.get_view_interval())
+        return mx.degrees(self._axis.get_view_interval())
 
     def set_view_interval(self, vmin, vmax):
-        self._axis.set_view_interval(*mx.deg2rad((vmin, vmax)))
+        self._axis.set_view_interval(*mx.radians(mx.array((vmin, vmax))))
 
     def get_minpos(self):
-        return mx.rad2deg(self._axis.get_minpos())
+        return mx.degrees(self._axis.get_minpos())
 
     def get_data_interval(self):
-        return mx.rad2deg(self._axis.get_data_interval())
+        return mx.degrees(self._axis.get_data_interval())
 
     def set_data_interval(self, vmin, vmax):
-        self._axis.set_data_interval(*mx.deg2rad((vmin, vmax)))
+        self._axis.set_data_interval(*mx.radians(mx.array((vmin, vmax))))
 
     def get_tick_space(self):
         return self._axis.get_tick_space()
@@ -272,13 +275,15 @@ class ThetaLocator(mticker.Locator):
     def __call__(self):
         lim = self.axis.get_view_interval()
         if _is_full_circle_deg(lim[0], lim[1]):
-            return mx.deg2rad(min(lim)) + mx.arange(8) * 2 * mx.pi / 8
+            return mx.radians(mx.min(lim)) + mx.arange(8) * 2 * mx.pi / 8
         else:
-            return mx.deg2rad(self.base())
+            base = self.base()
+            base = base if isinstance(base, mx.array) else mx.array(base)
+            return mx.radians(base)
 
     def view_limits(self, vmin, vmax):
-        vmin, vmax = mx.rad2deg((vmin, vmax))
-        return mx.deg2rad(self.base.view_limits(vmin, vmax))
+        vmin, vmax = mx.degrees(mx.array((vmin, vmax)))
+        return mx.radians(mx.array(self.base.view_limits(vmin, vmax)))
 
 
 class ThetaTick(maxis.XTick):
@@ -330,7 +335,7 @@ class ThetaTick(maxis.XTick):
         super().update_position(loc)
         axes = self.axes
         angle = loc * axes.get_theta_direction() + axes.get_theta_offset()
-        text_angle = mx.rad2deg(angle) % 360 - 90
+        text_angle = mx.degrees(angle) % 360 - 90
         angle -= mx.pi / 2
 
         marker = self.tick1line.get_marker()
@@ -589,7 +594,7 @@ class RadialTick(maxis.YTick):
         thetamax = axes.get_thetamax()
         direction = axes.get_theta_direction()
         offset_rad = axes.get_theta_offset()
-        offset = mx.rad2deg(offset_rad)
+        offset = mx.degrees(offset_rad)
         full = _is_full_circle_deg(thetamin, thetamax)
 
         if full:
@@ -599,9 +604,9 @@ class RadialTick(maxis.YTick):
         else:
             angle = (thetamin * direction + offset) % 360 - 90
             if direction > 0:
-                tick_angle = mx.deg2rad(angle)
+                tick_angle = mx.radians(angle)
             else:
-                tick_angle = mx.deg2rad(angle + 180)
+                tick_angle = mx.radians(angle + 180)
         text_angle = (angle + 90) % 180 - 90  # between -90 and +90.
         mode, user_angle = self._labelrotation
         if mode == 'auto':
@@ -635,9 +640,9 @@ class RadialTick(maxis.YTick):
             self.tick2line.set_visible(False)
         angle = (thetamax * direction + offset) % 360 - 90
         if direction > 0:
-            tick_angle = mx.deg2rad(angle)
+            tick_angle = mx.radians(angle)
         else:
-            tick_angle = mx.deg2rad(angle + 180)
+            tick_angle = mx.radians(angle + 180)
         text_angle = (angle + 90) % 180 - 90  # between -90 and +90.
         mode, user_angle = self._labelrotation
         if mode == 'auto':
@@ -732,23 +737,24 @@ class _WedgeBbox(mtransforms.Bbox):
     def get_points(self):
         # docstring inherited
         if self._invalid:
-            points = self._viewLim.get_points().copy()
+            points = self._viewLim.get_points()
             # Scale angular limits to work with Wedge.
-            points[:, 0] *= 180 / mx.pi
-            if points[0, 0] > points[1, 0]:
-                points[:, 0] = points[::-1, 0]
+            theta = points[:, 0] * 180 / mx.pi
+            if bool((theta[0] > theta[1]).item()):
+                theta = theta[::-1]
 
             # Scale radial limits based on origin radius.
-            points[:, 1] -= self._originLim.y0
+            radius = points[:, 1] - self._originLim.y0
 
             # Scale radial limits to match axes limits.
-            rscale = 0.5 / points[1, 1]
-            points[:, 1] *= rscale
-            width = min(points[1, 1] - points[0, 1], 0.5)
+            rscale = 0.5 / radius[1]
+            radius = radius * rscale
+            points = mx.stack([theta, radius], axis=1)
+            width = min((points[1, 1] - points[0, 1]).item(), 0.5)
 
             # Generate bounding box for wedge.
-            wedge = mpatches.Wedge(self._center, points[1, 1],
-                                   points[0, 0], points[1, 0],
+            wedge = mpatches.Wedge(self._center, points[1, 1].item(),
+                                   points[0, 0].item(), points[1, 0].item(),
                                    width=width)
             self.update_from_path(wedge.get_path())
 
@@ -756,7 +762,12 @@ class _WedgeBbox(mtransforms.Bbox):
             w, h = self._points[1] - self._points[0]
             deltah = max(w - h, 0) / 2
             deltaw = max(h - w, 0) / 2
-            self._points += mx.array([[-deltaw, -deltah], [deltaw, deltah]])
+            zero = self._points[0, 0] * 0
+            offset = mx.stack([
+                mx.stack([zero - deltaw, zero - deltah]),
+                mx.stack([zero + deltaw, zero + deltah]),
+            ])
+            self._points = self._points + offset
 
             self._invalid = 0
 
@@ -777,7 +788,7 @@ class PolarAxes(Axes):
         # docstring inherited
         self._default_theta_offset = theta_offset
         self._default_theta_direction = theta_direction
-        self._default_rlabel_position = mx.deg2rad(rlabel_position)
+        self._default_rlabel_position = mx.radians(rlabel_position)
         super().__init__(*args, **kwargs)
         self.use_sticky_edges = True
         self.set_aspect('equal', adjustable='box', anchor='C')
@@ -956,7 +967,7 @@ class PolarAxes(Axes):
 
     def draw(self, renderer):
         self._unstale_viewLim()
-        thetamin, thetamax = mx.rad2deg(self._realViewLim.intervalx)
+        thetamin, thetamax = mx.degrees(self._realViewLim.intervalx)
         if thetamin > thetamax:
             thetamin, thetamax = thetamax, thetamin
         rscale_tr = self.yaxis.get_transform()
@@ -1020,19 +1031,19 @@ class PolarAxes(Axes):
 
     def set_thetamax(self, thetamax):
         """Set the maximum theta limit in degrees."""
-        self.viewLim.x1 = mx.deg2rad(thetamax)
+        self.viewLim.x1 = mx.radians(thetamax)
 
     def get_thetamax(self):
         """Return the maximum theta limit in degrees."""
-        return mx.rad2deg(self.viewLim.xmax)
+        return mx.degrees(self.viewLim.xmax)
 
     def set_thetamin(self, thetamin):
         """Set the minimum theta limit in degrees."""
-        self.viewLim.x0 = mx.deg2rad(thetamin)
+        self.viewLim.x0 = mx.radians(thetamin)
 
     def get_thetamin(self):
         """Get the minimum theta limit in degrees."""
-        return mx.rad2deg(self.viewLim.xmin)
+        return mx.degrees(self.viewLim.xmin)
 
     def set_thetalim(self, *args, **kwargs):
         r"""
@@ -1229,7 +1240,7 @@ class PolarAxes(Axes):
         float
             The theta position of the radius labels in degrees.
         """
-        return mx.rad2deg(self._r_label_position.get_matrix()[0, 2])
+        return mx.degrees(self._r_label_position.get_matrix()[0, 2])
 
     def set_rlabel_position(self, value):
         """
@@ -1240,7 +1251,7 @@ class PolarAxes(Axes):
         value : number
             The angular position of the radius labels in degrees.
         """
-        self._r_label_position.clear().translate(mx.deg2rad(value), 0.0)
+        self._r_label_position.clear().translate(mx.radians(value), 0.0)
 
     def set_rscale(self, *args, **kwargs):
         return Axes.set_yscale(self, *args, **kwargs)

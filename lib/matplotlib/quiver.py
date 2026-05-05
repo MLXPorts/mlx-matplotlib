@@ -25,6 +25,15 @@ import matplotlib.text as mtext
 import matplotlib.transforms as transforms
 
 
+def _quiver_array(value, *, dtype=mx.float32):
+    return value if isinstance(value, mx.array) else mx.array(value, dtype=dtype)
+
+
+def _quiver_atleast_1d(value, *, dtype=mx.float32):
+    value = _quiver_array(value, dtype=dtype)
+    return mx.reshape(value, (1,)) if value.ndim == 0 else value
+
+
 _quiver_doc = """
 Plot a 2D field of arrows.
 
@@ -557,7 +566,7 @@ class Quiver(mcollections.PolyCollection):
             trans = self._set_transform()
             self.span = trans.inverted().transform_bbox(self.axes.bbox).width
             if self.width is None:
-                sn = mx.clip(math.sqrt(self.N), 8, 25)
+                sn = mx.clip(mx.sqrt(mx.array(self.N, dtype=mx.float32)), 8, 25)
                 self.width = 0.06 * self.span / sn
 
             # _make_verts sets self.scale if not already specified
@@ -587,10 +596,10 @@ class Quiver(mcollections.PolyCollection):
     def set_UVC(self, U, V, C=None):
         # We need to ensure we have a copy, not a reference
         # to an array that might change before draw().
-        U = mx.reshape(mx.asarray(U, dtype=mx.float32), (-1,))
-        V = mx.reshape(mx.asarray(V, dtype=mx.float32), (-1,))
+        U = mx.reshape(_quiver_array(U), (-1,))
+        V = mx.reshape(_quiver_array(V), (-1,))
         if C is not None:
-            C = mx.reshape(mx.asarray(C, dtype=mx.float32), (-1,))
+            C = mx.reshape(_quiver_array(C), (-1,))
         for name, var in zip(('U', 'V', 'C'), (U, V, C)):
             if not (var is None or var.size == self.N or var.size == 1):
                 raise ValueError(f'Argument {name} has a size {var.size}'
@@ -646,7 +655,6 @@ class Quiver(mcollections.PolyCollection):
     # XY is stacked [X, Y].
     # See quiver() doc for meaning of X, Y, U, V, angles.
     def _make_verts(self, XY, U, V, angles):
-        uv = (U + V * 1j)
         str_angles = angles if isinstance(angles, str) else ''
         if str_angles == 'xy' and self.scale_units == 'xy':
             # Here eps is 1 so that if we get U, V by diffing
@@ -663,7 +671,7 @@ class Quiver(mcollections.PolyCollection):
         if str_angles and self.scale_units == 'xy':
             a = lengths
         else:
-            a = mx.abs(uv)
+            a = mx.sqrt(U * U + V * V)
 
         if self.scale is None:
             sn = max(10, math.sqrt(self.N))
@@ -694,13 +702,15 @@ class Quiver(mcollections.PolyCollection):
         if str_angles == 'xy':
             theta = angles
         elif str_angles == 'uv':
-            theta = mx.angle(uv)
+            theta = mx.arctan2(V, U)
         else:
-            theta = mx.deg2rad(angles)
+            theta = mx.radians(_quiver_array(angles))
             theta = mx.where(mx.isfinite(theta), theta, 0)
         theta = theta.reshape((-1, 1))  # for broadcasting
-        xy = (X + Y * 1j) * mx.exp(1j * theta) * self.width
-        XY = mx.stack((xy.real, xy.imag), axis=2)
+        cos_t = mx.cos(theta)
+        sin_t = mx.sin(theta)
+        XY = mx.stack((X * cos_t - Y * sin_t,
+                       X * sin_t + Y * cos_t), axis=2) * self.width
         if self.Umask is not None:
             XY = mx.where(mx.reshape(self.Umask, (-1, 1, 1)), mx.nan, XY)
 
@@ -717,52 +727,51 @@ class Quiver(mcollections.PolyCollection):
         # This number is chosen based on when pixel values overflow in Agg
         # causing rendering errors
         # length = mx.minimum(length, 2 ** 16)
-        mx.clip(length, 0, 2 ** 16, out=length)
+        length = mx.clip(length, 0, 2 ** 16)
         # x, y: normal horizontal arrow
         x = mx.array([0, -self.headaxislength,
                       -self.headlength, 0],
-                     mx.float64)
-        x = x + mx.array([0, 1, 1, 1]) * length
-        y = 0.5 * mx.array([1, 1, self.headwidth, 0], mx.float64)
+                     dtype=length.dtype)
+        x = x + mx.array([0, 1, 1, 1], dtype=length.dtype) * length
+        y = 0.5 * mx.array([1, 1, self.headwidth, 0], dtype=length.dtype)
         y = mx.repeat(y[mx.newaxis, :], N, axis=0)
         # x0, y0: arrow without shaft, for short vectors
         x0 = mx.array([0, minsh - self.headaxislength,
-                       minsh - self.headlength, minsh], mx.float64)
-        y0 = 0.5 * mx.array([1, 1, self.headwidth, 0], mx.float64)
-        ii = [0, 1, 2, 3, 2, 1, 0, 0]
-        X = x[:, ii]
-        Y = y[:, ii]
-        Y[:, 3:-1] *= -1
-        X0 = x0[ii]
-        Y0 = y0[ii]
-        Y0[3:-1] *= -1
+                       minsh - self.headlength, minsh], dtype=length.dtype)
+        y0 = 0.5 * mx.array([1, 1, self.headwidth, 0], dtype=length.dtype)
+        ii = mx.array([0, 1, 2, 3, 2, 1, 0, 0], dtype=mx.int32)
+        sign = mx.array([1, 1, 1, -1, -1, -1, -1, 1], dtype=length.dtype)
+        X = mx.take(x, ii, axis=1)
+        Y = mx.take(y, ii, axis=1) * sign
+        X0 = mx.take(x0, ii)
+        Y0 = mx.take(y0, ii) * sign
         shrink = length / minsh if minsh != 0. else 0.
         X0 = shrink * X0[mx.newaxis, :]
         Y0 = shrink * Y0[mx.newaxis, :]
         short = mx.repeat(length < minsh, 8, axis=1)
         # Now select X0, Y0 if short, otherwise X, Y
-        mx.copyto(X, X0, where=short)
-        mx.copyto(Y, Y0, where=short)
+        X = mx.where(short, X0, X)
+        Y = mx.where(short, Y0, Y)
         if self.pivot == 'middle':
-            X -= 0.5 * X[:, 3, mx.newaxis]
+            X = X - 0.5 * X[:, 3:4]
         elif self.pivot == 'tip':
             # array_backend bug? using -= does not work here unless we multiply by a
             # float first, as with 'mid'.
-            X = X - X[:, 3, mx.newaxis]
+            X = X - X[:, 3:4]
         elif self.pivot != 'tail':
             _api.check_in_list(["middle", "tip", "tail"], pivot=self.pivot)
 
         tooshort = length < self.minlength
-        if tooshort.any():
+        if bool(mx.any(tooshort).item()):
             # Use a heptagonal dot:
-            th = mx.arange(0, 8, 1, mx.float64) * (mx.pi / 3.0)
+            th = mx.arange(8, dtype=length.dtype) * (mx.pi / 3.0)
             x1 = mx.cos(th) * self.minlength * 0.5
             y1 = mx.sin(th) * self.minlength * 0.5
             X1 = mx.repeat(x1[mx.newaxis, :], N, axis=0)
             Y1 = mx.repeat(y1[mx.newaxis, :], N, axis=0)
-            tooshort = mx.repeat(tooshort, 8, 1)
-            mx.copyto(X, X1, where=tooshort)
-            mx.copyto(Y, Y1, where=tooshort)
+            tooshort = mx.repeat(tooshort, 8, axis=1)
+            X = mx.where(tooshort, X1, X)
+            Y = mx.where(tooshort, Y1, Y)
         # Mask handling is deferred to the caller, _make_verts.
         return X, Y
 
@@ -941,7 +950,7 @@ class Barbs(mcollections.PolyCollection):
         self.fill_empty = fill_empty
         self.barb_increments = barb_increments or dict()
         self.rounding = rounding
-        self.flip = mx.atleast_1d(flip_barb)
+        self.flip = _quiver_atleast_1d(flip_barb, dtype=mx.bool_)
         transform = kwargs.pop('transform', ax.transData)
         self._pivot = pivot
         self._length = length
@@ -1008,12 +1017,12 @@ class Barbs(mcollections.PolyCollection):
         # If rounding, round to the nearest multiple of half, the smallest
         # increment
         if rounding:
-            mag = half * mx.around(mag / half)
-        n_flags, mag = divmod(mag, flag)
-        n_barb, mag = divmod(mag, full)
+            mag = half * mx.round(mag / half)
+        n_flags, mag = mx.divmod(mag, flag)
+        n_barb, mag = mx.divmod(mag, full)
         half_flag = mag >= half
         empty_flag = ~(half_flag | (n_flags > 0) | (n_barb > 0))
-        return n_flags.astype(int), n_barb.astype(int), half_flag, empty_flag
+        return n_flags.astype(mx.int32), n_barb.astype(mx.int32), half_flag, empty_flag
 
     def _make_barbs(self, u, v, nflags, nbarbs, half_barb, empty_flag, length,
                     pivot, sizes, fill_empty, flip):
@@ -1088,19 +1097,20 @@ class Barbs(mcollections.PolyCollection):
         # out here, it can be reused.  The center set here should put the
         # center of the circle at the location(offset), rather than at the
         # same point as the barb pivot; this seems more sensible.
-        circ = CirclePolygon((0, 0), radius=empty_rad).get_verts()
+        circ = _quiver_array(CirclePolygon((0, 0), radius=empty_rad).get_verts())
         if fill_empty:
             empty_barb = circ
         else:
             # If we don't want the empty one filled, we make a degenerate
             # polygon that wraps back over itself
-            empty_barb = mx.concatenate((circ, circ[::-1]))
+            empty_barb = mx.concatenate([circ, circ[::-1]])
 
         barb_list = []
-        for index, angle in mx.ndenumerate(angles):
+        for index in range(len(angles)):
+            angle = angles[index]
             # If the vector magnitude is too weak to draw anything, plot an
             # empty circle instead
-            if empty_flag[index]:
+            if bool(empty_flag[index].item()):
                 # We can skip the transform since the circle has no preferred
                 # orientation
                 barb_list.append(empty_barb)
@@ -1110,10 +1120,10 @@ class Barbs(mcollections.PolyCollection):
             offset = length
 
             # Handle if this barb should be flipped
-            barb_height = -full_height if flip[index] else full_height
+            barb_height = -full_height if bool(flip[index].item()) else full_height
 
             # Add vertices for each flag
-            for i in range(nflags[index]):
+            for i in range(int(nflags[index].item())):
                 # The spacing that works for the barbs is a little to much for
                 # the flags, but this only occurs when we have more than 1
                 # flag.
@@ -1129,7 +1139,7 @@ class Barbs(mcollections.PolyCollection):
             # Add vertices for each barb.  These really are lines, but works
             # great adding 3 vertices that basically pull the polygon out and
             # back down the line
-            for i in range(nbarbs[index]):
+            for i in range(int(nbarbs[index].item())):
                 poly_verts.extend(
                     [(endx, endy + offset),
                      (endx + barb_height, endy + offset + full_width / 2),
@@ -1138,7 +1148,7 @@ class Barbs(mcollections.PolyCollection):
                 offset -= spacing
 
             # Add the vertices for half a barb, if needed
-            if half_barb[index]:
+            if bool(half_barb[index].item()):
                 # If the half barb is the first on the staff, traditionally it
                 # is offset from the end to make it easy to distinguish from a
                 # barb with a full one
@@ -1162,8 +1172,8 @@ class Barbs(mcollections.PolyCollection):
     def set_UVC(self, U, V, C=None):
         # We need to ensure we have a copy, not a reference to an array that
         # might change before draw().
-        self.u = mx.reshape(mx.asarray(U, dtype=mx.float32), (-1,))
-        self.v = mx.reshape(mx.asarray(V, dtype=mx.float32), (-1,))
+        self.u = mx.reshape(_quiver_array(U), (-1,))
+        self.v = mx.reshape(_quiver_array(V), (-1,))
 
         # Flip needs to have the same number of entries as everything else.
         # Use broadcast_to to avoid a bloated array of identical values.
@@ -1174,7 +1184,7 @@ class Barbs(mcollections.PolyCollection):
             flip = self.flip
 
         if C is not None:
-            c = mx.reshape(mx.asarray(C, dtype=mx.float32), (-1,))
+            c = mx.reshape(_quiver_array(C), (-1,))
             x, y, u, v, c, flip = cbook.delete_masked_points(
                 mx.reshape(self.x, (-1,)), mx.reshape(self.y, (-1,)),
                 self.u, self.v, c, mx.reshape(flip, (-1,)))

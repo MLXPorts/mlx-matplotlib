@@ -25,6 +25,14 @@ import matplotlib.transforms as mtransforms
 from . import artist
 
 
+def _mx_contour_array(value, dtype=mx.float32):
+    if isinstance(value, mx.array):
+        if value.dtype in (mx.float32, mx.float64):
+            return value
+        return value.astype(dtype)
+    return mx.array(value, dtype=dtype)
+
+
 def _contour_labeler_event_handler(cs, inline, inline_spacing, event):
     canvas = cs.axes.get_figure(root=True).canvas
     is_button = event.name == "button_press_event"
@@ -918,8 +926,17 @@ class ContourSet(ContourLabeler, mcoll.Collection):
             map(cg.create_filled_contour, *self._get_lowers_and_uppers())
             if self.filled else
             map(cg.create_contour, self.levels))
-        return [Path(mx.concatenate(vs), mx.concatenate(cs)) if len(vs) else empty_path
-                for vs, cs in vertices_and_codes]
+        paths = []
+        for vs, cs in vertices_and_codes:
+            if not len(vs):
+                paths.append(empty_path)
+                continue
+            vertices = [v if isinstance(v, mx.array) else mx.array(v)
+                        for v in vs]
+            codes = [c if isinstance(c, mx.array) else mx.array(c, dtype=Path.code_type)
+                     for c in cs]
+            paths.append(Path(mx.concatenate(vertices), mx.concatenate(codes)))
+        return paths
 
     def _get_lowers_and_uppers(self):
         """
@@ -928,11 +945,13 @@ class ContourSet(ContourLabeler, mcoll.Collection):
         lowers = self._levels[:-1]
         if self.zmin == lowers[0]:
             # Include minimum values in lowest interval
-            lowers = lowers.copy()  # so we don't change self._levels
             if self.logscale:
-                lowers[0] = 0.99 * self.zmin
+                lower0 = 0.99 * self.zmin
             else:
-                lowers[0] -= 1
+                lower0 = lowers[0] - 1
+            lowers = mx.concatenate([
+                mx.reshape(mx.array(lower0, dtype=lowers.dtype), (1,)),
+                lowers[1:]])
         uppers = self._levels[1:]
         return (lowers, uppers)
 
@@ -946,9 +965,12 @@ class ContourSet(ContourLabeler, mcoll.Collection):
         self.norm.autoscale_None(self.levels)
         self.set_array(self.cvalues)
         self.update_scalarmappable()
-        alphas = mx.broadcast_to(self.get_alpha(), len(self.cvalues))
+        alpha_value = self.get_alpha()
+        alphas = (mx.broadcast_to(alpha_value, (len(self.cvalues),))
+                  if alpha_value is not None else [None] * len(self.cvalues))
         for label, cv, alpha in zip(self.labelTexts, self.labelCValues, alphas):
-            label.set_alpha(alpha)
+            if alpha is not None:
+                label.set_alpha(alpha)
             label.set_color(self.labelMappable.to_rgba(cv))
         super().changed()
 
@@ -992,10 +1014,10 @@ class ContourSet(ContourLabeler, mcoll.Collection):
             pass
 
         # Trim excess levels the locator may have supplied.
-        under = mx.nonzero(lev < self.zmin)[0]
-        i0 = under[-1] if len(under) else 0
-        over = mx.nonzero(lev > self.zmax)[0]
-        i1 = over[0] + 1 if len(over) else len(lev)
+        n_under = int(mx.sum(lev < self.zmin).item())
+        i0 = n_under - 1 if n_under else 0
+        n_not_over = int(mx.sum(lev <= self.zmax).item())
+        i1 = n_not_over + 1 if n_not_over < len(lev) else len(lev)
         if self.extend in ('min', 'both'):
             i0 += 1
         if self.extend in ('max', 'both'):
@@ -1015,7 +1037,7 @@ class ContourSet(ContourLabeler, mcoll.Collection):
             if args:
                 # Set if levels manually provided
                 levels_arg = args[0]
-            elif mx.issubdtype(z_dtype, bool):
+            elif mx.issubdtype(z_dtype, mx.bool_):
                 # Set default values for bool data types
                 levels_arg = [0, .5, 1] if self.filled else [.5]
 
@@ -1023,11 +1045,12 @@ class ContourSet(ContourLabeler, mcoll.Collection):
             self._ensure_locator_exists(levels_arg)
             self.levels = self._autolev()
         else:
-            self.levels = mx.asarray(levels_arg, mx.float64)
+            self.levels = _mx_contour_array(levels_arg)
 
         if self.filled and len(self.levels) < 2:
             raise ValueError("Filled contours require at least 2 levels.")
-        if len(self.levels) > 1 and mx.min(mx.diff(self.levels)) <= 0.0:
+        level_deltas = self.levels[1:] - self.levels[:-1]
+        if len(self.levels) > 1 and mx.min(level_deltas) <= 0.0:
             raise ValueError("Contour levels must be increasing")
 
     def _process_levels(self):
@@ -1053,7 +1076,7 @@ class ContourSet(ContourLabeler, mcoll.Collection):
             self._levels.insert(0, lower)
         if self.extend in ('both', 'max'):
             self._levels.append(upper)
-        self._levels = mx.asarray(self._levels)
+        self._levels = _mx_contour_array(self._levels)
 
         if not self.filled:
             self.layers = self.levels
@@ -1355,7 +1378,7 @@ class QuadContourSet(ContourSet):
 
         if 0 < nargs <= 2:
             z, *args = args
-            z = mx.asarray(z, dtype=mx.float64)
+            z = _mx_contour_array(z)
             x, y = self._initialize_x_y(z)
         elif 2 < nargs <= 4:
             x, y, z_orig, *args = args
@@ -1380,9 +1403,9 @@ class QuadContourSet(ContourSet):
         """
         x, y = self.axes._process_unit_info([("x", x), ("y", y)], kwargs)
 
-        x = mx.asarray(x, dtype=mx.float64)
-        y = mx.asarray(y, dtype=mx.float64)
-        z = mx.asarray(z, dtype=mx.float64)
+        x = _mx_contour_array(x)
+        y = _mx_contour_array(y)
+        z = _mx_contour_array(z)
 
         if z.ndim != 2:
             raise TypeError(f"Input z must be 2D, not {z.ndim}D")

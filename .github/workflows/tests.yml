@@ -64,13 +64,13 @@ jobs:
             pygobject-ver: '<3.52.0'
 
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c  # v6.0.0
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
@@ -153,7 +153,7 @@ jobs:
           esac
 
       - name: Cache pip
-        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809  # v4.2.4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
         if: startsWith(runner.os, 'Linux')
         with:
           path: ~/.cache/pip
@@ -161,7 +161,7 @@ jobs:
           restore-keys: |
             ${{ matrix.os }}-py${{ matrix.python-version }}-pip-
       - name: Cache pip
-        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809  # v4.2.4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
         if: startsWith(runner.os, 'macOS')
         with:
           path: ~/Library/Caches/pip
@@ -169,7 +169,7 @@ jobs:
           restore-keys: |
             ${{ matrix.os }}-py${{ matrix.python-version }}-pip-
       - name: Cache ccache
-        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809  # v4.2.4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
         with:
           path: |
             ~/.ccache
@@ -177,7 +177,7 @@ jobs:
           restore-keys: |
             ${{ matrix.os }}-py${{ matrix.python-version }}-ccache-
       - name: Cache Matplotlib
-        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809  # v4.2.4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
         with:
           path: |
             ~/.cache/matplotlib
@@ -207,7 +207,7 @@ jobs:
           python -m pip install --upgrade $PRE \
             'contourpy>=1.0.1' cycler fonttools kiwisolver importlib_resources \
             mlx packaging pillow 'pyparsing!=3.1.0' python-dateutil setuptools-scm \
-            'meson-python>=0.13.1' 'pybind11>=2.13.2' \
+            'meson-python>=0.13.1,!=0.17.*' 'nanobind==2.4.0' 'pybind11>=2.13.2,<3,!=2.13.3' \
             -r requirements/testing/all.txt \
             ${{ matrix.extra-requirements }}
 
@@ -231,7 +231,8 @@ jobs:
             )
 
           # PyQt5 does not have any wheels for ARM on Linux.
-          if [[ "${{ matrix.os }}" != 'ubuntu-24.04-arm' ]]; then
+          if [[ "${{ runner.os }}" != 'macOS'
+                && "${{ matrix.os }}" != 'ubuntu-24.04-arm' ]]; then
             python -mpip install --upgrade --only-binary :all: pyqt5 &&
               python -c 'import PyQt5.QtCore' &&
               echo 'PyQt5 is available' ||
@@ -247,14 +248,16 @@ jobs:
               echo 'PySide2 is available' ||
               echo 'PySide2 is not available'
           fi
-          python -mpip install --upgrade --only-binary :all: pyqt6 &&
-            python -c 'import PyQt6.QtCore' &&
-            echo 'PyQt6 is available' ||
-            echo 'PyQt6 is not available'
-          python -mpip install --upgrade --only-binary :all: pyside6 &&
-            python -c 'import PySide6.QtCore' &&
-            echo 'PySide6 is available' ||
-            echo 'PySide6 is not available'
+          if [[ "${{ runner.os }}" != 'macOS' ]]; then
+            python -mpip install --upgrade --only-binary :all: pyqt6 &&
+              python -c 'import PyQt6.QtCore' &&
+              echo 'PyQt6 is available' ||
+              echo 'PyQt6 is not available'
+            python -mpip install --upgrade --only-binary :all: pyside6 &&
+              python -c 'import PySide6.QtCore' &&
+              echo 'PySide6 is available' ||
+              echo 'PySide6 is not available'
+          fi
 
           python -mpip install --upgrade --only-binary :all: \
             -f "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/${{ matrix.os }}" \
@@ -355,12 +358,12 @@ jobs:
           fi
       - name: Upload code coverage
         if: ${{ !cancelled() && github.event_name != 'schedule' }}
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7  # v5.5.1
+        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2  # v6.0.0
         with:
           name: "${{ matrix.python-version }} ${{ matrix.os }} ${{ matrix.name-suffix }}"
           token: ${{ secrets.CODECOV_TOKEN }}
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         if: failure()
         with:
           name: "${{ matrix.python-version }} ${{ matrix.os }} ${{ matrix.name-suffix }} result images"

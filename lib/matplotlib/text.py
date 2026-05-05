@@ -508,7 +508,7 @@ class Text(Artist):
         bbox = Bbox.from_bounds(xmin, ymin, width, height)
 
         # now rotate the positions around the first (x, y) position
-        xys = M.transform(offset_layout) - (offsetx, offsety)
+        xys = M.transform(offset_layout) - mx.array([offsetx, offsety])
 
         return bbox, list(zip(lines, zip(ws, hs), *xys.T)), descent
 
@@ -1998,7 +1998,9 @@ or callable, default: value of *xycoords*
 
         # adjust the starting point of the arrow relative to the textbox.
         # TODO : Rotation needs to be accounted.
-        arrow_begin = bbox.p0 + bbox.size * self._arrow_relpos
+        arrow_relpos = (self._arrow_relpos if isinstance(self._arrow_relpos, mx.array)
+                        else mx.array(self._arrow_relpos, dtype=bbox.size.dtype))
+        arrow_begin = bbox.p0 + bbox.size * arrow_relpos
         # The arrow is drawn from arrow_begin to arrow_end.  It will be first
         # clipped by patchA and patchB.  Then it will be shrunk by shrinkA and
         # shrinkB (in points).  If patchA is not set, self.bbox_patch is used.

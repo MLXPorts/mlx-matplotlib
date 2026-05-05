@@ -9,24 +9,32 @@ def _asarray(value):
     return value if isinstance(value, mx.array) else mx.array(value)
 
 
+def _stream_for(*arrays):
+    return mx.cpu if any(a.dtype == mx.float64 for a in arrays) else None
+
+
 def assert_allclose(actual, desired, rtol=1e-7, atol=0, **kwargs):
     actual = _asarray(actual)
     desired = _asarray(desired)
-    if not bool(mx.allclose(actual, desired, rtol=rtol, atol=atol).item()):
+    stream = _stream_for(actual, desired)
+    if not bool(mx.allclose(actual, desired, rtol=rtol, atol=atol,
+                            equal_nan=True, stream=stream).item()):
         raise AssertionError(f"arrays are not close: {actual} != {desired}")
 
 
 def assert_array_equal(actual, desired, **kwargs):
     actual = _asarray(actual)
     desired = _asarray(desired)
-    if not bool(mx.array_equal(actual, desired).item()):
+    stream = _stream_for(actual, desired)
+    if not bool(mx.array_equal(actual, desired, stream=stream).item()):
         raise AssertionError(f"arrays are not equal: {actual} != {desired}")
 
 
 def assert_array_less(actual, desired, **kwargs):
     actual = _asarray(actual)
     desired = _asarray(desired)
-    if not bool(mx.all(actual < desired).item()):
+    stream = _stream_for(actual, desired)
+    if not bool(mx.all(actual < desired, stream=stream).item()):
         raise AssertionError(f"array values are not all less: {actual} >= {desired}")
 
 

@@ -54,6 +54,58 @@ import mlx.core as mx
 from matplotlib import _api, _docstring, cbook
 
 
+def _mx_angle(values):
+    values = values if isinstance(values, mx.array) else mx.array(values)
+    stream = mx.cpu if values.dtype == mx.float64 else None
+    return mx.arctan2(mx.imag(values, stream=stream),
+                      mx.real(values, stream=stream), stream=stream)
+
+
+def _mx_slice_axis(values, start, size, axis, *, stream=None):
+    start_indices = [0] * values.ndim
+    start_indices[axis] = start
+    slice_size = list(values.shape)
+    slice_size[axis] = size
+    return mx.slice(values, mx.array(start_indices, dtype=mx.int32),
+                    tuple(range(values.ndim)), tuple(slice_size),
+                    stream=stream)
+
+
+def _mx_unwrap(values, axis=0):
+    values = values if isinstance(values, mx.array) else mx.array(values)
+    axis %= values.ndim
+    if values.shape[axis] < 2:
+        return values
+    stream = mx.cpu if values.dtype == mx.float64 else None
+    size = values.shape[axis] - 1
+    delta = mx.subtract(
+        _mx_slice_axis(values, 1, size, axis, stream=stream),
+        _mx_slice_axis(values, 0, size, axis, stream=stream),
+        stream=stream)
+    pi = mx.full((), mx.pi, dtype=values.dtype, stream=stream)
+    period = mx.full((), 2 * mx.pi, dtype=values.dtype, stream=stream)
+    delta_mod = mx.subtract(mx.remainder(mx.add(delta, pi, stream=stream),
+                                         period, stream=stream),
+                            pi, stream=stream)
+    delta_mod = mx.where(
+        mx.logical_and(mx.equal(delta_mod, mx.negative(pi, stream=stream),
+                                stream=stream),
+                       mx.greater(delta, 0, stream=stream), stream=stream),
+        pi, delta_mod, stream=stream)
+    correction = mx.subtract(delta_mod, delta, stream=stream)
+    correction = mx.where(mx.less(mx.abs(delta, stream=stream), pi,
+                                  stream=stream),
+                          mx.zeros_like(correction, stream=stream),
+                          correction, stream=stream)
+    correction = mx.cumsum(correction, axis=axis, stream=stream)
+    zeros_shape = list(values.shape)
+    zeros_shape[axis] = 1
+    correction = mx.concatenate(
+        [mx.zeros(tuple(zeros_shape), dtype=values.dtype, stream=stream),
+         correction], axis=axis, stream=stream)
+    return mx.add(values, correction, stream=stream)
+
+
 def window_hanning(x):
     """
     Return *x* times the Hanning (or Hann) window of len(*x*).
@@ -341,7 +393,7 @@ def _spectral_helper(x, y=None, NFFT=None, Fs=None, detrend_func=None,
         result = mx.abs(result) / window.sum()
     elif mode == 'angle' or mode == 'phase':
         # we unwrap the phase later to handle the onesided vs. twosided case
-        result = mx.angle(result)
+        result = _mx_angle(result)
     elif mode == 'complex':
         result /= window.sum()
 
@@ -384,7 +436,7 @@ def _spectral_helper(x, y=None, NFFT=None, Fs=None, detrend_func=None,
 
     # we unwrap the phase here to handle the onesided vs. twosided case
     if mode == 'phase':
-        result = mx.unwrap(result, axis=0)
+        result = _mx_unwrap(result, axis=0)
 
     return result, freqs, t
 

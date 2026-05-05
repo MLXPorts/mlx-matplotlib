@@ -43,6 +43,26 @@ from . import _backend_pdf_ps
 
 _log = logging.getLogger(__name__)
 
+
+def _pdf_array(value, *, dtype=None):
+    arr = value if isinstance(value, mx.array) else mx.array(value, dtype=dtype)
+    if dtype is not None and arr.dtype != dtype:
+        arr = arr.astype(dtype)
+    return arr
+
+
+def _pdf_indices_where(mask):
+    mask = _pdf_array(mask, dtype=mx.bool_)
+    indices = mx.arange(mask.shape[0], dtype=mx.int32)
+    selected = mx.where(
+        mask, indices, mx.full(indices.shape, mask.shape[0], dtype=indices.dtype))
+    count = int(mx.sum(mask.astype(mx.int32)).item())
+    return mx.sort(selected)[:count]
+
+
+def _pdf_image_from_mx(data, mode, width, height):
+    return Image.frombytes(mode, (width, height), bytes(mx.contiguous(data)))
+
 # Overview
 #
 # The low-level knowledge about pdf syntax lies mainly in the pdfRepr
@@ -302,11 +322,16 @@ def pdfRepr(obj):
     if hasattr(obj, 'pdfRepr'):
         return obj.pdfRepr()
 
+    elif isinstance(obj, mx.array):
+        if obj.ndim == 0:
+            return pdfRepr(obj.item())
+        return _fill([b"[", *[pdfRepr(obj[i]) for i in range(len(obj))], b"]"])
+
     # Floats. PDF does not have exponential notation (1.0e-10) so we
     # need to use %f with some precision.  Perhaps the precision
     # should adapt to the magnitude of the number?
-    elif isinstance(obj, (float, mx.floating)):
-        if not mx.isfinite(obj):
+    elif isinstance(obj, float):
+        if not math.isfinite(obj):
             raise ValueError("Can only output finite numbers in PDF")
         r = b"%.10f" % obj
         return r.rstrip(b'0').rstrip(b'.')
@@ -317,7 +342,7 @@ def pdfRepr(obj):
         return [b'false', b'true'][obj]
 
     # Integers are written as such.
-    elif isinstance(obj, (int, mx.integer)):
+    elif isinstance(obj, int):
         return b"%d" % obj
 
     # Non-ASCII Unicode strings are encoded in UTF-16BE with byte-order mark.
@@ -350,9 +375,6 @@ def pdfRepr(obj):
     # Lists.
     elif isinstance(obj, (list, tuple)):
         return _fill([b"[", *[pdfRepr(val) for val in obj], b"]"])
-
-    elif isinstance(obj, mx.array):
-        return pdfRepr(obj.tolist())
 
     # The null keyword.
     elif obj is None:
@@ -622,11 +644,11 @@ def _get_pdf_charprocs(font_path, glyph_ids):
         # NOTE: We should be using round(), but instead use
         # "(x+.5).astype(int)" to keep backcompat with the old ttconv code
         # (this is different for negative x's).
-        d1 = (mx.array([g.horiAdvance, 0, *g.bbox]) * conv + .5).astype(int)
+        d1 = (mx.array([g.horiAdvance, 0, *g.bbox]) * conv + .5).astype(mx.int32)
         v, c = font.get_path()
-        v = mx.asarray(v)
-        c = mx.asarray(c)
-        v = (v * 64).astype(int)  # Back to TrueType's internal units (1/64's).
+        v = _pdf_array(v)
+        c = _pdf_array(c)
+        v = (v * 64).astype(mx.int32)  # Back to TrueType's internal units (1/64's).
         # Backcompat with old ttconv code: control points between two quads are
         # omitted if they are exactly at the midpoint between the control of
         # the quad before and the quad after, but ttconv used to interpolate
@@ -635,24 +657,35 @@ def _get_pdf_charprocs(font_path, glyph_ids):
         # re-interpolating them.  Note that occasionally (e.g. with DejaVu Sans
         # glyph "0") a point detected as "implicit" is actually explicit, and
         # will thus be shifted by 1.
-        quads, = mx.nonzero(c == 3)
+        quads = _pdf_indices_where(c == 3)
         quads_on = quads[1::2]
-        quads_mid_on = mx.array(
-            sorted({*quads_on} & {*(quads - 1)} & {*(quads + 1)}), int)
-        implicit = quads_mid_on[
-            (v[quads_mid_on]  # As above, use astype(int), not // division
-             == ((v[quads_mid_on - 1] + v[quads_mid_on + 1]) / 2).astype(int))
-            .all(axis=1)]
+        if quads_on.size:
+            quads_col = mx.expand_dims(quads, 1)
+            quads_on_row = mx.expand_dims(quads_on, 0)
+            has_prev = mx.any(quads_col == quads_on_row - 1, axis=0)
+            has_next = mx.any(quads_col == quads_on_row + 1, axis=0)
+            quads_mid_on = mx.take(
+                quads_on, _pdf_indices_where(mx.logical_and(has_prev, has_next)))
+        else:
+            quads_mid_on = mx.array([], dtype=quads.dtype)
+        implicit_midpoints = (
+            (v[quads_mid_on - 1] + v[quads_mid_on + 1]) / 2).astype(mx.int32)
+        implicit = mx.take(
+            quads_mid_on,
+            _pdf_indices_where(mx.all(v[quads_mid_on] == implicit_midpoints, axis=1)))
         if (font.postscript_name, glyph_id) in [
                 ("DejaVuSerif-Italic", 77),  # j
                 ("DejaVuSerif-Italic", 135),  # \AA
         ]:
-            v[:, 0] -= 1  # Hard-coded backcompat (FreeType shifts glyph by 1).
-        v = (v * conv + .5).astype(int)  # As above re: truncation vs rounding.
-        v[implicit] = ((  # Fix implicit points; again, truncate.
-            (v[implicit - 1] + v[implicit + 1]) / 2).astype(int))
+            # Hard-coded backcompat (FreeType shifts glyph by 1).
+            v = mx.concatenate([v[:, :1] - 1, v[:, 1:]], axis=1)
+        v = (v * conv + .5).astype(mx.int32)  # As above re: truncation vs rounding.
+        if implicit.size:
+            fixed = ((  # Fix implicit points; again, truncate.
+                v[implicit - 1] + v[implicit + 1]) / 2).astype(mx.int32)
+            v = mx.put_along_axis(v, mx.expand_dims(implicit, 1), fixed, axis=0)
         procs[font.get_glyph_name(glyph_id)] = (
-            " ".join(map(str, d1)).encode("ascii") + b" d1\n"
+            " ".join(str(_scalar.item()) for _scalar in d1).encode("ascii") + b" d1\n"
             + _path.convert_to_string(
                 Path(v, c), None, None, False, None, -1,
                 # no code for quad Beziers triggers auto-conversion to cubics.
@@ -1710,14 +1743,14 @@ end"""
             return im, None
         else:
             rgb = im[:, :, :3]
-            rgb = mx.array(rgb, order='C')
+            rgb = mx.contiguous(rgb)
             # PDF needs a separate alpha image
             if im.shape[2] == 4:
                 alpha = im[:, :, 3][..., None]
-                if mx.all(alpha == 255):
+                if bool(mx.all(alpha == 255).item()):
                     alpha = None
                 else:
-                    alpha = mx.array(alpha, order='C')
+                    alpha = mx.contiguous(alpha)
             else:
                 alpha = None
             return rgb, alpha
@@ -1771,7 +1804,8 @@ end"""
             if data.shape[-1] == 1:
                 data = data.squeeze(axis=-1)
             png = {'Predictor': 10, 'Colors': color_channels, 'Columns': width}
-            img = Image.fromarray(data)
+            img = _pdf_image_from_mx(
+                data, 'L' if color_channels == 1 else 'RGB', width, height)
             img_colors = img.getcolors(maxcolors=256)
             if color_channels == 3 and img_colors is not None:
                 # Convert to indexed color if there are 256 colors or fewer. This can
@@ -1785,10 +1819,13 @@ end"""
                 rgb24 = ((data[:, :, 0].astype(mx.uint32) << 16) |
                          (data[:, :, 1].astype(mx.uint32) << 8) |
                          data[:, :, 2])
-                indices = mx.argsort(palette24).astype(mx.uint8)
-                rgb8 = indices[mx.searchsorted(palette24, rgb24, sorter=indices)]
-                img = Image.fromarray(rgb8).convert("P")
-                img.putpalette(palette)
+                palette_matches = (
+                    mx.expand_dims(rgb24, -1)
+                    == mx.reshape(palette24, (1, 1, palette24.shape[0])))
+                rgb8 = mx.argmax(palette_matches.astype(mx.uint8), axis=-1
+                                  ).astype(mx.uint8)
+                img = _pdf_image_from_mx(rgb8, 'L', width, height).convert("P")
+                img.putpalette(bytes(mx.contiguous(palette)))
                 png_data, bit_depth, palette = self._writePng(img)
                 if bit_depth is None or palette is None:
                     raise RuntimeError("invalid PNG header")
@@ -1811,7 +1848,7 @@ end"""
         if png:
             self.currentstream.write(png_data)
         else:
-            self.currentstream.write(data.tobytes())
+            self.currentstream.write(bytes(mx.contiguous(data)))
         self.endStream()
 
     def writeImages(self):
@@ -2072,8 +2109,8 @@ class RendererPdf(_backend_pdf_ps.RendererPDFPSBase):
         # stroke (and the amount of alpha for each) is the same for
         # all of them
         can_do_optimization = True
-        facecolors = mx.asarray(facecolors)
-        edgecolors = mx.asarray(edgecolors)
+        facecolors = _pdf_array(facecolors)
+        edgecolors = _pdf_array(edgecolors)
 
         if hatchcolors is None:
             hatchcolors = []
@@ -2082,18 +2119,18 @@ class RendererPdf(_backend_pdf_ps.RendererPDFPSBase):
             filled = False
             can_do_optimization = not gc.get_hatch()
         else:
-            if mx.all(facecolors[:, 3] == facecolors[0, 3]):
-                filled = facecolors[0, 3] != 0.0
+            if bool(mx.all(facecolors[:, 3] == facecolors[0, 3]).item()):
+                filled = bool((facecolors[0, 3] != 0.0).item())
             else:
                 can_do_optimization = False
 
         if not len(edgecolors):
             stroked = False
         else:
-            if mx.all(mx.asarray(linewidths) == 0.0):
+            if bool(mx.all(_pdf_array(linewidths) == 0.0).item()):
                 stroked = False
-            elif mx.all(edgecolors[:, 3] == edgecolors[0, 3]):
-                stroked = edgecolors[0, 3] != 0.0
+            elif bool(mx.all(edgecolors[:, 3] == edgecolors[0, 3]).item()):
+                stroked = bool((edgecolors[0, 3] != 0.0).item())
             else:
                 can_do_optimization = False
 
@@ -2648,8 +2685,8 @@ class GraphicsContextPdf(GraphicsContextBase):
                     # array_backend version < 1.25 raises DeprecationWarning when array shapes
                     # mismatch, unlike array_backend >= 1.25 which raises ValueError.
                     # This should be removed when array_backend < 1.25 is no longer supported.
-                    ours = mx.asarray(ours)
-                    theirs = mx.asarray(theirs)
+                    ours = _pdf_array(ours)
+                    theirs = _pdf_array(theirs)
                     different = (ours.shape != theirs.shape or
                                  mx.any(ours != theirs))
                 if different:

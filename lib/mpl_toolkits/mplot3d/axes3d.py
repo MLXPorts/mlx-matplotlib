@@ -371,15 +371,20 @@ class Axes3D(Axes):
             raise ValueError(f'Argument zoom = {zoom} must be > 0')
 
         if aspect is None:
-            aspect = mx.asarray((4, 4, 3), dtype=float)
+            aspect = mx.array((4, 4, 3), dtype=mx.float32)
         else:
-            aspect = mx.asarray(aspect, dtype=float)
+            aspect = aspect if isinstance(aspect, mx.array) else mx.array(
+                aspect, dtype=mx.float32)
+            if aspect.dtype not in (mx.float32, mx.float64):
+                aspect = aspect.astype(mx.float32)
             _api.check_shape((3,), aspect=aspect)
         # The scale 1.8294640721620434 is tuned to match the mpl3.2 appearance.
         # The 25/24 factor is to compensate for the change in automargin
         # behavior in mpl3.9. This comes from the padding of 1/48 on both sides
         # of the axes in mpl3.8.
-        aspect *= 1.8294640721620434 * 25/24 * zoom / mx.linalg.norm(aspect)
+        norm = mx.sqrt(mx.sum(mx.square(aspect)))
+        aspect = mx.multiply(
+            aspect, 1.8294640721620434 * 25/24 * zoom / norm)
 
         self._box_aspect = self._roll_to_vertical(aspect, reverse=True)
         self.stale = True
@@ -421,7 +426,7 @@ class Axes3D(Axes):
 
         # add the projection matrix to the renderer
         self.M = self.get_proj()
-        self.invM = mx.linalg.inv(self.M)
+        self.invM = mx.linalg.inv(self.M, stream=mx.cpu)
 
         collections_and_patches = (
             artist for artist in self._children
@@ -589,13 +594,16 @@ class Axes3D(Axes):
     def auto_scale_xyz(self, X, Y, Z=None, had_data=None):
         # This updates the bounding boxes as to keep a record as to what the
         # minimum sized rectangular volume holds the data.
-        if mx.shape(X) == mx.shape(Y):
+        X = X if isinstance(X, mx.array) else mx.array(X)
+        Y = Y if isinstance(Y, mx.array) else mx.array(Y)
+        if X.shape == Y.shape:
             self.xy_dataLim.update_from_data_xy(
-                mx.column_stack([mx.ravel(X), mx.ravel(Y)]), not had_data)
+                mx.stack([mx.flatten(X), mx.flatten(Y)], axis=1), not had_data)
         else:
             self.xy_dataLim.update_from_data_x(X, not had_data)
             self.xy_dataLim.update_from_data_y(Y, not had_data)
         if Z is not None:
+            Z = Z if isinstance(Z, mx.array) else mx.array(Z)
             self.zz_dataLim.update_from_data_x(Z, not had_data)
         # Let autoscale_view figure out how to use this data.
         self.autoscale_view()
@@ -1202,6 +1210,10 @@ class Axes3D(Axes):
         reverse : bool, default: False
             Reverse the direction of the roll.
         """
+        if not isinstance(arr, mx.array):
+            arr = mx.stack(tuple(
+                value if isinstance(value, mx.array) else mx.array(value)
+                for value in arr))
         if reverse:
             return mx.roll(arr, (self._vertical_axis - 2) * -1)
         else:
@@ -1227,8 +1239,8 @@ class Axes3D(Axes):
         # Coordinates for a point that rotates around the box of data.
         # p0, p1 corresponds to rotating the box only around the vertical axis.
         # p2 corresponds to rotating the box only around the horizontal axis.
-        elev_rad = mx.deg2rad(self.elev)
-        azim_rad = mx.deg2rad(self.azim)
+        elev_rad = mx.radians(self.elev)
+        azim_rad = mx.radians(self.azim)
         p0 = mx.cos(elev_rad) * mx.cos(azim_rad)
         p1 = mx.cos(elev_rad) * mx.sin(azim_rad)
         p2 = mx.sin(elev_rad)
@@ -1262,8 +1274,8 @@ class Axes3D(Axes):
                                                  self._focal_length)
 
         # Combine all the transformation matrices to get the final projection
-        M0 = mx.dot(viewM, worldM)
-        M = mx.dot(projM, M0)
+        M0 = mx.matmul(viewM, worldM)
+        M = mx.matmul(projM, M0)
         return M
 
     def mouse_init(self, rotate_btn=1, pan_btn=2, zoom_btn=3):
@@ -1283,9 +1295,12 @@ class Axes3D(Axes):
         # coerce scalars into array-like, then convert into
         # a regular list to avoid comparisons against None
         # which breaks in recent versions of array_backend.
-        self._rotate_btn = mx.atleast_1d(rotate_btn).tolist()
-        self._pan_btn = mx.atleast_1d(pan_btn).tolist()
-        self._zoom_btn = mx.atleast_1d(zoom_btn).tolist()
+        def _button_list(buttons):
+            return list(buttons) if cbook.iterable(buttons) else [buttons]
+
+        self._rotate_btn = _button_list(rotate_btn)
+        self._pan_btn = _button_list(pan_btn)
+        self._zoom_btn = _button_list(zoom_btn)
 
     def disable_mouse_rotation(self):
         """Disable mouse buttons for 3D rotation, panning, and zooming."""
@@ -1570,7 +1585,7 @@ class Axes3D(Axes):
 
             style = mpl.rcParams['axes3d.mouserotationstyle']
             if style == 'azel':
-                roll = mx.deg2rad(self.roll)
+                roll = mx.radians(self.roll)
                 delev = -(dy/h)*180*mx.cos(roll) + (dx/w)*180*mx.sin(roll)
                 dazim = -(dy/h)*180*mx.sin(roll) - (dx/w)*180*mx.cos(roll)
                 elev = self.elev + delev
@@ -1578,7 +1593,8 @@ class Axes3D(Axes):
                 roll = self.roll
             else:
                 q = _Quaternion.from_cardan_angles(
-                        *mx.deg2rad((self.elev, self.azim, self.roll)))
+                        *mx.radians(mx.array(
+                            (self.elev, self.azim, self.roll))))
 
                 if style == 'trackball':
                     k = mx.array([0, -dy/h, dx/w])
@@ -1594,7 +1610,7 @@ class Axes3D(Axes):
                         dq = _Quaternion(0, new_vec) * _Quaternion(0, -current_vec)
 
                 q = dq * q
-                elev, azim, roll = mx.rad2deg(q.as_cardan_angles())
+                elev, azim, roll = mx.degrees(q.as_cardan_angles())
 
             # update view
             vertical_axis = self._axis_names[self._vertical_axis]
@@ -1670,8 +1686,8 @@ class Axes3D(Axes):
         `v` is towards the top of the screen
         `w` is out of the screen
         """
-        elev_rad = mx.deg2rad(art3d._norm_angle(self.elev))
-        roll_rad = mx.deg2rad(art3d._norm_angle(self.roll))
+        elev_rad = mx.radians(art3d._norm_angle(self.elev))
+        roll_rad = mx.radians(art3d._norm_angle(self.roll))
 
         # Look into the middle of the world coordinates
         R = 0.5 * self._roll_to_vertical(self._box_aspect)
@@ -2968,7 +2984,8 @@ class Axes3D(Axes):
         zs_orig = zs
 
         xs, ys, zs = cbook._broadcast_with_masks(xs, ys, zs)
-        s = mx.ma.ravel(s)  # This doesn't have to match x, y in size.
+        s = mx.flatten(s if isinstance(s, mx.array) else mx.array(s))
+        # This doesn't have to match x, y in size.
 
         xs, ys, zs, s, c, color = cbook.delete_masked_points(
             xs, ys, zs, s, c, kwargs.get('color', None)
@@ -2979,10 +2996,6 @@ class Axes3D(Axes):
             depthshade = mpl.rcParams['axes3d.depthshade']
         if depthshade_minalpha is None:
             depthshade_minalpha = mpl.rcParams['axes3d.depthshade_minalpha']
-
-        # For xs and ys, 2D scatter() will do the copying.
-        if mx.may_share_memory(zs_orig, zs):  # Avoid unnecessary copies.
-            zs = zs.copy()
 
         patches = super().scatter(xs, ys, s=s, c=c, *args, **kwargs)
         art3d.patch_collection_2d_to_3d(

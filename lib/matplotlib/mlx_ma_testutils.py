@@ -1,6 +1,6 @@
 """Masked array testing helpers backed by MLX."""
 from __future__ import annotations
 
-import mlx.core as mx
+from matplotlib import mlx_testing
 
-assert_array_almost_equal = mx.testing.assert_array_almost_equal
+assert_array_almost_equal = mlx_testing.assert_array_almost_equal

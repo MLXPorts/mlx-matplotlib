@@ -2378,7 +2378,9 @@ class _AxesBase(martist.Artist):
                 # and minpos would be superfluous. However, we add minpos to
                 # the call so that self.dataLim will update its own minpos.
                 # This ensures that log scales see the correct minimum.
-                points = mx.concatenate([points, [datalim.minpos]])
+                points = mx.concatenate([
+                    points,
+                    mx.reshape(mx.array(datalim.minpos, dtype=points.dtype), (1, 2))])
             # only update the dataLim for x/y if the collection uses transData
             # in this direction.
             x_is_data, y_is_data = (collection.get_transform()
@@ -2622,7 +2624,7 @@ class _AxesBase(martist.Artist):
         updatex, updatey : bool, default: True
             Whether to update the x/y limits.
         """
-        xys = mx.asarray(xys)
+        xys = xys if isinstance(xys, mx.array) else mx.array(xys)
         if not mx.any(mx.isfinite(xys)):
             return
         self.dataLim.update_from_data_xy(xys, self.ignore_existing_data_limits,
@@ -3013,18 +3015,27 @@ class _AxesBase(martist.Artist):
         if self.use_sticky_edges:
             if self._xmargin and scalex and self.get_autoscalex_on():
                 x_stickies = mx.sort(mx.concatenate([
-                    artist.sticky_edges.x
+                    artist.sticky_edges.x if isinstance(artist.sticky_edges.x, mx.array)
+                    else mx.array(artist.sticky_edges.x)
                     for ax in self._shared_axes["x"].get_siblings(self)
                     for artist in ax.get_children()]))
             if self._ymargin and scaley and self.get_autoscaley_on():
                 y_stickies = mx.sort(mx.concatenate([
-                    artist.sticky_edges.y
+                    artist.sticky_edges.y if isinstance(artist.sticky_edges.y, mx.array)
+                    else mx.array(artist.sticky_edges.y)
                     for ax in self._shared_axes["y"].get_siblings(self)
                     for artist in ax.get_children()]))
+        def _positive_stickies(stickies):
+            mask = stickies > 0
+            if bool(mx.all(mask).item()):
+                return stickies
+            keep = [i for i, value in enumerate(mask) if bool(value.item())]
+            return mx.take(stickies, mx.array(keep, dtype=mx.int32), axis=0)
+
         if self.get_xscale() == 'log':
-            x_stickies = x_stickies[x_stickies > 0]
+            x_stickies = _positive_stickies(x_stickies)
         if self.get_yscale() == 'log':
-            y_stickies = y_stickies[y_stickies > 0]
+            y_stickies = _positive_stickies(y_stickies)
 
         def handle_single_axis(
                 scale, shared_axes, name, axis, margin, stickies, set_bound):
@@ -3060,10 +3071,10 @@ class _AxesBase(martist.Artist):
             # datasets where all values are tiny (less than 1e-8).
             tol = 1e-5 * abs(x1 - x0)
             # Index of largest element < x0 + tol, if any.
-            i0 = stickies.searchsorted(x0 + tol) - 1
+            i0 = int(mx.sum(stickies < (x0 + tol)).item()) - 1
             x0bound = stickies[i0] if i0 != -1 else None
             # Index of smallest element > x1 - tol, if any.
-            i1 = stickies.searchsorted(x1 - tol)
+            i1 = int(mx.sum(stickies < (x1 - tol)).item())
             x1bound = stickies[i1] if i1 != len(stickies) else None
 
             # Add the margin in figure space and then transform back, to handle

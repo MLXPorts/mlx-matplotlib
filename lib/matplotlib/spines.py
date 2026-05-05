@@ -270,7 +270,7 @@ class Spine(mpatches.Patch):
                 if low > high:
                     low, high = high, low
 
-                self._path = mpath.Path.arc(mx.rad2deg(low), mx.rad2deg(high))
+                self._path = mpath.Path.arc(mx.degrees(low), mx.degrees(high))
 
                 if self.spine_type == 'bottom':
                     if self.axis is None:

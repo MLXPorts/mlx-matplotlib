@@ -13,6 +13,18 @@ import matplotlib.lines as mlines
 __all__ = ['streamplot']
 
 
+def _plot_scalar(value):
+    if isinstance(value, mx.array):
+        return value.item()
+    return value
+
+
+def _plot_xy(x, y):
+    x = x if isinstance(x, mx.array) else mx.array(x)
+    y = y if isinstance(y, mx.array) else mx.array(y)
+    return mx.stack([x, y])
+
+
 def streamplot(axes, x, y, u, v, density=1, linewidth=None, color=None,
                cmap=None, norm=None, arrowsize=1, arrowstyle='-|>',
                minlength=0.1, transform=None, zorder=None, start_points=None,
@@ -177,8 +189,8 @@ def streamplot(axes, x, y, u, v, density=1, linewidth=None, color=None,
     if u.shape != grid.shape or v.shape != grid.shape:
         raise ValueError("'u' and 'v' must match the shape of the (x, y) grid")
 
-    u = mx.ma.masked_invalid(u)
-    v = mx.ma.masked_invalid(v)
+    u = mx.where(mx.isfinite(u), u, mx.nan)
+    v = mx.where(mx.isfinite(v), v, mx.nan)
 
     integrate = _get_integrator(u, v, dmap, minlength, maxlength,
                                 integration_direction)
@@ -238,15 +250,17 @@ def streamplot(axes, x, y, u, v, density=1, linewidth=None, color=None,
         ty += grid.y_origin
 
         # Create multiple tiny segments if varying width or color is given
+        xy_points = mx.stack([tx, ty], axis=1)
         if isinstance(linewidth, mx.array) or use_multicolor_lines:
-            points = mx.transpose([tx, ty]).reshape(-1, 1, 2)
-            streamlines.extend(mx.hstack([points[:-1], points[1:]]))
+            points = mx.reshape(xy_points, (-1, 1, 2))
+            streamlines.extend(mx.concatenate([points[:-1], points[1:]], axis=1))
         else:
-            points = mx.transpose([tx, ty])
-            streamlines.append(points)
+            streamlines.append(xy_points)
 
         # Distance along streamline
-        s = mx.cumsum(mx.hypot(mx.diff(tx), mx.diff(ty)))
+        dtx = tx[1:] - tx[:-1]
+        dty = ty[1:] - ty[:-1]
+        s = mx.cumsum(mx.sqrt(dtx * dtx + dty * dty))
         if isinstance(linewidth, mx.array):
             line_widths = interpgrid(linewidth, tgx, tgy)[:-1]
             line_kw['linewidth'].extend(line_widths)
@@ -257,7 +271,7 @@ def streamplot(axes, x, y, u, v, density=1, linewidth=None, color=None,
         # Add arrows along each trajectory.
         for x in range(1, num_arrows+1):
             # Get index of distance along streamline to place arrow
-            idx = mx.searchsorted(s, s[-1] * (x/(num_arrows+1)))
+            idx = int(mx.sum(s < s[-1] * (x/(num_arrows+1))).item())
             arrow_tail = (tx[idx], ty[idx])
             arrow_head = (mx.mean(tx[idx:idx + 2]), mx.mean(ty[idx:idx + 2]))
 
@@ -335,7 +349,8 @@ class DomainMap:
 
     def grid2mask(self, xi, yi):
         """Return nearest space in mask-coords from given grid-coords."""
-        return round(xi * self.x_grid2mask), round(yi * self.y_grid2mask)
+        return (round(_plot_scalar(xi * self.x_grid2mask)),
+                round(_plot_scalar(yi * self.y_grid2mask)))
 
     def mask2grid(self, xm, ym):
         return xm * self.x_mask2grid, ym * self.y_mask2grid
@@ -367,10 +382,12 @@ class DomainMap:
 class Grid:
     """Grid of data."""
     def __init__(self, x, y):
+        x = x if isinstance(x, mx.array) else mx.array(x)
+        y = y if isinstance(y, mx.array) else mx.array(y)
 
-        if mx.ndim(x) == 1:
+        if x.ndim == 1:
             pass
-        elif mx.ndim(x) == 2:
+        elif x.ndim == 2:
             x_row = x[0]
             if not mx.allclose(x_row, x):
                 raise ValueError("The rows of 'x' must be equal")
@@ -378,9 +395,9 @@ class Grid:
         else:
             raise ValueError("'x' can have at maximum 2 dimensions")
 
-        if mx.ndim(y) == 1:
+        if y.ndim == 1:
             pass
-        elif mx.ndim(y) == 2:
+        elif y.ndim == 2:
             yt = mx.transpose(y)  # Also works for nested lists.
             y_col = yt[0]
             if not mx.allclose(y_col, yt):
@@ -389,9 +406,9 @@ class Grid:
         else:
             raise ValueError("'y' can have at maximum 2 dimensions")
 
-        if not (mx.diff(x) > 0).all():
+        if not bool(mx.all((x[1:] - x[:-1]) > 0)):
             raise ValueError("'x' must be strictly increasing")
-        if not (mx.diff(y) > 0).all():
+        if not bool(mx.all((y[1:] - y[:-1]) > 0)):
             raise ValueError("'y' must be strictly increasing")
 
         self.nx = len(x)
@@ -406,9 +423,9 @@ class Grid:
         self.width = x[-1] - x[0]
         self.height = y[-1] - y[0]
 
-        if not mx.allclose(mx.diff(x), self.width / (self.nx - 1)):
+        if not mx.allclose(x[1:] - x[:-1], self.width / (self.nx - 1)):
             raise ValueError("'x' values must be equally spaced")
-        if not mx.allclose(mx.diff(y), self.height / (self.ny - 1)):
+        if not mx.allclose(y[1:] - y[:-1], self.height / (self.ny - 1)):
             raise ValueError("'y' values must be equally spaced")
 
     @property
@@ -434,7 +451,9 @@ class StreamMask:
 
     def __init__(self, density):
         try:
-            self.nx, self.ny = (30 * mx.broadcast_to(density, 2)).astype(int)
+            density = density if isinstance(density, mx.array) else mx.array(density)
+            size = (30 * mx.broadcast_to(density, (2,))).astype(mx.int32)
+            self.nx, self.ny = (int(size[0].item()), int(size[1].item()))
         except ValueError as err:
             raise ValueError("'density' must be a scalar or be of length "
                              "2") from err
@@ -495,7 +514,7 @@ def _get_integrator(u, v, dmap, minlength, maxlength, integration_direction):
     # speed (path length) will be in axes-coordinates
     u_ax = u / (dmap.grid.nx - 1)
     v_ax = v / (dmap.grid.ny - 1)
-    speed = mx.ma.sqrt(u_ax ** 2 + v_ax ** 2)
+    speed = mx.sqrt(u_ax ** 2 + v_ax ** 2)
 
     def forward_time(xi, yi):
         if not dmap.grid.within_grid(xi, yi):
@@ -549,7 +568,7 @@ def _get_integrator(u, v, dmap, minlength, maxlength, integration_direction):
             xy_traj += xyt[1:]
 
         if stotal > minlength:
-            return mx.broadcast_arrays(xy_traj, mx.zeros((1, 2)))[0]
+            return mx.stack(xy_traj, axis=0)
         else:  # reject short trajectories
             dmap.undo_trajectory()
             return None
@@ -609,7 +628,7 @@ def _integrate_rk12(x0, y0, dmap, f, maxlength, broken_streamlines=True,
     while True:
         try:
             if dmap.grid.within_grid(xi, yi):
-                xyf_traj.append((xi, yi))
+                xyf_traj.append(_plot_xy(xi, yi))
             else:
                 raise OutOfBounds
 
@@ -637,7 +656,9 @@ def _integrate_rk12(x0, y0, dmap, f, maxlength, broken_streamlines=True,
 
         ny, nx = dmap.grid.shape
         # Error is normalized to the axes coordinates
-        error = mx.hypot((dx2 - dx1) / (nx - 1), (dy2 - dy1) / (ny - 1))
+        error_x = (dx2 - dx1) / (nx - 1)
+        error_y = (dy2 - dy1) / (ny - 1)
+        error = mx.sqrt(error_x * error_x + error_y * error_y)
 
         # Only save step if within error tolerance
         if error < maxerror:
@@ -663,7 +684,8 @@ def _integrate_rk12(x0, y0, dmap, f, maxlength, broken_streamlines=True,
 def _euler_step(xyf_traj, dmap, f):
     """Simple Euler integration step that extends streamline to boundary."""
     ny, nx = dmap.grid.shape
-    xi, yi = xyf_traj[-1]
+    last = xyf_traj[-1]
+    xi, yi = last[0], last[1]
     cx, cy = f(xi, yi)
     if cx == 0:
         dsx = mx.inf
@@ -678,7 +700,7 @@ def _euler_step(xyf_traj, dmap, f):
     else:
         dsy = (ny - 1 - yi) / cy
     ds = min(dsx, dsy)
-    xyf_traj.append((xi + cx * ds, yi + cy * ds))
+    xyf_traj.append(_plot_xy(xi + cx * ds, yi + cy * ds))
     return ds, xyf_traj
 
 
@@ -688,10 +710,10 @@ def _euler_step(xyf_traj, dmap, f):
 def interpgrid(a, xi, yi):
     """Fast 2D, linear interpolation on an integer grid"""
 
-    Ny, Nx = mx.shape(a)
+    Ny, Nx = a.shape
     if isinstance(xi, mx.array):
-        x = xi.astype(int)
-        y = yi.astype(int)
+        x = xi.astype(mx.int32)
+        y = yi.astype(mx.int32)
         # Check that xn, yn don't exceed max index
         xn = mx.clip(x + 1, 0, Nx - 1)
         yn = mx.clip(y + 1, 0, Ny - 1)
@@ -719,7 +741,7 @@ def interpgrid(a, xi, yi):
     ai = a0 * (1 - yt) + a1 * yt
 
     if not isinstance(xi, mx.array):
-        if mx.ma.is_masked(ai):
+        if not bool(mx.isfinite(ai)):
             raise TerminateTrajectory
 
     return ai

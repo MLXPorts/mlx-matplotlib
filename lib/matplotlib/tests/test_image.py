@@ -1012,24 +1012,35 @@ def test_imshow_no_warn_invalid():
     plt.imshow([[1, 2], [3, mx.nan]])  # Check that no warning is emitted.
 
 
-@pytest.mark.parametrize(
-    'dtype', [mx.dtype(s) for s in 'u2 u4 i2 i4 i8 f4 f8'.split()])
-def test_imshow_clips_rgb_to_valid_range(dtype):
-    arr = mx.arange(300, dtype=dtype).reshape((10, 10, 3))
-    if dtype.kind != 'u':
-        arr -= 10
-    too_low = arr < 0
-    too_high = arr > 255
-    if dtype.kind == 'f':
-        arr = arr / 255
+@pytest.mark.parametrize('dtype, kind', [
+    (mx.uint16, 'u'), (mx.uint32, 'u'),
+    (mx.int16, 'i'), (mx.int32, 'i'), (mx.int64, 'i'),
+    (mx.float32, 'f'), (mx.float64, 'f')])
+def test_imshow_clips_rgb_to_valid_range(dtype, kind):
+    stream = mx.cpu if dtype == mx.float64 else None
+    arr = mx.reshape(mx.arange(300, dtype=dtype, stream=stream),
+                     (10, 10, 3), stream=stream)
+    if kind != 'u':
+        arr = mx.subtract(arr, 10, stream=stream)
+    too_low = mx.less(arr, 0, stream=stream)
+    too_high = mx.greater(arr, 255, stream=stream)
+    if kind == 'f':
+        arr = mx.divide(arr, 255, stream=stream)
     _, ax = plt.subplots()
     out = ax.imshow(arr).get_array()
-    assert (out[too_low] == 0).all()
-    if dtype.kind == 'f':
-        assert (out[too_high] == 1).all()
-        assert out.dtype.kind == 'f'
+    out_stream = mx.cpu if out.dtype == mx.float64 else None
+    assert mx.all(mx.where(too_low, mx.equal(out, 0, stream=out_stream),
+                           True, stream=out_stream),
+                  stream=out_stream).item()
+    if kind == 'f':
+        assert mx.all(mx.where(too_high, mx.equal(out, 1, stream=out_stream),
+                               True, stream=out_stream),
+                      stream=out_stream).item()
+        assert out.dtype in (mx.float32, mx.float64)
     else:
-        assert (out[too_high] == 255).all()
+        assert mx.all(mx.where(too_high, mx.equal(out, 255, stream=out_stream),
+                               True, stream=out_stream),
+                      stream=out_stream).item()
         assert out.dtype == mx.uint8
 
 

@@ -1,3 +1,4 @@
+import gc
 import os
 from pathlib import Path
 import platform
@@ -100,11 +101,11 @@ def test_animation_delete(anim):
         # Something in the test setup fixture lingers around into the test and
         # breaks pytest.warns on PyPy. This garbage collection fixes it.
         # https://foss.heptapod.net/pypy/pypy/-/issues/3536
-        mx.testing.break_cycles()
+        gc.collect()
     anim = animation.FuncAnimation(**anim)
     with pytest.warns(Warning, match='Animation was deleted'):
         del anim
-        mx.testing.break_cycles()
+        gc.collect()
 
 
 def test_movie_writer_dpi_default():
@@ -241,7 +242,7 @@ def test_animation_repr_html(writer, html, want, anim):
         # Something in the test setup fixture lingers around into the test and
         # breaks pytest.warns on PyPy. This garbage collection fixes it.
         # https://foss.heptapod.net/pypy/pypy/-/issues/3536
-        mx.testing.break_cycles()
+        gc.collect()
     if (writer == 'imagemagick' and html == 'html5'
             # ImageMagick delegates to ffmpeg for this format.
             and not animation.FFMpegWriter.isAvailable()):
@@ -256,7 +257,7 @@ def test_animation_repr_html(writer, html, want, anim):
         assert html is None
         with pytest.warns(UserWarning):
             del anim  # Animation was never run, so will warn on cleanup.
-            mx.testing.break_cycles()
+            gc.collect()
     else:
         assert want in html
 
@@ -332,11 +333,14 @@ def test_funcanimation_cache_frame_data(cache_frame_data):
         return line,
 
     frames_generated = []
+    key = mx.random.key(19680801)
 
     def frames_generator():
+        nonlocal key
         for _ in range(5):
             x = mx.linspace(0, 10, 100)
-            y = mx.random.rand(100)
+            key, frame_key = mx.random.split(key)
+            y = mx.random.uniform(shape=(100,), key=frame_key)
 
             frame = Frame(x=x, y=y)
 
@@ -355,7 +359,7 @@ def test_funcanimation_cache_frame_data(cache_frame_data):
     writer = NullMovieWriter()
     anim.save('unused.null', writer=writer)
     assert len(frames_generated) == 5
-    mx.testing.break_cycles()
+    gc.collect()
     for f in frames_generated:
         # If cache_frame_data is True, then the weakref should be alive;
         # if cache_frame_data is False, then the weakref should be dead (None).

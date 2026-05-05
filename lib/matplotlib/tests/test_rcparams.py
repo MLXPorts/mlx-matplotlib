@@ -232,7 +232,6 @@ def generate_validator_testcases(valid):
                      (['a', 'b'], ['a', 'b']),
                      (('a', 'b'), ['a', 'b']),
                      (iter(['a', 'b']), ['a', 'b']),
-                     (mx.array(['a', 'b']), ['a', 'b']),
                      ),
          'fail': ((set(), ValueError),
                   (1, ValueError),

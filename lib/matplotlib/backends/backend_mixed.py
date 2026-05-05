@@ -95,7 +95,7 @@ class MixedModeRenderer:
         self._renderer = self._vector_renderer
 
         height = self._height * self.dpi
-        img = mx.asarray(self._raster_renderer.buffer_rgba())
+        img = mx.array(self._raster_renderer.buffer_rgba())
         slice_y, slice_x = cbook._get_nonzero_slices(img[..., 3])
         cropped_img = img[slice_y, slice_x]
         if cropped_img.size:
@@ -107,7 +107,7 @@ class MixedModeRenderer:
                 gc,
                 slice_x.start * self._figdpi / self.dpi,
                 (height - slice_y.stop) * self._figdpi / self.dpi,
-                cropped_img[::-1])
+                mx.contiguous(cropped_img[::-1]))
         self._raster_renderer = None
 
         # restore the figure dpi.

@@ -114,18 +114,27 @@ class TextToPath:
         verts, codes = [], []
         for glyph_id, xposition, yposition, scale in glyph_info:
             verts1, codes1 = glyph_map[glyph_id]
-            verts1 = mx.asarray(verts1)
-            codes1 = mx.asarray(codes1)
-            verts.extend((verts1 * scale + [xposition, yposition]).tolist())
-            codes.extend(codes1.tolist())
+            verts1 = verts1 if isinstance(verts1, mx.array) else mx.array(verts1)
+            codes1 = codes1 if isinstance(codes1, mx.array) else mx.array(codes1)
+            stream = mx.cpu if verts1.dtype == mx.float64 else None
+            offset = mx.array([xposition, yposition], dtype=verts1.dtype)
+            verts.append(mx.add(mx.multiply(verts1, scale, stream=stream),
+                                offset, stream=stream))
+            codes.append(codes1)
         for verts1, codes1 in rects:
-            verts.extend(mx.asarray(verts1).tolist())
-            codes.extend(mx.asarray(codes1).tolist())
+            verts.append(
+                verts1 if isinstance(verts1, mx.array) else mx.array(verts1))
+            codes.append(
+                codes1 if isinstance(codes1, mx.array) else mx.array(codes1))
 
         # Make sure an empty string or one with nothing to print
         # (e.g. only spaces & newlines) will be valid/empty path
         if not verts:
             verts = mx.zeros((0, 2))
+            codes = mx.zeros((0,), dtype=mx.uint8)
+        else:
+            verts = mx.concatenate(verts, axis=0)
+            codes = mx.concatenate(codes, axis=0)
 
         return verts, codes
 
@@ -369,5 +378,6 @@ class TextPath(Path):
                   .scale(self._size / text_to_path.FONT_SCALE)
                   .translate(*self._xy))
             self._cached_vertices = tr.transform(self._vertices)
-            self._cached_vertices.flags.writeable = False
+            if hasattr(self._cached_vertices, "flags"):
+                self._cached_vertices.flags.writeable = False
             self._invalid = False

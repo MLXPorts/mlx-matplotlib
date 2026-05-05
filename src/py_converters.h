@@ -21,6 +21,9 @@ namespace py = pybind11;
 #include "py_buffer.h"
 
 void convert_trans_affine(const py::object& transform, agg::trans_affine& affine);
+void convert_trans_affine_with_stream(const py::object& transform,
+                                      agg::trans_affine& affine,
+                                      const py::object& stream);
 
 inline auto convert_points(const py::buffer &obj)
 {

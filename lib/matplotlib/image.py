@@ -37,14 +37,21 @@ _INT_DTYPES = {
 _NUMERIC_DTYPES = _FLOAT_DTYPES | _INT_DTYPES | {mx.bool_}
 
 
+def _image_array(value, *, dtype=None):
+    arr = value if isinstance(value, mx.array) else mx.array(value, dtype=dtype)
+    if dtype is not None and arr.dtype != dtype:
+        arr = arr.astype(dtype)
+    return arr
+
+
 def _ndim(value):
     if value is None:
         return 0
-    return value.ndim if isinstance(value, mx.array) else mx.asarray(value).ndim
+    return value.ndim if isinstance(value, mx.array) else mx.array(value).ndim
 
 
 def _diff(a, axis=-1):
-    a = mx.asarray(a)
+    a = _image_array(a)
     if axis < 0:
         axis += a.ndim
     left = [slice(None)] * a.ndim
@@ -1647,7 +1654,8 @@ def imsave(fname, arr, vmin=None, vmax=None, cmap=None, format=None,
     from matplotlib.figure import Figure
 
     # Normalizing input (e.g., list or tuples) to MLXArrayBackend array if needed
-    arr = mx.asarray(arr)
+    if not isinstance(arr, memoryview):
+        arr = _image_array(arr)
 
     if isinstance(fname, os.PathLike):
         fname = os.fspath(fname)
@@ -1689,7 +1697,7 @@ def imsave(fname, arr, vmin=None, vmax=None, cmap=None, format=None,
             pil_kwargs = pil_kwargs.copy()
         pil_shape = (rgba.shape[1], rgba.shape[0])
         if not isinstance(rgba, memoryview):
-            rgba = memoryview(mx.contiguous(mx.asarray(rgba, dtype=mx.uint8)))
+            rgba = memoryview(mx.contiguous(_image_array(rgba, dtype=mx.uint8)))
         image = PIL.Image.frombuffer(
             "RGBA", pil_shape, rgba, "raw", "RGBA", 0, 1)
         if format == "png":
@@ -1769,24 +1777,52 @@ def _pil_png_to_float_array(pil_png):
     # by Pillow.
     mode = pil_png.mode
     rawmode = pil_png.png.im_rawmode
+
+    def _pil_to_uint8_array(image):
+        if image.mode == "1":
+            image = image.convert("L")
+        height = image.height
+        width = image.width
+        bands = len(image.getbands())
+        values = mx.array(image.tobytes(), dtype=mx.uint8)
+        shape = (height, width) if bands == 1 else (height, width, bands)
+        return mx.reshape(values, shape)
+
+    def _pil_i16be_to_array(image):
+        values = mx.reshape(mx.array(image.tobytes(), dtype=mx.uint8),
+                            (image.height, image.width, 2))
+        high = mx.squeeze(mx.slice(
+            values, mx.array([0, 0, 0], dtype=mx.int32), (0, 1, 2),
+            (image.height, image.width, 1)), axis=2)
+        low = mx.squeeze(mx.slice(
+            values, mx.array([0, 0, 1], dtype=mx.int32), (0, 1, 2),
+            (image.height, image.width, 1)), axis=2)
+        return mx.add(mx.multiply(high.astype(mx.uint32), 256),
+                      low.astype(mx.uint32))
+
+    def _scale(image, denom):
+        values = _pil_to_uint8_array(image).astype(mx.float32)
+        return mx.divide(values, denom)
+
     if rawmode == "1":  # Grayscale.
-        return mx.asarray(pil_png, mx.float32)
+        return _scale(pil_png, 255)
     if rawmode == "L;2":  # Grayscale.
-        return mx.divide(pil_png, 2**2 - 1, dtype=mx.float32)
+        return _scale(pil_png, 2**2 - 1)
     if rawmode == "L;4":  # Grayscale.
-        return mx.divide(pil_png, 2**4 - 1, dtype=mx.float32)
+        return _scale(pil_png, 2**4 - 1)
     if rawmode == "L":  # Grayscale.
-        return mx.divide(pil_png, 2**8 - 1, dtype=mx.float32)
+        return _scale(pil_png, 2**8 - 1)
     if rawmode == "I;16B":  # Grayscale.
-        return mx.divide(pil_png, 2**16 - 1, dtype=mx.float32)
+        return mx.divide(_pil_i16be_to_array(pil_png).astype(mx.float32),
+                         2**16 - 1)
     if mode == "RGB":  # RGB.
-        return mx.divide(pil_png, 2**8 - 1, dtype=mx.float32)
+        return _scale(pil_png, 2**8 - 1)
     if mode == "P":  # Palette.
-        return mx.divide(pil_png.convert("RGBA"), 2**8 - 1, dtype=mx.float32)
+        return _scale(pil_png.convert("RGBA"), 2**8 - 1)
     if mode == "LA":  # Grayscale + alpha.
-        return mx.divide(pil_png.convert("RGBA"), 2**8 - 1, dtype=mx.float32)
+        return _scale(pil_png.convert("RGBA"), 2**8 - 1)
     if mode == "RGBA":  # RGBA.
-        return mx.divide(pil_png, 2**8 - 1, dtype=mx.float32)
+        return _scale(pil_png, 2**8 - 1)
     raise ValueError(f"Unknown PIL rawmode: {rawmode}")
 
 

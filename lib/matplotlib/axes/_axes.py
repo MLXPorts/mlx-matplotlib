@@ -42,13 +42,109 @@ _log = logging.getLogger(__name__)
 
 
 def _mx_nanmin(values):
-    values = mx.asarray(values)
-    return mx.min(mx.where(mx.isfinite(values), values, mx.inf))
+    values = values if isinstance(values, mx.array) else mx.array(values)
+    if values.dtype not in (mx.float32, mx.float64):
+        values = values.astype(mx.float32)
+    stream = mx.cpu if values.dtype == mx.float64 else None
+    fill = mx.full((), float("inf"), dtype=values.dtype, stream=stream)
+    return mx.min(mx.where(mx.isfinite(values, stream=stream), values, fill,
+                           stream=stream), stream=stream).item()
 
 
 def _mx_nanmax(values):
-    values = mx.asarray(values)
-    return mx.max(mx.where(mx.isfinite(values), values, -mx.inf))
+    values = values if isinstance(values, mx.array) else mx.array(values)
+    if values.dtype not in (mx.float32, mx.float64):
+        values = values.astype(mx.float32)
+    stream = mx.cpu if values.dtype == mx.float64 else None
+    fill = mx.full((), -float("inf"), dtype=values.dtype, stream=stream)
+    return mx.max(mx.where(mx.isfinite(values, stream=stream), values, fill,
+                           stream=stream), stream=stream).item()
+
+
+def _mx_diff(values):
+    values = values if isinstance(values, mx.array) else mx.array(values)
+    stream = mx.cpu if values.dtype == mx.float64 else None
+    if values.shape[0] < 2:
+        return mx.zeros((0,), dtype=values.dtype, stream=stream)
+    left = mx.slice(values, mx.array([1], dtype=mx.int32), (0,),
+                    (values.shape[0] - 1,), stream=stream)
+    right = mx.slice(values, mx.array([0], dtype=mx.int32), (0,),
+                     (values.shape[0] - 1,), stream=stream)
+    return mx.subtract(left, right, stream=stream)
+
+
+def _mx_histogram_bin_edges(values, bins=10, bin_range=None, weights=None):
+    values = values if isinstance(values, mx.array) else mx.array(values)
+    if values.dtype not in (mx.float32, mx.float64):
+        values = values.astype(mx.float32)
+    stream = mx.cpu if values.dtype == mx.float64 else None
+    if cbook.is_scalar_or_string(bins):
+        if not isinstance(bins, Integral):
+            raise ValueError(
+                "MLX histogram bins must be an integer or explicit edges")
+        if bin_range is None:
+            lo = _mx_nanmin(values)
+            hi = _mx_nanmax(values)
+        else:
+            lo, hi = bin_range
+        if not lo < hi:
+            lo -= 0.5
+            hi += 0.5
+        return mx.linspace(lo, hi, bins + 1, dtype=values.dtype, stream=stream)
+    edges = bins if isinstance(bins, mx.array) else mx.array(bins)
+    if edges.dtype not in (mx.float32, mx.float64):
+        edges = edges.astype(values.dtype, stream=stream)
+    return edges
+
+
+def _mx_histogram(values, bins=10, *, weights=None, bin_range=None,
+                  density=False):
+    values = values if isinstance(values, mx.array) else mx.array(values)
+    if values.dtype not in (mx.float32, mx.float64):
+        values = values.astype(mx.float32)
+    stream = mx.cpu if values.dtype == mx.float64 else None
+    edges = _mx_histogram_bin_edges(values, bins, bin_range, weights)
+    if edges.dtype != values.dtype:
+        edges = edges.astype(values.dtype, stream=stream)
+    weight_values = None
+    if weights is not None:
+        weight_values = weights if isinstance(weights, mx.array) else mx.array(weights)
+        if weight_values.dtype not in (mx.float32, mx.float64):
+            weight_values = weight_values.astype(mx.float32)
+        if weight_values.dtype == mx.float64:
+            stream = mx.cpu
+        elif stream is None and values.dtype == mx.float64:
+            stream = mx.cpu
+    count_dtype = (
+        weight_values.dtype if weight_values is not None else values.dtype)
+    finite = mx.isfinite(values, stream=stream)
+    counts = []
+    nbins = edges.shape[0] - 1
+    for j in range(nbins):
+        left = mx.slice(edges, mx.array([j], dtype=mx.int32), (0,), (1,),
+                        stream=stream)
+        right = mx.slice(edges, mx.array([j + 1], dtype=mx.int32), (0,), (1,),
+                         stream=stream)
+        lower = mx.greater_equal(values, left, stream=stream)
+        upper = (mx.less_equal(values, right, stream=stream)
+                 if j == nbins - 1 else mx.less(values, right, stream=stream))
+        inside = mx.logical_and(finite, mx.logical_and(lower, upper,
+                                                       stream=stream),
+                                stream=stream)
+        if weight_values is None:
+            counts.append(mx.sum(inside.astype(count_dtype, stream=stream),
+                                 stream=stream))
+        else:
+            zero = mx.full((), 0, dtype=count_dtype, stream=stream)
+            counts.append(mx.sum(mx.where(inside, weight_values, zero,
+                                          stream=stream), stream=stream))
+    hist = mx.stack(counts, axis=0, stream=stream)
+    if density:
+        widths = _mx_diff(edges)
+        area = mx.sum(mx.multiply(hist, widths, stream=stream), stream=stream)
+        hist = mx.divide(mx.divide(hist, area, stream=stream), widths,
+                         stream=stream)
+    return hist, edges
 
 
 # The axes module contains all the wrappers to plotting functions.
@@ -2510,22 +2606,30 @@ class Axes(_AxesBase):
         # subtracted uniformly
         if self.xaxis is not None:
             x0 = x
-            x = mx.asarray(self.convert_xunits(x))
+            x = self.convert_xunits(x)
+            x = x if isinstance(x, mx.array) else mx.array(x)
             width = self._convert_dx(width, x0, x, self.convert_xunits)
             if xerr is not None:
                 xerr = self._convert_dx(xerr, x0, x, self.convert_xunits)
         if self.yaxis is not None:
             y0 = y
-            y = mx.asarray(self.convert_yunits(y))
+            y = self.convert_yunits(y)
+            y = y if isinstance(y, mx.array) else mx.array(y)
             height = self._convert_dx(height, y0, y, self.convert_yunits)
             if yerr is not None:
                 yerr = self._convert_dx(yerr, y0, y, self.convert_yunits)
         try:
+            height = height if isinstance(height, mx.array) else mx.array(height)
+            width = width if isinstance(width, mx.array) else mx.array(width)
+            stream = (mx.cpu if any(
+                values.dtype == mx.float64 for values in (x, height, width, y))
+                else None)
             x, height, width, y = mx.broadcast_arrays(
-                mx.reshape(mx.asarray(x), (-1,)),
-                mx.asarray(height),
-                mx.asarray(width),
-                mx.asarray(y))
+                mx.reshape(x, (-1,), stream=stream),
+                height,
+                width,
+                y,
+                stream=stream)
         except ValueError as e:
             arg_map = {
                 "arg 0": "'x'",
@@ -5226,17 +5330,15 @@ or pandas.DataFrame
         edgecolors = kwargs.pop('edgecolor', None)
         # Process **kwargs to handle aliases, conflicts with explicit kwargs:
         x, y = self._process_unit_info([("x", x), ("y", y)], kwargs)
-        # mx.ma.ravel yields an ndarray, not a masked array,
-        # unless its argument is a masked array.
-        x = mx.ma.ravel(x)
-        y = mx.ma.ravel(y)
+        x = mx.reshape(x if isinstance(x, mx.array) else mx.array(x), (-1,))
+        y = mx.reshape(y if isinstance(y, mx.array) else mx.array(y), (-1,))
         if x.size != y.size:
             raise ValueError("x and y must be the same size")
 
         if s is None:
             s = (20 if mpl.rcParams['_internal.classic_mode'] else
                  mpl.rcParams['lines.markersize'] ** 2.0)
-        s = mx.ma.ravel(s)
+        s = mx.reshape(s if isinstance(s, mx.array) else mx.array(s), (-1,))
         if (len(s) not in (1, x.size) or
                 (not mx.issubdtype(s.dtype, mx.floating) and
                  not mx.issubdtype(s.dtype, mx.integer))):
@@ -5254,19 +5356,18 @@ or pandas.DataFrame
                 get_next_color_func=self._get_patches_for_fill.get_next_color)
 
         if plotnonfinite and colors is None:
-            c = mx.ma.masked_invalid(c)
+            c = c if isinstance(c, mx.array) else mx.array(c)
+            if c.dtype not in (mx.float16, mx.bfloat16, mx.float32, mx.float64):
+                c = c.astype(mx.float32)
+            stream = mx.cpu if c.dtype == mx.float64 else None
+            c = mx.where(mx.isfinite(c, stream=stream), c, mx.nan,
+                         stream=stream)
             x, y, s, edgecolors, linewidths = \
                 cbook._combine_masks(x, y, s, edgecolors, linewidths)
         else:
             x, y, s, c, colors, edgecolors, linewidths = \
                 cbook._combine_masks(
                     x, y, s, c, colors, edgecolors, linewidths)
-        # Unmask edgecolors if it was actually a single RGB or RGBA.
-        if (x.size in (3, 4)
-                and mx.ma.is_masked(edgecolors)
-                and not mx.ma.is_masked(orig_edgecolor)):
-            edgecolors = edgecolors.data
-
         scales = s   # Renamed for readability below.
 
         # load default marker from rcParams
@@ -5323,7 +5424,7 @@ or pandas.DataFrame
                     lw if lw is not None else mpl.rcParams['lines.linewidth']
                     for lw in linewidths]
 
-        offsets = mx.ma.column_stack([x, y])
+        offsets = mx.stack([x, y], axis=1)
 
         collection = mcoll.PathCollection(
             (path,), scales,
@@ -6011,8 +6112,10 @@ or pandas.DataFrame
 
     def _fill_between_process_units(self, ind_dir, dep_dir, ind, dep1, dep2, **kwargs):
         """Handle united data, such as dates."""
-        return map(mx.ma.masked_invalid, self._process_unit_info(
-            [(ind_dir, ind), (dep_dir, dep1), (dep_dir, dep2)], kwargs))
+        return tuple(
+            values if isinstance(values, mx.array) else mx.array(values)
+            for values in self._process_unit_info(
+                [(ind_dir, ind), (dep_dir, dep1), (dep_dir, dep2)], kwargs))
 
     def fill_between(self, x, y1, y2=0, where=None, interpolate=False,
                      step=None, **kwargs):
@@ -6309,7 +6412,7 @@ or pandas.DataFrame
             shading = 'auto'
 
         if len(args) == 1:
-            C = mx.asarray(args[0])
+            C = args[0] if isinstance(args[0], mx.array) else mx.array(args[0])
             nrows, ncols = C.shape[:2]
             if shading in ['gouraud', 'nearest']:
                 X, Y = mx.meshgrid(mx.arange(ncols), mx.arange(nrows))
@@ -6318,14 +6421,14 @@ or pandas.DataFrame
                 shading = 'flat'
         elif len(args) == 3:
             # Check x and y for bad data...
-            C = mx.asarray(args[2])
+            C = args[2] if isinstance(args[2], mx.array) else mx.array(args[2])
             # unit conversion allows e.g. datetime objects as axis values
             X, Y = args[:2]
             X, Y = self._process_unit_info([("x", X), ("y", Y)], kwargs)
             X, Y = (cbook.safe_masked_invalid(a, copy=True) for a in [X, Y])
 
             if funcname == 'pcolormesh':
-                if mx.ma.is_masked(X) or mx.ma.is_masked(Y):
+                if hasattr(X, "mask") or hasattr(Y, "mask"):
                     raise ValueError(
                         'x and y arguments to pcolormesh cannot have '
                         'non-finite values or be of type '
@@ -6337,11 +6440,11 @@ or pandas.DataFrame
         Nx = X.shape[-1]
         Ny = Y.shape[0]
         if X.ndim != 2 or X.shape[0] == 1:
-            x = X.reshape(1, Nx)
-            X = x.repeat(Ny, axis=0)
+            x = mx.reshape(X, (1, Nx))
+            X = mx.repeat(x, Ny, axis=0)
         if Y.ndim != 2 or Y.shape[1] == 1:
-            y = Y.reshape(Ny, 1)
-            Y = y.repeat(Nx, axis=1)
+            y = mx.reshape(Y, (Ny, 1))
+            Y = mx.repeat(y, Nx, axis=1)
         if X.shape != Y.shape:
             raise TypeError(f'Incompatible X, Y inputs to {funcname}; '
                             f'see help({funcname})')
@@ -6581,18 +6684,9 @@ or pandas.DataFrame
 
         kwargs.setdefault('snap', False)
 
-        if mx.ma.isMaskedArray(X) or mx.ma.isMaskedArray(Y):
-            stack = mx.ma.stack
-            X = mx.ma.asarray(X)
-            Y = mx.ma.asarray(Y)
-            # For bounds collections later
-            x = X.compressed()
-            y = Y.compressed()
-        else:
-            stack = mx.stack
-            x = X
-            y = Y
-        coords = stack([X, Y], axis=-1)
+        x = X
+        y = Y
+        coords = mx.stack([X, Y], axis=-1)
 
         collection = mcoll.PolyQuadMesh(
             coords, array=C, cmap=cmap, norm=norm, colorizer=colorizer,
@@ -7303,7 +7397,7 @@ such objects
 
         kwargs = cbook.normalize_kwargs(kwargs, mpatches.Patch)
 
-        if mx.isscalar(x):
+        if cbook.is_scalar_or_string(x):
             x = [x]
 
         bins = mpl._val_or_rc(bins, 'hist.bins')
@@ -7390,7 +7484,7 @@ such objects
                 _w = mx.concatenate(w)
             else:
                 _w = None
-            bins = mx.histogram_bin_edges(
+            bins = _mx_histogram_bin_edges(
                 mx.concatenate(x), bins, bin_range, _w)
         else:
             hist_kwargs['range'] = bin_range
@@ -7405,22 +7499,32 @@ such objects
         for i in range(nx):
             # this will automatically overwrite bins,
             # so that each histogram uses the same bins
-            m, bins = mx.histogram(x[i], bins, weights=w[i], **hist_kwargs)
+            m, bins = _mx_histogram(
+                x[i], bins, weights=w[i], bin_range=hist_kwargs.get('range'),
+                density=hist_kwargs.get('density', False))
             tops.append(m)
-        tops = mx.array(tops, float)  # causes problems later if it's an int
-        bins = mx.array(bins, float)  # causes problems if float16
+        stream = mx.cpu if any(top.dtype == mx.float64 for top in tops) else None
+        tops = mx.stack(tops, axis=0, stream=stream)
+        if tops.dtype not in (mx.float32, mx.float64):
+            tops = tops.astype(mx.float32, stream=stream)
+        bins = bins if isinstance(bins, mx.array) else mx.array(bins)
+        if bins.dtype not in (mx.float32, mx.float64):
+            bins = bins.astype(tops.dtype, stream=stream)
         if stacked:
             tops = tops.cumsum(axis=0)
             # If a stacked density plot, normalize so the area of all the
             # stacked histograms together is 1
             if density:
-                tops = (tops / mx.diff(bins)) / tops[-1].sum()
+                widths = _mx_diff(bins)
+                tops = mx.divide(mx.divide(tops, widths, stream=stream),
+                                 mx.sum(tops[-1], stream=stream),
+                                 stream=stream)
         if cumulative:
             slc = slice(None)
             if isinstance(cumulative, Number) and cumulative < 0:
                 slc = slice(None, None, -1)
             if density:
-                tops = (tops * mx.diff(bins))[:, slc].cumsum(axis=1)[:, slc]
+                tops = (tops * _mx_diff(bins))[:, slc].cumsum(axis=1)[:, slc]
             else:
                 tops = tops[:, slc].cumsum(axis=1)[:, slc]
 
@@ -7428,7 +7532,7 @@ such objects
 
         if histtype.startswith('bar'):
 
-            totwidth = mx.diff(bins)
+            totwidth = _mx_diff(bins)
 
             if rwidth is not None:
                 dr = mx.clip(rwidth, 0, 1)
@@ -7554,7 +7658,8 @@ such objects
 
         # If None, make all labels None (via zip_longest below); otherwise,
         # cast each element to str, but keep a single str as it.
-        labels = [] if label is None else mx.atleast_1d(mx.asarray(label, str))
+        labels = [] if label is None else (
+            [label] if cbook.is_scalar_or_string(label) else list(label))
 
         if histtype == "step":
             ec = kwargs.get('edgecolor', colors)
@@ -7571,8 +7676,14 @@ such objects
         else:
             facecolors = itertools.cycle(mcolors.to_rgba_array(fc))
 
-        hatches = itertools.cycle(mx.atleast_1d(kwargs.get('hatch', None)))
-        linewidths = itertools.cycle(mx.atleast_1d(kwargs.get('linewidth', None)))
+        hatch = kwargs.get('hatch', None)
+        hatches = itertools.cycle(
+            [hatch] if hatch is None or cbook.is_scalar_or_string(hatch)
+            else list(hatch))
+        linewidth = kwargs.get('linewidth', None)
+        linewidths = itertools.cycle(
+            [linewidth] if linewidth is None
+            or cbook.is_scalar_or_string(linewidth) else list(linewidth))
         if 'linestyle' in kwargs:
             linestyles = itertools.cycle(mlines._get_dash_patterns(kwargs['linestyle']))
         else:

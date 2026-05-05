@@ -8,6 +8,7 @@ artists into 3D versions which can be added to an Axes3D.
 """
 
 import math
+import functools
 import mlx.core as mx
 from contextlib import contextmanager
 
@@ -483,30 +484,26 @@ class Line3DCollection(LineCollection):
         """
         Project the points according to renderer matrix.
         """
-        segments = mx.asarray(self._segments3d)
-
-        mask = False
-        if mx.ma.isMA(segments):
-            mask = segments.mask
+        segments = (self._segments3d if isinstance(self._segments3d, mx.array)
+                    else mx.array(self._segments3d))
 
         if self._axlim_clip:
             viewlim_mask = _viewlim_mask(segments[..., 0],
                                          segments[..., 1],
                                          segments[..., 2],
                                          self.axes)
-            if mx.any(viewlim_mask):
+            if bool(mx.any(viewlim_mask).item()):
                 # broadcast mask to 3D
                 viewlim_mask = mx.broadcast_to(viewlim_mask[..., mx.newaxis],
                                                (*viewlim_mask.shape, 3))
-                mask = mask | viewlim_mask
-        xyzs = mx.ma.array(proj3d._proj_transform_vectors(segments, self.axes.M),
-                           mask=mask)
+                segments = mx.where(viewlim_mask, mx.nan, segments)
+        xyzs = proj3d._proj_transform_vectors(segments, self.axes.M)
         segments_2d = xyzs[..., 0:2]
         LineCollection.set_segments(self, segments_2d)
 
         # FIXME
         if len(xyzs) > 0:
-            minz = min(xyzs[..., 2].min(), 1e9)
+            minz = min(mx.min(xyzs[..., 2]).item(), 1e9)
         else:
             minz = mx.nan
         return minz
@@ -841,16 +838,25 @@ def _get_data_scale(X, Y, Z):
     """
     # Account for empty datasets. Assume that X Y and Z have the same number
     # of elements.
-    if not mx.ma.count(X):
+    X = X if isinstance(X, mx.array) else mx.array(X)
+    Y = Y if isinstance(Y, mx.array) else mx.array(Y)
+    Z = Z if isinstance(Z, mx.array) else mx.array(Z)
+    valid = functools.reduce(mx.logical_and, (mx.isfinite(a) for a in (X, Y, Z)))
+    if not int(mx.sum(valid.astype(mx.int32)).item()):
         return 0
 
     # Estimate the scale using the RSS of the ranges of the dimensions
     # Note that we don't use mx.ma.ptp() because we otherwise get a build
     # warning about handing empty arrays.
-    ptp_x = X.max() - X.min()
-    ptp_y = Y.max() - Y.min()
-    ptp_z = Z.max() - Z.min()
-    return mx.sqrt(ptp_x ** 2 + ptp_y ** 2 + ptp_z ** 2)
+    def _ptp(values):
+        return mx.subtract(mx.max(mx.where(valid, values, -mx.inf)),
+                           mx.min(mx.where(valid, values, mx.inf)))
+
+    ptp_x = _ptp(X)
+    ptp_y = _ptp(Y)
+    ptp_z = _ptp(Z)
+    return mx.sqrt(mx.add(mx.add(mx.square(ptp_x), mx.square(ptp_y)),
+                          mx.square(ptp_z)))
 
 
 class Path3DCollection(PathCollection):
@@ -997,15 +1003,10 @@ class Path3DCollection(PathCollection):
         self.stale = True
 
     def do_3d_projection(self):
-        mask = False
-        for xyz in self._offsets3d:
-            if mx.ma.isMA(xyz):
-                mask = mask | xyz.mask
         if self._axlim_clip:
-            mask = mask | _viewlim_mask(*self._offsets3d, self.axes)
-            mask = mx.broadcast_to(mask,
-                                   (len(self._offsets3d), *self._offsets3d[0].shape))
-            xyzs = mx.ma.array(self._offsets3d, mask=mask)
+            mask = _viewlim_mask(*self._offsets3d, self.axes)
+            xyzs = tuple(mx.where(mask, mx.nan, xyz)
+                         for xyz in self._offsets3d)
         else:
             xyzs = self._offsets3d
         vxs, vys, vzs, vis = proj3d._proj_transform_clip(*xyzs,
@@ -1015,7 +1016,10 @@ class Path3DCollection(PathCollection):
         # Sort the points based on z coordinates
         # Performance optimization: Create a sorted index array and reorder
         # points and point properties according to the index array
-        z_markers_idx = self._z_markers_idx = mx.ma.argsort(vzs)[::-1]
+        z_order = mx.argsort(vzs)
+        z_markers_idx = self._z_markers_idx = mx.take(
+            z_order,
+            mx.arange(z_order.shape[0] - 1, -1, -1, dtype=mx.int32))
         self._vzs = vzs
 
         # we have to special case the sizes because of code in collections.py
@@ -1024,22 +1028,22 @@ class Path3DCollection(PathCollection):
         # so we cannot rely on doing the sorting on the way out via get_*
 
         if len(self._sizes3d) > 1:
-            self._sizes = self._sizes3d[z_markers_idx]
+            self._sizes = mx.take(self._sizes3d, z_markers_idx, axis=0)
 
         if len(self._linewidths3d) > 1:
-            self._linewidths = self._linewidths3d[z_markers_idx]
+            self._linewidths = mx.take(self._linewidths3d, z_markers_idx, axis=0)
 
-        PathCollection.set_offsets(self, mx.ma.column_stack((vxs, vys)))
+        PathCollection.set_offsets(self, mx.stack((vxs, vys), axis=1))
 
         # Re-order items
-        vzs = vzs[z_markers_idx]
-        vxs = vxs[z_markers_idx]
-        vys = vys[z_markers_idx]
+        vzs = mx.take(vzs, z_markers_idx, axis=0)
+        vxs = mx.take(vxs, z_markers_idx, axis=0)
+        vys = mx.take(vys, z_markers_idx, axis=0)
 
         # Store ordered offset for drawing purpose
-        self._offset_zordered = mx.ma.column_stack((vxs, vys))
+        self._offset_zordered = mx.stack((vxs, vys), axis=1)
 
-        return mx.min(vzs) if vzs.size else mx.nan
+        return mx.min(vzs).item() if vzs.size else mx.nan
 
     @contextmanager
     def _use_zordered_offset(self):

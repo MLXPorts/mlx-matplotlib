@@ -22,7 +22,10 @@ from ._enums import JoinStyle, CapStyle
 
 
 def _atleast_1d(value, *, dtype=None):
-    arr = mx.asarray(value, dtype=dtype) if dtype is not None else mx.asarray(value)
+    arr = (value if isinstance(value, mx.array)
+           else mx.array(value, dtype=dtype))
+    if dtype is not None and arr.dtype != dtype:
+        arr = arr.astype(dtype)
     return mx.reshape(arr, (1,)) if arr.ndim == 0 else arr
 
 
@@ -205,7 +208,10 @@ class Collection(mcolorizer.ColorizingArtist):
             self._joinstyle = None
 
         if offsets is not None:
-            offsets = mx.asarray(offsets, float)
+            offsets = (offsets if isinstance(offsets, mx.array)
+                       else mx.array(offsets, dtype=mx.float32))
+            if offsets.dtype not in (mx.float32, mx.float64):
+                offsets = offsets.astype(mx.float32)
             # Broadcast (2,) -> (1, 2) but nothing else.
             if offsets.shape == (2,):
                 offsets = offsets[None, :]
@@ -306,7 +312,8 @@ class Collection(mcolorizer.ColorizingArtist):
             # location.
             offsets = (offset_trf - transData).transform(offsets)
             # note A-B means A B^{-1}
-            offsets = mx.asarray(offsets, dtype=mx.float32)
+            offsets = (offsets.astype(mx.float32) if isinstance(offsets, mx.array)
+                       else mx.array(offsets, dtype=mx.float32))
             valid = mx.all(mx.isfinite(offsets), axis=-1)
             if bool(mx.any(valid)):
                 bbox = transforms.Bbox.null()
@@ -626,12 +633,15 @@ class Collection(mcolorizer.ColorizingArtist):
         ----------
         offsets : (N, 2) or (2,) array-like
         """
-        offsets = mx.asarray(offsets)
+        offsets = offsets if isinstance(offsets, mx.array) else mx.array(offsets)
         if offsets.shape == (2,):  # Broadcast (2,) -> (1, 2) but nothing else.
-            offsets = offsets[None, :]
+            offsets = mx.reshape(offsets, (1, 2))
+        x = self.convert_xunits(offsets[:, 0])
+        y = self.convert_yunits(offsets[:, 1])
+        x = x if isinstance(x, mx.array) else mx.array(x)
+        y = y if isinstance(y, mx.array) else mx.array(y)
         self._offsets = mx.stack(
-            (mx.asarray(self.convert_xunits(offsets[:, 0]), dtype=mx.float32),
-             mx.asarray(self.convert_yunits(offsets[:, 1]), dtype=mx.float32)),
+            (x.astype(mx.float32), y.astype(mx.float32)),
             axis=-1)
         self.stale = True
 
@@ -1089,7 +1099,7 @@ class _CollectionWithSizes(Collection):
             self._sizes = mx.array([])
             self._transforms = mx.zeros((0, 3, 3))
         else:
-            self._sizes = mx.asarray(sizes)
+            self._sizes = sizes if isinstance(sizes, mx.array) else mx.array(sizes)
             self._transforms = mx.zeros((len(self._sizes), 3, 3))
             scale = mx.sqrt(self._sizes) * dpi / 72.0 * self._factor
             self._transforms[:, 0, 0] = scale
@@ -1313,8 +1323,8 @@ class PolyCollection(_CollectionWithSizes):
             connection at the end.
         """
         self.stale = True
-        if isinstance(verts, mx.ma.MaskedArray):
-            verts = verts.astype(float).filled(mx.nan)
+        if hasattr(verts, "filled") and not isinstance(verts, mx.array):
+            verts = verts.filled(mx.nan)
 
         # No need to do anything fancy if the path isn't closed.
         if not closed:
@@ -1479,8 +1489,11 @@ class FillBetweenPolyCollection(PolyCollection):
     def get_datalim(self, transData):
         """Calculate the data limits and return them as a `.Bbox`."""
         datalim = transforms.Bbox.null()
+        bbox_points = self._bbox.get_points()
+        minpos = self._bbox.minpos
+        minpos = minpos if isinstance(minpos, mx.array) else mx.array(minpos)
         datalim.update_from_data_xy((self.get_transform() - transData).transform(
-            mx.concatenate([self._bbox, [self._bbox.minpos]])))
+            mx.concatenate([bbox_points, mx.reshape(minpos, (1, 2))])))
         return datalim
 
     def _make_verts(self, t, f1, f2, where):
@@ -1490,11 +1503,15 @@ class FillBetweenPolyCollection(PolyCollection):
         self._validate_shapes(self.t_direction, self._f_direction, t, f1, f2)
 
         where = self._get_data_mask(t, f1, f2, where)
-        t, f1, f2 = mx.broadcast_arrays(mx.atleast_1d(t), f1, f2, subok=True)
+        t, f1, f2 = mx.broadcast_arrays(mx.atleast_1d(t),
+                                        mx.atleast_1d(f1),
+                                        mx.atleast_1d(f2))
 
         self._bbox = transforms.Bbox.null()
+        valid_t = mx.where(where, t, mx.nan)
         self._bbox.update_from_data_xy(self._fix_pts_xy_order(mx.concatenate([
-            mx.stack((t[where], f[where]), axis=-1) for f in (f1, f2)])))
+            mx.stack((valid_t, mx.where(where, f, mx.nan)), axis=-1)
+            for f in (f1, f2)])))
 
         return [
             self._make_verts_for_region(t, f1, f2, idx0, idx1)
@@ -1509,15 +1526,20 @@ class FillBetweenPolyCollection(PolyCollection):
         *t*, *f1*, *f2* is masked and if the input *where* is true at that point.
         """
         if where is None:
-            where = True
+            where = mx.ones(mx.atleast_1d(t).shape, dtype=mx.bool_)
         else:
-            where = mx.asarray(where, dtype=bool)
-            if where.size != t.size:
+            where = where if isinstance(where, mx.array) else mx.array(
+                where, dtype=mx.bool_)
+            if where.size != mx.atleast_1d(t).size:
                 msg = "where size ({}) does not match {!r} size ({})".format(
-                    where.size, self.t_direction, t.size)
+                    where.size, self.t_direction, mx.atleast_1d(t).size)
                 raise ValueError(msg)
-        return where & ~functools.reduce(
-            mx.logical_or, map(mx.ma.getmaskarray, [t, f1, f2]))
+        t, f1, f2 = mx.broadcast_arrays(mx.atleast_1d(t),
+                                        mx.atleast_1d(f1),
+                                        mx.atleast_1d(f2))
+        valid = functools.reduce(
+            mx.logical_and, (mx.isfinite(a) for a in (t, f1, f2)))
+        return mx.logical_and(where, valid)
 
     @staticmethod
     def _validate_shapes(t_dir, f_dir, t, f1, f2):
@@ -1552,10 +1574,12 @@ class FillBetweenPolyCollection(PolyCollection):
             start = t_slice[0], f2_slice[0]
             end = t_slice[-1], f2_slice[-1]
 
+        start = mx.reshape(mx.stack(start, axis=0), (1, 2))
+        end = mx.reshape(mx.stack(end, axis=0), (1, 2))
         pts = mx.concatenate((
-            mx.asarray([start]),
+            start,
             mx.stack((t_slice, f1_slice), axis=-1),
-            mx.asarray([end]),
+            end,
             mx.stack((t_slice, f2_slice), axis=-1)[::-1]))
 
         return self._fix_pts_xy_order(pts)
@@ -1739,7 +1763,8 @@ class LineCollection(Collection):
             return
 
         self._paths = [
-            mpath.Path(mx.asarray(seg, dtype=mx.float32))
+            mpath.Path(seg if isinstance(seg, mx.array)
+                       else mx.array(seg, dtype=mx.float32))
             for seg in segments
         ]
         self.stale = True
@@ -2351,7 +2376,7 @@ class _MeshData:
             h, w = height, width
         ok_shapes = [(h, w, 3), (h, w, 4), (h, w), (h * w,)]
         if A is not None:
-            shape = mx.shape(A)
+            shape = A.shape if isinstance(A, mx.array) else mx.array(A).shape
             if shape not in ok_shapes:
                 raise ValueError(
                     f"For X ({width}) and Y ({height}) with {self._shading} "
@@ -2389,7 +2414,7 @@ class _MeshData:
         This function is primarily of use to implementers of backends that do
         not directly support quadmeshes.
         """
-        if isinstance(coordinates, mx.ma.MaskedArray):
+        if hasattr(coordinates, "data") and not isinstance(coordinates, mx.array):
             c = coordinates.data
         else:
             c = coordinates
@@ -2408,7 +2433,7 @@ class _MeshData:
         with its own color.  The result can be used to construct a call to
         `~.RendererBase.draw_gouraud_triangles`.
         """
-        if isinstance(coordinates, mx.ma.MaskedArray):
+        if hasattr(coordinates, "data") and not isinstance(coordinates, mx.array):
             p = coordinates.data
         else:
             p = coordinates
@@ -2427,7 +2452,7 @@ class _MeshData:
 
         c = self.get_facecolor().reshape((*coordinates.shape[:2], 4))
         z = self.get_array()
-        mask = z.mask if mx.ma.is_masked(z) else None
+        mask = z.mask if hasattr(z, "mask") else None
         if mask is not None:
             c[mask, 3] = mx.nan
         c_a = c[:-1, :-1]
@@ -2442,7 +2467,11 @@ class _MeshData:
             c_d, c_a, c_center,
         ], axis=2).reshape((-1, 3, 4))
         tmask = mx.isnan(colors[..., 2, 3])
-        return triangles[~tmask], colors[~tmask]
+        if not bool(mx.any(tmask).item()):
+            return triangles, colors
+        keep = [i for i, value in enumerate(tmask) if not bool(value.item())]
+        keep = mx.array(keep, dtype=mx.int32)
+        return mx.take(triangles, keep, axis=0), mx.take(colors, keep, axis=0)
 
 
 class QuadMesh(_MeshData, Collection):
@@ -2602,13 +2631,13 @@ class PolyQuadMesh(_MeshData, PolyCollection):
     def _get_unmasked_polys(self):
         """Get the unmasked regions using the coordinates and array"""
         # mask(X) | mask(Y)
-        mask = mx.any(mx.ma.getmaskarray(self._coordinates), axis=-1)
+        mask = mx.zeros(self._coordinates.shape[:-1], dtype=mx.bool_)
 
         # We want the shape of the polygon, which is the corner of each X/Y array
         mask = (mask[0:-1, 0:-1] | mask[1:, 1:] | mask[0:-1, 1:] | mask[1:, 0:-1])
         arr = self.get_array()
-        if arr is not None:
-            arr = mx.ma.getmaskarray(arr)
+        if arr is not None and hasattr(arr, "mask"):
+            arr = arr.mask
             if arr.ndim == 3:
                 # RGB(A) case
                 mask |= mx.any(arr, axis=-1)
@@ -2623,17 +2652,29 @@ class PolyQuadMesh(_MeshData, PolyCollection):
         Y = self._coordinates[..., 1]
 
         unmask = self._get_unmasked_polys()
-        X1 = mx.ma.filled(X[:-1, :-1])[unmask]
-        Y1 = mx.ma.filled(Y[:-1, :-1])[unmask]
-        X2 = mx.ma.filled(X[1:, :-1])[unmask]
-        Y2 = mx.ma.filled(Y[1:, :-1])[unmask]
-        X3 = mx.ma.filled(X[1:, 1:])[unmask]
-        Y3 = mx.ma.filled(Y[1:, 1:])[unmask]
-        X4 = mx.ma.filled(X[:-1, 1:])[unmask]
-        Y4 = mx.ma.filled(Y[:-1, 1:])[unmask]
+        X1 = mx.reshape(X[:-1, :-1], (-1,))
+        Y1 = mx.reshape(Y[:-1, :-1], (-1,))
+        X2 = mx.reshape(X[1:, :-1], (-1,))
+        Y2 = mx.reshape(Y[1:, :-1], (-1,))
+        X3 = mx.reshape(X[1:, 1:], (-1,))
+        Y3 = mx.reshape(Y[1:, 1:], (-1,))
+        X4 = mx.reshape(X[:-1, 1:], (-1,))
+        Y4 = mx.reshape(Y[:-1, 1:], (-1,))
+        if not bool(mx.all(unmask).item()):
+            keep = [i for i, value in enumerate(mx.reshape(unmask, (-1,)))
+                    if bool(value.item())]
+            keep = mx.array(keep, dtype=mx.int32)
+            X1 = mx.take(X1, keep)
+            Y1 = mx.take(Y1, keep)
+            X2 = mx.take(X2, keep)
+            Y2 = mx.take(Y2, keep)
+            X3 = mx.take(X3, keep)
+            Y3 = mx.take(Y3, keep)
+            X4 = mx.take(X4, keep)
+            Y4 = mx.take(Y4, keep)
         npoly = len(X1)
 
-        xy = mx.ma.stack([X1, Y1, X2, Y2, X3, Y3, X4, Y4, X1, Y1], axis=-1)
+        xy = mx.stack([X1, Y1, X2, Y2, X3, Y3, X4, Y4, X1, Y1], axis=-1)
         verts = xy.reshape((npoly, 5, 2))
         self.set_verts(verts)
 

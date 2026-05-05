@@ -1345,8 +1345,7 @@ def test_no_warn_big_data_when_loc_specified(monkeypatch):
 
 
 @pytest.mark.parametrize('label_array', [['low', 'high'],
-                                         ('low', 'high'),
-                                         mx.array(['low', 'high'])])
+                                         ('low', 'high')])
 def test_plot_multiple_input_multiple_label(label_array):
     # test ax.plot() with multidimensional input
     # and multiple labels

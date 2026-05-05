@@ -411,8 +411,8 @@ class Line2D(Artist):
                 not isinstance(self._picker, bool)):
             self._pickradius = self._picker
 
-        self._xorig = mx.asarray([])
-        self._yorig = mx.asarray([])
+        self._xorig = mx.array([])
+        self._yorig = mx.array([])
         self._invalidx = True
         self._invalidy = True
         self._x = None
@@ -672,12 +672,12 @@ class Line2D(Artist):
     def recache(self, always=False):
         if always or self._invalidx:
             xconv = self.convert_xunits(self._xorig)
-            x = _to_unmasked_float_array(xconv).ravel()
+            x = mx.reshape(_to_unmasked_float_array(xconv), (-1,))
         else:
             x = self._x
         if always or self._invalidy:
             yconv = self.convert_yunits(self._yorig)
-            y = _to_unmasked_float_array(yconv).ravel()
+            y = mx.reshape(_to_unmasked_float_array(yconv), (-1,))
         else:
             y = self._y
 
@@ -708,7 +708,7 @@ class Line2D(Artist):
         else:
             interpolation_steps = 1
         xy = STEP_LOOKUP_MAP[self._drawstyle](*self._xy.T)
-        self._path = Path(mx.asarray(xy).T,
+        self._path = Path((xy if isinstance(xy, mx.array) else mx.array(xy)).T,
                           _interpolation_steps=interpolation_steps)
         self._transformed_path = None
         self._invalidx = False
@@ -723,7 +723,11 @@ class Line2D(Artist):
         # Masked arrays are now handled by the Path class itself
         if subslice is not None:
             xy = STEP_LOOKUP_MAP[self._drawstyle](*self._xy[subslice, :].T)
-            _path = Path(mx.asarray(xy).T,
+            if not isinstance(xy, mx.array):
+                xy = mx.stack(tuple(
+                    values if isinstance(values, mx.array) else mx.array(values)
+                    for values in xy), axis=1)
+            _path = Path(xy,
                          _interpolation_steps=self._path._interpolation_steps)
         else:
             _path = self._path
@@ -753,8 +757,11 @@ class Line2D(Artist):
         self.ind_offset = 0  # Needed for contains() method.
         if self._subslice and self.axes:
             x0, x1 = self.axes.get_xbound()
-            i0 = self._x_filled.searchsorted(x0, 'left')
-            i1 = self._x_filled.searchsorted(x1, 'right')
+            stream = mx.cpu if self._x_filled.dtype == mx.float64 else None
+            i0 = int(mx.sum(mx.less(self._x_filled, x0, stream=stream),
+                            stream=stream).item())
+            i1 = int(mx.sum(mx.less_equal(self._x_filled, x1, stream=stream),
+                            stream=stream).item())
             subslice = slice(max(i0 - 1, 0), i1 + 1)
             self.ind_offset = subslice.start
             self._transform_path(subslice)

@@ -5,6 +5,18 @@ import mlx.core as mx
 from matplotlib import _api
 
 
+def _cross3(a, b):
+    stream = mx.cpu if a.dtype == mx.float64 or b.dtype == mx.float64 else None
+    return mx.stack([
+        mx.subtract(mx.multiply(a[1], b[2], stream=stream),
+                    mx.multiply(a[2], b[1], stream=stream), stream=stream),
+        mx.subtract(mx.multiply(a[2], b[0], stream=stream),
+                    mx.multiply(a[0], b[2], stream=stream), stream=stream),
+        mx.subtract(mx.multiply(a[0], b[1], stream=stream),
+                    mx.multiply(a[1], b[0], stream=stream), stream=stream),
+    ], stream=stream)
+
+
 def world_transformation(xmin, xmax,
                          ymin, ymax,
                          zmin, zmax, pb_aspect=None):
@@ -70,16 +82,16 @@ def _view_axes(E, R, V, roll):
     """
     w = (E - R)
     w = w/mx.linalg.norm(w)
-    u = mx.cross(V, w)
+    u = _cross3(V, w)
     u = u/mx.linalg.norm(u)
-    v = mx.cross(w, u)  # Will be a unit vector
+    v = _cross3(w, u)  # Will be a unit vector
 
     # Save some computation for the default roll=0
     if roll != 0:
         # A positive rotation of the camera is a negative rotation of the world
         Rroll = _rotation_about_vector(w, -roll)
-        u = mx.dot(Rroll, u)
-        v = mx.dot(Rroll, v)
+        u = mx.matmul(Rroll, u)
+        v = mx.matmul(Rroll, v)
     return u, v, w
 
 
@@ -98,11 +110,19 @@ def _view_transformation_uvw(u, v, w, E):
     E : 3-element array_backend array
         The coordinates of the eye/camera.
     """
-    Mr = mx.eye(4)
-    Mt = mx.eye(4)
-    Mr[:3, :3] = [u, v, w]
-    Mt[:3, -1] = -E
-    M = mx.dot(Mr, Mt)
+    dtype = u.dtype
+    stream = mx.cpu if dtype == mx.float64 else None
+    zeros_col = mx.zeros((3, 1), dtype=dtype, stream=stream)
+    bottom = mx.array([[0, 0, 0, 1]], dtype=dtype)
+    Mr = mx.concatenate([
+        mx.concatenate([mx.stack([u, v, w], axis=0), zeros_col], axis=1),
+        bottom], axis=0)
+    Mt = mx.concatenate([
+        mx.concatenate([mx.eye(3, dtype=dtype, stream=stream),
+                        mx.reshape(mx.negative(E, stream=stream), (3, 1))],
+                       axis=1),
+        bottom], axis=0)
+    M = mx.matmul(Mr, Mt)
     return M
 
 
@@ -130,10 +150,8 @@ def _ortho_transformation(zfront, zback):
 
 
 def _proj_transform_vec(vec, M):
-    vecw = mx.dot(M, vec.data)
-    ts = vecw[0:3]/vecw[3]
-    if mx.ma.isMA(vec):
-        ts = mx.ma.array(ts, mask=vec.mask)
+    vecw = mx.matmul(M, vec)
+    ts = mx.divide(vecw[0:3], vecw[3])
     return ts[0], ts[1], ts[2]
 
 
@@ -149,34 +167,26 @@ def _proj_transform_vectors(vecs, M):
         Projection matrix
     """
     vecs_shape = vecs.shape
-    vecs = vecs.reshape(-1, 3).T
+    vecs = mx.transpose(mx.reshape(vecs, (-1, 3)))
+    vecs_pad = mx.concatenate(
+        [vecs, mx.ones((1, vecs.shape[1]), dtype=vecs.dtype)], axis=0)
+    product = mx.matmul(M, vecs_pad)
+    tvecs = mx.divide(product[:3], product[3])
 
-    vecs_pad = mx.zeros((vecs.shape[0] + 1,) + vecs.shape[1:])
-    vecs_pad[:-1] = vecs
-    vecs_pad[-1] = 1
-    product = mx.dot(M, vecs_pad)
-    tvecs = product[:3] / product[3]
-
-    return tvecs.T.reshape(vecs_shape)
+    return mx.reshape(mx.transpose(tvecs), vecs_shape)
 
 
 def _proj_transform_vec_clip(vec, M, focal_length):
-    vecw = mx.dot(M, vec.data)
-    txs, tys, tzs = vecw[0:3] / vecw[3]
-    if mx.isinf(focal_length):  # don't clip orthographic projection
-        tis = mx.ones(txs.shape, dtype=bool)
+    vecw = mx.matmul(M, vec)
+    txs, tys, tzs = mx.divide(vecw[0:3], vecw[3])
+    if focal_length == mx.inf:  # don't clip orthographic projection
+        tis = mx.ones(txs.shape, dtype=mx.bool_)
     else:
-        tis = (-1 <= txs) & (txs <= 1) & (-1 <= tys) & (tys <= 1) & (tzs <= 0)
-    if mx.ma.isMA(vec[0]):
-        tis = tis & ~vec[0].mask
-    if mx.ma.isMA(vec[1]):
-        tis = tis & ~vec[1].mask
-    if mx.ma.isMA(vec[2]):
-        tis = tis & ~vec[2].mask
-
-    txs = mx.ma.masked_array(txs, ~tis)
-    tys = mx.ma.masked_array(tys, ~tis)
-    tzs = mx.ma.masked_array(tzs, ~tis)
+        tis = mx.logical_and(
+            mx.logical_and(mx.greater_equal(txs, -1), mx.less_equal(txs, 1)),
+            mx.logical_and(
+                mx.logical_and(mx.greater_equal(tys, -1), mx.less_equal(tys, 1)),
+                mx.less_equal(tzs, 0)))
     return txs, tys, tzs, tis
 
 
@@ -185,7 +195,7 @@ def inv_transform(xs, ys, zs, invM):
     Transform the points by the inverse of the projection matrix, *invM*.
     """
     vec = _vec_pad_ones(xs, ys, zs)
-    vecr = mx.dot(invM, vec)
+    vecr = mx.matmul(invM, vec)
     if vecr.shape == (4,):
         vecr = vecr.reshape((4, 1))
     for i in range(vecr.shape[1]):
@@ -195,10 +205,10 @@ def inv_transform(xs, ys, zs, invM):
 
 
 def _vec_pad_ones(xs, ys, zs):
-    if mx.ma.isMA(xs) or mx.ma.isMA(ys) or mx.ma.isMA(zs):
-        return mx.ma.array([xs, ys, zs, mx.ones_like(xs)])
-    else:
-        return mx.array([xs, ys, zs, mx.ones_like(xs)])
+    xs = xs if isinstance(xs, mx.array) else mx.array(xs)
+    ys = ys if isinstance(ys, mx.array) else mx.array(ys)
+    zs = zs if isinstance(zs, mx.array) else mx.array(zs)
+    return mx.stack([xs, ys, zs, mx.ones_like(xs)], axis=0)
 
 
 def proj_transform(xs, ys, zs, M):
@@ -225,10 +235,10 @@ def _proj_transform_clip(xs, ys, zs, M, focal_length):
 
 
 def _proj_points(points, M):
-    return mx.column_stack(_proj_trans_points(points, M))
+    return mx.stack(_proj_trans_points(points, M), axis=1)
 
 
 def _proj_trans_points(points, M):
-    points = mx.asarray(points)
+    points = points if isinstance(points, mx.array) else mx.array(points)
     xs, ys, zs = points[:, 0], points[:, 1], points[:, 2]
     return proj_transform(xs, ys, zs, M)

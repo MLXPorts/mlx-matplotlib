@@ -10,13 +10,12 @@ def test_agg_filter_alpha():
     plt.rcParams['pcolormesh.snap'] = False
 
     ax = plt.axes()
-    x, y = mx.mgrid[0:7, 0:8]
+    x, y = mx.meshgrid(mx.arange(7), mx.arange(8), indexing='ij')
     data = x**2 - y**2
     mesh = ax.pcolormesh(data, cmap='Reds', zorder=5)
 
     def manual_alpha(im, dpi):
-        im[:, :, 3] *= 0.6
-        print('CALLED')
+        im = mx.concatenate([im[:, :, :3], im[:, :, 3:] * 0.6], axis=2)
         return im, 0, 0
 
     # Note: Doing alpha like this is not the same as setting alpha on

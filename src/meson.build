@@ -15,6 +15,38 @@ endif
 # Will only exist on Linux with older glibc.
 dl = dependency('dl', required: false)
 
+nanobind_include_dir = run_command(
+  py3,
+  '-c',
+  'import nanobind; print(nanobind.include_dir())',
+  capture: true,
+  check: true,
+).stdout().strip()
+nanobind_combined_cpp = run_command(
+  py3,
+  '-c',
+  'import pathlib, nanobind; print(pathlib.Path(nanobind.__file__).with_name("src") / "nb_combined.cpp")',
+  capture: true,
+  check: true,
+).stdout().strip()
+nanobind_robin_map_include_dir = run_command(
+  py3,
+  '-c',
+  'import pathlib, nanobind; print(pathlib.Path(nanobind.__file__).parent / "ext" / "robin_map" / "include")',
+  capture: true,
+  check: true,
+).stdout().strip()
+mlx_paths = run_command(
+  py3,
+  '-c',
+  'import pathlib, mlx.core as mx; p = pathlib.Path(mx.__file__).parent; print(p / "include"); print(p / "lib")',
+  capture: true,
+  check: true,
+).stdout().strip().split('\n')
+mlx_include_dir = mlx_paths[0]
+mlx_lib_dir = mlx_paths[1]
+mlx_dep = cpp.find_library('mlx', dirs: mlx_lib_dir, required: true)
+
 # With Meson >= 1.2.0, use cpp_winlibs instead of manually searching.
 if ['cygwin', 'windows'].contains(host_machine.system())
   comctl32 = cc.find_library('comctl32')
@@ -66,19 +98,58 @@ extension_data = {
     'sources': files(
       '_image_wrapper.cpp',
       'py_converters.cpp',
-    ),
+    ) + [nanobind_combined_cpp],
     'dependencies': [
       pybind11_dep,
+      mlx_dep,
       # Only need source code files agg_image_filters.cpp and agg_trans_affine.cpp
       agg_dep,
     ],
+    'cpp_args': [
+      '-I' + nanobind_include_dir,
+      '-I' + nanobind_robin_map_include_dir,
+      '-I' + mlx_include_dir,
+      '-DNB_DOMAIN=mlx',
+      '-DNB_STATIC',
+    ],
+    'override_options': ['cpp_std=c++20'],
+    'build_rpath': mlx_lib_dir,
+    'install_rpath': mlx_lib_dir,
+  },
+  '_mlx_overrides': {
+    'subdir': 'matplotlib',
+    'sources': files(
+      '_mlx_overrides.cpp',
+    ) + [nanobind_combined_cpp],
+    'dependencies': [mlx_dep],
+    'cpp_args': [
+      '-I' + nanobind_include_dir,
+      '-I' + nanobind_robin_map_include_dir,
+      '-I' + mlx_include_dir,
+      '-DNB_DOMAIN=mlx',
+      '-DNB_STATIC',
+    ],
+    'override_options': ['cpp_std=c++20'],
+    'build_rpath': mlx_lib_dir,
+    'install_rpath': mlx_lib_dir,
   },
   '_path': {
     'subdir': 'matplotlib',
     'sources': files(
       '_path_wrapper.cpp',
-    ),
-    'dependencies': [agg_dep, pybind11_dep],
+      'py_converters.cpp',
+    ) + [nanobind_combined_cpp],
+    'dependencies': [agg_dep, pybind11_dep, mlx_dep],
+    'cpp_args': [
+      '-I' + nanobind_include_dir,
+      '-I' + nanobind_robin_map_include_dir,
+      '-I' + mlx_include_dir,
+      '-DNB_DOMAIN=mlx',
+      '-DNB_STATIC',
+    ],
+    'override_options': ['cpp_std=c++20'],
+    'build_rpath': mlx_lib_dir,
+    'install_rpath': mlx_lib_dir,
   },
   '_qhull': {
     'subdir': 'matplotlib',

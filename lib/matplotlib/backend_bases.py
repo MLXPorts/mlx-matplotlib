@@ -271,7 +271,7 @@ class RendererBase:
 
         if edgecolors is None:
             edgecolors = facecolors
-        linewidths = mx.array([gc.get_linewidth()], float)
+        linewidths = mx.array([gc.get_linewidth()], dtype=mx.float32)
 
         return self.draw_path_collection(
             gc, master_transform, paths, [], offsets, offsetTrans, facecolors,
@@ -900,11 +900,11 @@ class GraphicsContextBase:
         for more info.
         """
         if dash_list is not None:
-            dl = mx.asarray(dash_list)
-            if mx.any(dl < 0.0):
+            dl = dash_list if isinstance(dash_list, mx.array) else mx.array(dash_list)
+            if bool(mx.any(dl < 0.0).item()):
                 raise ValueError(
                     "All values in the dash list must be non-negative")
-            if dl.size and not mx.any(dl > 0.0):
+            if dl.size and not bool(mx.any(dl > 0.0).item()):
                 raise ValueError(
                     'At least one value in the dash list must be positive')
         self._dashes = dash_offset, dash_list

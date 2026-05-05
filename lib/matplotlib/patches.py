@@ -22,6 +22,34 @@ from .path import Path
 from ._enums import JoinStyle, CapStyle
 
 
+def _aspect_scale(vertices, aspect_ratio):
+    if isinstance(vertices, mx.array):
+        base = vertices[0, 0] * 0
+        return mx.stack([base + 1, base + aspect_ratio])
+    return mx.array([1, aspect_ratio], dtype=mx.float32)
+
+
+def _mlx_hypot(x, y):
+    x = x if isinstance(x, mx.array) else mx.array(x)
+    y = y if isinstance(y, mx.array) else mx.array(y)
+    return mx.sqrt(x * x + y * y)
+
+
+def _xy_row(x, y):
+    x = x if isinstance(x, mx.array) else mx.array(x)
+    y = y if isinstance(y, mx.array) else mx.array(y)
+    return mx.reshape(mx.stack([x, y]), (1, 2))
+
+
+def _path_from_codes_and_points(patch_path):
+    vertices = mx.stack([
+        point if isinstance(point, mx.array) else mx.array(point)
+        for _, point in patch_path
+    ])
+    codes = [code for code, _ in patch_path]
+    return Path(vertices, codes)
+
+
 @_docstring.interpd
 @_api.define_aliases({
     "antialiased": ["aa"],
@@ -1224,19 +1252,25 @@ class Polygon(Patch):
         equal to the first, we assume that the user has not explicitly passed a
         ``CLOSEPOLY`` vertex, and add it ourselves.
         """
-        xy = mx.asarray(xy)
+        xy = xy if isinstance(xy, mx.array) else mx.array(xy)
         nverts, _ = xy.shape
+        stream = mx.cpu if xy.dtype == mx.float64 else None
         if self._closed:
             # if the first and last vertex are the "same", then we assume that
             # the user explicitly passed the CLOSEPOLY vertex. Otherwise, we
             # have to append one since the last vertex will be "ignored" by
             # Path
-            if nverts == 1 or nverts > 1 and (xy[0] != xy[-1]).any():
-                xy = mx.concatenate([xy, [xy[0]]])
+            if nverts == 1 or (nverts > 1 and bool(mx.any(
+                    mx.not_equal(xy[0], xy[-1], stream=stream),
+                    stream=stream).item())):
+                xy = mx.concatenate([xy, mx.reshape(xy[0], (1, 2))],
+                                    stream=stream)
         else:
             # if we aren't closed, and the last vertex matches the first, then
             # we assume we have an unnecessary CLOSEPOLY vertex and remove it
-            if nverts > 2 and (xy[0] == xy[-1]).all():
+            if nverts > 2 and bool(mx.all(
+                    mx.equal(xy[0], xy[-1], stream=stream),
+                    stream=stream).item()):
                 xy = xy[:-1]
         self._path = Path(xy, closed=self._closed)
         self.stale = True
@@ -1290,15 +1324,17 @@ class Wedge(Patch):
             # followed by a reversed and scaled inner ring
             v1 = arc.vertices
             v2 = arc.vertices[::-1] * (self.r - self.width) / self.r
-            v = mx.concatenate([v1, v2, [(0, 0)]])
+            v = mx.concatenate([v1, v2, mx.zeros((1, 2), dtype=v1.dtype)])
             c = [*arc.codes, connector, *arc.codes[1:], Path.CLOSEPOLY]
         else:
             # Wedge doesn't need an inner ring
-            v = mx.concatenate([arc.vertices, [(0, 0), (0, 0)]])
+            v = mx.concatenate([arc.vertices, mx.zeros((2, 2), dtype=arc.vertices.dtype)])
             c = [*arc.codes, connector, Path.CLOSEPOLY]
 
         # Shift and scale the wedge to the final location.
-        self._path = Path(v * self.r + self.center, c)
+        center = (self.center if isinstance(self.center, mx.array)
+                  else mx.array(self.center, dtype=v.dtype))
+        self._path = Path(v * self.r + center, c)
 
     def set_center(self, center):
         self._path = None
@@ -1409,7 +1445,7 @@ class Arrow(Patch):
             self._width = width
         self._patch_transform = (
             transforms.Affine2D()
-            .scale(mx.hypot(self._dx, self._dy), self._width)
+            .scale(_mlx_hypot(self._dx, self._dy), self._width)
             .rotate(mx.arctan2(self._dy, self._dx))
             .translate(self._x, self._y)
             .frozen())
@@ -2992,10 +3028,10 @@ class ConnectionStyle(_Style):
                 codes.append(Path.LINETO)
             else:
                 dx1, dy1 = x1 - cx, y1 - cy
-                d1 = mx.hypot(dx1, dy1)
+                d1 = _mlx_hypot(dx1, dy1)
                 f1 = self.rad / d1
                 dx2, dy2 = x2 - cx, y2 - cy
-                d2 = mx.hypot(dx2, dy2)
+                d2 = _mlx_hypot(dx2, dy2)
                 f2 = self.rad / d2
                 vertices.extend([(cx + dx1 * f1, cy + dy1 * f1),
                                  (cx, cy),
@@ -3293,7 +3329,7 @@ class ArrowStyle(_Style):
 
             if aspect_ratio is not None:
                 # Squeeze the given height by the aspect_ratio
-                vertices = path.vertices / [1, aspect_ratio]
+                vertices = path.vertices / _aspect_scale(path.vertices, aspect_ratio)
                 path_shrunk = Path(vertices, path.codes)
                 # call transmute method with squeezed height.
                 path_mutated, fillable = self.transmute(path_shrunk,
@@ -3301,7 +3337,7 @@ class ArrowStyle(_Style):
                                                         linewidth)
                 if cbook.iterable(fillable):
                     # Restore the height
-                    path_list = [Path(p.vertices * [1, aspect_ratio], p.codes)
+                    path_list = [Path(p.vertices * _aspect_scale(p.vertices, aspect_ratio), p.codes)
                                  for p in path_mutated]
                     return path_list, fillable
                 else:
@@ -3395,7 +3431,7 @@ class ArrowStyle(_Style):
             # arrow from x0, y0 to x1, y1
             dx, dy = x0 - x1, y0 - y1
 
-            cp_distance = mx.hypot(dx, dy)
+            cp_distance = _mlx_hypot(dx, dy)
 
             # pad_projected : amount of pad to account the
             # overshooting of the projection of the wedge
@@ -3456,7 +3492,7 @@ class ArrowStyle(_Style):
             if self._beginarrow_head or self._endarrow_head:
                 head_length = self.head_length * mutation_size
                 head_width = self.head_width * mutation_size
-                head_dist = mx.hypot(head_length, head_width)
+                head_dist = _mlx_hypot(head_length, head_width)
                 cos_t, sin_t = head_length / head_dist, head_width / head_dist
 
             scaleA = mutation_size if self.scaleA is None else self.scaleA
@@ -3490,9 +3526,9 @@ class ArrowStyle(_Style):
 
             # This simple code will not work if ddx, ddy is greater than the
             # separation between vertices.
-            paths = [Path(mx.concatenate([[(x0 + ddxA, y0 + ddyA)],
+            paths = [Path(mx.concatenate([_xy_row(x0 + ddxA, y0 + ddyA),
                                           path.vertices[1:-1],
-                                          [(x3 + ddxB, y3 + ddyB)]]),
+                                          _xy_row(x3 + ddxB, y3 + ddyB)]),
                           path.codes)]
             fills = [False]
 
@@ -3772,7 +3808,7 @@ class ArrowStyle(_Style):
                               (Path.CLOSEPOLY, head_left[0]),
                               ]
 
-            path = Path([p for c, p in patch_path], [c for c, p in patch_path])
+            path = _path_from_codes_and_points(patch_path)
 
             return path, True
 
@@ -3860,7 +3896,7 @@ class ArrowStyle(_Style):
                           (Path.LINETO, tail_start),
                           (Path.CLOSEPOLY, tail_start),
                           ]
-            path = Path([p for c, p in patch_path], [c for c, p in patch_path])
+            path = _path_from_codes_and_points(patch_path)
 
             return path, True
 
@@ -3904,7 +3940,7 @@ class ArrowStyle(_Style):
                           (Path.CURVE3, b_minus[0]),
                           (Path.CLOSEPOLY, b_minus[0]),
                           ]
-            path = Path([p for c, p in patch_path], [c for c, p in patch_path])
+            path = _path_from_codes_and_points(patch_path)
 
             return path, True
 

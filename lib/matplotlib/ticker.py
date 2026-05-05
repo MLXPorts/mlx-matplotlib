@@ -740,12 +740,13 @@ class ScalarFormatter(Formatter):
         locs = self.locs
         # Restrict to visible ticks.
         vmin, vmax = sorted(self.axis.get_view_interval())
-        locs = mx.asarray(locs)
-        locs = locs[(vmin <= locs) & (locs <= vmax)]
-        if not len(locs):
+        locs = locs if isinstance(locs, mx.array) else mx.array(locs)
+        visible = (vmin <= locs) & (locs <= vmax)
+        if int(mx.sum(visible).item()) == 0:
             self.offset = 0
             return
-        lmin, lmax = locs.min(), locs.max()
+        lmin = float(mx.min(mx.where(visible, locs, mx.inf)).item())
+        lmax = float(mx.max(mx.where(visible, locs, -mx.inf)).item())
         # Only use offset if there are at least two ticks and every tick has
         # the same sign.
         if lmin == lmax or lmin <= 0 <= lmax:
@@ -788,16 +789,16 @@ class ScalarFormatter(Formatter):
             return
         # restrict to visible ticks
         vmin, vmax = sorted(self.axis.get_view_interval())
-        locs = mx.asarray(self.locs)
-        locs = locs[(vmin <= locs) & (locs <= vmax)]
-        locs = mx.abs(locs)
-        if not len(locs):
+        locs = self.locs if isinstance(self.locs, mx.array) else mx.array(self.locs)
+        visible = (vmin <= locs) & (locs <= vmax)
+        if int(mx.sum(visible).item()) == 0:
             self.orderOfMagnitude = 0
             return
+        locs_abs = mx.abs(mx.where(visible, locs, 0))
         if self.offset:
             oom = math.floor(math.log10(vmax - vmin))
         else:
-            val = locs.max()
+            val = float(mx.max(locs_abs).item())
             if val == 0:
                 oom = 0
             else:
@@ -816,7 +817,8 @@ class ScalarFormatter(Formatter):
             _locs = [*self.locs, *self.axis.get_view_interval()]
         else:
             _locs = self.locs
-        locs = (mx.asarray(_locs) - self.offset) / 10. ** self.orderOfMagnitude
+        locs = ((_locs if isinstance(_locs, mx.array) else mx.array(_locs))
+                - self.offset) / 10. ** self.orderOfMagnitude
         loc_range = mx.max(locs) - mx.min(locs)
         # Curvilinear coordinates can yield two identical points.
         if loc_range == 0:
@@ -827,13 +829,14 @@ class ScalarFormatter(Formatter):
         if len(self.locs) < 2:
             # We needed the end points only for the loc_range calculation.
             locs = locs[:-2]
+        loc_range = float(loc_range.item()) if isinstance(loc_range, mx.array) else loc_range
         loc_range_oom = int(math.floor(math.log10(loc_range)))
         # first estimate:
         sigfigs = max(0, 3 - loc_range_oom)
         # refined estimate:
         thresh = 1e-3 * 10 ** loc_range_oom
         while sigfigs >= 0:
-            if mx.abs(locs - mx.round(locs, decimals=sigfigs)).max() < thresh:
+            if mx.max(mx.abs(locs - mx.round(locs, decimals=sigfigs))) < thresh:
                 sigfigs -= 1
             else:
                 break
@@ -1010,6 +1013,8 @@ class LogFormatter(Formatter):
 
     def __call__(self, x, pos=None):
         # docstring inherited
+        if isinstance(x, mx.array):
+            x = x.item()
         if x == 0.0:  # Symlog
             return '0'
 
@@ -1018,7 +1023,7 @@ class LogFormatter(Formatter):
         # only label the decades
         fx = math.log(x) / math.log(b)
         is_x_decade = _is_close_to_int(fx)
-        exponent = round(fx) if is_x_decade else mx.floor(fx)
+        exponent = round(fx) if is_x_decade else math.floor(fx)
         coeff = round(b ** (fx - exponent))
 
         if self.labelOnlyBase and not is_x_decade:
@@ -1088,6 +1093,8 @@ class LogFormatterMathtext(LogFormatter):
 
     def __call__(self, x, pos=None):
         # docstring inherited
+        if isinstance(x, mx.array):
+            x = x.item()
         if x == 0:  # Symlog
             return r'$\mathdefault{0}$'
 
@@ -1098,7 +1105,7 @@ class LogFormatterMathtext(LogFormatter):
         # only label the decades
         fx = math.log(x) / math.log(b)
         is_x_decade = _is_close_to_int(fx)
-        exponent = round(fx) if is_x_decade else mx.floor(fx)
+        exponent = round(fx) if is_x_decade else math.floor(fx)
         coeff = round(b ** (fx - exponent))
 
         if self.labelOnlyBase and not is_x_decade:
@@ -1781,7 +1788,7 @@ class FixedLocator(Locator):
     """
 
     def __init__(self, locs, nbins=None):
-        self.locs = mx.asarray(locs)
+        self.locs = locs if isinstance(locs, mx.array) else mx.array(locs)
         _api.check_shape((None,), locs=self.locs)
         self.nbins = max(nbins, 2) if nbins is not None else None
 
@@ -2027,14 +2034,14 @@ class _Edge_integer:
 
     def le(self, x):
         """Return the largest n: n*step <= x."""
-        d, m = divmod(x, self.step)
+        d, m = mx.divmod(x, self.step)
         if self.closeto(m / self.step, 1):
             return d + 1
         return d
 
     def ge(self, x):
         """Return the smallest n: n*step >= x."""
-        d, m = divmod(x, self.step)
+        d, m = mx.divmod(x, self.step)
         if self.closeto(m / self.step, 0):
             return d
         return d + 1
@@ -2098,7 +2105,7 @@ class MaxNLocator(Locator):
         if not cbook.iterable(steps):
             raise ValueError('steps argument must be an increasing sequence '
                              'of numbers between 1 and 10 inclusive')
-        steps = mx.asarray(steps)
+        steps = steps if isinstance(steps, mx.array) else mx.array(steps)
         if (mx.any((steps[1:] - steps[:-1]) <= 0)
                 or steps[-1] > 10 or steps[0] < 1):
             raise ValueError('steps argument must be an increasing sequence '
@@ -2170,8 +2177,8 @@ class MaxNLocator(Locator):
         """
         if self._nbins == 'auto':
             if self.axis is not None:
-                nbins = mx.clip(self.axis.get_tick_space(),
-                                max(1, self._min_n_ticks - 1), 9)
+                nbins = min(max(self.axis.get_tick_space(),
+                                max(1, self._min_n_ticks - 1)), 9)
             else:
                 nbins = 9
         else:
@@ -2224,7 +2231,9 @@ class MaxNLocator(Locator):
             edge = _Edge_integer(step, offset)
             low = edge.le(_vmin - best_vmin)
             high = edge.ge(_vmax - best_vmin)
-            ticks = mx.arange(low, high + 1) * step + best_vmin
+            low_i = int(low.item()) if isinstance(low, mx.array) else int(low)
+            high_i = int(high.item()) if isinstance(high, mx.array) else int(high)
+            ticks = mx.arange(low_i, high_i + 1) * step + best_vmin
             # Count only the ticks that will be displayed.
             nticks = ((ticks <= _vmax) & (ticks >= _vmin)).sum()
             if nticks >= self._min_n_ticks:
@@ -2391,7 +2400,7 @@ class LogLocator(Locator):
             self._subs = subs
         else:
             try:
-                self._subs = mx.asarray(subs, dtype=float)
+                self._subs = subs if isinstance(subs, mx.array) else mx.array(subs, dtype=mx.float32)
             except ValueError as e:
                 raise ValueError("subs must be None, 'all', 'auto' or "
                                  "a sequence of floats, not "
@@ -2410,9 +2419,15 @@ class LogLocator(Locator):
         # Use specialized logs if possible, as they can be more accurate; e.g.
         # log(.001) / log(10) = -2.999... (whether math.log or mx.log) due to
         # floating point error.
-        return (mx.log10(x) if self._base == 10 else
-                mx.log2(x) if self._base == 2 else
-                mx.log(x) / mx.log(self._base))
+        x = x if isinstance(x, mx.array) else mx.array(x)
+        stream = mx.cpu if x.dtype == mx.float64 else None
+        if self._base == 10:
+            return mx.log10(x, stream=stream)
+        if self._base == 2:
+            return mx.log2(x, stream=stream)
+        base = mx.array(self._base, dtype=x.dtype)
+        return mx.divide(mx.log(x, stream=stream), mx.log(base, stream=stream),
+                         stream=stream)
 
     def tick_values(self, vmin, vmax):
         n_request = (
@@ -2694,7 +2709,7 @@ class SymmetricalLogLocator(Locator):
         if has_c:
             decades.extend(base ** (mx.arange(c_lo, c_hi, stride)))
 
-        subs = mx.asarray(self._subs)
+        subs = self._subs if isinstance(self._subs, mx.array) else mx.array(self._subs)
 
         if len(subs) > 1 or subs[0] != 1.0:
             ticklocs = []

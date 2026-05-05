@@ -20,6 +20,10 @@ from .cbook import _to_unmasked_float_array, simple_linear_interpolation
 from .bezier import BezierSegment
 
 
+def _path_array(values, *, dtype=mx.float32):
+    return values if isinstance(values, mx.array) else mx.array(values, dtype=dtype)
+
+
 def _path_values_to_memoryview(values):
     if values is None:
         return None
@@ -57,7 +61,7 @@ def _path_transform_to_memoryview(transform):
 
 
 def _collection_transforms_to_memoryview(master_transform, transforms):
-    transforms = mx.asarray(transforms, dtype=mx.float32)
+    transforms = _path_array(transforms)
     if transforms.size == 0:
         if hasattr(master_transform, "get_matrix"):
             matrix = master_transform.get_matrix()
@@ -65,7 +69,7 @@ def _collection_transforms_to_memoryview(master_transform, transforms):
             matrix = master_transform.get_affine().get_matrix()
         else:
             matrix = master_transform
-        transforms = mx.reshape(mx.asarray(matrix, dtype=mx.float32), (1, 3, 3))
+        transforms = mx.reshape(_path_array(matrix), (1, 3, 3))
     elif transforms.ndim == 2:
         transforms = mx.reshape(transforms, (1, 3, 3))
     return _path_values_to_memoryview(transforms)
@@ -179,7 +183,8 @@ class Path:
         _api.check_shape((None, 2), vertices=vertices)
 
         if codes is not None and len(vertices):
-            codes = mx.asarray(codes, self.code_type)
+            codes = (codes.astype(self.code_type) if isinstance(codes, mx.array)
+                     else mx.array(codes, dtype=self.code_type))
             if codes.ndim != 1 or len(codes) != len(vertices):
                 raise ValueError("'codes' must be a 1D list or array with the "
                                  "same length of 'vertices'. "
@@ -201,8 +206,9 @@ class Path:
         self._update_values()
 
         if readonly:
-            self._vertices.flags.writeable = False
-            if self._codes is not None:
+            if hasattr(self._vertices, "flags"):
+                self._vertices.flags.writeable = False
+            if self._codes is not None and hasattr(self._codes, "flags"):
                 self._codes.flags.writeable = False
             self._readonly = True
         else:
@@ -405,7 +411,11 @@ class Path:
                 codes[i:i+size] = path.codes
             i += size
         not_stop_mask = codes != cls.STOP  # Remove STOPs, as internal STOPs are a bug.
-        return cls(vertices[not_stop_mask], codes[not_stop_mask])
+        if bool(mx.all(not_stop_mask).item()):
+            return cls(vertices, codes)
+        keep = [i for i in range(len(codes)) if int(codes[i].item()) != cls.STOP]
+        keep = mx.array(keep, dtype=mx.int32)
+        return cls(mx.take(vertices, keep, axis=0), mx.take(codes, keep, axis=0))
 
     def __repr__(self):
         return f"Path({self.vertices!r}, {self.codes!r})"
@@ -476,7 +486,10 @@ class Path:
             if extra_vertices:
                 for i in range(extra_vertices):
                     next(codes)
-                    curr_vertices = mx.append(curr_vertices, next(vertices))
+                    curr_vertices = mx.concatenate([
+                        mx.reshape(curr_vertices, (-1,)),
+                        mx.reshape(next(vertices), (-1,)),
+                    ])
             yield curr_vertices, code
 
     def iter_bezier(self, **kwargs):
@@ -509,17 +522,17 @@ class Path:
                     raise ValueError("Malformed path, must start with MOVETO.")
             if code == Path.MOVETO:  # a point is like "CURVE1"
                 first_vert = verts
-                yield BezierSegment(mx.array([first_vert])), code
+                yield BezierSegment(mx.reshape(first_vert, (1, -1))), code
             elif code == Path.LINETO:  # "CURVE2"
-                yield BezierSegment(mx.array([prev_vert, verts])), code
+                yield BezierSegment(mx.stack([prev_vert, verts])), code
             elif code == Path.CURVE3:
-                yield BezierSegment(mx.array([prev_vert, verts[:2],
+                yield BezierSegment(mx.stack([prev_vert, verts[:2],
                                               verts[2:]])), code
             elif code == Path.CURVE4:
-                yield BezierSegment(mx.array([prev_vert, verts[:2],
+                yield BezierSegment(mx.stack([prev_vert, verts[:2],
                                               verts[2:4], verts[4:]])), code
             elif code == Path.CLOSEPOLY:
-                yield BezierSegment(mx.array([prev_vert, first_vert])), code
+                yield BezierSegment(mx.stack([prev_vert, first_vert])), code
             elif code == Path.STOP:
                 return
             else:
@@ -699,13 +712,18 @@ class Path:
             self = transform.transform_path(self)
         if self.codes is None:
             xys = self.vertices
-        elif len(mx.intersect1d(self.codes, [Path.CURVE3, Path.CURVE4])) == 0:
+        elif not bool(mx.any((self.codes == Path.CURVE3)
+                             | (self.codes == Path.CURVE4)).item()):
             # Optimization for the straight line case.
             # Instead of iterating through each curve, consider
             # each line segment's end-points
             # (recall that STOP and CLOSEPOLY vertices are ignored)
-            xys = self.vertices[mx.isin(self.codes,
-                                        [Path.MOVETO, Path.LINETO])]
+            mask = (self.codes == Path.MOVETO) | (self.codes == Path.LINETO)
+            if bool(mx.all(mask).item()):
+                xys = self.vertices
+            else:
+                keep = [i for i in range(len(mask)) if bool(mask[i].item())]
+                xys = mx.take(self.vertices, mx.array(keep, dtype=mx.int32), axis=0)
         else:
             xys = []
             for curve, code in self.iter_bezier(**kwargs):
@@ -825,7 +843,7 @@ class Path:
         # Deal with the case where there are curves and/or multiple
         # subpaths (using extension code)
         return _path.convert_path_to_polygons(
-            self, transform, width, height, closed_only)
+            self, _path_transform_to_memoryview(transform), width, height, closed_only)
 
     _unit_rectangle = None
 
@@ -857,7 +875,7 @@ class Path:
                      # This initial rotation is to make sure the polygon always
                      # "points-up".
                      + mx.pi / 2)
-            verts = mx.column_stack((mx.cos(theta), mx.sin(theta)))
+            verts = mx.stack([mx.cos(theta), mx.sin(theta)], axis=1)
             path = cls(verts, closed=True, readonly=True)
             if numVertices <= 16:
                 cls._unit_regular_polygons[numVertices] = path
@@ -883,7 +901,7 @@ class Path:
             theta += mx.pi / 2.0
             r = mx.ones(ns2 + 1)
             r[1::2] = innerCircle
-            verts = (r * mx.vstack((mx.cos(theta), mx.sin(theta)))).T
+            verts = mx.stack([r * mx.cos(theta), r * mx.sin(theta)], axis=1)
             path = cls(verts, closed=True, readonly=True)
             if numVertices <= 16:
                 cls._unit_regular_stars[(numVertices, innerCircle)] = path
@@ -972,11 +990,13 @@ class Path:
                              [0.0, -1.0],
 
                              [0.0, -1.0]],
-                            dtype=float)
+                            dtype=mx.float32)
 
         codes = [cls.CURVE4] * 26
         codes[0] = cls.MOVETO
         codes[-1] = cls.CLOSEPOLY
+        center = center if isinstance(center, mx.array) else mx.array(
+            center, dtype=vertices.dtype)
         return Path(vertices * radius + center, codes, readonly=readonly)
 
     _unit_circle_righthalf = None
@@ -1049,7 +1069,7 @@ class Path:
         # but don't try to expand existing 0 range.
         if theta2 != theta1 and eta2 <= eta1:
             eta2 += 360
-        eta1, eta2 = mx.deg2rad([eta1, eta2])
+        eta1, eta2 = mx.radians(mx.array([eta1, eta2]))
 
         # number of curve segments to make
         if n is None:
@@ -1061,7 +1081,7 @@ class Path:
         t = mx.tan(0.5 * deta)
         alpha = mx.sin(deta) * (mx.sqrt(4.0 + 3.0 * t * t) - 1) / 3.0
 
-        steps = mx.linspace(eta1, eta2, n + 1, True)
+        steps = mx.linspace(eta1, eta2, n + 1)
         cos_eta = mx.cos(steps)
         sin_eta = mx.sin(steps)
 
@@ -1077,18 +1097,18 @@ class Path:
 
         if is_wedge:
             length = n * 3 + 4
-            vertices = mx.zeros((length, 2), float)
+            vertices = mx.zeros((length, 2), dtype=steps.dtype)
             codes = mx.full(length, cls.CURVE4, dtype=cls.code_type)
-            vertices[1] = [xA[0], yA[0]]
-            codes[0:2] = [cls.MOVETO, cls.LINETO]
-            codes[-2:] = [cls.LINETO, cls.CLOSEPOLY]
+            vertices[1] = mx.stack([xA[0], yA[0]])
+            codes[0:2] = mx.array([cls.MOVETO, cls.LINETO], dtype=cls.code_type)
+            codes[-2:] = mx.array([cls.LINETO, cls.CLOSEPOLY], dtype=cls.code_type)
             vertex_offset = 2
             end = length - 2
         else:
             length = n * 3 + 1
-            vertices = mx.zeros((length, 2), float)
+            vertices = mx.zeros((length, 2), dtype=steps.dtype)
             codes = mx.full(length, cls.CURVE4, dtype=cls.code_type)
-            vertices[0] = [xA[0], yA[0]]
+            vertices[0] = mx.stack([xA[0], yA[0]])
             codes[0] = cls.MOVETO
             vertex_offset = 1
             end = length

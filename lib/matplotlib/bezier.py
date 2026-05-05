@@ -6,6 +6,7 @@ import math
 import warnings
 import mlx.core as mx
 from matplotlib import _api
+from matplotlib import _mlx_overrides as _mx_overrides
 
 
 # same algorithm as 3.8's math.comb
@@ -21,11 +22,67 @@ def _comb(n, k):
     return math.comb(n, k) if 0 <= k <= n else 0
 
 
+def _real_polynomial_roots(coeff):
+    coeff = coeff if isinstance(coeff, mx.array) else mx.array(coeff)
+    degree = len(coeff) - 1
+    if degree <= 0:
+        return mx.array([])
+    c0, c1 = coeff[0], coeff[1]
+    if degree == 1 or bool((mx.abs(coeff[2]) <= 1e-12).item()):
+        if bool((mx.abs(c1) <= 1e-12).item()):
+            return mx.array([])
+        return mx.reshape(-c0 / c1, (1,))
+
+    c2 = coeff[2]
+    disc = c1 * c1 - 4 * c2 * c0
+    if bool((disc < 0).item()):
+        return mx.array([])
+    sqrt_disc = mx.sqrt(disc)
+    denom = 2 * c2
+    if bool((disc <= 1e-12).item()):
+        return mx.reshape(-c1 / denom, (1,))
+    return mx.stack([(-c1 - sqrt_disc) / denom,
+                     (-c1 + sqrt_disc) / denom])
+
+
 class NonIntersectingPathException(ValueError):
     pass
 
 
 # some functions
+
+
+def _precise_array(value, *, dtype=None, stream=None):
+    return _mx_overrides.mlx_precise_array(value, dtype=dtype, stream=stream)
+
+
+def _float64_array(value, *, stream=mx.cpu):
+    return _precise_array(value, dtype=mx.float64, stream=stream)
+
+
+def _float64_scalar(value):
+    return _mx_overrides.float64_scalar(float(value), stream=mx.cpu)
+
+
+def _take_axis0(value, index):
+    if isinstance(value, mx.array) and value.dtype == mx.float64:
+        if index < 0:
+            index += value.shape[0]
+        slice_size = (1, *value.shape[1:])
+        row = mx.slice(value, mx.array([index], dtype=mx.int32), [0],
+                       slice_size, stream=mx.cpu)
+        return mx.squeeze(row, axis=0, stream=mx.cpu)
+    return value[index]
+
+
+def _mx_hypot(x, y):
+    stream = mx.cpu if any(
+        isinstance(v, mx.array) and v.dtype == mx.float64 for v in (x, y)
+    ) else None
+    return mx.sqrt(
+        mx.add(mx.square(x, stream=stream), mx.square(y, stream=stream),
+               stream=stream),
+        stream=stream)
 
 
 def get_intersection(cx1, cy1, cos_t1, sin_t1,
@@ -87,8 +144,18 @@ def get_normal_points(cx, cy, cos_t, sin_t, length):
 
 
 def _de_casteljau1(beta, t):
-    next_beta = beta[:-1] * (1 - t) + beta[1:] * t
-    return next_beta
+    stream = mx.cpu if beta.dtype == mx.float64 else None
+    if beta.dtype == mx.float64:
+        t = _float64_scalar(t)
+        one = _float64_scalar(1.0)
+    else:
+        t = t if isinstance(t, mx.array) else mx.array(t)
+        one = 1
+    return mx.add(
+        mx.multiply(beta[:-1], mx.subtract(one, t, stream=stream),
+                    stream=stream),
+        mx.multiply(beta[1:], t, stream=stream),
+        stream=stream)
 
 
 def split_de_casteljau(beta, t):
@@ -96,15 +163,15 @@ def split_de_casteljau(beta, t):
     Split a Bézier segment defined by its control points *beta* into two
     separate segments divided at *t* and return their control points.
     """
-    beta = mx.asarray(beta)
+    beta = beta if isinstance(beta, mx.array) else _float64_array(beta)
     beta_list = [beta]
     while True:
         beta = _de_casteljau1(beta, t)
         beta_list.append(beta)
         if len(beta) == 1:
             break
-    left_beta = [beta[0] for beta in beta_list]
-    right_beta = [beta[-1] for beta in reversed(beta_list)]
+    left_beta = [_take_axis0(beta, 0) for beta in beta_list]
+    right_beta = [_take_axis0(beta, -1) for beta in reversed(beta_list)]
 
     return left_beta, right_beta
 
@@ -151,26 +218,37 @@ def find_bezier_t_intersecting_with_closedpath(
     end = bezier_point_at_t(t1)
 
     start_inside = inside_closedpath(start)
+    start_inside = (bool(start_inside.item()) if isinstance(start_inside, mx.array)
+                    else bool(start_inside))
     end_inside = inside_closedpath(end)
+    end_inside = (bool(end_inside.item()) if isinstance(end_inside, mx.array)
+                  else bool(end_inside))
 
-    if start_inside == end_inside and start != end:
+    same_point = bool(mx.all(start == end).item())
+    if start_inside == end_inside and not same_point:
         raise NonIntersectingPathException(
             "Both points are on the same side of the closed path")
 
     while True:
 
         # return if the distance is smaller than the tolerance
-        if mx.hypot(start[0] - end[0], start[1] - end[1]) < tolerance:
+        start_x, start_y = _take_axis0(start, 0), _take_axis0(start, 1)
+        end_x, end_y = _take_axis0(end, 0), _take_axis0(end, 1)
+        if bool((_mx_hypot(start_x - end_x, start_y - end_y)
+                 < tolerance).item()):
             return t0, t1
 
         # calculate the middle point
         middle_t = 0.5 * (t0 + t1)
         middle = bezier_point_at_t(middle_t)
         middle_inside = inside_closedpath(middle)
+        middle_inside = (bool(middle_inside.item())
+                         if isinstance(middle_inside, mx.array)
+                         else bool(middle_inside))
 
         if start_inside ^ middle_inside:
             t1 = middle_t
-            if end == middle:
+            if bool(mx.all(end == middle).item()):
                 # Edge case where infinite loop is possible
                 # Caused by large numbers relative to tolerance
                 return t0, t1
@@ -199,13 +277,20 @@ class BezierSegment:
     """
 
     def __init__(self, control_points):
-        self._cpoints = mx.asarray(control_points)
+        self._cpoints = (control_points if isinstance(control_points, mx.array)
+                         else _float64_array(control_points))
         self._N, self._d = self._cpoints.shape
-        self._orders = mx.arange(self._N)
+        stream = mx.cpu if self._cpoints.dtype == mx.float64 else None
+        self._orders = mx.arange(self._N, stream=stream)
         coeff = [math.factorial(self._N - 1)
                  // (math.factorial(i) * math.factorial(self._N - 1 - i))
                  for i in range(self._N)]
-        self._px = (self._cpoints.T * coeff).T
+        coeff = (_float64_array(coeff) if self._cpoints.dtype == mx.float64
+                 else mx.array(coeff))
+        self._px = mx.transpose(
+            mx.multiply(mx.transpose(self._cpoints, stream=stream), coeff,
+                        stream=stream),
+            stream=stream)
 
     def __call__(self, t):
         """
@@ -221,10 +306,17 @@ class BezierSegment:
         (k, d) array
             Value of the curve for each point in *t*.
         """
-        t = mx.reshape(mx.asarray(t), (-1,))
-        t_col = mx.expand_dims(t, axis=-1)
-        return (mx.power(1 - t_col, self._orders[::-1])
-                * mx.power(t_col, self._orders)) @ self._px
+        stream = mx.cpu if self._cpoints.dtype == mx.float64 else None
+        t = t if isinstance(t, mx.array) else (
+            _float64_array(t) if self._cpoints.dtype == mx.float64 else mx.array(t))
+        t = mx.reshape(t, (-1,), stream=stream)
+        t_col = mx.expand_dims(t, axis=-1, stream=stream)
+        basis = mx.multiply(
+            mx.power(mx.subtract(_float64_scalar(1.0), t_col, stream=stream),
+                     self._orders[::-1], stream=stream),
+            mx.power(t_col, self._orders, stream=stream),
+            stream=stream)
+        return mx.matmul(basis, self._px, stream=stream)
 
     @_api.deprecated(
         "3.11", alternative="Call the BezierSegment object with an argument.")
@@ -309,13 +401,13 @@ class BezierSegment:
         dims = []
         roots = []
         for i, pi in enumerate(dCj.T):
-            r = mx.roots(pi[::-1])
-            roots.append(r)
-            dims.append(mx.full_like(r, i))
-        roots = mx.concatenate(roots)
-        dims = mx.concatenate(dims)
-        in_range = mx.isreal(roots) & (roots >= 0) & (roots <= 1)
-        return dims[in_range], mx.real(roots)[in_range]
+            for root in _real_polynomial_roots(pi):
+                if bool(((root >= 0) & (root <= 1)).item()):
+                    roots.append(root)
+                    dims.append(i)
+        if not roots:
+            return mx.array([], dtype=mx.int32), mx.array([])
+        return mx.array(dims, dtype=mx.int32), mx.stack(roots)
 
 
 def split_bezier_intersecting_with_closedpath(
@@ -343,7 +435,7 @@ def split_bezier_intersecting_with_closedpath(
     bz = BezierSegment(bezier)
 
     t0, t1 = find_bezier_t_intersecting_with_closedpath(
-        lambda t: tuple(bz(t)), inside_closedpath, tolerance=tolerance)
+        lambda t: _take_axis0(bz(t), 0), inside_closedpath, tolerance=tolerance)
 
     _left, _right = split_de_casteljau(bezier, (t0 + t1) / 2.)
     return _left, _right
@@ -425,8 +517,16 @@ def inside_circle(cx, cy, r):
     r2 = r ** 2
 
     def _f(xy):
-        x, y = xy
-        return (x - cx) ** 2 + (y - cy) ** 2 < r2
+        xy = xy if isinstance(xy, mx.array) else _float64_array(xy)
+        stream = mx.cpu if xy.dtype == mx.float64 else None
+        xy = mx.reshape(xy, (-1,), stream=stream)
+        x, y = _take_axis0(xy, 0), _take_axis0(xy, 1)
+        return mx.less(
+            mx.add(mx.square(mx.subtract(x, cx, stream=stream), stream=stream),
+                   mx.square(mx.subtract(y, cy, stream=stream), stream=stream),
+                   stream=stream),
+            r2,
+            stream=stream)
     return _f
 
 

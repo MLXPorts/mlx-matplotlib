@@ -39,7 +39,15 @@ def iterable(obj):
 
 
 def _flatten_array(x, *, dtype=None):
-    arr = mx.asarray(x, dtype=dtype) if dtype is not None else mx.asarray(x)
+    if dtype is bool:
+        dtype = mx.bool_
+    elif dtype is float:
+        dtype = mx.float32
+    elif dtype is int:
+        dtype = mx.int32
+    arr = x if isinstance(x, mx.array) else mx.array(x, dtype=dtype)
+    if dtype is not None and arr.dtype != dtype:
+        arr = arr.astype(dtype)
     return mx.reshape(arr, (-1,))
 
 
@@ -725,7 +733,7 @@ class _Stack:
 
 
 def safe_masked_invalid(x, copy=False):
-    x = mx.array(x) if copy else mx.asarray(x)
+    x = mx.array(x) if copy or not isinstance(x, mx.array) else x
     return mx.where(mx.isfinite(x), x, mx.nan)
 
 
@@ -996,7 +1004,7 @@ def delete_masked_points(*args):
     for i, x in enumerate(args):
         if not isinstance(x, str) and iterable(x) and len(x) == nrecs:
             seqlist[i] = True
-            x = mx.asarray(x)
+            x = x if isinstance(x, mx.array) else mx.array(x)
             if x.ndim == 1:
                 try:
                     masks.append(mx.isfinite(x))
@@ -1005,14 +1013,12 @@ def delete_masked_points(*args):
         margs.append(x)
     if len(masks):
         mask = mx.all(mx.stack(masks), axis=0)
-        keep = mask.tolist()
-        if not all(keep):
+        if not bool(mx.all(mask).item()):
+            keep = [i for i in range(len(mask)) if bool(mask[i].item())]
+            keep = mx.array(keep, dtype=mx.int32)
             for i, x in enumerate(margs):
                 if seqlist[i] and getattr(x, "ndim", 0) == 1:
-                    values = x.tolist()
-                    margs[i] = mx.array(
-                        [v for v, is_good in zip(values, keep) if is_good],
-                        dtype=x.dtype)
+                    margs[i] = mx.take(x, keep, axis=0)
     return margs
 
 
@@ -1060,7 +1066,7 @@ def _combine_masks(*args):
             margs.append(x)  # Leave it unmodified.
         else:
             try:
-                x = mx.asarray(x)
+                x = x if isinstance(x, mx.array) else mx.array(x)
             except (VisibleDeprecationWarning, ValueError):
                 margs.append(x)
                 continue
@@ -1079,7 +1085,7 @@ def _combine_masks(*args):
         for i, x in enumerate(margs):
             if seqlist[i]:
                 if mx.any(mask):
-                    x = mx.asarray(x)
+                    x = x if isinstance(x, mx.array) else mx.array(x)
                     if x.dtype not in {mx.float16, mx.float32, mx.float64, mx.bfloat16}:
                         x = x.astype(mx.float32)
                     margs[i] = mx.where(mask, mx.nan, x)
@@ -1103,24 +1109,14 @@ def _broadcast_with_masks(*args, compress=False):
     list of array-like
         The broadcasted and masked inputs.
     """
-    # extract the masks, if any
-    masks = [k.mask for k in args if isinstance(k, mx.ma.MaskedArray)]
-    # broadcast to match the shape
-    bcast = mx.broadcast_arrays(*args, *masks)
-    inputs = bcast[:len(args)]
-    masks = bcast[len(args):]
-    if masks:
-        # combine the masks into one
-        mask = mx.logical_or.reduce(masks)
-        # put mask on and compress
-        if compress:
-            inputs = [mx.ma.array(k, mask=mask).compressed()
-                      for k in inputs]
-        else:
-            inputs = [mx.ma.array(k, mask=mask, dtype=float).filled(mx.nan).ravel()
-                      for k in inputs]
-    else:
-        inputs = [mx.ravel(k) for k in inputs]
+    arrays = [arg if isinstance(arg, mx.array) else mx.array(arg)
+              for arg in args]
+    inputs = [mx.flatten(k) for k in mx.broadcast_arrays(*arrays)]
+    if compress:
+        valid = functools.reduce(mx.logical_and,
+                                 (mx.isfinite(k) for k in inputs))
+        inputs = delete_masked_points(*[
+            mx.where(valid, k, mx.nan) for k in inputs])
     return inputs
 
 
@@ -1337,25 +1333,23 @@ def contiguous_regions(mask):
     Return a list of (ind0, ind1) such that ``mask[ind0:ind1].all()`` is
     True and we cover all such regions.
     """
-    mask = mx.asarray(mask, dtype=bool)
+    mask = _flatten_array(mask, dtype=mx.bool_)
 
     if not mask.size:
         return []
 
-    # Find the indices of region changes, and correct offset
-    idx, = mx.nonzero(mask[:-1] != mask[1:])
-    idx += 1
-
-    # List operations are faster for moderately sized arrays
-    idx = idx.tolist()
-
-    # Add first and/or last index if needed
-    if mask[0]:
-        idx = [0] + idx
-    if mask[-1]:
-        idx.append(len(mask))
-
-    return list(zip(idx[::2], idx[1::2]))
+    regions = []
+    start = None
+    for i in range(mask.size):
+        active = bool(mask[i].item())
+        if active and start is None:
+            start = i
+        elif not active and start is not None:
+            regions.append((start, i))
+            start = None
+    if start is not None:
+        regions.append((start, mask.size))
+    return regions
 
 
 def is_math_text(s):
@@ -1378,11 +1372,11 @@ def _to_unmasked_float_array(x):
     """
     if hasattr(x, 'mask'):
         raw = getattr(x, "data", x)
-        data = mx.asarray(raw, dtype=mx.float32)
-        mask = mx.asarray(x.mask)
+        data = raw.astype(mx.float32) if isinstance(raw, mx.array) else mx.array(raw, dtype=mx.float32)
+        mask = x.mask if isinstance(x.mask, mx.array) else mx.array(x.mask)
         return mx.where(mask, mx.nan, data)
     else:
-        return mx.asarray(x, dtype=mx.float32)
+        return x.astype(mx.float32) if isinstance(x, mx.array) else mx.array(x, dtype=mx.float32)
 
 
 def _check_1d(x):
@@ -1396,11 +1390,11 @@ def _check_1d(x):
             not hasattr(x, 'ndim') or
             len(x.shape) < 1):
         try:
-            x = mx.asarray(x)
+            x = x if isinstance(x, mx.array) else mx.array(x)
         except (TypeError, ValueError, RuntimeError):
             if not iterable(x) or isinstance(x, (str, bytes)):
                 raise
-            x = mx.asarray(list(x))
+            x = mx.array(list(x))
         if x.ndim == 0:
             x = mx.reshape(x, (1,))
         return x
@@ -1429,7 +1423,8 @@ def _reshape_2D(X, name):
 
         if len(X) == 0:
             return [[]]
-        elif X.ndim == 1 and mx.asarray(X[0]).ndim == 0:
+        elif X.ndim == 1 and (X[0] if isinstance(X[0], mx.array)
+                              else mx.array(X[0])).ndim == 0:
             # 1D array of scalars: directly return it.
             return [X]
         elif X.ndim in [1, 2]:
@@ -1454,7 +1449,7 @@ def _reshape_2D(X, name):
                 pass
             else:
                 is_1d = False
-        xi = mx.asarray(xi)
+        xi = xi if isinstance(xi, mx.array) else mx.array(xi)
         nd = xi.ndim
         if nd > 1:
             raise ValueError(f'{name} must have 2 or fewer dimensions')
@@ -1462,7 +1457,7 @@ def _reshape_2D(X, name):
 
     if is_1d:
         # 1D array of scalars: directly return it.
-        return [mx.reshape(mx.asarray(result), (-1,))]
+        return [mx.reshape(mx.array(result), (-1,))]
     else:
         # 2D array, or 1D array of iterables: use flattened version.
         return result
@@ -1698,7 +1693,7 @@ def pts_to_midstep(x, *args):
     >>> x_s, y1_s, y2_s = pts_to_midstep(x, y1, y2)
     """
     steps = mx.zeros((1 + len(args), 2 * len(x)))
-    x = mx.asarray(x)
+    x = x if isinstance(x, mx.array) else mx.array(x)
     steps[0, 1:-1:2] = steps[0, 2::2] = (x[:-1] + x[1:]) / 2
     steps[0, :1] = x[:1]  # Also works for zero-sized input.
     steps[0, -1:] = x[-1:]
@@ -2217,14 +2212,23 @@ def _get_nonzero_slices(buf):
     that encloses all non-zero entries in *buf*.  If *buf* is fully zero, then
     ``(slice(0, 0), slice(0, 0))`` is returned.
     """
-    x_nz, = buf.any(axis=0).nonzero()
-    y_nz, = buf.any(axis=1).nonzero()
-    if len(x_nz) and len(y_nz):
-        l, r = x_nz[[0, -1]]
-        b, t = y_nz[[0, -1]]
+    x_any = mx.any(buf, axis=0)
+    y_any = mx.any(buf, axis=1)
+
+    def _bounds(mask):
+        first = last = None
+        for i in range(mask.size):
+            if bool(mask[i].item()):
+                if first is None:
+                    first = i
+                last = i
+        return first, last
+
+    l, r = _bounds(x_any)
+    b, t = _bounds(y_any)
+    if l is not None and b is not None:
         return slice(b, t + 1), slice(l, r + 1)
-    else:
-        return slice(0, 0), slice(0, 0)
+    return slice(0, 0), slice(0, 0)
 
 
 def _pformat_subprocess(command):
@@ -2469,7 +2473,7 @@ def _unpack_to_array_backend(x):
         # only _one_ of many methods, and it's the last resort, see also
         # https://array_backend.org/devdocs/user/basics.interoperability.html#using-arbitrary-objects-in-array_backend
         # therefore, let arrays do better if they can
-        xtmp = mx.asarray(x)
+        xtmp = mx.array(x)
 
         # In case mx.asarray method does not return a array_backend array in future
         if isinstance(xtmp, mx.array):

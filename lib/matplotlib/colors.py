@@ -104,11 +104,12 @@ def _dtype_kind(dtype):
 
 
 def _column_stack(arrays):
-    return mx.stack([mx.asarray(a) for a in arrays], axis=1)
+    return mx.stack([a if isinstance(a, mx.array) else mx.array(a)
+                     for a in arrays], axis=1)
 
 
 def _diff(a, axis=-1):
-    a = mx.asarray(a)
+    a = a if isinstance(a, mx.array) else mx.array(a)
     if axis < 0:
         axis += a.ndim
     left = [slice(None)] * a.ndim
@@ -119,8 +120,8 @@ def _diff(a, axis=-1):
 
 
 def _searchsorted(a, v, side="left"):
-    a = mx.asarray(a)
-    v = mx.asarray(v)
+    a = a if isinstance(a, mx.array) else mx.array(a)
+    v = v if isinstance(v, mx.array) else mx.array(v)
     if side == "left":
         return mx.sum(mx.expand_dims(v, -1) > a, axis=-1)
     if side == "right":
@@ -848,11 +849,11 @@ class Colormap:
         """
         self._ensure_inited()
 
-        xa = mx.array(X).copy()
+        xa = X if isinstance(X, mx.array) else mx.array(X)
         if _dtype_kind(xa.dtype) == "f":
-            xa *= self.N
+            xa = xa * self.N
             # xa == 1 (== N after multiplication) is not out of range.
-            xa[xa == self.N] = self.N - 1
+            xa = mx.where(xa == self.N, self.N - 1, xa)
         # Pre-compute the masks before casting to int (which can truncate
         # negative values to zero or wrap large floats to negative ints).
         mask_under = xa < 0
@@ -861,9 +862,9 @@ class Colormap:
             xa.shape, dtype=mx.bool_)
         # We need this cast for unsigned ints as well as floats.
         xa = xa.astype(mx.int32)
-        xa[mask_under] = self._i_under
-        xa[mask_over] = self._i_over
-        xa[mask_bad] = self._i_bad
+        xa = mx.where(mask_under, self._i_under, xa)
+        xa = mx.where(mask_over, self._i_over, xa)
+        xa = mx.where(mask_bad, self._i_bad, xa)
 
         lut = self._lut
         if bytes:
@@ -872,7 +873,8 @@ class Colormap:
         rgba = mx.take(lut, xa, axis=0)
 
         if alpha is not None:
-            alpha = mx.clip(mx.asarray(alpha), 0, 1)
+            alpha = mx.clip(
+                alpha if isinstance(alpha, mx.array) else mx.array(alpha), 0, 1)
             if bytes:
                 alpha *= 255  # Will be cast to uint8 upon assignment.
             if alpha.shape not in [(), xa.shape]:
@@ -882,7 +884,9 @@ class Colormap:
             rgba[..., -1] = alpha
             # If the "bad" color is all zeros, then ignore alpha input.
             if mx.all(lut[-1] == 0):
-                rgba[mask_bad] = mx.array([0, 0, 0, 0], dtype=rgba.dtype)
+                rgba = mx.where(mx.expand_dims(mask_bad, -1),
+                                mx.array([0, 0, 0, 0], dtype=rgba.dtype),
+                                rgba)
 
         return rgba, mask_bad
 
@@ -982,14 +986,16 @@ class Colormap:
     def _update_lut_extremes(self):
         """Ensure than an existing lookup table has the correct extreme values."""
         if self._rgba_under:
-            self._lut[self._i_under] = self._rgba_under
+            self._lut[self._i_under] = mx.array(
+                self._rgba_under, dtype=self._lut.dtype)
         else:
             self._lut[self._i_under] = self._lut[0]
         if self._rgba_over:
-            self._lut[self._i_over] = self._rgba_over
+            self._lut[self._i_over] = mx.array(
+                self._rgba_over, dtype=self._lut.dtype)
         else:
             self._lut[self._i_over] = self._lut[self.N - 1]
-        self._lut[self._i_bad] = self._rgba_bad
+        self._lut[self._i_bad] = mx.array(self._rgba_bad, dtype=self._lut.dtype)
 
     def with_alpha(self, alpha):
         """
@@ -1258,7 +1264,7 @@ class LinearSegmentedColormap(Colormap):
                 _vals, _colors = itertools.zip_longest(*colors)
             except Exception as e2:
                 raise e2 from e
-            vals = mx.asarray(_vals)
+            vals = mx.array(_vals)
             if (mx.min(vals) < 0 or mx.max(vals) > 1
                     or mx.any((vals[1:] - vals[:-1]) <= 0)):
                 raise ValueError(
@@ -2526,7 +2532,7 @@ class Normalize(Norm):
         is_scalar = not cbook.iterable(value)
         if is_scalar:
             value = [value]
-        data = mx.asarray(value)
+        data = value if isinstance(value, mx.array) else mx.array(value)
         dtype = data.dtype
         if _dtype_kind(dtype) in ("i", "b"):
             # bool_/int8/int16 -> float32; int32/int64 -> float64
@@ -2590,12 +2596,12 @@ class Normalize(Norm):
 
     def autoscale_None(self, A):
         # docstring inherited
-        A = mx.asarray(A)
+        A = A if isinstance(A, mx.array) else mx.array(A)
 
         if self.vmin is None and A.size:
-            self.vmin = A.min()
+            self.vmin = mx.min(A)
         if self.vmax is None and A.size:
-            self.vmax = A.max()
+            self.vmax = mx.max(A)
 
     def scaled(self):
         # docstring inherited

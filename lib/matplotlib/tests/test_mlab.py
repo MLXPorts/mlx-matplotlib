@@ -765,8 +765,8 @@ class TestSpectral:
     @pytest.mark.parametrize(
         "mode, conv", [
             ("magnitude", mx.abs),
-            ("angle", mx.angle),
-            ("phase", lambda x: mx.unwrap(mx.angle(x), axis=0))
+            ("angle", mlab._mx_angle),
+            ("phase", lambda x: mlab._mx_unwrap(mlab._mx_angle(x), axis=0))
         ])
     def test_specgram_complex_equivalent(self, mode, conv):
         specc, freqspecc, tc = mlab.specgram(x=self.y,

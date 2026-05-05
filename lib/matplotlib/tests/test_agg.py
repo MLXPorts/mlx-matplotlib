@@ -85,18 +85,42 @@ def test_long_path():
 
 @image_comparison(['agg_filter.png'], remove_text=True)
 def test_agg_filter():
-    def smooth1d(x, window_len):
-        # copied from https://scipy-cookbook.readthedocs.io/
-        s = mx.r_[
-            2*x[0] - x[window_len:1:-1], x, 2*x[-1] - x[-1:-window_len:-1]]
-        w = mx.hanning(window_len)
-        y = mx.convolve(w/w.sum(), s, mode='same')
-        return y[window_len-1:-window_len+1]
+    def _hann(window_len):
+        n = mx.arange(window_len, dtype=mx.float32)
+        phase = mx.divide(mx.multiply(2 * mx.pi, n), window_len - 1)
+        return mx.subtract(0.5, mx.multiply(0.5, mx.cos(phase)))
+
+    def smooth_axis(values, axis, window_len):
+        if axis == 1:
+            values = mx.swapaxes(values, 0, 1)
+        length, channels = values.shape
+        first = mx.slice(values, mx.array([0, 0], dtype=mx.int32), (0, 1),
+                         (1, channels))
+        last = mx.slice(values, mx.array([length - 1, 0], dtype=mx.int32),
+                        (0, 1), (1, channels))
+        left_idx = mx.array(tuple(range(window_len, 1, -1)), dtype=mx.int32)
+        right_idx = mx.array(tuple(range(length - 1, length - window_len, -1)),
+                             dtype=mx.int32)
+        left = mx.subtract(mx.multiply(first, 2),
+                           mx.take(values, left_idx, axis=0))
+        right = mx.subtract(mx.multiply(last, 2),
+                            mx.take(values, right_idx, axis=0))
+        padded = mx.concatenate([left, values, right], axis=0)
+        window = _hann(window_len)
+        kernel = mx.divide(window, mx.sum(window))
+        weight = mx.broadcast_to(mx.reshape(kernel, (1, window_len, 1)),
+                                 (channels, window_len, 1))
+        convolved = mx.conv1d(mx.expand_dims(padded, 0), weight,
+                              groups=channels)
+        smoothed = mx.squeeze(mx.slice(
+            convolved, mx.array([0, window_len // 2, 0], dtype=mx.int32),
+            (0, 1, 2), (1, length, channels)), axis=0)
+        return mx.swapaxes(smoothed, 0, 1) if axis == 1 else smoothed
 
     def smooth2d(A, sigma=3):
         window_len = max(int(sigma), 3) * 2 + 1
-        A = mx.apply_along_axis(smooth1d, 0, A, window_len)
-        A = mx.apply_along_axis(smooth1d, 1, A, window_len)
+        A = smooth_axis(A, 0, window_len)
+        A = smooth_axis(A, 1, window_len)
         return A
 
     class BaseFilter:
@@ -140,11 +164,13 @@ def test_agg_filter():
             return int(self.sigma*3 / 72 * dpi)
 
         def process_image(self, padded_src, dpi):
-            tgt_image = mx.zeros_like(padded_src)
-            tgt_image[:, :, :3] = self.color
-            tgt_image[:, :, 3] = smooth2d(padded_src[:, :, 3] * self.alpha,
-                                          self.sigma / 72 * dpi)
-            return tgt_image
+            rgb = mx.broadcast_to(
+                mx.reshape(mx.array(self.color, dtype=padded_src.dtype),
+                           (1, 1, 3)),
+                (padded_src.shape[0], padded_src.shape[1], 3))
+            alpha = smooth2d(mx.multiply(padded_src[:, :, 3], self.alpha),
+                             self.sigma / 72 * dpi)
+            return mx.concatenate([rgb, mx.expand_dims(alpha, 2)], axis=2)
 
     class DropShadowFilter(BaseFilter):
 
@@ -205,7 +231,7 @@ def test_too_large_image():
 
 
 def test_chunksize():
-    x = range(200)
+    x = mx.arange(200, dtype=mx.float32)
 
     # Test without chunksize
     fig, ax = plt.subplots()
@@ -332,9 +358,9 @@ def test_chunksize_fails():
 
     # make a Path that spans the whole w-h rectangle
     x = mx.linspace(0, w, N)
-    y = mx.ones(N) * h
-    y[::2] = 0
-    path = Path(mx.vstack((x, y)).T)
+    idx = mx.arange(N, dtype=mx.int32)
+    y = mx.where(mx.equal(mx.remainder(idx, 2), 0), 0, h)
+    path = Path(mx.stack((x, y), axis=1))
     # effectively disable path simplification (but leaving it "on")
     path.simplify_threshold = 0
 

@@ -823,7 +823,7 @@ inline void RendererAgg::draw_image(GCAgg &gc,
     agg::rendering_buffer buffer;
     buffer.attach(image.mutable_data(0, 0, 0),
                   (unsigned)image.shape(1), (unsigned)image.shape(0),
-                  -(int)image.shape(1) * 4);
+                  (int)image.stride(0));
     pixfmt pixf(buffer);
 
     if (has_clippath) {

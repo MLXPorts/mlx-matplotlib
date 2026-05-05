@@ -150,7 +150,7 @@ class Colorizer:
             return self._pass_image_data(x, alpha, bytes, norm)
 
         # Otherwise run norm -> colormap pipeline
-        x = mx.asarray(x)
+        x = x if isinstance(x, mx.array) else mx.array(x)
         if norm:
             x = self.norm(x)
         rgba = self.cmap(x, alpha=alpha, bytes=bytes)
@@ -556,7 +556,9 @@ class _ScalarMappable(_ColorizerInterface):
             return
 
         A = cbook.safe_masked_invalid(A, copy=True)
-        if not mx.can_cast(A.dtype, float, "same_kind"):
+        if not (mx.issubdtype(A.dtype, mx.integer)
+                or mx.issubdtype(A.dtype, mx.floating)
+                or A.dtype == mx.bool_):
             raise TypeError(f"Image data of dtype {A.dtype} cannot be "
                             "converted to float")
 

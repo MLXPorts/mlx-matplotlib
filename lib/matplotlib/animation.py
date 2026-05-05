@@ -5,6 +5,7 @@ import contextlib
 from io import BytesIO, TextIOWrapper
 import itertools
 import logging
+import math
 from pathlib import Path
 import shutil
 import subprocess
@@ -54,10 +55,10 @@ def adjusted_figsize(w, h, dpi, n):
     # pixel size across the whole library
     def correct_roundoff(x, dpi, n):
         if int(x*dpi) % n != 0:
-            if int(mx.nextafter(x, mx.inf)*dpi) % n == 0:
-                x = mx.nextafter(x, mx.inf)
-            elif int(mx.nextafter(x, -mx.inf)*dpi) % n == 0:
-                x = mx.nextafter(x, -mx.inf)
+            if int(math.nextafter(x, math.inf)*dpi) % n == 0:
+                x = math.nextafter(x, math.inf)
+            elif int(math.nextafter(x, -math.inf)*dpi) % n == 0:
+                x = math.nextafter(x, -math.inf)
         return x
 
     wnew = int(w * dpi / n) * n / dpi

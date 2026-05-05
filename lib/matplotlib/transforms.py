@@ -40,11 +40,21 @@ import itertools
 import sys
 import textwrap
 import weakref
-import math
 from array import array as _array
 import mlx.core as mx
-import mlx.core as mx
-inv = mx.linalg.inv
+
+
+def inv(mtx):
+    a, c, e = mtx[0, 0], mtx[0, 1], mtx[0, 2]
+    b, d, f = mtx[1, 0], mtx[1, 1], mtx[1, 2]
+    det = a * d - b * c
+    zero = a * 0
+    one = zero + 1
+    return mx.stack([
+        mx.stack([d / det, -c / det, (c * f - d * e) / det]),
+        mx.stack([-b / det, a / det, (b * e - a * f) / det]),
+        mx.stack([zero, zero, one]),
+    ])
 
 from matplotlib import _api
 from matplotlib._path import (
@@ -79,10 +89,21 @@ def _as_float_memoryview(values):
     return memoryview(buf).cast("B").cast("d", shape=shape)
 
 
-def affine_transform(values, mtx):
-    result = _path_affine_transform(
-        _as_float_memoryview(values), _as_float_memoryview(mtx))
-    return mx.array(result.tolist(), dtype=mx.float32)
+def _mx_plot_array(values, dtype=None, *, stream=None):
+    if isinstance(values, mx.array):
+        return (values if dtype is None or values.dtype == dtype
+                else values.astype(dtype, stream=stream))
+    return mx.array(values, dtype=dtype)
+
+
+def affine_transform(values, mtx, *, stream=None):
+    values = _mx_plot_array(values)
+    if values.dtype not in (mx.float32, mx.float64):
+        values = values.astype(mx.float32)
+    if values.dtype == mx.float64 and stream is None:
+        stream = mx.cpu
+    mtx = _mx_plot_array(mtx, dtype=values.dtype, stream=stream)
+    return _path_affine_transform(values, mtx, stream=stream)
 
 
 def _maybe_scalar(value):
@@ -535,9 +556,10 @@ class BboxBase(TransformNode):
         l, b, w, h = container.bounds
         L, B, W, H = self.bounds
         cx, cy = self.coefs[c] if isinstance(c, str) else c
-        return Bbox(self._points +
-                    [(l + cx * (w - W)) - L,
-                     (b + cy * (h - H)) - B])
+        zero = self._points[0, 0] * 0
+        offset = mx.stack([zero + (l + cx * (w - W)) - L,
+                           zero + (b + cy * (h - H)) - B])
+        return Bbox(self._points + offset)
 
     def shrunk(self, mx, my):
         """
@@ -571,8 +593,10 @@ class BboxBase(TransformNode):
         else:
             W = h * fig_aspect / box_aspect
             H = h
-        return Bbox([self._points[0],
-                     self._points[0] + (W, H)])
+        size = mx.stack([self._points[0, 0] * 0 + W,
+                         self._points[0, 0] * 0 + H])
+        return Bbox(mx.stack([self._points[0],
+                              self._points[0] + size]))
 
     def splitx(self, *args):
         """
@@ -650,11 +674,16 @@ class BboxBase(TransformNode):
         points = self.get_points()
         if h_pad is None:
             h_pad = w_pad
-        return Bbox(points + [[-w_pad, -h_pad], [w_pad, h_pad]])
+        zero = points[0, 0] * 0
+        pad = mx.stack([
+            mx.stack([zero - w_pad, zero - h_pad]),
+            mx.stack([zero + w_pad, zero + h_pad]),
+        ])
+        return Bbox(points + pad)
 
     def translated(self, tx, ty):
         """Construct a `Bbox` by translating this one by *tx* and *ty*."""
-        return Bbox(self._points + (tx, ty))
+        return Bbox(self._points + _mx_plot_array([tx, ty], dtype=self._points.dtype))
 
     def corners(self):
         """
@@ -793,7 +822,7 @@ class Bbox(BboxBase):
             A (2, 2) array of the form ``[[x0, y0], [x1, y1]]``.
         """
         super().__init__(**kwargs)
-        points = mx.asarray(points, mx.float32)
+        points = _mx_plot_array(points, dtype=mx.float32)
         if points.shape != (2, 2):
             raise ValueError('Bbox points must be of the form '
                              '"[[x0, y0], [x1, y1]]".')
@@ -958,10 +987,11 @@ class Bbox(BboxBase):
            - When ``False``, include the existing bounds of the `Bbox`.
            - When ``None``, use the last value passed to :meth:`ignore`.
         """
-        x = mx.ravel(x)
+        x = mx.flatten(x if isinstance(x, mx.array) else mx.array(x))
         # The y-component in mx.array([x, *y*]).T is not used. We simply pass
         # x again to not spend extra time on creating an array of unused data
-        self.update_from_data_xy(mx.array([x, x]).T, ignore=ignore, updatey=False)
+        self.update_from_data_xy(mx.stack([x, x], axis=1), ignore=ignore,
+                                 updatey=False)
 
     def update_from_data_y(self, y, ignore=None):
         """
@@ -978,10 +1008,11 @@ class Bbox(BboxBase):
             - When ``False``, include the existing bounds of the `Bbox`.
             - When ``None``, use the last value passed to :meth:`ignore`.
         """
-        y = mx.ravel(y)
+        y = mx.flatten(y if isinstance(y, mx.array) else mx.array(y))
         # The x-component in mx.array([*x*, y]).T is not used. We simply pass
         # y again to not spend extra time on creating an array of unused data
-        self.update_from_data_xy(mx.array([y, y]).T, ignore=ignore, updatex=False)
+        self.update_from_data_xy(mx.stack([y, y], axis=1), ignore=ignore,
+                                 updatex=False)
 
     def update_from_data_xy(self, xy, ignore=None, updatex=True, updatey=True):
         """
@@ -1030,22 +1061,22 @@ class Bbox(BboxBase):
 
     @BboxBase.p0.setter
     def p0(self, val):
-        self._points[0] = val
+        self._points[0] = _mx_plot_array(val, dtype=self._points.dtype)
         self.invalidate()
 
     @BboxBase.p1.setter
     def p1(self, val):
-        self._points[1] = val
+        self._points[1] = _mx_plot_array(val, dtype=self._points.dtype)
         self.invalidate()
 
     @BboxBase.intervalx.setter
     def intervalx(self, interval):
-        self._points[:, 0] = interval
+        self._points[:, 0] = _mx_plot_array(interval, dtype=self._points.dtype)
         self.invalidate()
 
     @BboxBase.intervaly.setter
     def intervaly(self, interval):
-        self._points[:, 1] = interval
+        self._points[:, 1] = _mx_plot_array(interval, dtype=self._points.dtype)
         self.invalidate()
 
     @BboxBase.bounds.setter
@@ -1182,7 +1213,7 @@ class TransformedBbox(BboxBase):
                  [p[1, 0], p[0, 1]],
                  [p[0, 0], p[1, 1]],
                  [p[1, 0], p[1, 1]]])
-            points = mx.asarray(points)
+            points = _mx_plot_array(points)
 
             xs = min(points[:, 0]), max(points[:, 0])
             if p[0, 0] > p[1, 0]:
@@ -1560,9 +1591,10 @@ class Transform(TransformNode):
         """
         # Ensure that values is a 2d array (but remember whether
         # we started with a 1d or 2d array).
-        values = mx.asarray(values)
+        values = _mx_plot_array(values)
         ndim = values.ndim
-        values = values.reshape((-1, self.input_dims))
+        stream = mx.cpu if values.dtype == mx.float64 else None
+        values = mx.reshape(values, (-1, self.input_dims), stream=stream)
 
         # Transform the values
         res = self.transform_affine(self.transform_non_affine(values))
@@ -1571,7 +1603,7 @@ class Transform(TransformNode):
         if ndim == 0:
             return res[0, 0]
         if ndim == 1:
-            return res.reshape(-1)
+            return mx.reshape(res, (-1,), stream=stream)
         elif ndim == 2:
             return res
         raise ValueError(
@@ -1721,27 +1753,36 @@ class Transform(TransformNode):
         # Must be 2D
         if self.input_dims != 2 or self.output_dims != 2:
             raise NotImplementedError('Only defined in 2D')
-        angles = mx.asarray(angles)
-        pts = mx.asarray(pts)
+        angles = _mx_plot_array(angles, dtype=mx.float64, stream=mx.cpu)
+        pts = _mx_plot_array(pts, dtype=mx.float64, stream=mx.cpu)
         _api.check_shape((None, 2), pts=pts)
         _api.check_shape((None,), angles=angles)
         if len(angles) != len(pts):
             raise ValueError("There must be as many 'angles' as 'pts'")
         # Convert to radians if desired
         if not radians:
-            angles = mx.deg2rad(angles)
+            angles = mx.radians(angles, stream=mx.cpu)
         # Move a short distance away
-        pts2 = pts + pushoff * mx.column_stack([mx.cos(angles),
-                                                mx.sin(angles)])
+        unit = mx.stack(
+            [mx.cos(angles, stream=mx.cpu), mx.sin(angles, stream=mx.cpu)],
+            axis=1, stream=mx.cpu)
+        pts2 = mx.add(pts, mx.multiply(unit, pushoff, stream=mx.cpu),
+                      stream=mx.cpu)
         # Transform both sets of points
         tpts = self.transform(pts)
         tpts2 = self.transform(pts2)
         # Calculate transformed angles
-        d = tpts2 - tpts
-        a = mx.arctan2(d[:, 1], d[:, 0])
+        d = mx.subtract(tpts2, tpts, stream=mx.cpu)
+        col0 = mx.squeeze(mx.slice(
+            d, mx.array([0, 0], dtype=mx.int32), (0, 1), (d.shape[0], 1),
+            stream=mx.cpu), axis=1, stream=mx.cpu)
+        col1 = mx.squeeze(mx.slice(
+            d, mx.array([0, 1], dtype=mx.int32), (0, 1), (d.shape[0], 1),
+            stream=mx.cpu), axis=1, stream=mx.cpu)
+        a = mx.arctan2(col1, col0, stream=mx.cpu)
         # Convert back to degrees if desired
         if not radians:
-            a = mx.rad2deg(a)
+            a = mx.degrees(a, stream=mx.cpu)
         return a
 
     def inverted(self):
@@ -1918,7 +1959,7 @@ class Affine2DBase(AffineBase):
         Return the values of the matrix as an ``(a, b, c, d, e, f)`` tuple.
         """
         mtx = self.get_matrix()
-        return tuple(mtx[:2].swapaxes(0, 1).flat)
+        return tuple(mx.flatten(mx.swapaxes(mtx[:2], 0, 1)))
 
     def transform_affine(self, values):
         mtx = self.get_matrix()
@@ -2050,8 +2091,13 @@ class Affine2D(Affine2DBase):
         calls to :meth:`rotate`, :meth:`rotate_deg`, :meth:`translate`
         and :meth:`scale`.
         """
-        a = math.cos(theta)
-        b = math.sin(theta)
+        theta = _mx_plot_array(theta, dtype=self._mtx.dtype)
+        a = mx.cos(theta)
+        b = mx.sin(theta)
+        tol = mx.array(1e-6, dtype=self._mtx.dtype)
+        zero = mx.array(0.0, dtype=self._mtx.dtype)
+        a = mx.where(mx.abs(a) < tol, zero, a)
+        b = mx.where(mx.abs(b) < tol, zero, b)
         rot = mx.identity(3, dtype=self._mtx.dtype)
         rot[0, 0] = a
         rot[0, 1] = -b
@@ -2070,7 +2116,10 @@ class Affine2D(Affine2DBase):
         calls to :meth:`rotate`, :meth:`rotate_deg`, :meth:`translate`
         and :meth:`scale`.
         """
-        return self.rotate(math.radians(degrees))
+        degrees = _mx_plot_array(degrees, dtype=self._mtx.dtype)
+        radians_per_degree = mx.array(0.017453292519943295,
+                                      dtype=self._mtx.dtype)
+        return self.rotate(degrees * radians_per_degree)
 
     def rotate_around(self, x, y, theta):
         """
@@ -2090,9 +2139,8 @@ class Affine2D(Affine2DBase):
         calls to :meth:`rotate`, :meth:`rotate_deg`, :meth:`translate`
         and :meth:`scale`.
         """
-        # Keep in MLX space (avoid Python scalar casts that break lazy graphs).
-        x = mx.asarray(x, dtype=mx.float64)
-        y = mx.asarray(y, dtype=mx.float64)
+        x = _mx_plot_array(x, dtype=self._mtx.dtype)
+        y = _mx_plot_array(y, dtype=self._mtx.dtype)
         return self.translate(-x, -y).rotate_deg(degrees).translate(x, y)
 
     def translate(self, tx, ty):
@@ -2141,8 +2189,10 @@ class Affine2D(Affine2DBase):
         calls to :meth:`rotate`, :meth:`rotate_deg`, :meth:`translate`
         and :meth:`scale`.
         """
-        rx = math.tan(xShear)
-        ry = math.tan(yShear)
+        xShear = _mx_plot_array(xShear, dtype=self._mtx.dtype)
+        yShear = _mx_plot_array(yShear, dtype=self._mtx.dtype)
+        rx = mx.tan(xShear)
+        ry = mx.tan(yShear)
         sh = mx.identity(3, dtype=self._mtx.dtype)
         sh[0, 1] = rx
         sh[1, 0] = ry
@@ -2161,7 +2211,12 @@ class Affine2D(Affine2DBase):
         calls to :meth:`rotate`, :meth:`rotate_deg`, :meth:`translate`
         and :meth:`scale`.
         """
-        return self.skew(math.radians(xShear), math.radians(yShear))
+        xShear = _mx_plot_array(xShear, dtype=self._mtx.dtype)
+        yShear = _mx_plot_array(yShear, dtype=self._mtx.dtype)
+        radians_per_degree = mx.array(0.017453292519943295,
+                                      dtype=self._mtx.dtype)
+        return self.skew(xShear * radians_per_degree,
+                         yShear * radians_per_degree)
 
 
 class IdentityTransform(Affine2DBase):
@@ -2183,15 +2238,15 @@ class IdentityTransform(Affine2DBase):
 
     def transform(self, values):
         # docstring inherited
-        return mx.asarray(values)
+        return _mx_plot_array(values)
 
     def transform_affine(self, values):
         # docstring inherited
-        return mx.asarray(values)
+        return _mx_plot_array(values)
 
     def transform_non_affine(self, values):
         # docstring inherited
-        return mx.asarray(values)
+        return _mx_plot_array(values)
 
     def transform_path(self, path):
         # docstring inherited

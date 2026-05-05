@@ -3150,13 +3150,15 @@ None}, default: None
         if h is None:  # Got called with a single pair as argument.
             w, h = w
         size = mx.array([w, h])
-        if not mx.isfinite(size).all() or (size < 0).any():
+        if (not bool(mx.all(mx.isfinite(size)).item())
+                or bool(mx.any(size < 0).item())):
             raise ValueError(f'figure size must be positive finite not {size}')
         self.bbox_inches.p1 = size
         if forward:
             manager = self.canvas.manager
             if manager is not None:
-                manager.resize(*(size * self.dpi).astype(int))
+                pixels = (size * self.dpi).astype(mx.int32)
+                manager.resize(*(int(value.item()) for value in pixels))
         self.stale = True
 
     def get_size_inches(self):

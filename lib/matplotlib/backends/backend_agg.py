@@ -59,7 +59,7 @@ def _transform_to_memoryview(transform):
 
 
 def _plain_float_buffer(values, empty_fallback=None):
-    values = mx.asarray(values)
+    values = values if isinstance(values, mx.array) else mx.array(values)
     shape = tuple(values.shape)
     data = values.tolist()
     if not shape:
@@ -68,7 +68,7 @@ def _plain_float_buffer(values, empty_fallback=None):
     if 0 in shape:
         if empty_fallback is None:
             empty_fallback = [0.0]
-        values = mx.asarray(empty_fallback)
+        values = mx.array(empty_fallback)
         shape = tuple(values.shape)
         data = values.tolist()
 
@@ -128,9 +128,16 @@ class RendererAgg(RendererBase):
         self.__init__(state['width'], state['height'], state['dpi'])
 
     def _update_methods(self):
-        self.draw_gouraud_triangles = self._renderer.draw_gouraud_triangles
+        self._draw_gouraud_triangles = self._renderer.draw_gouraud_triangles
         self.draw_image = self._renderer.draw_image
         self.copy_from_bbox = self._renderer.copy_from_bbox
+
+    def draw_gouraud_triangles(self, gc, triangles_array, colors_array, transform):
+        triangles_array = _plain_float_buffer(triangles_array)
+        colors_array = _plain_float_buffer(colors_array)
+        transform = _transform_to_memoryview(transform)
+        return self._draw_gouraud_triangles(
+            gc, triangles_array, colors_array, transform)
 
     def draw_markers(self, gc, marker_path, marker_trans, path, transform,
                      rgbFace=None):
@@ -145,8 +152,11 @@ class RendererAgg(RendererBase):
         transform = _transform_to_memoryview(transform)
         path = _BufferPath(path)
         nmax = mpl.rcParams['agg.path.chunksize']  # here at least for testing
-        vertices = mx.asarray(path.vertices)
-        codes = None if path.codes is None else mx.asarray(path.codes)
+        vertices = (path.vertices if isinstance(path.vertices, mx.array)
+                    else mx.array(path.vertices))
+        codes = (None if path.codes is None else
+                 path.codes if isinstance(path.codes, mx.array)
+                 else mx.array(path.codes))
         npts = vertices.shape[0]
 
         if (npts > nmax > 100 and path.should_simplify and
@@ -240,8 +250,10 @@ class RendererAgg(RendererBase):
         facecolors = _plain_float_buffer(facecolors, [[0.0, 0.0, 0.0, 0.0]])
         edgecolors = _plain_float_buffer(edgecolors, [[0.0, 0.0, 0.0, 0.0]])
         linewidths = _plain_float_buffer(linewidths, [1.0])
+        antialiaseds = (antialiaseds if isinstance(antialiaseds, mx.array)
+                        else mx.array(antialiaseds))
         antialiaseds = memoryview(_array("B", [
-            int(value) for value in mx.asarray(antialiaseds).tolist()
+            int(value) for value in antialiaseds.tolist()
         ]))
         if hatchcolors is not None:
             hatchcolors = _plain_float_buffer(
@@ -272,6 +284,8 @@ class RendererAgg(RendererBase):
 
         xd = descent * sin(radians(angle))
         yd = descent * cos(radians(angle))
+        x = x.item() if isinstance(x, mx.array) else x
+        y = y.item() if isinstance(y, mx.array) else y
         x = round(x + ox + xd)
         y = round(y - oy + yd)
         self._renderer.draw_text_image(font_image, x, y + 1, angle, gc)
@@ -293,6 +307,8 @@ class RendererAgg(RendererBase):
         yo /= 64.0
         xd = d * sin(radians(angle))
         yd = d * cos(radians(angle))
+        x = x.item() if isinstance(x, mx.array) else x
+        y = y.item() if isinstance(y, mx.array) else y
         x = round(x + xo + xd)
         y = round(y + yo + yd)
         self._renderer.draw_text_image(font, x, y + 1, angle, gc)
@@ -436,7 +452,8 @@ class RendererAgg(RendererBase):
         The saved renderer is restored and the returned image from
         post_processing is plotted (using draw_image) on it.
         """
-        orig_img = mx.asarray(self.buffer_rgba())
+        orig_img = mx.reshape(mx.array(self.buffer_rgba(), dtype=mx.uint8),
+                              (int(self.height), int(self.width), 4))
         slice_y, slice_x = cbook._get_nonzero_slices(orig_img[..., 3])
         cropped_img = orig_img[slice_y, slice_x]
 
@@ -444,13 +461,16 @@ class RendererAgg(RendererBase):
         self._update_methods()
 
         if cropped_img.size:
-            img, ox, oy = post_processing(cropped_img / 255, self.dpi)
+            img, ox, oy = post_processing(
+                mx.divide(cropped_img.astype(mx.float32), 255), self.dpi)
             gc = self.new_gc()
-            if img.dtype.kind == 'f':
-                img = mx.asarray(img * 255., mx.uint8)
+            if img.dtype in (mx.float16, mx.bfloat16, mx.float32, mx.float64):
+                stream = mx.cpu if img.dtype == mx.float64 else None
+                img = mx.multiply(img, 255, stream=stream).astype(
+                    mx.uint8, stream=stream)
             self._renderer.draw_image(
                 gc, slice_x.start + ox, int(self.height) - slice_y.stop + oy,
-                img[::-1])
+                mx.contiguous(img))
 
 
 class FigureCanvasAgg(FigureCanvasBase):
