@@ -1483,7 +1483,7 @@ def _reshape_2D(X, name):
     Use Fortran ordering to convert ndarrays and lists of iterables to lists of
     1D arrays.
 
-    Lists of iterables are converted by applying `array_backend.asanyarray` to each of
+    Lists of iterables are converted by routing each element through `mx.array`.
     their elements.  1D ndarrays are returned in a singleton list containing
     them.  2D ndarrays are converted to the list of their *columns*.
 

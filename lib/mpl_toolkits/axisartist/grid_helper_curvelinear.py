@@ -186,8 +186,8 @@ class FloatingAxisArtistHelper(_FloatingAxisArtistHelperBase):
 
         self._grid_info = {
             "extremes": Bbox.from_extents(lon_min, lat_min, lon_max, lat_max),
-            "lon_info": (lon_levs, lon_n, mx.asarray(lon_factor)),
-            "lat_info": (lat_levs, lat_n, mx.asarray(lat_factor)),
+            "lon_info": (lon_levs, lon_n, mx.array(lon_factor)),
+            "lat_info": (lat_levs, lat_n, mx.array(lat_factor)),
             "lon_labels": grid_finder._format_ticks(
                 1, "bottom", lon_factor, lon_levs),
             "lat_labels": grid_finder._format_ticks(

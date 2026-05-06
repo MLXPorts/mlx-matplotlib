@@ -53,7 +53,7 @@ class TriContourSet(ContourSet):
         tri, args, kwargs = Triangulation.get_from_args_and_kwargs(*args,
                                                                    **kwargs)
         z, *args = args
-        z = mx.ma.asarray(z)
+        z = mx.ma.array(z)
         if z.shape != tri.x.shape:
             raise ValueError('z array must have same length as triangulation x'
                              ' and y arrays')

@@ -305,7 +305,7 @@ class FormatterHMS(FormatterDMS):
     fmt_ss_partial = "%02d.%s" + sec_mark + "$"
 
     def __call__(self, direction, factor, values):  # hour
-        return super().__call__(direction, factor, mx.asarray(values) / 15)
+        return super().__call__(direction, factor, mx.array(values) / 15)
 
 
 class ExtremeFinderCycle(ExtremeFinderSimple):

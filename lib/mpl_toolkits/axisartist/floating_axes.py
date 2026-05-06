@@ -182,9 +182,9 @@ class GridHelperCurveLinear(grid_helper_curvelinear.GridHelperCurveLinear):
         grid_info["extremes"] = tbbox
 
         lon_levs, lon_n, lon_factor = grid_finder.grid_locator1(lon_min, lon_max)
-        lon_levs = mx.asarray(lon_levs)
+        lon_levs = mx.array(lon_levs)
         lat_levs, lat_n, lat_factor = grid_finder.grid_locator2(lat_min, lat_max)
-        lat_levs = mx.asarray(lat_levs)
+        lat_levs = mx.array(lat_levs)
 
         grid_info["lon_info"] = lon_levs, lon_n, lon_factor
         grid_info["lat_info"] = lat_levs, lat_n, lat_factor

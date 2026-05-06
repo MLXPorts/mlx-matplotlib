@@ -1682,7 +1682,7 @@ def imsave(fname, arr, vmin=None, vmax=None, cmap=None, format=None,
         if (isinstance(arr, memoryview) and arr.format == "B"
                 and arr.ndim == 3 and arr.shape[-1] == 4):
             # Such an ``arr`` would also be handled fine by sm.to_rgba below
-            # (after casting with asarray), but it is useful to special-case it
+            # (after routing through mx.array), but it is useful to special-case it
             # because that's what backend_agg passes, and can be in fact used
             # as is, saving a few operations.
             rgba = arr

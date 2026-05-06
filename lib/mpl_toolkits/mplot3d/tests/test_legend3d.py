@@ -103,7 +103,7 @@ def test_contourf_legend_elements():
 
 def test_legend_Poly3dCollection():
 
-    verts = mx.asarray([[0, 0, 0], [0, 1, 1], [1, 0, 1]])
+    verts = mx.array([[0, 0, 0], [0, 1, 1], [1, 0, 1]])
     mesh = art3d.Poly3DCollection([verts], label="surface")
 
     fig, ax = plt.subplots(subplot_kw={"projection": "3d"})

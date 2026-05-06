@@ -1672,16 +1672,6 @@ def array(obj: Any, dtype: Any | None = None, copy: bool | None = True,
     return arr
 
 
-def asarray(obj: Any, dtype: Any | None = None, order: Any | None = None,
-            copy: bool | None = None, like: Any | None = None) -> mx.array:
-    return _to_mx(obj, dtype=dtype)
-
-
-def asanyarray(obj: Any, dtype: Any | None = None, order: Any | None = None,
-               like: Any | None = None) -> mx.array:
-    return _to_mx(obj, dtype=dtype)
-
-
 def atleast_1d(*arys: Any) -> Tuple[mx.array, ...] | mx.array:
     res = []
     for a in arys:
@@ -3215,8 +3205,8 @@ class _Random:
         else:
             shape = tuple(size)
 
-        mean_arr = asarray(mean, dtype=float32)
-        cov_arr = asarray(cov, dtype=float32)
+        mean_arr = array(mean, dtype=float32)
+        cov_arr = array(cov, dtype=float32)
         return mx.random.multivariate_normal(mean_arr, cov_arr, shape=shape, dtype=float32.mx_dtype)
 
     def random(self, size: Any | None = None):
@@ -3415,14 +3405,6 @@ class _MA:
 
     def masked_array(self, data: Any, mask: Any | None = None, dtype: Any | None = None, copy: bool | None = None):
         return self.array(data, mask=mask, dtype=dtype, copy=copy)
-
-    def asarray(self, data: Any, dtype: Any | None = None):
-        if isinstance(data, MaskedArray):
-            return data.astype(dtype) if dtype is not None else data
-        return self.array(data, dtype=dtype)
-
-    def asanyarray(self, data: Any, dtype: Any | None = None):
-        return self.asarray(data, dtype=dtype)
 
     def isMA(self, data: Any) -> bool:
         return isinstance(data, MaskedArray)

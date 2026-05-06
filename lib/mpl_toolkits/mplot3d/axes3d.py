@@ -2092,7 +2092,7 @@ class Axes3D(Axes):
         if where is None:
             where = True
         else:
-            where = mx.asarray(where, dtype=bool)
+            where = mx.array(where, dtype=bool)
             if where.size != x1.size:
                 raise ValueError(f"where size ({where.size}) does not match "
                                  f"size ({x1.size})")
@@ -2545,7 +2545,7 @@ class Axes3D(Axes):
         except KeyError:
             # We do this so Z doesn't get passed as an arg to PolyCollection
             z, *args = args
-        z = mx.asarray(z)
+        z = mx.array(z)
 
         triangles = tri.get_masked_triangles()
         xt = tri.x[triangles]

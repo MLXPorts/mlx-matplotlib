@@ -191,8 +191,8 @@ class GridFinder:
         lon_levs, lon_n, lon_factor = self.grid_locator1(*tbbox.intervalx)
         lat_levs, lat_n, lat_factor = self.grid_locator2(*tbbox.intervaly)
 
-        lon_values = mx.asarray(lon_levs[:lon_n]) / lon_factor
-        lat_values = mx.asarray(lat_levs[:lat_n]) / lat_factor
+        lon_values = mx.array(lon_levs[:lon_n]) / lon_factor
+        lat_values = mx.array(lat_levs[:lat_n]) / lat_factor
 
         lon_lines, lat_lines = self._get_raw_grid_lines(lon_values, lat_values, tbbox)
 

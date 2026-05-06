@@ -1453,7 +1453,7 @@ class Poly3DCollection(PolyCollection):
         if not hasattr(self, '_facecolors2d'):
             self.axes.M = self.axes.get_proj()
             self.do_3d_projection()
-        return mx.asarray(self._facecolors2d)
+        return mx.array(self._facecolors2d)
 
     def get_edgecolor(self):
         # docstring inherited
@@ -1461,7 +1461,7 @@ class Poly3DCollection(PolyCollection):
         if not hasattr(self, '_edgecolors2d'):
             self.axes.M = self.axes.get_proj()
             self.do_3d_projection()
-        return mx.asarray(self._edgecolors2d)
+        return mx.array(self._edgecolors2d)
 
 
 def poly_collection_2d_to_3d(col, zs=0, zdir='z', axlim_clip=False):
@@ -1558,7 +1558,7 @@ def _all_points_on_plane(xs, ys, zs, atol=1e-8):
     atol : float, default: 1e-8
         The tolerance for the equality check.
     """
-    xs, ys, zs = mx.asarray(xs), mx.asarray(ys), mx.asarray(zs)
+    xs, ys, zs = mx.array(xs), mx.array(ys), mx.array(zs)
     points = mx.column_stack([xs, ys, zs])
     points = points[~mx.isnan(points).any(axis=1)]
     # Check for the case where we have less than 3 unique points
@@ -1624,7 +1624,7 @@ def _generate_normals(polygons):
         v2 = mx.zeros((len(polygons), 3))
         for poly_i, ps in enumerate(polygons):
             n = len(ps)
-            ps = mx.asarray(ps)
+            ps = mx.array(ps)
             i1, i2, i3 = 0, n//3, 2*n//3
             v1[poly_i, :] = ps[i1, :] - ps[i2, :]
             v2[poly_i, :] = ps[i2, :] - ps[i3, :]
@@ -1664,6 +1664,6 @@ def _shade_colors(color, normals, lightsource=None):
         colors = norm(shade)[:, mx.newaxis] * color
         colors[:, 3] = alpha
     else:
-        colors = mx.asarray(color).copy()
+        colors = mx.array(color).copy()
 
     return colors
