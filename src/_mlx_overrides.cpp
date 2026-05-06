@@ -26,6 +26,7 @@
 #include "mlx/primitives.h"
 #include "mlx/stream.h"
 #include "mlx/utils.h"
+#include "mlx/version.h"
 
 namespace nb = nanobind;
 namespace mx = mlx::core;
@@ -84,6 +85,15 @@ enum class PreciseFloat64CompareOp : int {
 mx::Shape broadcast_binary_shape(const mx::array& left, const mx::array& right)
 {
     return mx::broadcast_shapes(left.shape(), right.shape());
+}
+
+mx::metal::CommandEncoder& precise_command_encoder(mx::Stream stream)
+{
+#if MLX_VERSION_NUMERIC >= 31000
+    return mx::metal::get_command_encoder(stream);
+#else
+    return mx::metal::device(stream.device).get_command_encoder(stream.index);
+#endif
 }
 
 mx::Shape broadcast_ternary_shape(const mx::array& first,
@@ -209,7 +219,7 @@ public:
             });
         auto kernel = device.get_kernel(
             "mlx_matplotlib_precise_float64_copy", library);
-        auto& encoder = device.get_command_encoder(stream().index);
+        auto& encoder = precise_command_encoder(stream());
         encoder.set_compute_pipeline_state(kernel);
         encoder.set_input_array(inputs[0], 0);
         encoder.set_output_array(out, 1);
@@ -284,7 +294,7 @@ public:
             });
         auto kernel = device.get_kernel(
             "mlx_matplotlib_precise_float64_full", library);
-        auto& encoder = device.get_command_encoder(stream().index);
+        auto& encoder = precise_command_encoder(stream());
         encoder.set_compute_pipeline_state(kernel);
         encoder.set_bytes(value_, 0);
         encoder.set_output_array(out, 1);
@@ -393,7 +403,7 @@ public:
             });
         auto kernel = device.get_kernel(
             "mlx_matplotlib_precise_float64_arange", library);
-        auto& encoder = device.get_command_encoder(stream().index);
+        auto& encoder = precise_command_encoder(stream());
         encoder.set_compute_pipeline_state(kernel);
         encoder.set_bytes(start_, 0);
         encoder.set_bytes(step_, 1);
@@ -737,7 +747,7 @@ public:
             });
         auto kernel = device.get_kernel(
             "mlx_matplotlib_precise_float64_binary", library);
-        auto& encoder = device.get_command_encoder(stream().index);
+        auto& encoder = precise_command_encoder(stream());
         encoder.set_compute_pipeline_state(kernel);
         encoder.set_input_array(inputs[0], 0);
         encoder.set_input_array(inputs[1], 1);
@@ -872,7 +882,7 @@ public:
             });
         auto kernel = device.get_kernel(
             "mlx_matplotlib_precise_float64_compare", library);
-        auto& encoder = device.get_command_encoder(stream().index);
+        auto& encoder = precise_command_encoder(stream());
         encoder.set_compute_pipeline_state(kernel);
         encoder.set_input_array(inputs[0], 0);
         encoder.set_input_array(inputs[1], 1);
@@ -991,7 +1001,7 @@ public:
             });
         auto kernel = device.get_kernel(
             "mlx_matplotlib_precise_float64_where", library);
-        auto& encoder = device.get_command_encoder(stream().index);
+        auto& encoder = precise_command_encoder(stream());
         encoder.set_compute_pipeline_state(kernel);
         encoder.set_input_array(inputs[0], 0);
         encoder.set_input_array(inputs[1], 1);
@@ -1095,7 +1105,7 @@ public:
             });
         auto kernel = device.get_kernel(
             "mlx_matplotlib_precise_float64_cumsum_1d", library);
-        auto& encoder = device.get_command_encoder(stream().index);
+        auto& encoder = precise_command_encoder(stream());
         encoder.set_compute_pipeline_state(kernel);
         encoder.set_input_array(inputs[0], 0);
         encoder.set_output_array(out, 1);
@@ -1178,7 +1188,7 @@ public:
             });
         auto kernel = device.get_kernel(
             "mlx_matplotlib_precise_float64_arctan2", library);
-        auto& encoder = device.get_command_encoder(stream().index);
+        auto& encoder = precise_command_encoder(stream());
         encoder.set_compute_pipeline_state(kernel);
         encoder.set_input_array(inputs[0], 0);
         encoder.set_input_array(inputs[1], 1);
@@ -1248,7 +1258,7 @@ public:
             });
         auto kernel = device.get_kernel(
             "mlx_matplotlib_precise_float64_abs", library);
-        auto& encoder = device.get_command_encoder(stream().index);
+        auto& encoder = precise_command_encoder(stream());
         encoder.set_compute_pipeline_state(kernel);
         encoder.set_input_array(inputs[0], 0);
         encoder.set_output_array(out, 1);
@@ -1317,7 +1327,7 @@ public:
             });
         auto kernel = device.get_kernel(
             "mlx_matplotlib_precise_float64_isfinite", library);
-        auto& encoder = device.get_command_encoder(stream().index);
+        auto& encoder = precise_command_encoder(stream());
         encoder.set_compute_pipeline_state(kernel);
         encoder.set_input_array(inputs[0], 0);
         encoder.set_output_array(out, 1);
@@ -1405,7 +1415,7 @@ public:
             });
         auto kernel = device.get_kernel(
             "mlx_matplotlib_precise_float64_round", library);
-        auto& encoder = device.get_command_encoder(stream().index);
+        auto& encoder = precise_command_encoder(stream());
         encoder.set_compute_pipeline_state(kernel);
         encoder.set_input_array(inputs[0], 0);
         encoder.set_output_array(out, 1);
@@ -1518,7 +1528,7 @@ public:
             });
         auto kernel = device.get_kernel(
             "mlx_matplotlib_precise_float64_matmul", library);
-        auto& encoder = device.get_command_encoder(stream().index);
+        auto& encoder = precise_command_encoder(stream());
         encoder.set_compute_pipeline_state(kernel);
         encoder.set_input_array(inputs[0], 0);
         encoder.set_input_array(inputs[1], 1);
@@ -1617,7 +1627,7 @@ public:
             });
         auto kernel = device.get_kernel(
             "mlx_matplotlib_precise_float64_astype_float32", library);
-        auto& encoder = device.get_command_encoder(stream().index);
+        auto& encoder = precise_command_encoder(stream());
         encoder.set_compute_pipeline_state(kernel);
         encoder.set_input_array(inputs[0], 0);
         encoder.set_output_array(out, 1);
@@ -1709,7 +1719,7 @@ public:
             });
         auto kernel = device.get_kernel(
             "mlx_matplotlib_precise_float64_astype_int32", library);
-        auto& encoder = device.get_command_encoder(stream().index);
+        auto& encoder = precise_command_encoder(stream());
         encoder.set_compute_pipeline_state(kernel);
         encoder.set_input_array(inputs[0], 0);
         encoder.set_output_array(out, 1);
@@ -1801,7 +1811,7 @@ public:
             });
         auto kernel = device.get_kernel(
             "mlx_matplotlib_precise_float64_astype_from_float32", library);
-        auto& encoder = device.get_command_encoder(stream().index);
+        auto& encoder = precise_command_encoder(stream());
         encoder.set_compute_pipeline_state(kernel);
         encoder.set_input_array(inputs[0], 0);
         encoder.set_output_array(out, 1);
@@ -1981,7 +1991,7 @@ public:
             });
         auto kernel = device.get_kernel(
             "mlx_matplotlib_precise_float64_reduce_minmax", library);
-        auto& encoder = device.get_command_encoder(stream().index);
+        auto& encoder = precise_command_encoder(stream());
         encoder.set_compute_pipeline_state(kernel);
         encoder.set_input_array(inputs[0], 0);
         encoder.set_output_array(out, 1);
@@ -2088,7 +2098,7 @@ public:
             });
         auto kernel = device.get_kernel(
             "mlx_matplotlib_precise_float64_stack_axis0", library);
-        auto& encoder = device.get_command_encoder(stream().index);
+        auto& encoder = precise_command_encoder(stream());
         encoder.set_compute_pipeline_state(kernel);
         std::uint64_t offset = 0;
         for (const auto& input : inputs) {
@@ -2205,7 +2215,7 @@ public:
             });
         auto kernel = device.get_kernel(
             "mlx_matplotlib_precise_float64_concatenate", library);
-        auto& encoder = device.get_command_encoder(stream().index);
+        auto& encoder = precise_command_encoder(stream());
         auto ndim = static_cast<std::uint32_t>(out.ndim());
         auto concat_axis = static_cast<std::uint32_t>(axis_);
         auto out_strides = contiguous_strides(out.shape());
@@ -4446,9 +4456,17 @@ mx::array fft_float64(const mx::array& value,
         input = mx::astype(input, mx::float64, stream);
     }
     if (n > 0) {
+#if MLX_VERSION_NUMERIC >= 31000
+        return mx::fft::fft(input, n, axis, mx::fft::FFTNorm::Backward, stream);
+#else
         return mx::fft::fft(input, n, axis, stream);
+#endif
     }
+#if MLX_VERSION_NUMERIC >= 31000
+    return mx::fft::fft(input, axis, mx::fft::FFTNorm::Backward, stream);
+#else
     return mx::fft::fft(input, axis, stream);
+#endif
 }
 
 mx::array less_float64(nb::handle left,
