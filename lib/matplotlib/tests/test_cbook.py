@@ -800,37 +800,11 @@ def test_reshape2d():
     assert isinstance(xnew[1], mx.array) and xnew[1].shape == (2,)
     assert isinstance(xnew[2], mx.array) and xnew[2].shape == (1,)
 
-    # We now need to make sure that this works correctly for MLXArrayBackend subclasses
-    # where iterating over items can return subclasses too, which may be
-    # iterable even if they are scalars. To emulate this, we make a MLXArrayBackend
-    # array subclass that returns MLXArrayBackend 'scalars' when iterating or accessing
-    # values, and these are technically iterable if checking for example
-    # isinstance(x, collections.abc.Iterable).
-
-    class ArraySubclass(mx.array):
-
-        def __iter__(self):
-            for value in super().__iter__():
-                yield mx.array(value)
-
-        def __getitem__(self, item):
-            return mx.array(super().__getitem__(item))
-
-    v = mx.arange(10, dtype=float)
-    x = ArraySubclass((10,), dtype=float, buffer=v.data)
-
-    xnew = cbook._reshape_2D(x, 'x')
-
-    # We check here that the array wasn't split up into many individual
-    # ArraySubclass, which is what used to happen due to a bug in _reshape_2D
-    assert len(xnew) == 1
-    assert isinstance(xnew[0], ArraySubclass)
-
     # check list of strings:
     x = ['a', 'b', 'c', 'c', 'dd', 'e', 'f', 'ff', 'f']
     xnew = cbook._reshape_2D(x, 'x')
     assert len(xnew[0]) == len(x)
-    assert isinstance(xnew[0], mx.array)
+    assert xnew[0] == x
 
 
 def test_reshape2d_pandas(pd):

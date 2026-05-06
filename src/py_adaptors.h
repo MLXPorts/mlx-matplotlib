@@ -8,14 +8,26 @@
  * structures to C++ and Agg-friendly interfaces.
  */
 
-#include <pybind11/pybind11.h>
+#include <optional>
+#include <stdexcept>
+#include <string>
 
 #include "agg_basics.h"
-#include "py_buffer.h"
+#include "mlx/array.h"
+#include "nb_compat.h"
 
-namespace py = pybind11;
+namespace mx = mlx::core;
 
 namespace mpl {
+
+inline bool python_truth(py::handle src)
+{
+    int truth = PyObject_IsTrue(src.ptr());
+    if (truth < 0) {
+        py::raise_python_error();
+    }
+    return truth != 0;
+}
 
 /************************************************************
  * mpl::PathIterator acts as a bridge between MLXArrayBackend and Agg.  Given a
@@ -31,11 +43,10 @@ class PathIterator
        underlying data arrays, so that Python reference counting
        can work.
     */
-    py::buffer m_vertices;
-    py::buffer m_codes;
-    mpl::BufferView<double, 2> m_vertices_view64;
-    mpl::BufferView<float, 2> m_vertices_view32;
-    mpl::BufferView<uint8_t, 1> m_codes_view;
+    py::object m_vertices_owner;
+    py::object m_codes_owner;
+    std::optional<mx::array> m_vertices_array;
+    std::optional<mx::array> m_codes_array;
 
     enum class VertexDtype {
         Float32,
@@ -55,9 +66,9 @@ class PathIterator
 
   public:
     inline PathIterator()
-        : m_iterator(0),
+        : m_vertices_dtype(VertexDtype::Float64),
+          m_iterator(0),
           m_total_vertices(0),
-          m_vertices_dtype(VertexDtype::Float64),
           m_should_simplify(false),
           m_simplify_threshold(1.0 / 9.0)
     {
@@ -78,15 +89,11 @@ class PathIterator
 
     inline PathIterator(const PathIterator &other)
     {
-        m_vertices = other.m_vertices;
-        m_codes = other.m_codes;
-        if (m_vertices) {
-            set_vertices_view();
-        }
-        if (m_codes) {
-            m_codes_view = mpl::BufferView<uint8_t, 1>(m_codes);
-        }
-
+        m_vertices_owner = other.m_vertices_owner;
+        m_codes_owner = other.m_codes_owner;
+        m_vertices_array = other.m_vertices_array;
+        m_codes_array = other.m_codes_array;
+        m_vertices_dtype = other.m_vertices_dtype;
         m_iterator = 0;
         m_total_vertices = other.m_total_vertices;
 
@@ -94,26 +101,90 @@ class PathIterator
         m_simplify_threshold = other.m_simplify_threshold;
     }
 
-    inline void set_vertices_view()
+    inline mx::array cast_mlx_array(py::object obj, const char *name)
     {
-        auto info = m_vertices.request(false);
-        if (info.ndim != 2 || info.shape[1] != 2) {
+        try {
+            return py::cast<mx::array>(obj);
+        } catch (const std::exception& e) {
+            throw std::runtime_error(std::string(name) + " must be an MLX array: " + e.what());
+        }
+    }
+
+    inline bool is_mlx_array_like(py::object obj)
+    {
+        return py::isinstance<mx::array>(obj);
+    }
+
+    inline py::object get_python_item(py::handle obj, py::handle key)
+    {
+        PyObject* result = PyObject_GetItem(obj.ptr(), key.ptr());
+        if (result == nullptr) {
+            py::raise_python_error();
+        }
+        return py::steal<py::object>(result);
+    }
+
+    inline py::object mlx_scalar_at(py::handle array, size_t row, int column)
+    {
+        return get_python_item(
+            array,
+            py::make_tuple(static_cast<Py_ssize_t>(row),
+                           static_cast<Py_ssize_t>(column)));
+    }
+
+    inline py::object mlx_scalar_at(py::handle array, size_t idx)
+    {
+        py::int_ key(static_cast<Py_ssize_t>(idx));
+        return get_python_item(array, key);
+    }
+
+    inline double vertex_scalar(size_t idx, int column)
+    {
+        auto scalar = mlx_scalar_at(m_vertices_owner, idx, column);
+        return static_cast<double>(py::float_(scalar.attr("item")()));
+    }
+
+    inline unsigned code_scalar(size_t idx)
+    {
+        auto scalar = mlx_scalar_at(m_codes_owner, idx);
+        return static_cast<unsigned>(
+            static_cast<unsigned long long>(py::int_(scalar.attr("item")())));
+    }
+
+    inline void set_vertices_from_mlx(py::object vertices)
+    {
+        auto array = cast_mlx_array(vertices, "vertices");
+        if (array.ndim() != 2 || array.shape(1) != 2) {
             throw py::value_error("Invalid vertices array");
         }
 
-        if (info.format == py::format_descriptor<double>::format()
-            && info.itemsize == static_cast<py::ssize_t>(sizeof(double))) {
-            m_vertices_view64 = mpl::BufferView<double, 2>(m_vertices);
+        if (array.dtype() == mx::float64) {
             m_vertices_dtype = VertexDtype::Float64;
-        } else if (info.format == py::format_descriptor<float>::format()
-                   && info.itemsize == static_cast<py::ssize_t>(sizeof(float))) {
-            m_vertices_view32 = mpl::BufferView<float, 2>(m_vertices);
+        } else if (array.dtype() == mx::float32) {
             m_vertices_dtype = VertexDtype::Float32;
         } else {
             throw py::value_error("Unsupported vertices dtype");
         }
 
-        m_total_vertices = static_cast<unsigned>(info.shape[0]);
+        m_vertices_owner = vertices;
+        m_vertices_array = std::move(array);
+        m_total_vertices = static_cast<unsigned>(m_vertices_array->shape(0));
+    }
+
+    inline void set_codes_from_mlx(py::object codes)
+    {
+        auto array = cast_mlx_array(codes, "codes");
+        if (array.ndim() != 1
+                || static_cast<unsigned>(array.shape(0)) != m_total_vertices) {
+            throw py::value_error("Invalid codes array");
+        }
+
+        if (array.dtype() != mx::uint8) {
+            throw py::value_error("Invalid codes array");
+        }
+
+        m_codes_owner = codes;
+        m_codes_array = std::move(array);
     }
 
     inline void
@@ -121,18 +192,32 @@ class PathIterator
     {
         m_should_simplify = should_simplify;
         m_simplify_threshold = simplify_threshold;
+        m_vertices_array.reset();
+        m_codes_array.reset();
 
-        m_vertices = py::reinterpret_borrow<py::buffer>(vertices);
-        set_vertices_view();
+        m_vertices_owner = vertices;
+        try {
+            if (!is_mlx_array_like(vertices)) {
+                throw py::type_error("Path vertices must be an MLX array");
+            }
+            set_vertices_from_mlx(vertices);
+        } catch (const std::exception& e) {
+            throw std::runtime_error(std::string("vertices setup: ") + e.what());
+        }
 
         if (!codes.is_none()) {
-            m_codes = py::reinterpret_borrow<py::buffer>(codes);
-            m_codes_view = mpl::BufferView<uint8_t, 1>(m_codes);
-            if (m_codes_view.ndim() != 1 || m_codes_view.shape(0) != m_total_vertices) {
-                throw py::value_error("Invalid codes array");
+            m_codes_owner = codes;
+            try {
+                if (!is_mlx_array_like(codes)) {
+                    throw py::type_error("Path codes must be an MLX array");
+                }
+                set_codes_from_mlx(codes);
+            } catch (const std::exception& e) {
+                throw std::runtime_error(std::string("codes setup: ") + e.what());
             }
         } else {
-            m_codes = py::buffer();
+            m_codes_array.reset();
+            m_codes_owner = py::object();
         }
 
         m_iterator = 0;
@@ -153,16 +238,11 @@ class PathIterator
 
         const size_t idx = m_iterator++;
 
-        if (m_vertices_dtype == VertexDtype::Float64) {
-            *x = m_vertices_view64(static_cast<py::ssize_t>(idx), 0);
-            *y = m_vertices_view64(static_cast<py::ssize_t>(idx), 1);
-        } else {
-            *x = static_cast<double>(m_vertices_view32(static_cast<py::ssize_t>(idx), 0));
-            *y = static_cast<double>(m_vertices_view32(static_cast<py::ssize_t>(idx), 1));
-        }
+        *x = vertex_scalar(idx, 0);
+        *y = vertex_scalar(idx, 1);
 
-        if (m_codes) {
-            return m_codes_view(static_cast<py::ssize_t>(idx));
+        if (m_codes_array.has_value()) {
+            return code_scalar(idx);
         } else {
             return idx == 0 ? agg::path_cmd_move_to : agg::path_cmd_line_to;
         }
@@ -190,12 +270,12 @@ class PathIterator
 
     inline bool has_codes() const
     {
-        return bool(m_codes);
+        return m_codes_array.has_value();
     }
 
     inline void *get_id()
     {
-        return (void *)m_vertices.ptr();
+        return (void *)m_vertices_owner.ptr();
     }
 };
 
@@ -211,8 +291,8 @@ class PathGenerator
 
     void set(py::object obj)
     {
-        m_paths = obj.cast<py::sequence>();
-        m_npaths = m_paths.size();
+        m_paths = py::cast<py::sequence>(obj);
+        m_npaths = static_cast<Py_ssize_t>(py::len(m_paths));
     }
 
     Py_ssize_t num_paths() const
@@ -230,28 +310,55 @@ class PathGenerator
         path_iterator path;
 
         auto item = m_paths[i % m_npaths];
-        path = item.cast<path_iterator>();
+        path = py::cast<path_iterator>(item);
         return path;
     }
 };
 }
 
-namespace PYBIND11_NAMESPACE { namespace detail {
+namespace nanobind { namespace detail {
     template <> struct type_caster<mpl::PathIterator> {
     public:
-        PYBIND11_TYPE_CASTER(mpl::PathIterator, const_name("PathIterator"));
+        NB_TYPE_CASTER(mpl::PathIterator, const_name("PathIterator"));
 
-        bool load(handle src, bool) {
+        bool from_python(handle src, uint8_t, cleanup_list *) {
             if (src.is_none()) {
                 return true;
             }
 
-            py::object vertices = src.attr("vertices");
-            py::object codes = src.attr("codes");
-            auto should_simplify = src.attr("should_simplify").cast<bool>();
-            auto simplify_threshold = src.attr("simplify_threshold").cast<double>();
+            py::object obj = py::borrow<py::object>(src);
+            py::object vertices;
+            py::object codes;
+            bool should_simplify;
+            double simplify_threshold;
 
-            value.set(vertices, codes, should_simplify, simplify_threshold);
+            try {
+                vertices = obj.attr("vertices");
+            } catch (const std::exception& e) {
+                throw std::runtime_error(std::string("path.vertices: ") + e.what());
+            }
+            try {
+                codes = obj.attr("codes");
+            } catch (const std::exception& e) {
+                throw std::runtime_error(std::string("path.codes: ") + e.what());
+            }
+            try {
+                should_simplify = mpl::python_truth(obj.attr("should_simplify"));
+            } catch (const std::exception& e) {
+                throw std::runtime_error(std::string("path.should_simplify: ") + e.what());
+            }
+            try {
+                simplify_threshold = static_cast<double>(
+                    py::float_(obj.attr("simplify_threshold")));
+            } catch (const std::exception& e) {
+                throw std::runtime_error(std::string("path.simplify_threshold: ") + e.what());
+            }
+
+            try {
+                value.set(vertices, codes, should_simplify, simplify_threshold);
+            } catch (const std::exception& e) {
+                throw std::runtime_error(std::string("path data: ") + e.what());
+            }
 
             return true;
         }
@@ -259,13 +366,13 @@ namespace PYBIND11_NAMESPACE { namespace detail {
 
     template <> struct type_caster<mpl::PathGenerator> {
     public:
-        PYBIND11_TYPE_CASTER(mpl::PathGenerator, const_name("PathGenerator"));
+        NB_TYPE_CASTER(mpl::PathGenerator, const_name("PathGenerator"));
 
-        bool load(handle src, bool) {
+        bool from_python(handle src, uint8_t, cleanup_list *) {
             value.set(py::reinterpret_borrow<py::object>(src));
             return true;
         }
     };
-}} // namespace PYBIND11_NAMESPACE::detail
+}} // namespace nanobind::detail
 
 #endif

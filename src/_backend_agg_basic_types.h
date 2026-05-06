@@ -4,19 +4,17 @@
 /* Contains some simple types from the Agg backend that are also used
    by other modules */
 
-#include <pybind11/pybind11.h>
-
+#include <stdexcept>
 #include <unordered_map>
 #include <vector>
 
 #include "agg_color_rgba.h"
 #include "agg_math_stroke.h"
 #include "agg_trans_affine.h"
+#include "nb_compat.h"
 #include "path_converters.h"
 
 #include "py_adaptors.h"
-
-namespace py = pybind11;
 
 struct ClipPath
 {
@@ -124,52 +122,119 @@ class GCAgg
     GCAgg &operator=(const GCAgg &);
 };
 
-namespace PYBIND11_NAMESPACE { namespace detail {
+inline bool python_truth(py::handle src);
+
+inline void set_gcagg_from_python(py::handle src, GCAgg& value)
+{
+    py::object obj = py::reinterpret_borrow<py::object>(src);
+#define SET_GC_FIELD(name_, field_, expr_) \
+    do { \
+        try { \
+            value.field_ = (expr_); \
+        } catch (const std::exception& e) { \
+            throw std::runtime_error(std::string(name_) + ": " + e.what()); \
+        } \
+    } while (false)
+    SET_GC_FIELD("_linewidth", linewidth, py::cast<double>(obj.attr("_linewidth")));
+    SET_GC_FIELD("_alpha", alpha, py::cast<double>(obj.attr("_alpha")));
+    SET_GC_FIELD("_forced_alpha", forced_alpha, python_truth(obj.attr("_forced_alpha")));
+    SET_GC_FIELD("_rgb", color, py::cast<agg::rgba>(obj.attr("_rgb")));
+    SET_GC_FIELD("_antialiased", isaa, python_truth(obj.attr("_antialiased")));
+    SET_GC_FIELD("_capstyle", cap, py::cast<agg::line_cap_e>(obj.attr("_capstyle")));
+    SET_GC_FIELD("_joinstyle", join, py::cast<agg::line_join_e>(obj.attr("_joinstyle")));
+    SET_GC_FIELD("get_dashes", dashes, py::cast<Dashes>(obj.attr("get_dashes")()));
+    SET_GC_FIELD("get_clip_rectangle_agg", cliprect,
+                 py::cast<agg::rect_d>(obj.attr("get_clip_rectangle_agg")()));
+    SET_GC_FIELD("get_clip_path_agg", clippath,
+                 py::cast<ClipPath>(obj.attr("get_clip_path_agg")()));
+    SET_GC_FIELD("get_snap", snap_mode, py::cast<e_snap_mode>(obj.attr("get_snap")()));
+    SET_GC_FIELD("get_hatch_path", hatchpath,
+                 py::cast<mpl::PathIterator>(obj.attr("get_hatch_path")()));
+    SET_GC_FIELD("get_hatch_color", hatch_color,
+                 py::cast<agg::rgba>(obj.attr("get_hatch_color")()));
+    SET_GC_FIELD("get_hatch_linewidth", hatch_linewidth,
+                 py::cast<double>(obj.attr("get_hatch_linewidth")()));
+    SET_GC_FIELD("get_sketch_params", sketch,
+                 py::cast<SketchParams>(obj.attr("get_sketch_params")()));
+#undef SET_GC_FIELD
+}
+
+inline std::string string_or_enum_value(py::handle src)
+{
+    if (PyUnicode_Check(src.ptr())) {
+        return py::cast<std::string>(src);
+    }
+    if (PyObject_HasAttrString(src.ptr(), "value")) {
+        return py::cast<std::string>(src.attr("value"));
+    }
+    return py::cast<std::string>(src);
+}
+
+inline bool python_truth(py::handle src)
+{
+    int truth = PyObject_IsTrue(src.ptr());
+    if (truth < 0) {
+        py::raise_python_error();
+    }
+    return truth != 0;
+}
+
+inline e_snap_mode snap_mode_from_python(py::handle src)
+{
+    if (src.is_none()) {
+        return SNAP_AUTO;
+    }
+    return python_truth(src) ? SNAP_TRUE : SNAP_FALSE;
+}
+
+namespace nanobind { namespace detail {
     template <> struct type_caster<agg::line_cap_e> {
     public:
-        PYBIND11_TYPE_CASTER(agg::line_cap_e, const_name("line_cap_e"));
+        NB_TYPE_CASTER(agg::line_cap_e, const_name("line_cap_e"));
 
-        bool load(handle src, bool) {
+        bool from_python(handle src, uint8_t, cleanup_list *) {
             const std::unordered_map<std::string, agg::line_cap_e> enum_values = {
                 {"butt", agg::butt_cap},
                 {"round", agg::round_cap},
                 {"projecting", agg::square_cap},
             };
-            value = enum_values.at(src.cast<std::string>());
+            value = enum_values.at(string_or_enum_value(src));
             return true;
         }
     };
 
     template <> struct type_caster<agg::line_join_e> {
     public:
-        PYBIND11_TYPE_CASTER(agg::line_join_e, const_name("line_join_e"));
+        NB_TYPE_CASTER(agg::line_join_e, const_name("line_join_e"));
 
-        bool load(handle src, bool) {
+        bool from_python(handle src, uint8_t, cleanup_list *) {
             const std::unordered_map<std::string, agg::line_join_e> enum_values = {
                 {"miter", agg::miter_join_revert},
                 {"round", agg::round_join},
                 {"bevel", agg::bevel_join},
             };
-            value = enum_values.at(src.cast<std::string>());
+            value = enum_values.at(string_or_enum_value(src));
             return true;
         }
     };
 
     template <> struct type_caster<ClipPath> {
     public:
-        PYBIND11_TYPE_CASTER(ClipPath, const_name("ClipPath"));
+        NB_TYPE_CASTER(ClipPath, const_name("ClipPath"));
 
-        bool load(handle src, bool) {
+        bool from_python(handle src, uint8_t, cleanup_list *) {
             if (src.is_none()) {
                 return true;
             }
 
-            auto [path, trans] =
-                src.cast<std::pair<std::optional<mpl::PathIterator>, agg::trans_affine>>();
-            if (path) {
-                value.path = *path;
+            auto pair = py::cast<py::tuple>(src);
+            if (pair.size() != 2) {
+                throw py::value_error("clip path must be a path/transform pair");
             }
-            value.trans = trans;
+            if (!py::handle(pair[0]).is_none()) {
+                value.path = py::cast<mpl::PathIterator>(pair[0]);
+            }
+            value.trans = py::cast<agg::trans_affine>(pair[1]);
 
             return true;
         }
@@ -177,26 +242,29 @@ namespace PYBIND11_NAMESPACE { namespace detail {
 
     template <> struct type_caster<Dashes> {
     public:
-        PYBIND11_TYPE_CASTER(Dashes, const_name("Dashes"));
+        NB_TYPE_CASTER(Dashes, const_name("Dashes"));
 
-        bool load(handle src, bool) {
-            auto [dash_offset, dashes_seq_or_none] =
-                src.cast<std::pair<double, std::optional<py::sequence>>>();
+        bool from_python(handle src, uint8_t, cleanup_list *) {
+            auto pair = py::cast<py::tuple>(src);
+            if (pair.size() != 2) {
+                throw py::value_error("dashes must be an offset/pattern pair");
+            }
+            auto dash_offset = py::cast<double>(pair[0]);
 
-            if (!dashes_seq_or_none) {
+            if (py::handle(pair[1]).is_none()) {
                 return true;
             }
 
-            auto dashes_seq = *dashes_seq_or_none;
+            auto dashes_seq = py::cast<py::sequence>(pair[1]);
 
-            auto nentries = dashes_seq.size();
+            auto nentries = py::len(dashes_seq);
             // If the dashpattern has odd length, iterate through it twice (in
             // accordance with the pdf/ps/svg specs).
             auto dash_pattern_length = (nentries % 2) ? 2 * nentries : nentries;
 
-            for (py::size_t i = 0; i < dash_pattern_length; i += 2) {
-                auto length = dashes_seq[i % nentries].cast<double>();
-                auto skip = dashes_seq[(i + 1) % nentries].cast<double>();
+            for (size_t i = 0; i < dash_pattern_length; i += 2) {
+                auto length = py::cast<double>(dashes_seq[i % nentries]);
+                auto skip = py::cast<double>(dashes_seq[(i + 1) % nentries]);
 
                 value.add_dash_pair(length, skip);
             }
@@ -209,9 +277,9 @@ namespace PYBIND11_NAMESPACE { namespace detail {
 
     template <> struct type_caster<SketchParams> {
     public:
-        PYBIND11_TYPE_CASTER(SketchParams, const_name("SketchParams"));
+        NB_TYPE_CASTER(SketchParams, const_name("SketchParams"));
 
-        bool load(handle src, bool) {
+        bool from_python(handle src, uint8_t, cleanup_list *) {
             if (src.is_none()) {
                 value.scale = 0.0;
                 value.length = 0.0;
@@ -219,37 +287,18 @@ namespace PYBIND11_NAMESPACE { namespace detail {
                 return true;
             }
 
-            auto params = src.cast<std::tuple<double, double, double>>();
-            std::tie(value.scale, value.length, value.randomness) = params;
+            auto params = py::cast<py::tuple>(src);
+            if (params.size() != 3) {
+                throw py::value_error("sketch parameters must have three values");
+            }
+            value.scale = py::cast<double>(params[0]);
+            value.length = py::cast<double>(params[1]);
+            value.randomness = py::cast<double>(params[2]);
 
             return true;
         }
     };
 
-    template <> struct type_caster<GCAgg> {
-    public:
-        PYBIND11_TYPE_CASTER(GCAgg, const_name("GCAgg"));
-
-        bool load(handle src, bool) {
-            value.linewidth = src.attr("_linewidth").cast<double>();
-            value.alpha = src.attr("_alpha").cast<double>();
-            value.forced_alpha = src.attr("_forced_alpha").cast<bool>();
-            value.color = src.attr("_rgb").cast<agg::rgba>();
-            value.isaa = src.attr("_antialiased").cast<bool>();
-            value.cap = src.attr("_capstyle").cast<agg::line_cap_e>();
-            value.join = src.attr("_joinstyle").cast<agg::line_join_e>();
-            value.dashes = src.attr("get_dashes")().cast<Dashes>();
-            value.cliprect = src.attr("get_clip_rectangle_agg")().cast<agg::rect_d>();
-            value.clippath = src.attr("get_clip_path_agg")().cast<ClipPath>();
-            value.snap_mode = src.attr("get_snap")().cast<e_snap_mode>();
-            value.hatchpath = src.attr("get_hatch_path")().cast<mpl::PathIterator>();
-            value.hatch_color = src.attr("get_hatch_color")().cast<agg::rgba>();
-            value.hatch_linewidth = src.attr("get_hatch_linewidth")().cast<double>();
-            value.sketch = src.attr("get_sketch_params")().cast<SketchParams>();
-
-            return true;
-        }
-    };
-}} // namespace PYBIND11_NAMESPACE::detail
+}} // namespace nanobind::detail
 
 #endif

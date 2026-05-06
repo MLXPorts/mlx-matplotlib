@@ -902,7 +902,7 @@ class Bbox(BboxBase):
         bbox = Bbox(mx.reshape(mx.stack([
             _mx_plot_array(value, dtype=mx.float64) for value in args]), (2, 2)))
         if minpos is not None:
-            bbox._minpos[:] = minpos
+            bbox.minpos = minpos
         return bbox
 
     def __format__(self, fmt):
@@ -1151,7 +1151,10 @@ class Bbox(BboxBase):
 
     @minpos.setter
     def minpos(self, val):
-        self._minpos[:] = val
+        val = _mx_plot_array(val, dtype=self._points.dtype)
+        if val.ndim == 0:
+            val = mx.broadcast_to(val, (2,))
+        self._minpos = mx.reshape(val, (2,))
 
     @property
     def minposx(self):

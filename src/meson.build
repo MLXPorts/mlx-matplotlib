@@ -47,6 +47,15 @@ mlx_include_dir = mlx_paths[0]
 mlx_lib_dir = mlx_paths[1]
 mlx_metal_cpp_include_dir = meson.project_source_root() / 'extern' / 'metal_cpp'
 mlx_dep = cpp.find_library('mlx', dirs: mlx_lib_dir, required: true)
+nanobind_cpp_args = [
+  '-I' + nanobind_include_dir,
+  '-I' + nanobind_robin_map_include_dir,
+  '-DNB_DOMAIN=mlx',
+  '-DNB_STATIC',
+]
+mlx_cpp_args = nanobind_cpp_args + [
+  '-I' + mlx_include_dir,
+]
 
 # With Meson >= 1.2.0, use cpp_winlibs instead of manually searching.
 if ['cygwin', 'windows'].contains(host_machine.system())
@@ -69,26 +78,34 @@ extension_data = {
     'sources': files(
       '_backend_agg.cpp',
       '_backend_agg_wrapper.cpp',
-    ),
-    'dependencies': [agg_dep, pybind11_dep],
+      'py_converters.cpp',
+    ) + [nanobind_combined_cpp],
+    'dependencies': [agg_dep, mlx_dep],
+    'cpp_args': mlx_cpp_args + [
+      '-DMPL_USE_NANOBIND',
+    ],
+    'override_options': ['cpp_std=c++20'],
+    'build_rpath': mlx_lib_dir,
+    'install_rpath': mlx_lib_dir,
   },
   '_c_internal_utils': {
     'subdir': 'matplotlib',
     'sources': files(
       '_c_internal_utils.cpp',
-    ),
-    'dependencies': [pybind11_dep, dl, ole32, shell32, user32],
+    ) + [nanobind_combined_cpp],
+    'dependencies': [dl, ole32, shell32, user32],
+    'cpp_args': nanobind_cpp_args,
   },
   'ft2font': {
     'subdir': 'matplotlib',
     'sources': files(
       'ft2font.cpp',
       'ft2font_wrapper.cpp',
-    ),
+    ) + [nanobind_combined_cpp],
     'dependencies': [
-      freetype_dep, pybind11_dep, agg_dep.partial_dependency(includes: true),
+      freetype_dep, agg_dep.partial_dependency(includes: true),
     ],
-    'cpp_args': [
+    'cpp_args': nanobind_cpp_args + [
       '-DFREETYPE_BUILD_TYPE="@0@"'.format(
         freetype_dep.type_name() == 'internal' ? 'local' : 'system',
       ),
@@ -101,18 +118,11 @@ extension_data = {
       'py_converters.cpp',
     ) + [nanobind_combined_cpp],
     'dependencies': [
-      pybind11_dep,
       mlx_dep,
       # Only need source code files agg_image_filters.cpp and agg_trans_affine.cpp
       agg_dep,
     ],
-    'cpp_args': [
-      '-I' + nanobind_include_dir,
-      '-I' + nanobind_robin_map_include_dir,
-      '-I' + mlx_include_dir,
-      '-DNB_DOMAIN=mlx',
-      '-DNB_STATIC',
-    ],
+    'cpp_args': mlx_cpp_args,
     'override_options': ['cpp_std=c++20'],
     'build_rpath': mlx_lib_dir,
     'install_rpath': mlx_lib_dir,
@@ -141,13 +151,9 @@ extension_data = {
       '_path_wrapper.cpp',
       'py_converters.cpp',
     ) + [nanobind_combined_cpp],
-    'dependencies': [agg_dep, pybind11_dep, mlx_dep],
-    'cpp_args': [
-      '-I' + nanobind_include_dir,
-      '-I' + nanobind_robin_map_include_dir,
-      '-I' + mlx_include_dir,
-      '-DNB_DOMAIN=mlx',
-      '-DNB_STATIC',
+    'dependencies': [agg_dep, mlx_dep],
+    'cpp_args': mlx_cpp_args + [
+      '-DMPL_USE_NANOBIND',
     ],
     'override_options': ['cpp_std=c++20'],
     'build_rpath': mlx_lib_dir,
@@ -157,29 +163,31 @@ extension_data = {
     'subdir': 'matplotlib',
     'sources': files(
       '_qhull_wrapper.cpp',
-    ),
-    'dependencies': [pybind11_dep, qhull_dep],
+    ) + [nanobind_combined_cpp],
+    'dependencies': [qhull_dep],
     'c_args': [f'-DMPL_DEVNULL=@devnull@'],
-    'cpp_args': [f'-DMPL_DEVNULL=@devnull@'],
+    'cpp_args': nanobind_cpp_args + [f'-DMPL_DEVNULL=@devnull@'],
   },
   '_tkagg': {
     'subdir': 'matplotlib/backends',
     'sources': files(
       '_tkagg.cpp',
-    ),
+    ) + [nanobind_combined_cpp],
     'include_directories': include_directories('.'),
     # The dl/psapi libraries are needed for finding Tcl/Tk at run time.
     'dependencies': [
-      pybind11_dep, agg_dep.partial_dependency(includes: true), dl, comctl32, psapi,
+      agg_dep.partial_dependency(includes: true), dl, comctl32, psapi,
     ],
+    'cpp_args': nanobind_cpp_args,
   },
   '_tri': {
     'subdir': 'matplotlib',
     'sources': files(
       'tri/_tri.cpp',
       'tri/_tri_wrapper.cpp',
-    ),
-    'dependencies': [pybind11_dep],
+    ) + [nanobind_combined_cpp],
+    'dependencies': [],
+    'cpp_args': nanobind_cpp_args,
   },
 }
 

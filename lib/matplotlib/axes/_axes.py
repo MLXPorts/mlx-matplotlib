@@ -73,6 +73,20 @@ def _mx_diff(values):
     return mx.subtract(left, right, stream=stream)
 
 
+def _mx_histogram_bin_count(values, strategy):
+    size = math.prod(values.shape)
+    if size <= 1:
+        return 1
+    if strategy == "sqrt":
+        return math.ceil(math.sqrt(size))
+    if strategy == "rice":
+        return math.ceil(2 * size ** (1 / 3))
+    sturges = math.ceil(math.log2(size) + 1)
+    if strategy == "auto":
+        return max(sturges, math.ceil(math.sqrt(size)))
+    return sturges
+
+
 def _mx_histogram_bin_edges(values, bins=10, bin_range=None, weights=None):
     values = values if isinstance(values, mx.array) else mx.array(values)
     if values.dtype not in (mx.float32, mx.float64):
@@ -80,8 +94,13 @@ def _mx_histogram_bin_edges(values, bins=10, bin_range=None, weights=None):
     stream = mx.cpu if values.dtype == mx.float64 else None
     if cbook.is_scalar_or_string(bins):
         if not isinstance(bins, Integral):
-            raise ValueError(
-                "MLX histogram bins must be an integer or explicit edges")
+            valid_strategies = {
+                "auto", "fd", "doane", "scott", "stone", "rice",
+                "sturges", "sqrt",
+            }
+            if bins not in valid_strategies:
+                raise ValueError(f"{bins!r} is not a valid estimator for bins")
+            bins = _mx_histogram_bin_count(values, bins)
         if bin_range is None:
             lo = _mx_nanmin(values)
             hi = _mx_nanmax(values)

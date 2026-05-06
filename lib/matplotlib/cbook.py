@@ -1515,21 +1515,40 @@ def _reshape_2D(X, name):
 
     result = []
     is_1d = True
+    has_python_refs = False
     for xi in X:
         # check if this is iterable, except for strings which we
         # treat as singletons.
-        if not isinstance(xi, str):
+        xi_is_iterable = False
+        if (not isinstance(xi, str)
+                and not (hasattr(xi, "ndim") and xi.ndim == 0)):
             try:
                 iter(xi)
             except TypeError:
                 pass
             else:
+                xi_is_iterable = True
                 is_1d = False
-        xi = xi if isinstance(xi, mx.array) else mx.array(xi)
+        try:
+            xi = xi if isinstance(xi, mx.array) else mx.array(xi)
+        except TypeError:
+            has_python_refs = True
+            if xi_is_iterable:
+                row = list(xi)
+                if any(not isinstance(item, str) and iterable(item)
+                       for item in row):
+                    raise ValueError(f'{name} must have 2 or fewer dimensions')
+                result.append(row)
+            else:
+                result.append(xi)
+            continue
         nd = xi.ndim
         if nd > 1:
             raise ValueError(f'{name} must have 2 or fewer dimensions')
         result.append(mx.reshape(xi, (-1,)))
+
+    if has_python_refs:
+        return [result] if is_1d else result
 
     if is_1d:
         # 1D array of scalars: directly return it.
@@ -2110,14 +2129,13 @@ def _unfold(arr, axis, size, step):
             [22, 23, 24],
             [24, 25, 26]]])
     """
-    new_shape = [*arr.shape, size]
-    new_strides = [*arr.strides, arr.strides[axis]]
-    new_shape[axis] = (new_shape[axis] - size) // step + 1
-    new_strides[axis] = new_strides[axis] * step
-    return mx.lib.stride_tricks.as_strided(arr,
-                                           shape=new_shape,
-                                           strides=new_strides,
-                                           writeable=False)
+    count = (arr.shape[axis] - size) // step + 1
+    windows = []
+    for offset in range(size):
+        slc = [slice(None)] * arr.ndim
+        slc[axis] = slice(offset, offset + count * step, step)
+        windows.append(arr[tuple(slc)])
+    return mx.stack(windows, axis=-1)
 
 
 def _array_patch_perimeters(x, rstride, cstride):

@@ -16,7 +16,7 @@
 #define _WIN32_WINNT WINVER
 #endif
 #endif
-#include <pybind11/pybind11.h>
+#include "nb_compat.h"
 #ifdef __linux__
 #include <dlfcn.h>
 #endif
@@ -29,8 +29,7 @@
 #define UNUSED_ON_NON_WINDOWS Py_UNUSED
 #endif
 
-namespace py = pybind11;
-using namespace pybind11::literals;
+using namespace nanobind::literals;
 
 static bool
 mpl_xdisplay_is_valid(void)
@@ -103,7 +102,7 @@ mpl_GetCurrentProcessExplicitAppUserModelID(void)
     HRESULT hr = GetCurrentProcessExplicitAppUserModelID(&appid);
     if (FAILED(hr)) {
         PyErr_SetFromWindowsErr(hr);
-        throw py::error_already_set();
+        py::raise_python_error();
     }
     auto py_appid = py::cast(appid);
     CoTaskMemFree(appid);
@@ -120,7 +119,7 @@ mpl_SetCurrentProcessExplicitAppUserModelID(const wchar_t* UNUSED_ON_NON_WINDOWS
     HRESULT hr = SetCurrentProcessExplicitAppUserModelID(appid);
     if (FAILED(hr)) {
         PyErr_SetFromWindowsErr(hr);
-        throw py::error_already_set();
+        py::raise_python_error();
     }
 #endif
 }
@@ -188,7 +187,7 @@ mpl_SetProcessDpiAwareness_max(void)
 #endif
 }
 
-PYBIND11_MODULE(_c_internal_utils, m, py::mod_gil_not_used())
+NB_MODULE(_c_internal_utils, m)
 {
     m.def(
         "display_is_valid", &mpl_display_is_valid,
@@ -220,7 +219,7 @@ PYBIND11_MODULE(_c_internal_utils, m, py::mod_gil_not_used())
     m.def(
         "Win32_SetCurrentProcessExplicitAppUserModelID",
         &mpl_SetCurrentProcessExplicitAppUserModelID,
-        "appid"_a, py::pos_only(),
+        "appid"_a,
         R"""(        --
         Wrapper for Windows's SetCurrentProcessExplicitAppUserModelID.
 

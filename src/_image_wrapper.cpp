@@ -1,5 +1,4 @@
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include "nb_compat.h"
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/variant.h>
 
@@ -22,10 +21,9 @@
 #include "py_buffer.h"
 #include "py_converters.h"
 
-namespace py = pybind11;
 namespace nb = nanobind;
 namespace mx = mlx::core;
-using namespace pybind11::literals;
+using namespace nanobind::literals;
 
 namespace {
 
@@ -103,7 +101,7 @@ mx::StreamOrDevice as_stream_or_device(const py::object& stream)
     } catch (const nb::cast_error&) {
     }
 
-    auto repr = py::repr(stream).cast<std::string>();
+    auto repr = py::cast<std::string>(py::repr(stream));
     if (repr.rfind("Stream(", 0) == 0) {
         return parse_mlx_stream_repr(repr);
     }
@@ -277,10 +275,10 @@ std::vector<double> get_transform_mesh(const py::object &transform,
         PyByteArray_FromStringAndSize(nullptr,
                                       static_cast<py::ssize_t>(input_mesh.size() * sizeof(double))));
     if (!ba) {
-        throw py::error_already_set();
+        py::raise_python_error();
     }
     std::memcpy(PyByteArray_AsString(ba.ptr()), input_mesh.data(), input_mesh.size() * sizeof(double));
-    py::object mv = py::module_::import("builtins").attr("memoryview")(ba);
+    py::object mv = py::module_::import_("builtins").attr("memoryview")(ba);
     mv = mv.attr("cast")("d", py::make_tuple(n, 2));
 
     py::object output = inverse.attr("transform")(mv);
@@ -467,10 +465,10 @@ static void image_resample(py::object input_array,
 
 [[noreturn]] void throw_image_comparison_failure(const std::string &message)
 {
-    py::object exc = py::module_::import("matplotlib.testing.exceptions")
+    py::object exc = py::module_::import_("matplotlib.testing.exceptions")
                          .attr("ImageComparisonFailure");
     PyErr_SetString(exc.ptr(), message.c_str());
-    throw py::error_already_set();
+    py::raise_python_error();
 }
 
 std::string dimensionality(py::ssize_t ndim)
@@ -632,15 +630,15 @@ static py::tuple calculate_rms_and_diff(py::object expected_image,
         PyByteArray_FromStringAndSize(
             reinterpret_cast<const char *>(diff_uint8.data<std::uint8_t>()), nbytes));
     if (!ba) {
-        throw py::error_already_set();
+        py::raise_python_error();
     }
-    py::object mv = py::module_::import("builtins").attr("memoryview")(ba);
+    py::object mv = py::module_::import_("builtins").attr("memoryview")(ba);
     mv = mv.attr("cast")("B", py::make_tuple(height, width, depth));
 
     return py::make_tuple(rms, mv);
 }
 
-PYBIND11_MODULE(_image, m)
+NB_MODULE(_image, m)
 {
 #if NB_VERSION_MAJOR > 2 || (NB_VERSION_MAJOR == 2 && NB_VERSION_MINOR >= 12)
     nb::detail::nb_module_exec(NB_DOMAIN_STR, m.ptr());

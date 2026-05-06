@@ -203,9 +203,7 @@ jobs:
           # Install MLX first so the nanobind ABI used for our C++ extension
           # can match the MLX wheel selected for this Python and runner.
           python -m pip install --upgrade $PRE mlx
-          MLXPORTS_NANOBIND_REQUIREMENT="$(
-            python ci/mlx_build_config.py --nanobind-requirement
-          )"
+          eval "$(python ci/mlx_build_config.py --shell-env)"
           python ci/mlx_build_config.py --summary
 
           # Install dependencies from PyPI.
@@ -215,7 +213,7 @@ jobs:
           python -m pip install --upgrade $PRE \
             'contourpy>=1.0.1' cycler fonttools kiwisolver importlib_resources \
             packaging pillow 'pyparsing!=3.1.0' python-dateutil setuptools-scm \
-            'meson-python>=0.13.1,!=0.17.*' "$MLXPORTS_NANOBIND_REQUIREMENT" 'pybind11>=2.13.2,<3,!=2.13.3' \
+            'meson-python>=0.13.1,!=0.17.*' "$MLXPORTS_NANOBIND_REQUIREMENT" \
             -r requirements/testing/all.txt \
             ${{ matrix.extra-requirements }}
 

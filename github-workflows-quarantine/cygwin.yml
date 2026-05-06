@@ -177,7 +177,7 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install kiwisolver mlx pillow importlib_resources
           grep -v -F -e psutil requirements/testing/all.txt >requirements_test.txt
-          python -m pip install meson-python pybind11
+          python -m pip install meson-python nanobind
           export PATH="/usr/local/bin:$PATH"
           python -m pip install --no-build-isolation 'contourpy>=1.0.1'
           python -m pip install --upgrade cycler fonttools \

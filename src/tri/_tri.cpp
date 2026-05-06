@@ -52,8 +52,8 @@ std::vector<T> copy_2d(const mpl::BufferView<T, 2> &view)
 
 py::memoryview make_view_from_bytearray(const py::bytearray &ba, const char *format, const py::tuple &shape)
 {
-    py::object mv = py::module_::import("builtins").attr("memoryview")(ba);
-    return mv.attr("cast")(format, shape).cast<py::memoryview>();
+    py::object mv = py::module_::import_("builtins").attr("memoryview")(ba);
+    return py::cast<py::memoryview>(mv.attr("cast")(format, shape));
 }
 
 py::bytearray bytearray_of_size(py::ssize_t nbytes)
@@ -61,7 +61,7 @@ py::bytearray bytearray_of_size(py::ssize_t nbytes)
     py::bytearray ba = py::reinterpret_steal<py::bytearray>(
         PyByteArray_FromStringAndSize(nullptr, nbytes));
     if (!ba) {
-        throw py::error_already_set();
+        py::raise_python_error();
     }
     return ba;
 }
@@ -765,8 +765,8 @@ py::tuple TriContourGenerator::contour_line_to_segs_and_kinds(const Contour& con
     // and they are appended to the Python lists vertices_list and codes_list
     // respectively for return to the Python calling function.
 
-    py::list vertices_list(contour.size());
-    py::list codes_list(contour.size());
+    py::list vertices_list;
+    py::list codes_list;
 
     for (Contour::size_type i = 0; i < contour.size(); ++i) {
         const ContourLine& contour_line = contour[i];
@@ -794,8 +794,8 @@ py::tuple TriContourGenerator::contour_line_to_segs_and_kinds(const Contour& con
             contour_line.front() == contour_line.back())
             *(codes_ptr-1) = CLOSEPOLY;
 
-        vertices_list[i] = make_view_from_bytearray(segs_ba, "d", py::make_tuple(npoints, 2));
-        codes_list[i] = make_view_from_bytearray(codes_ba, "B", py::make_tuple(npoints));
+        vertices_list.append(make_view_from_bytearray(segs_ba, "d", py::make_tuple(npoints, 2)));
+        codes_list.append(make_view_from_bytearray(codes_ba, "B", py::make_tuple(npoints)));
     }
 
     return py::make_tuple(vertices_list, codes_list);
@@ -843,11 +843,11 @@ py::tuple TriContourGenerator::contour_to_segs_and_kinds(const Contour& contour)
         }
     }
 
-    py::list vertices_list(1);
-    vertices_list[0] = make_view_from_bytearray(segs_ba, "d", py::make_tuple(n_points, 2));
+    py::list vertices_list;
+    vertices_list.append(make_view_from_bytearray(segs_ba, "d", py::make_tuple(n_points, 2)));
 
-    py::list codes_list(1);
-    codes_list[0] = make_view_from_bytearray(codes_ba, "B", py::make_tuple(n_points));
+    py::list codes_list;
+    codes_list.append(make_view_from_bytearray(codes_ba, "B", py::make_tuple(n_points)));
 
     return py::make_tuple(vertices_list, codes_list);
 }
@@ -1495,14 +1495,14 @@ TrapezoidMapTriFinder::get_tree_stats()
     NodeStats stats;
     _tree->get_stats(0, stats);
 
-    py::list ret(7);
-    ret[0] = stats.node_count;
-    ret[1] = stats.unique_nodes.size(),
-    ret[2] = stats.trapezoid_count,
-    ret[3] = stats.unique_trapezoid_nodes.size(),
-    ret[4] = stats.max_parent_count,
-    ret[5] = stats.max_depth,
-    ret[6] = stats.sum_trapezoid_depth / stats.trapezoid_count;
+    py::list ret;
+    ret.append(stats.node_count);
+    ret.append(stats.unique_nodes.size());
+    ret.append(stats.trapezoid_count);
+    ret.append(stats.unique_trapezoid_nodes.size());
+    ret.append(stats.max_parent_count);
+    ret.append(stats.max_depth);
+    ret.append(stats.sum_trapezoid_depth / stats.trapezoid_count);
     return ret;
 }
 

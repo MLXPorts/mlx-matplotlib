@@ -29,10 +29,9 @@
 #endif
 #endif
 
-#include <pybind11/pybind11.h>
+#include "nb_compat.h"
 #include "py_buffer.h"
-namespace py = pybind11;
-using namespace pybind11::literals;
+using namespace nanobind::literals;
 
 #ifdef _WIN32
 #define WIN32_DLL
@@ -80,7 +79,7 @@ convert_voidptr(const py::object &obj)
 {
     auto result = static_cast<T>(PyLong_AsVoidPtr(obj.ptr()));
     if (PyErr_Occurred()) {
-        throw py::error_already_set();
+        py::raise_python_error();
     }
     return result;
 }
@@ -108,19 +107,19 @@ mpl_tk_blit(py::object interp_obj, const char *photo_name,
 
     mpl::BufferView<unsigned char, 3> data_ptr(data, true);
     if (data_ptr.shape(2) != 4) {
-        throw py::value_error(
-            "Data pointer must be RGBA; last dimension is {}, not 4"_s.format(
-                data_ptr.shape(2)));
+        auto message = "Data pointer must be RGBA; last dimension is "
+            + std::to_string(data_ptr.shape(2)) + ", not 4";
+        throw py::value_error(message.c_str());
     }
     if (data_ptr.shape(0) > INT_MAX) {  // Limited by Tk_PhotoPutBlock argument type.
         throw std::range_error(
-            "Height ({}) exceeds maximum allowable size ({})"_s.format(
-                data_ptr.shape(0), INT_MAX));
+            "Height (" + std::to_string(data_ptr.shape(0))
+            + ") exceeds maximum allowable size (" + std::to_string(INT_MAX) + ")");
     }
     if (data_ptr.shape(1) > INT_MAX / 4) {  // Limited by Tk_PhotoImageBlock.pitch field.
         throw std::range_error(
-            "Width ({}) exceeds maximum allowable size ({})"_s.format(
-                data_ptr.shape(1), INT_MAX / 4));
+            "Width (" + std::to_string(data_ptr.shape(1))
+            + ") exceeds maximum allowable size (" + std::to_string(INT_MAX / 4) + ")");
     }
     const auto height = static_cast<int>(data_ptr.shape(0));
     const auto width = static_cast<int>(data_ptr.shape(1));
@@ -283,13 +282,13 @@ load_tkinter_funcs()
     DWORD size;
     if (!EnumProcessModules(process, NULL, 0, &size)) {
         PyErr_SetFromWindowsErr(0);
-        throw py::error_already_set();
+        py::raise_python_error();
     }
     auto count = size / sizeof(HMODULE);
     auto modules = std::vector<HMODULE>(count);
     if (!EnumProcessModules(process, modules.data(), size, &size)) {
         PyErr_SetFromWindowsErr(0);
-        throw py::error_already_set();
+        py::raise_python_error();
     }
     for (auto mod: modules) {
         if (load_tcl_tk(mod)) {
@@ -325,14 +324,14 @@ load_tkinter_funcs()
     py::object module;
     // Handle PyPy first, as that import will correctly fail on CPython.
     try {
-        module = py::module_::import("_tkinter.tklib_cffi");  // PyPy
-    } catch (py::error_already_set &e) {
-        module = py::module_::import("_tkinter");  // CPython
+        module = py::module_::import_("_tkinter.tklib_cffi");  // PyPy
+    } catch (py::python_error &e) {
+        module = py::module_::import_("_tkinter");  // CPython
     }
     auto py_path = module.attr("__file__");
     auto py_path_b = py::reinterpret_steal<py::bytes>(
         PyUnicode_EncodeFSDefault(py_path.ptr()));
-    std::string path = py_path_b;
+    std::string path = py::cast<std::string>(py_path_b);
     auto tkinter_lib = dlopen(path.c_str(), RTLD_LAZY);
     if (!tkinter_lib) {
         throw std::runtime_error(dlerror());
@@ -345,14 +344,14 @@ load_tkinter_funcs()
 }
 #endif // end not Windows
 
-PYBIND11_MODULE(_tkagg, m, py::mod_gil_not_used())
+NB_MODULE(_tkagg, m)
 {
     try {
         load_tkinter_funcs();
-    } catch (py::error_already_set& e) {
+    } catch (py::python_error& e) {
         // Always raise ImportError to interact properly with backend auto-fallback.
         py::raise_from(e, PyExc_ImportError, "failed to load tkinter functions");
-        throw py::error_already_set();
+        py::raise_python_error();
     }
 
     if (!(TCL_SETVAR || TCL_SETVAR2)) {

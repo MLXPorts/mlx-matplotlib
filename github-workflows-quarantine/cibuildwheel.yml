@@ -101,10 +101,10 @@ jobs:
       CIBW_BEFORE_BUILD: |
         python -m pip install --upgrade pip setuptools wheel
         python -m pip install --upgrade "$(python {package}/ci/mlx_build_config.py --mlx-requirement)"
+        eval "$(python {package}/ci/mlx_build_config.py --shell-env)"
         python -m pip install --upgrade \
-          "$(python {package}/ci/mlx_build_config.py --nanobind-requirement)" \
+          "$MLXPORTS_NANOBIND_REQUIREMENT" \
           'meson-python>=0.13.1,!=0.17.*' \
-          'pybind11>=2.13.2,<3,!=2.13.3' \
           setuptools-scm \
           twine
         python {package}/ci/mlx_build_config.py --summary
@@ -114,17 +114,23 @@ jobs:
         python {package}/ci/check_wheel_licenses.py {wheel} &&
         python {package}/ci/check_version_number.py {wheel}
       # This job targets MLX's macOS arm64 lane. Linux MLX wheels are
-      # manylinux_2_35; add a matching cibuildwheel image before enabling them.
-      # Do not request formats MLX does not publish.
+      # manylinux_2_35, so use matching cibuildwheel images when those lanes
+      # are enabled. Do not request formats MLX does not publish.
       CIBW_SKIP: "pp* *t-* *-win* *-macosx_x86_64"
+      CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_35
+      CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_35
       MACOSX_DEPLOYMENT_TARGET: ${{ matrix.macos_deployment_target }}
     strategy:
       fail-fast: false
       matrix:
         include:
+          - os: ubuntu-22.04
+            cibw_archs: "x86_64"
+          - os: ubuntu-24.04-arm
+            cibw_archs: "aarch64"
           - os: macos-14
             cibw_archs: "arm64"
-            macos_deployment_target: "14.0"
+            macos_deployment_target: "15.0"
 
     steps:
       - name: Download sdist

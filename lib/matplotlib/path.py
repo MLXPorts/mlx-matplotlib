@@ -1210,5 +1210,5 @@ def get_path_collection_extents(
         _path_values_to_memoryview(offsets),
         _path_transform_to_memoryview(offset_transform))
     bbox = Bbox(mx.array(extents.tolist(), dtype=mx.float32))
-    bbox._minpos[:] = mx.array(minpos.tolist(), dtype=mx.float32)
+    bbox.minpos = minpos
     return bbox

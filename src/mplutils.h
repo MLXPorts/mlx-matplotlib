@@ -51,18 +51,16 @@ enum {
 #ifdef __cplusplus  // not for macosx.m
 // Check that array has shape (N, d1) or (N, d1, d2).  We cast d1, d2 to longs
 // so that we don't need to access the NPY_INTP_FMT macro here.
-#include <pybind11/pybind11.h>
+#include <string>
 #include "py_buffer.h"
-
-namespace py = pybind11;
-using namespace pybind11::literals;
 
 template<typename T>
 inline void check_trailing_shape(T array, char const* name, long d1)
 {
     if (array.ndim() != 2) {
-        throw py::value_error(
-            "Expected 2-dimensional array, got %d"_s.format(array.ndim()));
+        auto message = "Expected 2-dimensional array, got "
+            + std::to_string(array.ndim());
+        throw py::value_error(message.c_str());
     }
     if (array.size() == 0) {
         // Sometimes things come through as atleast_2d, etc., but they're empty, so
@@ -70,9 +68,11 @@ inline void check_trailing_shape(T array, char const* name, long d1)
         return;
     }
     if (array.shape(1) != d1) {
-        throw py::value_error(
-            "%s must have shape (N, %d), got (%d, %d)"_s.format(
-                name, d1, array.shape(0), array.shape(1)));
+        auto message = std::string(name) + " must have shape (N, "
+            + std::to_string(d1) + "), got ("
+            + std::to_string(array.shape(0)) + ", "
+            + std::to_string(array.shape(1)) + ")";
+        throw py::value_error(message.c_str());
     }
 }
 
@@ -80,8 +80,9 @@ template<typename T>
 inline void check_trailing_shape(T array, char const* name, long d1, long d2)
 {
     if (array.ndim() != 3) {
-        throw py::value_error(
-            "Expected 3-dimensional array, got %d"_s.format(array.ndim()));
+        auto message = "Expected 3-dimensional array, got "
+            + std::to_string(array.ndim());
+        throw py::value_error(message.c_str());
     }
     if (array.size() == 0) {
         // Sometimes things come through as atleast_3d, etc., but they're empty, so
@@ -89,9 +90,12 @@ inline void check_trailing_shape(T array, char const* name, long d1, long d2)
         return;
     }
     if (array.shape(1) != d1 || array.shape(2) != d2) {
-        throw py::value_error(
-            "%s must have shape (N, %d, %d), got (%d, %d, %d)"_s.format(
-                name, d1, d2, array.shape(0), array.shape(1), array.shape(2)));
+        auto message = std::string(name) + " must have shape (N, "
+            + std::to_string(d1) + ", " + std::to_string(d2)
+            + "), got (" + std::to_string(array.shape(0)) + ", "
+            + std::to_string(array.shape(1)) + ", "
+            + std::to_string(array.shape(2)) + ")";
+        throw py::value_error(message.c_str());
     }
 }
 

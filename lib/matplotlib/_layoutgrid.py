@@ -28,6 +28,22 @@ from matplotlib.transforms import Bbox
 _log = logging.getLogger(__name__)
 
 
+def _layout_ratios(ratios, size):
+    if ratios is None:
+        return [1] * size
+    if isinstance(ratios, mx.array):
+        return ratios.tolist()
+    if cbook.is_scalar_or_string(ratios):
+        return [ratios]
+    return list(ratios)
+
+
+def _layout_scalar(value):
+    if isinstance(value, mx.array):
+        return float(value.item())
+    return float(value)
+
+
 class LayoutGrid:
     """
     Analogous to a gridspec, and contained in another LayoutGrid.
@@ -45,12 +61,8 @@ class LayoutGrid:
             self.name = f'{parent.name}.{self.name}'
         self.nrows = nrows
         self.ncols = ncols
-        self.height_ratios = mx.atleast_1d(height_ratios)
-        if height_ratios is None:
-            self.height_ratios = mx.ones(nrows)
-        self.width_ratios = mx.atleast_1d(width_ratios)
-        if width_ratios is None:
-            self.width_ratios = mx.ones(ncols)
+        self.height_ratios = _layout_ratios(height_ratios, nrows)
+        self.width_ratios = _layout_ratios(width_ratios, ncols)
 
         sn = self.name + '_'
         if not isinstance(parent, LayoutGrid):
@@ -70,7 +82,7 @@ class LayoutGrid:
         for todo in ['left', 'right', 'leftcb', 'rightcb']:
             # track the value so we can change only if a margin is larger
             # than the current value
-            self.margin_vals[todo] = mx.zeros(ncols)
+            self.margin_vals[todo] = [0.0] * ncols
 
         sol = self.solver
 
@@ -84,7 +96,7 @@ class LayoutGrid:
 
         for todo in ['bottom', 'top', 'bottomcb', 'topcb']:
             self.margins[todo] = [None for _ in range(nrows)]
-            self.margin_vals[todo] = mx.zeros(nrows)
+            self.margin_vals[todo] = [0.0] * nrows
 
         self.bottoms = [Variable(f'{sn}bottoms[{i}]') for i in range(nrows)]
         self.tops = [Variable(f'{sn}tops[{i}]') for i in range(nrows)]
@@ -266,6 +278,7 @@ class LayoutGrid:
         cell : int
             Cell column or row to edit.
         """
+        size = _layout_scalar(size)
         self.solver.suggestValue(self.margins[todo][cell], size)
         self.margin_vals[todo][cell] = size
 
@@ -287,6 +300,7 @@ class LayoutGrid:
             Cell column or row to edit.
         """
 
+        size = _layout_scalar(size)
         if size > self.margin_vals[todo][cell]:
             self.edit_margin(todo, size, cell)
 

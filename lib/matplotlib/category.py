@@ -21,6 +21,14 @@ from matplotlib import _api, cbook, ticker, units
 _log = logging.getLogger(__name__)
 
 
+def _category_values(value):
+    if cbook.is_scalar_or_string(value):
+        return [value]
+    if isinstance(value, cbook._ReferenceGrid):
+        return value.ravel()
+    return list(value)
+
+
 class StrCategoryConverter(units.ConversionInterface):
     @staticmethod
     def convert(value, unit, axis):
@@ -49,7 +57,7 @@ class StrCategoryConverter(units.ConversionInterface):
                 'this might be caused by unintendedly mixing categorical and '
                 'numeric data')
         StrCategoryConverter._validate_unit(unit)
-        values = [value] if cbook.is_scalar_or_string(value) else list(value)
+        values = _category_values(value)
         # force an update so it also does type checking
         unit.update(values)
         s = mx.array([unit._mapping[v] for v in values], dtype=mx.float32)
@@ -206,7 +214,7 @@ class UnitData:
         TypeError
             If elements in *data* are neither str nor bytes.
         """
-        data = [data] if cbook.is_scalar_or_string(data) else list(data)
+        data = _category_values(data)
         # check if convertible to number:
         convertible = True
         for val in OrderedDict.fromkeys(data):
@@ -217,7 +225,7 @@ class UnitData:
                 convertible = self._str_is_convertible(val)
             if val not in self._mapping:
                 self._mapping[val] = next(self._counter)
-        if data.size and convertible:
+        if data and convertible:
             _log.info('Using categorical units to plot a list of strings '
                       'that are all parsable as floats or dates. If these '
                       'strings should be plotted as numbers, cast to the '

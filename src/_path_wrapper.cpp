@@ -1,7 +1,9 @@
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/array.h>
+#include <nanobind/stl/optional.h>
+#include <nanobind/stl/string.h>
 #include <nanobind/stl/variant.h>
+#include <nanobind/stl/vector.h>
 
 #include <array>
 #include <cmath>
@@ -23,10 +25,10 @@
 #include "py_buffer.h"
 #include "py_converters.h"
 
-namespace py = pybind11;
 namespace nb = nanobind;
+namespace py = nanobind;
 namespace mx = mlx::core;
-using namespace pybind11::literals;
+using namespace nanobind::literals;
 
 static bool has_explicit_stream(const mx::StreamOrDevice& stream)
 {
@@ -90,7 +92,7 @@ static mx::StreamOrDevice as_stream_or_device(const py::object& stream)
     } catch (const nb::cast_error&) {
     }
 
-    auto repr = py::repr(stream).cast<std::string>();
+    auto repr = py::cast<std::string>(py::repr(stream));
     if (repr.rfind("Stream(", 0) == 0) {
         return parse_mlx_stream_repr(repr);
     }
@@ -224,7 +226,7 @@ static py::object Py_mlx_affine_transform(py::handle vertices_obj,
 
 static py::object dtype_from_buffer_format(const char *format)
 {
-    py::object mx_module = py::module_::import("mlx.core");
+    py::object mx_module = py::module_::import_("mlx.core");
     if (std::strcmp(format, "d") == 0) {
         return mx_module.attr("float64");
     }
@@ -243,25 +245,29 @@ static py::object make_memoryview(const void *data,
                                   py::tuple shape)
 {
     if (nbytes == 0) {
-        py::object mx_module = py::module_::import("mlx.core");
+        py::object mx_module = py::module_::import_("mlx.core");
         return mx_module.attr("zeros")(shape, "dtype"_a = dtype_from_buffer_format(format));
     }
 
     py::bytearray ba = py::reinterpret_steal<py::bytearray>(
         PyByteArray_FromStringAndSize(nullptr, nbytes));
     if (!ba) {
-        throw py::error_already_set();
+        py::raise_python_error();
     }
     if (nbytes > 0 && data != nullptr) {
         std::memcpy(PyByteArray_AsString(ba.ptr()), data, static_cast<size_t>(nbytes));
     }
-    py::object mv = py::module_::import("builtins").attr("memoryview")(ba);
+    py::object mv = py::module_::import_("builtins").attr("memoryview")(ba);
     return mv.attr("cast")(format, shape);
 }
 
 static py::list convert_polygon_vector(std::vector<Polygon> &polygons)
 {
-    auto result = py::list(polygons.size());
+    auto result = py::reinterpret_steal<py::list>(
+        PyList_New(static_cast<py::ssize_t>(polygons.size())));
+    if (!result) {
+        py::raise_python_error();
+    }
 
     for (size_t i = 0; i < polygons.size(); ++i) {
         const auto &poly = polygons[i];
@@ -659,7 +665,7 @@ static py::object Py_convert_to_string(mpl::PathIterator path,
         throw py::value_error("Malformed path codes");
     }
 
-    return py::bytes(buffer);
+    return py::bytes(buffer.data(), buffer.size());
 }
 
 const char *Py_is_sorted_and_has_non_nan__doc__ = R"""(--
@@ -715,7 +721,7 @@ static bool Py_is_sorted_and_has_non_nan(py::object obj)
     throw std::invalid_argument("Unsupported dtype for is_sorted_and_has_non_nan");
 }
 
-PYBIND11_MODULE(_path, m, py::mod_gil_not_used())
+NB_MODULE(_path, m)
 {
 #if NB_VERSION_MAJOR > 2 || (NB_VERSION_MAJOR == 2 && NB_VERSION_MINOR >= 12)
     nb::detail::nb_module_exec(NB_DOMAIN_STR, m.ptr());

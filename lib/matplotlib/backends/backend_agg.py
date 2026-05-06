@@ -27,7 +27,6 @@ import mlx.core as mx
 from PIL import features
 
 import matplotlib as mpl
-from matplotlib import _mlx_overrides as _mx_overrides
 from matplotlib import _api, cbook
 from matplotlib.backend_bases import (
     _Backend, FigureCanvasBase, FigureManagerBase, RendererBase)
@@ -41,46 +40,35 @@ from matplotlib.backends._backend_agg import RendererAgg as _RendererAgg
 
 class _BufferPath:
     def __init__(self, path):
-        self.vertices = _float64_memoryview(path.vertices)
-        self.codes = (
-            None if path.codes is None
-            else _uint8_memoryview(path.codes))
+        self.vertices = path.vertices
+        self.codes = path.codes
         self.should_simplify = path.should_simplify
         self.simplify_threshold = path.simplify_threshold
 
 
-def _transform_to_memoryview(transform):
+def _transform_to_mlx(transform):
     if hasattr(transform, "get_matrix"):
         transform = transform.get_matrix()
     elif hasattr(transform, "get_affine"):
         transform = transform.get_affine().get_matrix()
-    return _float64_memoryview(transform)
+    return transform if isinstance(transform, mx.array) else mx.array(
+        transform, dtype=mx.float64)
 
 
-def _memoryview_from_mx(values, dtype, format_code, empty_fallback=None):
-    values = mx.array(values, dtype=dtype, stream=mx.cpu)
+def _mlx_tensor(values, dtype, empty_fallback=None):
+    values = values if isinstance(values, mx.array) else mx.array(values, dtype=dtype)
     shape = tuple(values.shape)
     if not shape:
         values = mx.reshape(values, (1,))
         shape = (1,)
     if 0 in shape:
         if empty_fallback is None:
-            empty_fallback = mx.zeros((1,), dtype=dtype, stream=mx.cpu)
-        values = mx.array(empty_fallback, dtype=dtype, stream=mx.cpu)
-        shape = tuple(values.shape)
-    if dtype == mx.float64:
-        raw = _mx_overrides.float64_bytes(values, stream=mx.cpu)
-    else:
-        raw = _mx_overrides.array_bytes(values, stream=mx.cpu)
-    return memoryview(bytearray(raw)).cast(format_code, shape=shape)
-
-
-def _float64_memoryview(values, empty_fallback=None):
-    return _memoryview_from_mx(values, mx.float64, "d", empty_fallback)
-
-
-def _uint8_memoryview(values, empty_fallback=None):
-    return _memoryview_from_mx(values, mx.uint8, "B", empty_fallback)
+            empty_fallback = mx.zeros((1,), dtype=dtype)
+        values = (empty_fallback if isinstance(empty_fallback, mx.array)
+                  else mx.array(empty_fallback, dtype=dtype))
+    elif values.dtype != dtype:
+        values = values.astype(dtype)
+    return values
 
 
 def get_hinting_flag():
@@ -133,23 +121,23 @@ class RendererAgg(RendererBase):
         self.copy_from_bbox = self._renderer.copy_from_bbox
 
     def draw_gouraud_triangles(self, gc, triangles_array, colors_array, transform):
-        triangles_array = _float64_memoryview(triangles_array)
-        colors_array = _float64_memoryview(colors_array)
-        transform = _transform_to_memoryview(transform)
+        triangles_array = _mlx_tensor(triangles_array, mx.float64)
+        colors_array = _mlx_tensor(colors_array, mx.float64)
+        transform = _transform_to_mlx(transform)
         return self._draw_gouraud_triangles(
             gc, triangles_array, colors_array, transform)
 
     def draw_markers(self, gc, marker_path, marker_trans, path, transform,
                      rgbFace=None):
-        marker_trans = _transform_to_memoryview(marker_trans)
-        transform = _transform_to_memoryview(transform)
+        marker_trans = _transform_to_mlx(marker_trans)
+        transform = _transform_to_mlx(transform)
         self._renderer.draw_markers(
             gc, _BufferPath(marker_path), marker_trans,
             _BufferPath(path), transform, rgbFace)
 
     def draw_path(self, gc, path, transform, rgbFace=None):
         # docstring inherited
-        transform = _transform_to_memoryview(transform)
+        transform = _transform_to_mlx(transform)
         source_path = path
         path = _BufferPath(path)
         nmax = mpl.rcParams['agg.path.chunksize']  # here at least for testing
@@ -237,27 +225,24 @@ class RendererAgg(RendererBase):
                              offsets, offset_trans, facecolors, edgecolors,
                              linewidths, linestyles, antialiaseds, urls,
                              offset_position, hatchcolors=None):
-        master_transform = _transform_to_memoryview(master_transform)
+        master_transform = _transform_to_mlx(master_transform)
         paths = [_BufferPath(path) for path in paths]
-        transforms = _float64_memoryview(
-            transforms, mx.reshape(
-                mx.eye(3, dtype=mx.float64, stream=mx.cpu), (1, 3, 3),
-                stream=mx.cpu))
-        offsets = _float64_memoryview(
-            offsets, mx.zeros((1, 2), dtype=mx.float64, stream=mx.cpu))
-        offset_trans = _transform_to_memoryview(offset_trans)
-        facecolors = _float64_memoryview(
-            facecolors, mx.zeros((1, 4), dtype=mx.float64, stream=mx.cpu))
-        edgecolors = _float64_memoryview(
-            edgecolors, mx.zeros((1, 4), dtype=mx.float64, stream=mx.cpu))
-        linewidths = _float64_memoryview(
-            linewidths, mx.ones((1,), dtype=mx.float64, stream=mx.cpu))
-        antialiaseds = (antialiaseds if isinstance(antialiaseds, mx.array)
-                        else mx.array(antialiaseds))
-        antialiaseds = _uint8_memoryview(antialiaseds)
+        transforms = _mlx_tensor(
+            transforms, mx.float64,
+            mx.reshape(mx.eye(3, dtype=mx.float64), (1, 3, 3)))
+        offsets = _mlx_tensor(
+            offsets, mx.float64, mx.zeros((1, 2), dtype=mx.float64))
+        offset_trans = _transform_to_mlx(offset_trans)
+        facecolors = _mlx_tensor(
+            facecolors, mx.float64, mx.zeros((1, 4), dtype=mx.float64))
+        edgecolors = _mlx_tensor(
+            edgecolors, mx.float64, mx.zeros((1, 4), dtype=mx.float64))
+        linewidths = _mlx_tensor(
+            linewidths, mx.float64, mx.ones((1,), dtype=mx.float64))
+        antialiaseds = _mlx_tensor(antialiaseds, mx.uint8)
         if hatchcolors is not None:
-            hatchcolors = _float64_memoryview(
-                hatchcolors, mx.zeros((1, 4), dtype=mx.float64, stream=mx.cpu))
+            hatchcolors = _mlx_tensor(
+                hatchcolors, mx.float64, mx.zeros((1, 4), dtype=mx.float64))
         self._renderer.draw_path_collection(
             gc, master_transform, paths, transforms, offsets, offset_trans,
             facecolors, edgecolors, linewidths, linestyles, antialiaseds,
@@ -266,15 +251,15 @@ class RendererAgg(RendererBase):
     def draw_quad_mesh(self, gc, master_transform, meshWidth, meshHeight,
                        coordinates, offsets, offsetTrans, facecolors,
                        antialiased, edgecolors):
-        master_transform = _transform_to_memoryview(master_transform)
-        coordinates = _float64_memoryview(coordinates)
-        offsets = _float64_memoryview(
-            offsets, mx.zeros((1, 2), dtype=mx.float64, stream=mx.cpu))
-        offsetTrans = _transform_to_memoryview(offsetTrans)
-        facecolors = _float64_memoryview(
-            facecolors, mx.zeros((1, 4), dtype=mx.float64, stream=mx.cpu))
-        edgecolors = _float64_memoryview(
-            edgecolors, mx.zeros((1, 4), dtype=mx.float64, stream=mx.cpu))
+        master_transform = _transform_to_mlx(master_transform)
+        coordinates = _mlx_tensor(coordinates, mx.float64)
+        offsets = _mlx_tensor(
+            offsets, mx.float64, mx.zeros((1, 2), dtype=mx.float64))
+        offsetTrans = _transform_to_mlx(offsetTrans)
+        facecolors = _mlx_tensor(
+            facecolors, mx.float64, mx.zeros((1, 4), dtype=mx.float64))
+        edgecolors = _mlx_tensor(
+            edgecolors, mx.float64, mx.zeros((1, 4), dtype=mx.float64))
         self._renderer.draw_quad_mesh(
             gc, master_transform, meshWidth, meshHeight, coordinates, offsets,
             offsetTrans, facecolors, antialiased, edgecolors)
@@ -468,9 +453,7 @@ class RendererAgg(RendererBase):
                 mx.divide(cropped_img.astype(mx.float32), 255), self.dpi)
             gc = self.new_gc()
             if img.dtype in (mx.float16, mx.bfloat16, mx.float32, mx.float64):
-                stream = mx.cpu if img.dtype == mx.float64 else None
-                img = mx.multiply(img, 255, stream=stream).astype(
-                    mx.uint8, stream=stream)
+                img = mx.multiply(img, 255).astype(mx.uint8)
             self._renderer.draw_image(
                 gc, slice_x.start + ox, int(self.height) - slice_y.stop + oy,
                 mx.contiguous(img))

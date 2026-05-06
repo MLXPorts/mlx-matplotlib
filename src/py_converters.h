@@ -5,19 +5,15 @@
 
 /***************************************************************************************
  * This module contains a number of conversion functions from Python types to C++ types.
- * Most of them meet the pybind11 type casters, and thus will automatically be applied
+ * Most of them meet the nanobind type casters, and thus will automatically be applied
  * when a C++ function parameter uses their type.
  */
-
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-
-namespace py = pybind11;
 
 #include "agg_basics.h"
 #include "agg_color_rgba.h"
 #include "agg_trans_affine.h"
 #include "mplutils.h"
+#include "nb_compat.h"
 #include "py_buffer.h"
 
 void convert_trans_affine(const py::object& transform, agg::trans_affine& affine);
@@ -53,12 +49,33 @@ inline auto convert_colors(const py::buffer &obj)
     return view;
 }
 
-namespace PYBIND11_NAMESPACE { namespace detail {
+inline auto convert_mlx_points(py::object obj)
+{
+    mpl::MlxArrayView<double, 2> view(std::move(obj), "points");
+    check_trailing_shape(view, "points", 2);
+    return view;
+}
+
+inline auto convert_mlx_transforms(py::object obj)
+{
+    mpl::MlxArrayView<double, 3> view(std::move(obj), "transforms");
+    check_trailing_shape(view, "transforms", 3, 3);
+    return view;
+}
+
+inline auto convert_mlx_colors(py::object obj)
+{
+    mpl::MlxArrayView<double, 2> view(std::move(obj), "colors");
+    check_trailing_shape(view, "colors", 4);
+    return view;
+}
+
+namespace nanobind { namespace detail {
     template <> struct type_caster<agg::rect_d> {
     public:
-        PYBIND11_TYPE_CASTER(agg::rect_d, const_name("rect_d"));
+        NB_TYPE_CASTER(agg::rect_d, const_name("rect_d"));
 
-        bool load(handle src, bool) {
+        bool from_python(handle src, uint8_t, cleanup_list *) {
             if (src.is_none()) {
                 value.x1 = 0.0;
                 value.y1 = 0.0;
@@ -110,22 +127,22 @@ namespace PYBIND11_NAMESPACE { namespace detail {
 
     template <> struct type_caster<agg::rgba> {
     public:
-        PYBIND11_TYPE_CASTER(agg::rgba, const_name("rgba"));
+        NB_TYPE_CASTER(agg::rgba, const_name("rgba"));
 
-        bool load(handle src, bool) {
+        bool from_python(handle src, uint8_t, cleanup_list *) {
             if (src.is_none()) {
                 value.r = 0.0;
                 value.g = 0.0;
                 value.b = 0.0;
                 value.a = 0.0;
             } else {
-                auto rgbatuple = src.cast<py::tuple>();
-                value.r = rgbatuple[0].cast<double>();
-                value.g = rgbatuple[1].cast<double>();
-                value.b = rgbatuple[2].cast<double>();
+                auto rgbatuple = py::cast<py::tuple>(src);
+                value.r = py::cast<double>(rgbatuple[0]);
+                value.g = py::cast<double>(rgbatuple[1]);
+                value.b = py::cast<double>(rgbatuple[2]);
                 switch (rgbatuple.size()) {
                 case 4:
-                    value.a = rgbatuple[3].cast<double>();
+                    value.a = py::cast<double>(rgbatuple[3]);
                     break;
                 case 3:
                     value.a = 1.0;
@@ -140,30 +157,18 @@ namespace PYBIND11_NAMESPACE { namespace detail {
 
     template <> struct type_caster<agg::trans_affine> {
     public:
-        PYBIND11_TYPE_CASTER(agg::trans_affine, const_name("trans_affine"));
+        NB_TYPE_CASTER(agg::trans_affine, const_name("trans_affine"));
 
-        bool load(handle src, bool) {
+        bool from_python(handle src, uint8_t, cleanup_list *) {
             // If None assume identity transform so leave affine unchanged
             if (src.is_none()) {
                 return true;
             }
 
-            py::buffer buf = py::reinterpret_borrow<py::buffer>(src);
-            mpl::BufferView<double, 2> array(buf);
-            if (array.shape(0) != 3 || array.shape(1) != 3) {
-                throw std::invalid_argument("Invalid affine transformation matrix");
-            }
-
-            value.sx = array(0, 0);
-            value.shx = array(0, 1);
-            value.tx = array(0, 2);
-            value.shy = array(1, 0);
-            value.sy = array(1, 1);
-            value.ty = array(1, 2);
-
+            convert_trans_affine(py::reinterpret_borrow<py::object>(src), value);
             return true;
         }
     };
-}} // namespace PYBIND11_NAMESPACE::detail
+}} // namespace nanobind::detail
 
 #endif /* MPL_PY_CONVERTERS_H */

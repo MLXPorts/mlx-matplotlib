@@ -1,6 +1,7 @@
 #include "py_converters.h"
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
 #include <nanobind/stl/variant.h>
 
 #include <variant>
@@ -14,11 +15,6 @@ namespace nb = nanobind;
 namespace mx = mlx::core;
 
 namespace {
-
-bool has_explicit_stream(const mx::StreamOrDevice& stream)
-{
-    return !std::holds_alternative<std::monostate>(stream);
-}
 
 mx::Device parse_mlx_device_repr(const std::string& repr)
 {
@@ -60,19 +56,9 @@ mx::Stream parse_mlx_stream_repr(const std::string& repr)
 bool is_mlx_array_like(const py::object& obj)
 {
     nb::object nb_obj = nb::borrow<nb::object>(nb::handle(obj.ptr()));
-    return nb::isinstance<mx::array>(nb_obj) || nb::hasattr(nb_obj, "__mlx_array__");
-}
-
-mx::array as_mlx_array(const py::object& obj)
-{
-    nb::object nb_obj = nb::borrow<nb::object>(nb::handle(obj.ptr()));
-    if (nb::isinstance<mx::array>(nb_obj)) {
-        return nb::cast<mx::array>(nb_obj);
-    }
-    if (nb::hasattr(nb_obj, "__mlx_array__")) {
-        return nb::cast<mx::array>(nb_obj.attr("__mlx_array__")());
-    }
-    throw std::invalid_argument("object is not an MLX array");
+    return (nb::isinstance<mx::array>(nb_obj)
+            || nb::hasattr(nb_obj, "__mlx_array__")
+            || (py::hasattr(obj, "dtype") && py::hasattr(obj, "shape")));
 }
 
 mx::StreamOrDevice as_stream_or_device(const py::object& stream)
@@ -95,7 +81,7 @@ mx::StreamOrDevice as_stream_or_device(const py::object& stream)
     } catch (const nb::cast_error&) {
     }
 
-    auto repr = py::repr(stream).cast<std::string>();
+    auto repr = py::cast<std::string>(py::repr(stream));
     if (repr.rfind("Stream(", 0) == 0) {
         return parse_mlx_stream_repr(repr);
     }
@@ -119,35 +105,27 @@ bool convert_mlx_affine(const py::object& obj,
         return false;
     }
 
-    auto array = as_mlx_array(obj);
-    if (has_explicit_stream(stream) || !array.flags().row_contiguous) {
-        array = mx::contiguous(array, false, stream);
-    }
-    {
-        py::gil_scoped_release release;
-        array.eval();
-        if (has_explicit_stream(stream)) {
-            mx::synchronize(mx::to_stream(stream));
-        }
-    }
-
-    if (array.ndim() != 2 || array.shape(0) != 3 || array.shape(1) != 3) {
+    auto shape = py::reinterpret_borrow<py::tuple>(obj.attr("shape"));
+    if (shape.size() != 2
+            || py::cast<py::ssize_t>(shape[0]) != 3
+            || py::cast<py::ssize_t>(shape[1]) != 3) {
         throw std::invalid_argument("Invalid affine transformation matrix");
     }
-    if (array.dtype() != mx::float64) {
-        throw std::invalid_argument("Invalid affine transformation matrix dtype");
-    }
-    if (array.strides(1) != 1 || array.strides(0) != array.shape(1)) {
-        throw std::invalid_argument("Invalid affine transformation matrix layout");
-    }
 
-    const double *data = array.data<double>();
-    affine.sx = data[0];
-    affine.shx = data[1];
-    affine.tx = data[2];
-    affine.shy = data[3];
-    affine.sy = data[4];
-    affine.ty = data[5];
+    auto scalar = [&obj](py::ssize_t row, py::ssize_t col) {
+        auto value = obj.attr("__getitem__")(py::make_tuple(row, col));
+        if (py::hasattr(value, "item")) {
+            value = value.attr("item")();
+        }
+        return py::cast<double>(value);
+    };
+
+    affine.sx = scalar(0, 0);
+    affine.shx = scalar(0, 1);
+    affine.tx = scalar(0, 2);
+    affine.shy = scalar(1, 0);
+    affine.sy = scalar(1, 1);
+    affine.ty = scalar(1, 2);
     return true;
 }
 
@@ -194,7 +172,7 @@ void convert_trans_affine_with_stream(const py::object& transform,
         return;
     }
 
-    py::sequence values = affine_transform.attr("to_values")();
+    py::sequence values = py::cast<py::sequence>(affine_transform.attr("to_values")());
     if (py::len(values) != 6) {
         throw std::invalid_argument("Invalid affine transformation values");
     }

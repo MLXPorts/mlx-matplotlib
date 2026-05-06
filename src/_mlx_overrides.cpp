@@ -4262,6 +4262,13 @@ void eval_precise_array(const mx::array& value)
 
 mx::array as_float64_array(nb::handle value, const mx::StreamOrDevice& stream)
 {
+    if (nb::isinstance<MlxPreciseArray>(value)) {
+        auto array = nb::cast<MlxPreciseArray>(value);
+        if (array.dtype() != mx::float64) {
+            return mx::astype(array, mx::float64, stream);
+        }
+        return place_float64_on_explicit_stream(std::move(array), stream);
+    }
     if (nb::isinstance<mx::array>(value)) {
         auto array = nb::cast<mx::array>(value);
         if (targets_gpu(stream)) {
@@ -5168,25 +5175,6 @@ MlxPreciseArray take_precise(nb::handle value,
         mx::take(array, indices, axis, actual_stream), actual_stream);
 }
 
-nb::bytes array_bytes(nb::handle value, const mx::StreamOrDevice& stream)
-{
-    auto array = MlxPreciseArray::make(value, nb::none(), stream, 0);
-    if (!array.flags().row_contiguous) {
-        array = MlxPreciseArray(mx::contiguous(array, false, stream), stream);
-    }
-    MlxPreciseArray::eval(array);
-    return nb::bytes(static_cast<const char*>(array.data<void>()),
-                     array.nbytes());
-}
-
-nb::bytes float64_bytes(nb::handle value, const mx::StreamOrDevice& stream)
-{
-    auto array = MlxPreciseArray::make(value, nb::cast(mx::float64), stream, 0);
-    auto values = read_precise_float64_values(std::move(array));
-    return nb::bytes(reinterpret_cast<const char*>(values.data()),
-                     values.size() * sizeof(double));
-}
-
 nb::object item_precise(nb::handle value, const mx::StreamOrDevice& stream)
 {
     auto array = MlxPreciseArray::make(value, nb::none(), stream, 0);
@@ -5685,6 +5673,15 @@ NB_MODULE(_mlx_overrides, m)
                  return transpose_precise(
                      self_obj, nb::none(), self.stream_or_device());
              })
+        .def_prop_ro("strides",
+             [](const MlxPreciseArray& self) {
+                 std::vector<std::int64_t> strides;
+                 strides.reserve(self.ndim());
+                 for (auto stride : self.strides()) {
+                     strides.push_back(stride);
+                 }
+                 return strides;
+             })
         .def("astype",
              [](const MlxPreciseArray& self,
                 nb::object dtype,
@@ -6072,12 +6069,6 @@ NB_MODULE(_mlx_overrides, m)
           "value"_a,
           "indices"_a,
           "axis"_a = nb::none(),
-          "stream"_a = nb::none());
-    m.def("array_bytes", &array_bytes,
-          "value"_a,
-          "stream"_a = nb::none());
-    m.def("float64_bytes", &float64_bytes,
-          "value"_a,
           "stream"_a = nb::none());
     m.def("item_precise", &item_precise,
           "value"_a,

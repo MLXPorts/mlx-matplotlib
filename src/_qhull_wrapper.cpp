@@ -4,8 +4,7 @@
  * This MLX fork removes the hard dependency on MLXArrayBackend by using the Python buffer
  * protocol for inputs and returning shaped memoryviews for outputs.
  */
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include "nb_compat.h"
 
 #include <cstdint>
 #include <cstring>
@@ -31,8 +30,7 @@ extern const char qh_version[];
 #define STRINGIFY(x) STR(x)
 #define STR(x) #x
 
-namespace py = pybind11;
-using namespace pybind11::literals;
+using namespace nanobind::literals;
 
 static const char *qhull_error_msg[6] = {
     "",                     /* 0 = qh_ERRnone */
@@ -156,9 +154,9 @@ static py::tuple delaunay_impl(py::ssize_t npoints,
                             nullptr,
                             error_file);
     if (exitcode != qh_ERRnone) {
-        std::string msg = py::str("Error in qhull Delaunay triangulation calculation: {} (exitcode={})")
-                              .format(qhull_error_msg[exitcode], exitcode)
-                              .cast<std::string>();
+        std::string msg = py::cast<std::string>(
+            py::str("Error in qhull Delaunay triangulation calculation: {} (exitcode={})")
+                .format(qhull_error_msg[exitcode], exitcode));
         if (hide_qhull_errors) {
             msg += "; use python verbose option (-v) to see original qhull error.";
         }
@@ -221,11 +219,12 @@ static py::tuple delaunay_impl(py::ssize_t npoints,
         py::bytearray ba = py::reinterpret_steal<py::bytearray>(
             PyByteArray_FromStringAndSize(nullptr, ba_size));
         if (!ba) {
-            throw py::error_already_set();
+            py::raise_python_error();
         }
         std::memcpy(PyByteArray_AsString(ba.ptr()), v.data(), v.size() * sizeof(std::int32_t));
-        py::object mv = py::module_::import("builtins").attr("memoryview")(ba);
-        return mv.attr("cast")("i", py::make_tuple(static_cast<py::ssize_t>(ntri), 3)).cast<py::memoryview>();
+        py::object mv = py::module_::import_("builtins").attr("memoryview")(ba);
+        return py::cast<py::memoryview>(
+            mv.attr("cast")("i", py::make_tuple(static_cast<py::ssize_t>(ntri), 3)));
     };
 
     return py::make_tuple(make_view(triangles), make_view(neighbors));
@@ -250,7 +249,7 @@ static py::tuple delaunay(const py::buffer &x, const py::buffer &y, int verbose)
     return delaunay_impl(npoints, x_view.data(), y_view.data(), verbose == 0);
 }
 
-PYBIND11_MODULE(_qhull, m, py::mod_gil_not_used())
+NB_MODULE(_qhull, m)
 {
     m.doc() = "Computing Delaunay triangulations.\n";
 

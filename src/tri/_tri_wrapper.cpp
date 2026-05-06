@@ -1,8 +1,8 @@
 #include "_tri.h"
 
-using namespace pybind11::literals;
+using namespace nanobind::literals;
 
-PYBIND11_MODULE(_tri, m, py::mod_gil_not_used())
+NB_MODULE(_tri, m)
 {
     py::class_<Triangulation>(m, "Triangulation", py::is_final())
         .def(py::init<const py::buffer&,

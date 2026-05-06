@@ -6,8 +6,6 @@
 #ifndef MPL_BACKEND_AGG_H
 #define MPL_BACKEND_AGG_H
 
-#include <pybind11/pybind11.h>
-
 #include <cmath>
 #include <algorithm>
 #include <functional>
@@ -41,11 +39,10 @@
 #include "agg_span_pattern_rgba.h"
 
 #include "_backend_agg_basic_types.h"
+#include "nb_compat.h"
 #include "path_converters.h"
 #include "array.h"
 #include "agg_workaround.h"
-
-namespace py = pybind11;
 
 /**********************************************************************/
 
@@ -1242,10 +1239,11 @@ inline void RendererAgg::draw_gouraud_triangles(GCAgg &gc,
         check_trailing_shape(colors, "colors", 3, 4);
     }
     if (points.shape(0) != colors.shape(0)) {
-        throw py::value_error(
+        auto message =
             "points and colors arrays must be the same length, got " +
             std::to_string(points.shape(0)) + " points and " +
-            std::to_string(colors.shape(0)) + "colors");
+            std::to_string(colors.shape(0)) + "colors";
+        throw py::value_error(message.c_str());
     }
 
     theRasterizer.reset_clipping();

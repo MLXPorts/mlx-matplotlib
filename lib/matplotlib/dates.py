@@ -329,7 +329,7 @@ def _dt64_to_ordinalf(d):
 
 
 def _python_dt_to_ordinalf(value):
-    if isinstance(value, list):
+    if isinstance(value, (list, tuple)):
         return [_python_dt_to_ordinalf(item) for item in value]
     if value is None or value == 'NaT':
         return mx.nan

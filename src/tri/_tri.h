@@ -63,7 +63,7 @@
 #ifndef MPL_TRI_H
 #define MPL_TRI_H
 
-#include <pybind11/pybind11.h>
+#include "nb_compat.h"
 
 #include <iostream>
 #include <list>
@@ -71,7 +71,6 @@
 #include <set>
 #include <vector>
 
-namespace py = pybind11;
 
 #include "py_buffer.h"
 

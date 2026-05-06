@@ -6,7 +6,7 @@
 #ifndef MPL_FT2FONT_H
 #define MPL_FT2FONT_H
 
-#include <pybind11/pybind11.h>
+#include "nb_compat.h"
 #include "py_buffer.h"
 
 #include <set>
@@ -25,7 +25,6 @@ extern "C" {
 #include FT_TRUETYPE_TABLES_H
 }
 
-namespace py = pybind11;
 
 // By definition, FT_FIXED as 2 16bit values stored in a single long.
 #define FIXED_MAJOR(val) (signed short)((val & 0xffff0000) >> 16)
@@ -153,6 +152,19 @@ class FT2Font
             {static_cast<py::ssize_t>(image_height), static_cast<py::ssize_t>(image_width)},
             {static_cast<py::ssize_t>(image_width), static_cast<py::ssize_t>(1)},
             true);
+    }
+    uint8_t *get_image_buffer()
+    {
+        static uint8_t dummy = 0;
+        return image.empty() ? &dummy : image.data();
+    }
+    long get_image_width() const
+    {
+        return image_width;
+    }
+    long get_image_height() const
+    {
+        return image_height;
     }
     FT_Glyph const &get_last_glyph() const
     {

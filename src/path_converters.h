@@ -3,14 +3,13 @@
 #ifndef MPL_PATH_CONVERTERS_H
 #define MPL_PATH_CONVERTERS_H
 
-#include <pybind11/pybind11.h>
-
 #include <cmath>
 #include <cstdint>
 #include <limits>
 
 #include "agg_clip_liang_barsky.h"
 #include "mplutils.h"
+#include "nb_compat.h"
 #include "agg_conv_segmentator.h"
 
 /*
@@ -530,23 +529,27 @@ enum e_snap_mode {
     SNAP_TRUE
 };
 
-namespace PYBIND11_NAMESPACE { namespace detail {
+namespace nanobind { namespace detail {
     template <> struct type_caster<e_snap_mode> {
     public:
-        PYBIND11_TYPE_CASTER(e_snap_mode, const_name("e_snap_mode"));
+        NB_TYPE_CASTER(e_snap_mode, const_name("e_snap_mode"));
 
-        bool load(handle src, bool) {
+        bool from_python(handle src, uint8_t, cleanup_list *) {
             if (src.is_none()) {
                 value = SNAP_AUTO;
                 return true;
             }
 
-            value = src.cast<bool>() ? SNAP_TRUE : SNAP_FALSE;
+            int truth = PyObject_IsTrue(src.ptr());
+            if (truth < 0) {
+                py::raise_python_error();
+            }
+            value = truth ? SNAP_TRUE : SNAP_FALSE;
 
             return true;
         }
     };
-}} // namespace PYBIND11_NAMESPACE::detail
+}} // namespace nanobind::detail
 
 template <class VertexSource>
 class PathSnapper
