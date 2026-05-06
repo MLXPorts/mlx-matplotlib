@@ -8,16 +8,17 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/complex.h>
+#include <nanobind/stl/string.h>
 #include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
 
 #include <limits>
 #include <stdexcept>
+#include <string>
 #include <variant>
 #include <vector>
 
 #include "mlx/array.h"
-#include "mlx/backend/common/slicing.h"
 #include "mlx/backend/common/utils.h"
 #include "mlx/backend/metal/device.h"
 #include "mlx/backend/metal/utils.h"
@@ -80,6 +81,14 @@ enum class PreciseFloat64CompareOp : int {
     NotEqual = 1,
     Less = 2,
     LessEqual = 3,
+};
+
+enum class PreciseFloat64UnaryMathOp : int {
+    Log = 0,
+    Log2 = 1,
+    Log10 = 2,
+    Floor = 3,
+    Ceil = 4,
 };
 
 mx::Shape broadcast_binary_shape(const mx::array& left, const mx::array& right)
@@ -168,6 +177,183 @@ std::vector<std::uint64_t> contiguous_strides(const mx::Shape& shape)
         stride *= static_cast<std::uint64_t>(shape[axis]);
     }
     return strides;
+}
+
+mx::Strides contiguous_row_strides(const mx::Shape& shape)
+{
+    mx::Strides strides(shape.size(), 1);
+    std::int64_t stride = 1;
+    for (std::size_t step = 0; step < shape.size(); ++step) {
+        auto axis = shape.size() - 1 - step;
+        strides[axis] = stride;
+        stride *= static_cast<std::int64_t>(shape[axis]);
+    }
+    return strides;
+}
+
+std::size_t row_major_offset(std::size_t index,
+                             const mx::Shape& shape,
+                             const mx::Strides& strides)
+{
+    std::int64_t offset = 0;
+    for (std::size_t step = 0; step < shape.size(); ++step) {
+        auto axis = shape.size() - 1 - step;
+        auto dim = shape[axis];
+        auto coord = dim == 0 ? 0 : index % dim;
+        if (dim != 0) {
+            index /= dim;
+        }
+        offset += static_cast<std::int64_t>(coord) * strides[axis];
+    }
+    return static_cast<std::size_t>(offset);
+}
+
+std::size_t slice_offset(std::size_t index,
+                         const mx::Shape& out_shape,
+                         const mx::Shape& start,
+                         const mx::Shape& strides,
+                         const mx::Strides& input_strides)
+{
+    std::int64_t offset = 0;
+    for (std::size_t step = 0; step < out_shape.size(); ++step) {
+        auto axis = out_shape.size() - 1 - step;
+        auto dim = out_shape[axis];
+        auto coord = dim == 0 ? 0 : index % dim;
+        if (dim != 0) {
+            index /= dim;
+        }
+        auto input_coord = static_cast<std::int64_t>(start[axis])
+            + static_cast<std::int64_t>(coord) * strides[axis];
+        offset += input_coord * input_strides[axis];
+    }
+    return static_cast<std::size_t>(offset);
+}
+
+mx::Shape precise_reshape_output_shape(const mx::array& array,
+                                       mx::Shape shape)
+{
+    std::int64_t inferred_axis = -1;
+    std::size_t known_size = 1;
+    for (std::size_t axis = 0; axis < shape.size(); ++axis) {
+        auto dim = shape[axis];
+        if (dim == -1) {
+            if (inferred_axis != -1) {
+                throw std::invalid_argument(
+                    "[reshape] only one dimension can be inferred");
+            }
+            inferred_axis = static_cast<std::int64_t>(axis);
+            continue;
+        }
+        if (dim < 0) {
+            throw std::invalid_argument("[reshape] invalid negative dimension");
+        }
+        known_size *= static_cast<std::size_t>(dim);
+    }
+
+    auto input_size = array.size();
+    if (inferred_axis != -1) {
+        if (known_size == 0 || input_size % known_size != 0) {
+            throw std::invalid_argument(
+                "[reshape] cannot infer dimension for requested shape");
+        }
+        shape[static_cast<std::size_t>(inferred_axis)] =
+            static_cast<mx::ShapeElem>(input_size / known_size);
+        return shape;
+    }
+
+    if (known_size != input_size) {
+        throw std::invalid_argument(
+            "[reshape] requested shape does not match array size");
+    }
+    return shape;
+}
+
+mx::Shape take_output_shape(const mx::array& input,
+                            const mx::array& indices,
+                            int axis,
+                            bool flatten_input)
+{
+    if (flatten_input) {
+        return indices.shape();
+    }
+    if (axis < 0) {
+        axis += input.ndim();
+    }
+    if (axis < 0 || axis >= input.ndim()) {
+        throw std::invalid_argument("[take] axis out of bounds");
+    }
+
+    mx::Shape shape;
+    shape.reserve(input.ndim() + indices.ndim() - 1);
+    for (int i = 0; i < axis; ++i) {
+        shape.push_back(input.shape(i));
+    }
+    for (auto dim : indices.shape()) {
+        shape.push_back(dim);
+    }
+    for (int i = axis + 1; i < input.ndim(); ++i) {
+        shape.push_back(input.shape(i));
+    }
+    return shape;
+}
+
+std::int64_t read_int32_index(const mx::array& indices, std::size_t offset)
+{
+    return static_cast<std::int64_t>(indices.data<std::int32_t>()[offset]);
+}
+
+std::size_t take_source_offset(std::size_t out_index,
+                               const mx::array& input,
+                               const mx::array& indices,
+                               const mx::Shape& out_shape,
+                               int axis,
+                               bool flatten_input)
+{
+    std::vector<mx::ShapeElem> coords(out_shape.size());
+    auto remaining = out_index;
+    for (std::size_t step = 0; step < out_shape.size(); ++step) {
+        auto out_axis = out_shape.size() - 1 - step;
+        auto dim = out_shape[out_axis];
+        coords[out_axis] = dim == 0 ? 0 : remaining % dim;
+        if (dim != 0) {
+            remaining /= dim;
+        }
+    }
+
+    std::int64_t index_offset = 0;
+    if (flatten_input) {
+        for (int idx_axis = 0; idx_axis < indices.ndim(); ++idx_axis) {
+            index_offset += static_cast<std::int64_t>(coords[idx_axis])
+                * indices.strides(idx_axis);
+        }
+        auto index = read_int32_index(indices, static_cast<std::size_t>(index_offset));
+        if (index < 0) {
+            index += static_cast<std::int64_t>(input.size());
+        }
+        return row_major_offset(
+            static_cast<std::size_t>(index), input.shape(), input.strides());
+    }
+
+    std::int64_t input_offset = 0;
+    int out_axis = 0;
+    for (int input_axis = 0; input_axis < axis; ++input_axis) {
+        input_offset += static_cast<std::int64_t>(coords[out_axis++])
+            * input.strides(input_axis);
+    }
+    for (int idx_axis = 0; idx_axis < indices.ndim(); ++idx_axis) {
+        index_offset += static_cast<std::int64_t>(coords[out_axis++])
+            * indices.strides(idx_axis);
+    }
+    auto index = read_int32_index(indices, static_cast<std::size_t>(index_offset));
+    if (index < 0) {
+        index += input.shape(axis);
+    }
+    input_offset += index * input.strides(axis);
+    for (int input_axis = axis + 1; input_axis < input.ndim(); ++input_axis) {
+        input_offset += static_cast<std::int64_t>(coords[out_axis++])
+            * input.strides(input_axis);
+    }
+    return static_cast<std::size_t>(input_offset);
 }
 
 class PreciseFloat64GpuTransfer : public mx::UnaryPrimitive {
@@ -468,37 +654,133 @@ std::pair<bool, mx::Shape> normalize_precise_slice(
     return {has_neg_strides, out_shape};
 }
 
-class PreciseFloat64GpuSlice : public mx::Slice {
+class PreciseFloat64GpuSlice : public mx::UnaryPrimitive {
 public:
     PreciseFloat64GpuSlice(mx::Stream stream,
                            mx::Shape start_indices,
-                           mx::Shape end_indices,
+                           mx::Shape output_shape,
                            mx::Shape strides)
-        : mx::Slice(stream, start_indices, end_indices, strides),
+        : mx::UnaryPrimitive(stream),
           start_indices_(std::move(start_indices)),
+          output_shape_(std::move(output_shape)),
           strides_(std::move(strides)) {}
 
     const char* name() const override {
         return "PreciseFloat64GpuSlice";
     }
 
+    std::vector<mx::Shape> output_shapes(
+        const std::vector<mx::array>&) override {
+        return {output_shape_};
+    }
+
     void eval_cpu(const std::vector<mx::array>& inputs, mx::array& out) override {
-        mx::slice(inputs[0], out, start_indices_, strides_);
+        out.set_data(mx::allocator::malloc(out.nbytes()));
+        auto source = inputs[0].data<PreciseFloat64>();
+        auto result = out.data<PreciseFloat64>();
+        for (std::size_t i = 0; i < out.size(); ++i) {
+            result[i] = source[slice_offset(
+                i, out.shape(), start_indices_, strides_, inputs[0].strides())];
+        }
     }
 
     void eval_gpu(const std::vector<mx::array>& inputs, mx::array& out) override {
-        mx::slice(inputs[0], out, start_indices_, strides_);
+        if (out.size() == 0) {
+            out.set_data(mx::allocator::Buffer(nullptr));
+            return;
+        }
+
+        out.set_data(mx::allocator::malloc(out.nbytes()));
+        auto& device = mx::metal::device(stream().device);
+        auto library = device.get_library(
+            "mlx_matplotlib_precise_float64_slice",
+            [] {
+                return R"(
+                    #include <metal_stdlib>
+                    using namespace metal;
+
+                    inline long slice_offset(
+                        ulong index,
+                        constant ulong* out_shape,
+                        constant long* start,
+                        constant long* strides,
+                        constant long* input_strides,
+                        uint ndim) {
+                        long offset = 0;
+                        for (uint step = 0; step < ndim; ++step) {
+                            uint axis = ndim - 1 - step;
+                            ulong dim = out_shape[axis];
+                            ulong coord = dim == 0 ? 0 : index % dim;
+                            if (dim != 0) {
+                                index /= dim;
+                            }
+                            long input_coord = start[axis]
+                                + static_cast<long>(coord) * strides[axis];
+                            offset += input_coord * input_strides[axis];
+                        }
+                        return offset;
+                    }
+
+                    kernel void mlx_matplotlib_precise_float64_slice(
+                        device const float2* in [[buffer(0)]],
+                        device float2* out [[buffer(1)]],
+                        constant ulong& size [[buffer(2)]],
+                        constant uint& ndim [[buffer(3)]],
+                        constant ulong* out_shape [[buffer(4)]],
+                        constant long* start [[buffer(5)]],
+                        constant long* strides [[buffer(6)]],
+                        constant long* input_strides [[buffer(7)]],
+                        uint gid [[thread_position_in_grid]]) {
+                        auto index = static_cast<ulong>(gid);
+                        if (index >= size) {
+                            return;
+                        }
+                        out[index] = in[slice_offset(
+                            index, out_shape, start, strides, input_strides,
+                            ndim)];
+                    }
+                )";
+            });
+        auto kernel = device.get_kernel(
+            "mlx_matplotlib_precise_float64_slice", library);
+        auto& encoder = precise_command_encoder(stream());
+        encoder.set_compute_pipeline_state(kernel);
+        encoder.set_input_array(inputs[0], 0);
+        encoder.set_output_array(out, 1);
+        auto size = static_cast<std::uint64_t>(out.data_size());
+        auto ndim = static_cast<std::uint32_t>(out.ndim());
+        auto out_shape = shape_bytes(out.shape());
+        std::vector<std::int64_t> start(
+            start_indices_.begin(), start_indices_.end());
+        std::vector<std::int64_t> strides(strides_.begin(), strides_.end());
+        std::vector<std::int64_t> input_strides(
+            inputs[0].strides().begin(), inputs[0].strides().end());
+        encoder.set_bytes(size, 2);
+        encoder.set_bytes(ndim, 3);
+        encoder.set_vector_bytes(out_shape, 4);
+        encoder.set_vector_bytes(start, 5);
+        encoder.set_vector_bytes(strides, 6);
+        encoder.set_vector_bytes(input_strides, 7);
+
+        auto threads = static_cast<NS::UInteger>(out.data_size());
+        auto group_size = kernel->maxTotalThreadsPerThreadgroup();
+        if (group_size > threads) {
+            group_size = threads;
+        }
+        encoder.dispatch_threads(
+            MTL::Size(threads, 1, 1), MTL::Size(group_size, 1, 1));
     }
 
 private:
     mx::Shape start_indices_;
+    mx::Shape output_shape_;
     mx::Shape strides_;
 };
 
-class PreciseFloat64GpuReshape : public mx::Reshape {
+class PreciseFloat64GpuReshape : public mx::UnaryPrimitive {
 public:
     PreciseFloat64GpuReshape(mx::Stream stream, mx::Shape shape)
-        : mx::Reshape(stream, shape), shape_(std::move(shape)) {}
+        : mx::UnaryPrimitive(stream), shape_(std::move(shape)) {}
 
     const char* name() const override {
         return "PreciseFloat64GpuReshape";
@@ -514,14 +796,18 @@ public:
     }
 
     void eval_gpu(const std::vector<mx::array>& inputs, mx::array& out) override {
-        eval_common(inputs[0], out);
+        eval_common_gpu(inputs[0], out, stream());
     }
 
 private:
     static void eval_common(const mx::array& input, mx::array& out) {
-        auto [copy_necessary, out_strides] = mx::prepare_reshape(input, out);
-        if (!copy_necessary) {
-            mx::shared_buffer_reshape(input, out_strides, out);
+        if (input.flags().row_contiguous) {
+            auto out_strides = contiguous_row_strides(out.shape());
+            auto [data_size, row_contiguous, col_contiguous] =
+                mx::check_contiguity(out.shape(), out_strides);
+            mx::array::Flags flags{
+                data_size == input.data_size(), row_contiguous, col_contiguous};
+            out.copy_shared_buffer(input, out_strides, flags, input.data_size());
             return;
         }
 
@@ -529,18 +815,104 @@ private:
         auto source = input.data<PreciseFloat64>();
         auto result = out.data<PreciseFloat64>();
         for (std::size_t i = 0; i < out.size(); ++i) {
-            result[i] = source[broadcast_offset(
-                i, out.shape(), input.shape(), input.strides())];
+            result[i] = source[row_major_offset(
+                i, input.shape(), input.strides())];
         }
+    }
+
+    static void eval_common_gpu(const mx::array& input,
+                                mx::array& out,
+                                mx::Stream stream) {
+        if (input.flags().row_contiguous) {
+            auto out_strides = contiguous_row_strides(out.shape());
+            auto [data_size, row_contiguous, col_contiguous] =
+                mx::check_contiguity(out.shape(), out_strides);
+            mx::array::Flags flags{
+                data_size == input.data_size(), row_contiguous, col_contiguous};
+            out.copy_shared_buffer(input, out_strides, flags, input.data_size());
+            return;
+        }
+        if (out.size() == 0) {
+            out.set_data(mx::allocator::Buffer(nullptr));
+            return;
+        }
+
+        out.set_data(mx::allocator::malloc(out.nbytes()));
+        auto& device = mx::metal::device(stream.device);
+        auto library = device.get_library(
+            "mlx_matplotlib_precise_float64_reshape_copy",
+            [] {
+                return R"(
+                    #include <metal_stdlib>
+                    using namespace metal;
+
+                    inline long row_major_offset(
+                        ulong index,
+                        constant ulong* shape,
+                        constant long* strides,
+                        uint ndim) {
+                        long offset = 0;
+                        for (uint step = 0; step < ndim; ++step) {
+                            uint axis = ndim - 1 - step;
+                            ulong dim = shape[axis];
+                            ulong coord = dim == 0 ? 0 : index % dim;
+                            if (dim != 0) {
+                                index /= dim;
+                            }
+                            offset += static_cast<long>(coord) * strides[axis];
+                        }
+                        return offset;
+                    }
+
+                    kernel void mlx_matplotlib_precise_float64_reshape_copy(
+                        device const float2* in [[buffer(0)]],
+                        device float2* out [[buffer(1)]],
+                        constant ulong& size [[buffer(2)]],
+                        constant uint& ndim [[buffer(3)]],
+                        constant ulong* input_shape [[buffer(4)]],
+                        constant long* input_strides [[buffer(5)]],
+                        uint gid [[thread_position_in_grid]]) {
+                        auto index = static_cast<ulong>(gid);
+                        if (index >= size) {
+                            return;
+                        }
+                        out[index] = in[row_major_offset(
+                            index, input_shape, input_strides, ndim)];
+                    }
+                )";
+            });
+        auto kernel = device.get_kernel(
+            "mlx_matplotlib_precise_float64_reshape_copy", library);
+        auto& encoder = precise_command_encoder(stream);
+        encoder.set_compute_pipeline_state(kernel);
+        encoder.set_input_array(input, 0);
+        encoder.set_output_array(out, 1);
+        auto size = static_cast<std::uint64_t>(out.data_size());
+        auto ndim = static_cast<std::uint32_t>(input.ndim());
+        auto input_shape = shape_bytes(input.shape());
+        std::vector<std::int64_t> input_strides(
+            input.strides().begin(), input.strides().end());
+        encoder.set_bytes(size, 2);
+        encoder.set_bytes(ndim, 3);
+        encoder.set_vector_bytes(input_shape, 4);
+        encoder.set_vector_bytes(input_strides, 5);
+
+        auto threads = static_cast<NS::UInteger>(out.data_size());
+        auto group_size = kernel->maxTotalThreadsPerThreadgroup();
+        if (group_size > threads) {
+            group_size = threads;
+        }
+        encoder.dispatch_threads(
+            MTL::Size(threads, 1, 1), MTL::Size(group_size, 1, 1));
     }
 
     mx::Shape shape_;
 };
 
-class PreciseFloat64GpuTranspose : public mx::Transpose {
+class PreciseFloat64GpuTranspose : public mx::UnaryPrimitive {
 public:
     PreciseFloat64GpuTranspose(mx::Stream stream, std::vector<int> axes)
-        : mx::Transpose(stream, axes), axes_(std::move(axes)) {}
+        : mx::UnaryPrimitive(stream), axes_(std::move(axes)) {}
 
     const char* name() const override {
         return "PreciseFloat64GpuTranspose";
@@ -1033,6 +1405,201 @@ public:
     }
 };
 
+class PreciseFloat64GpuTake : public mx::UnaryPrimitive {
+public:
+    PreciseFloat64GpuTake(mx::Stream stream, int axis, bool flatten_input)
+        : mx::UnaryPrimitive(stream),
+          axis_(axis),
+          flatten_input_(flatten_input) {}
+
+    const char* name() const override {
+        return "PreciseFloat64GpuTake";
+    }
+
+    std::vector<mx::Shape> output_shapes(
+        const std::vector<mx::array>& inputs) override {
+        return {take_output_shape(
+            inputs[0], inputs[1], axis_, flatten_input_)};
+    }
+
+    void eval_cpu(const std::vector<mx::array>& inputs, mx::array& out) override {
+        out.set_data(mx::allocator::malloc(out.nbytes()));
+        auto source = inputs[0].data<PreciseFloat64>();
+        auto result = out.data<PreciseFloat64>();
+        for (std::size_t i = 0; i < out.size(); ++i) {
+            result[i] = source[take_source_offset(
+                i, inputs[0], inputs[1], out.shape(), axis_, flatten_input_)];
+        }
+    }
+
+    void eval_gpu(const std::vector<mx::array>& inputs, mx::array& out) override {
+        if (out.size() == 0) {
+            out.set_data(mx::allocator::Buffer(nullptr));
+            return;
+        }
+
+        out.set_data(mx::allocator::malloc(out.nbytes()));
+        auto& device = mx::metal::device(stream().device);
+        auto library = device.get_library(
+            "mlx_matplotlib_precise_float64_take",
+            [] {
+                return R"(
+                    #include <metal_stdlib>
+                    using namespace metal;
+
+                    inline long row_major_offset(
+                        long index,
+                        constant ulong* shape,
+                        constant long* strides,
+                        uint ndim) {
+                        long offset = 0;
+                        for (uint step = 0; step < ndim; ++step) {
+                            uint axis = ndim - 1 - step;
+                            ulong dim = shape[axis];
+                            long coord = dim == 0 ? 0 : index % static_cast<long>(dim);
+                            if (dim != 0) {
+                                index /= static_cast<long>(dim);
+                            }
+                            offset += coord * strides[axis];
+                        }
+                        return offset;
+                    }
+
+                    inline long take_source_offset(
+                        ulong out_index,
+                        device const int* indices,
+                        constant ulong* input_shape,
+                        constant long* input_strides,
+                        constant long* index_strides,
+                        constant ulong* out_shape,
+                        constant ulong& input_size,
+                        constant int& axis,
+                        constant uint& input_ndim,
+                        constant uint& index_ndim,
+                        constant uint& out_ndim,
+                        constant bool& flatten_input) {
+                        long index_offset = 0;
+                        long input_offset = 0;
+                        auto remaining = out_index;
+                        if (flatten_input) {
+                            for (uint step = 0; step < out_ndim; ++step) {
+                                uint out_axis = out_ndim - 1 - step;
+                                ulong dim = out_shape[out_axis];
+                                ulong coord = dim == 0 ? 0 : remaining % dim;
+                                if (dim != 0) {
+                                    remaining /= dim;
+                                }
+                                index_offset += static_cast<long>(coord)
+                                    * index_strides[out_axis];
+                            }
+                            long index = static_cast<long>(indices[index_offset]);
+                            if (index < 0) {
+                                index += static_cast<long>(input_size);
+                            }
+                            return row_major_offset(
+                                index, input_shape, input_strides, input_ndim);
+                        }
+
+                        for (uint step = 0; step < out_ndim; ++step) {
+                            uint out_axis = out_ndim - 1 - step;
+                            ulong dim = out_shape[out_axis];
+                            ulong coord = dim == 0 ? 0 : remaining % dim;
+                            if (dim != 0) {
+                                remaining /= dim;
+                            }
+                            if (static_cast<int>(out_axis) < axis) {
+                                input_offset += static_cast<long>(coord)
+                                    * input_strides[out_axis];
+                            } else if (out_axis < static_cast<uint>(axis) + index_ndim) {
+                                auto index_axis = out_axis - static_cast<uint>(axis);
+                                index_offset += static_cast<long>(coord)
+                                    * index_strides[index_axis];
+                            } else {
+                                auto input_axis = out_axis - index_ndim + 1;
+                                input_offset += static_cast<long>(coord)
+                                    * input_strides[input_axis];
+                            }
+                        }
+                        long index = static_cast<long>(indices[index_offset]);
+                        if (index < 0) {
+                            index += static_cast<long>(input_shape[axis]);
+                        }
+                        return input_offset + index * input_strides[axis];
+                    }
+
+                    kernel void mlx_matplotlib_precise_float64_take(
+                        device const float2* in [[buffer(0)]],
+                        device const int* indices [[buffer(1)]],
+                        device float2* out [[buffer(2)]],
+                        constant ulong& size [[buffer(3)]],
+                        constant ulong* input_shape [[buffer(4)]],
+                        constant long* input_strides [[buffer(5)]],
+                        constant long* index_strides [[buffer(6)]],
+                        constant ulong* out_shape [[buffer(7)]],
+                        constant ulong& input_size [[buffer(8)]],
+                        constant int& axis [[buffer(9)]],
+                        constant uint& input_ndim [[buffer(10)]],
+                        constant uint& index_ndim [[buffer(11)]],
+                        constant uint& out_ndim [[buffer(12)]],
+                        constant bool& flatten_input [[buffer(13)]],
+                        uint gid [[thread_position_in_grid]]) {
+                        auto index = static_cast<ulong>(gid);
+                        if (index >= size) {
+                            return;
+                        }
+                        out[index] = in[take_source_offset(
+                            index, indices, input_shape, input_strides,
+                            index_strides, out_shape, input_size, axis,
+                            input_ndim, index_ndim, out_ndim, flatten_input)];
+                    }
+                )";
+            });
+        auto kernel = device.get_kernel(
+            "mlx_matplotlib_precise_float64_take", library);
+        auto& encoder = precise_command_encoder(stream());
+        encoder.set_compute_pipeline_state(kernel);
+        encoder.set_input_array(inputs[0], 0);
+        encoder.set_input_array(inputs[1], 1);
+        encoder.set_output_array(out, 2);
+        auto size = static_cast<std::uint64_t>(out.data_size());
+        auto input_shape = shape_bytes(inputs[0].shape());
+        std::vector<std::int64_t> input_strides(
+            inputs[0].strides().begin(), inputs[0].strides().end());
+        std::vector<std::int64_t> index_strides(
+            inputs[1].strides().begin(), inputs[1].strides().end());
+        auto out_shape = shape_bytes(out.shape());
+        auto input_size = static_cast<std::uint64_t>(inputs[0].size());
+        auto axis = axis_;
+        auto input_ndim = static_cast<std::uint32_t>(inputs[0].ndim());
+        auto index_ndim = static_cast<std::uint32_t>(inputs[1].ndim());
+        auto out_ndim = static_cast<std::uint32_t>(out.ndim());
+        auto flatten_input = flatten_input_;
+        encoder.set_bytes(size, 3);
+        encoder.set_vector_bytes(input_shape, 4);
+        encoder.set_vector_bytes(input_strides, 5);
+        encoder.set_vector_bytes(index_strides, 6);
+        encoder.set_vector_bytes(out_shape, 7);
+        encoder.set_bytes(input_size, 8);
+        encoder.set_bytes(axis, 9);
+        encoder.set_bytes(input_ndim, 10);
+        encoder.set_bytes(index_ndim, 11);
+        encoder.set_bytes(out_ndim, 12);
+        encoder.set_bytes(flatten_input, 13);
+
+        auto threads = static_cast<NS::UInteger>(out.data_size());
+        auto group_size = kernel->maxTotalThreadsPerThreadgroup();
+        if (group_size > threads) {
+            group_size = threads;
+        }
+        encoder.dispatch_threads(
+            MTL::Size(threads, 1, 1), MTL::Size(group_size, 1, 1));
+    }
+
+private:
+    int axis_;
+    bool flatten_input_;
+};
+
 class PreciseFloat64GpuCumsum1D : public mx::UnaryPrimitive {
 public:
     explicit PreciseFloat64GpuCumsum1D(mx::Stream stream)
@@ -1124,10 +1691,10 @@ public:
     }
 };
 
-class PreciseFloat64GpuArcTan2 : public mx::ArcTan2 {
+class PreciseFloat64GpuArcTan2 : public mx::UnaryPrimitive {
 public:
     explicit PreciseFloat64GpuArcTan2(mx::Stream stream)
-        : mx::ArcTan2(stream) {}
+        : mx::UnaryPrimitive(stream) {}
 
     const char* name() const override {
         return "PreciseFloat64GpuArcTan2";
@@ -1136,6 +1703,20 @@ public:
     std::vector<mx::Shape> output_shapes(
         const std::vector<mx::array>& inputs) override {
         return {broadcast_binary_shape(inputs[0], inputs[1])};
+    }
+
+    void eval_cpu(const std::vector<mx::array>& inputs, mx::array& out) override {
+        out.set_data(mx::allocator::malloc(out.nbytes()));
+        auto left = inputs[0].data<PreciseFloat64>();
+        auto right = inputs[1].data<PreciseFloat64>();
+        auto result = out.data<PreciseFloat64>();
+        for (std::size_t i = 0; i < out.size(); ++i) {
+            auto lhs = left[broadcast_offset(
+                i, out.shape(), inputs[0].shape(), inputs[0].strides())].value();
+            auto rhs = right[broadcast_offset(
+                i, out.shape(), inputs[1].shape(), inputs[1].strides())].value();
+            result[i] = PreciseFloat64(std::atan2(lhs, rhs));
+        }
     }
 
     void eval_gpu(const std::vector<mx::array>& inputs, mx::array& out) override {
@@ -1216,13 +1797,29 @@ public:
     }
 };
 
-class PreciseFloat64GpuAbs : public mx::Abs {
+class PreciseFloat64GpuAbs : public mx::UnaryPrimitive {
 public:
     explicit PreciseFloat64GpuAbs(mx::Stream stream)
-        : mx::Abs(stream) {}
+        : mx::UnaryPrimitive(stream) {}
 
     const char* name() const override {
         return "PreciseFloat64GpuAbs";
+    }
+
+    std::vector<mx::Shape> output_shapes(
+        const std::vector<mx::array>& inputs) override {
+        return {inputs[0].shape()};
+    }
+
+    void eval_cpu(const std::vector<mx::array>& inputs, mx::array& out) override {
+        out.set_data(mx::allocator::malloc(out.nbytes()));
+        auto source = inputs[0].data<PreciseFloat64>();
+        auto result = out.data<PreciseFloat64>();
+        for (std::size_t i = 0; i < out.size(); ++i) {
+            auto value = source[row_major_offset(
+                i, inputs[0].shape(), inputs[0].strides())].value();
+            result[i] = PreciseFloat64(std::fabs(value));
+        }
     }
 
     void eval_gpu(const std::vector<mx::array>& inputs, mx::array& out) override {
@@ -1272,6 +1869,115 @@ public:
         encoder.dispatch_threads(
             MTL::Size(threads, 1, 1), MTL::Size(group_size, 1, 1));
     }
+};
+
+class PreciseFloat64GpuUnaryMath : public mx::UnaryPrimitive {
+public:
+    PreciseFloat64GpuUnaryMath(mx::Stream stream, PreciseFloat64UnaryMathOp op)
+        : mx::UnaryPrimitive(stream), op_(op) {}
+
+    const char* name() const override {
+        return "PreciseFloat64GpuUnaryMath";
+    }
+
+    std::vector<mx::Shape> output_shapes(
+        const std::vector<mx::array>& inputs) override {
+        return {inputs[0].shape()};
+    }
+
+    void eval_cpu(const std::vector<mx::array>& inputs, mx::array& out) override {
+        out.set_data(mx::allocator::malloc(out.nbytes()));
+        auto source = inputs[0].data<PreciseFloat64>();
+        auto result = out.data<PreciseFloat64>();
+        for (std::size_t i = 0; i < out.size(); ++i) {
+            auto value = source[row_major_offset(
+                i, inputs[0].shape(), inputs[0].strides())].value();
+            double computed;
+            switch (op_) {
+            case PreciseFloat64UnaryMathOp::Log:
+                computed = std::log(value);
+                break;
+            case PreciseFloat64UnaryMathOp::Log2:
+                computed = std::log2(value);
+                break;
+            case PreciseFloat64UnaryMathOp::Log10:
+                computed = std::log10(value);
+                break;
+            case PreciseFloat64UnaryMathOp::Floor:
+                computed = std::floor(value);
+                break;
+            case PreciseFloat64UnaryMathOp::Ceil:
+                computed = std::ceil(value);
+                break;
+            }
+            result[i] = PreciseFloat64(computed);
+        }
+    }
+
+    void eval_gpu(const std::vector<mx::array>& inputs, mx::array& out) override {
+        if (out.size() == 0) {
+            out.set_data(mx::allocator::Buffer(nullptr));
+            return;
+        }
+
+        out.set_data(mx::allocator::malloc(out.nbytes()));
+        auto& device = mx::metal::device(stream().device);
+        auto library = device.get_library(
+            "mlx_matplotlib_precise_float64_unary_math",
+            [] {
+                return R"(
+                    #include <metal_stdlib>
+                    using namespace metal;
+
+                    kernel void mlx_matplotlib_precise_float64_unary_math(
+                        device const float2* in [[buffer(0)]],
+                        device float2* out [[buffer(1)]],
+                        constant ulong& size [[buffer(2)]],
+                        constant uint& op [[buffer(3)]],
+                        uint gid [[thread_position_in_grid]]) {
+                        auto index = static_cast<ulong>(gid);
+                        if (index >= size) {
+                            return;
+                        }
+                        float value = in[index].x + in[index].y;
+                        float computed;
+                        if (op == 0) {
+                            computed = log(value);
+                        } else if (op == 1) {
+                            computed = log2(value);
+                        } else if (op == 2) {
+                            computed = log10(value);
+                        } else if (op == 3) {
+                            computed = floor(value);
+                        } else {
+                            computed = ceil(value);
+                        }
+                        out[index] = float2(computed, 0.0f);
+                    }
+                )";
+            });
+        auto kernel = device.get_kernel(
+            "mlx_matplotlib_precise_float64_unary_math", library);
+        auto& encoder = precise_command_encoder(stream());
+        encoder.set_compute_pipeline_state(kernel);
+        encoder.set_input_array(inputs[0], 0);
+        encoder.set_output_array(out, 1);
+        auto size = static_cast<std::uint64_t>(out.data_size());
+        auto op = static_cast<std::uint32_t>(op_);
+        encoder.set_bytes(size, 2);
+        encoder.set_bytes(op, 3);
+
+        auto threads = static_cast<NS::UInteger>(out.data_size());
+        auto group_size = kernel->maxTotalThreadsPerThreadgroup();
+        if (group_size > threads) {
+            group_size = threads;
+        }
+        encoder.dispatch_threads(
+            MTL::Size(threads, 1, 1), MTL::Size(group_size, 1, 1));
+    }
+
+private:
+    PreciseFloat64UnaryMathOp op_;
 };
 
 class PreciseFloat64GpuIsFinite : public mx::UnaryPrimitive {
@@ -1443,13 +2149,56 @@ private:
     int decimals_;
 };
 
-class PreciseFloat64GpuMatmul : public mx::Matmul {
+class PreciseFloat64GpuMatmul : public mx::UnaryPrimitive {
 public:
     explicit PreciseFloat64GpuMatmul(mx::Stream stream)
-        : mx::Matmul(stream) {}
+        : mx::UnaryPrimitive(stream) {}
 
     const char* name() const override {
         return "PreciseFloat64GpuMatmul";
+    }
+
+    std::vector<mx::Shape> output_shapes(
+        const std::vector<mx::array>& inputs) override {
+        if (inputs[0].ndim() != 2 || inputs[1].ndim() != 2) {
+            throw std::invalid_argument(
+                "precise float64 matmul currently requires 2-D inputs");
+        }
+        if (inputs[0].shape(1) != inputs[1].shape(0)) {
+            throw std::invalid_argument("[matmul] input dimensions do not match");
+        }
+        return {mx::Shape{inputs[0].shape(0), inputs[1].shape(1)}};
+    }
+
+    void eval_cpu(const std::vector<mx::array>& inputs, mx::array& out) override {
+        if (inputs[0].ndim() != 2 || inputs[1].ndim() != 2) {
+            throw std::invalid_argument(
+                "precise float64 matmul currently requires 2-D inputs");
+        }
+        out.set_data(mx::allocator::malloc(out.nbytes()));
+        auto lhs = inputs[0].data<PreciseFloat64>();
+        auto rhs = inputs[1].data<PreciseFloat64>();
+        auto result = out.data<PreciseFloat64>();
+        auto m = static_cast<std::size_t>(inputs[0].shape(0));
+        auto k = static_cast<std::size_t>(inputs[0].shape(1));
+        auto n = static_cast<std::size_t>(inputs[1].shape(1));
+        for (std::size_t row = 0; row < m; ++row) {
+            for (std::size_t col = 0; col < n; ++col) {
+                double sum = 0.0;
+                for (std::size_t inner = 0; inner < k; ++inner) {
+                    auto lhs_index =
+                        static_cast<std::int64_t>(row) * inputs[0].strides(0)
+                        + static_cast<std::int64_t>(inner)
+                            * inputs[0].strides(1);
+                    auto rhs_index =
+                        static_cast<std::int64_t>(inner) * inputs[1].strides(0)
+                        + static_cast<std::int64_t>(col)
+                            * inputs[1].strides(1);
+                    sum += lhs[lhs_index].value() * rhs[rhs_index].value();
+                }
+                result[row * n + col] = PreciseFloat64(sum);
+            }
+        }
     }
 
     void eval_gpu(const std::vector<mx::array>& inputs, mx::array& out) override {
@@ -2737,7 +3486,67 @@ mx::array transfer_float64_to_gpu(mx::array input,
 std::vector<double> read_canonical_float64_values(mx::array array)
 {
     if (array.dtype() != mx::float64) {
-        array = mx::astype(array, mx::float64, mx::Device(mx::Device::cpu));
+        array = mx::contiguous(array, false, mx::Device(mx::Device::cpu));
+        array.eval();
+        std::vector<double> values;
+        values.reserve(array.size());
+        if (array.dtype() == mx::bool_) {
+            auto ptr = array.data<bool>();
+            for (std::size_t i = 0; i < array.size(); ++i) {
+                values.push_back(ptr[i] ? 1.0 : 0.0);
+            }
+        } else if (array.dtype() == mx::int8) {
+            auto ptr = array.data<std::int8_t>();
+            for (std::size_t i = 0; i < array.size(); ++i) {
+                values.push_back(static_cast<double>(ptr[i]));
+            }
+        } else if (array.dtype() == mx::int16) {
+            auto ptr = array.data<std::int16_t>();
+            for (std::size_t i = 0; i < array.size(); ++i) {
+                values.push_back(static_cast<double>(ptr[i]));
+            }
+        } else if (array.dtype() == mx::int32) {
+            auto ptr = array.data<std::int32_t>();
+            for (std::size_t i = 0; i < array.size(); ++i) {
+                values.push_back(static_cast<double>(ptr[i]));
+            }
+        } else if (array.dtype() == mx::int64) {
+            auto ptr = array.data<std::int64_t>();
+            for (std::size_t i = 0; i < array.size(); ++i) {
+                values.push_back(static_cast<double>(ptr[i]));
+            }
+        } else if (array.dtype() == mx::uint8) {
+            auto ptr = array.data<std::uint8_t>();
+            for (std::size_t i = 0; i < array.size(); ++i) {
+                values.push_back(static_cast<double>(ptr[i]));
+            }
+        } else if (array.dtype() == mx::uint16) {
+            auto ptr = array.data<std::uint16_t>();
+            for (std::size_t i = 0; i < array.size(); ++i) {
+                values.push_back(static_cast<double>(ptr[i]));
+            }
+        } else if (array.dtype() == mx::uint32) {
+            auto ptr = array.data<std::uint32_t>();
+            for (std::size_t i = 0; i < array.size(); ++i) {
+                values.push_back(static_cast<double>(ptr[i]));
+            }
+        } else if (array.dtype() == mx::uint64) {
+            auto ptr = array.data<std::uint64_t>();
+            for (std::size_t i = 0; i < array.size(); ++i) {
+                values.push_back(static_cast<double>(ptr[i]));
+            }
+        } else if (array.dtype() == mx::float32) {
+            auto ptr = array.data<float>();
+            for (std::size_t i = 0; i < array.size(); ++i) {
+                values.push_back(static_cast<double>(ptr[i]));
+            }
+        } else {
+            array = mx::astype(array, mx::float64, mx::Device(mx::Device::cpu));
+            array.eval();
+            auto ptr = array.data<double>();
+            values.assign(ptr, ptr + array.size());
+        }
+        return values;
     }
     array.eval();
     auto ptr = array.data<double>();
@@ -2752,11 +3561,19 @@ std::vector<double> read_precise_float64_values(MlxPreciseArray array)
     if (targets_gpu(array.stream_or_device())) {
         auto ptr = array.data<PreciseFloat64>();
         for (std::size_t i = 0; i < array.size(); ++i) {
-            values.push_back(ptr[i].value());
+            auto offset = array.flags().row_contiguous
+                ? i
+                : row_major_offset(i, array.shape(), array.strides());
+            values.push_back(ptr[offset].value());
         }
     } else {
         auto ptr = array.data<double>();
-        values.assign(ptr, ptr + array.size());
+        for (std::size_t i = 0; i < array.size(); ++i) {
+            auto offset = array.flags().row_contiguous
+                ? i
+                : row_major_offset(i, array.shape(), array.strides());
+            values.push_back(ptr[offset]);
+        }
     }
     return values;
 }
@@ -3090,6 +3907,56 @@ mx::Dtype requested_dtype(nb::handle dtype, mx::Dtype fallback)
     if (dtype.is_none()) {
         return fallback;
     }
+    if (PyUnicode_Check(dtype.ptr())) {
+        auto name = nb::cast<std::string>(dtype);
+        if (!name.empty()
+                && (name[0] == '<' || name[0] == '>' || name[0] == '='
+                    || name[0] == '|' || name[0] == '!')) {
+            name.erase(name.begin());
+        }
+        if (name == "?" || name == "bool" || name == "bool_") {
+            return mx::bool_;
+        }
+        if (name == "b" || name == "i1" || name == "int8") {
+            return mx::int8;
+        }
+        if (name == "h" || name == "i2" || name == "int16") {
+            return mx::int16;
+        }
+        if (name == "i" || name == "i4" || name == "int32") {
+            return mx::int32;
+        }
+        if (name == "l" || name == "q" || name == "i8"
+                || name == "int" || name == "int64") {
+            return mx::int64;
+        }
+        if (name == "B" || name == "u1" || name == "uint8") {
+            return mx::uint8;
+        }
+        if (name == "H" || name == "u2" || name == "uint16") {
+            return mx::uint16;
+        }
+        if (name == "I" || name == "u4" || name == "uint32") {
+            return mx::uint32;
+        }
+        if (name == "L" || name == "Q" || name == "u8"
+                || name == "uint64") {
+            return mx::uint64;
+        }
+        if (name == "e" || name == "f2" || name == "float16") {
+            return mx::float16;
+        }
+        if (name == "f" || name == "f4" || name == "float32") {
+            return mx::float32;
+        }
+        if (name == "d" || name == "f8" || name == "float"
+                || name == "float64" || name == "double"
+                || name == "g" || name == "longdouble"
+                || name == "float128") {
+            return mx::float64;
+        }
+        throw std::invalid_argument("unsupported dtype string");
+    }
     return nb::cast<mx::Dtype>(dtype);
 }
 
@@ -3186,6 +4053,11 @@ MlxPreciseArray astype_mlx_precise_array(MlxPreciseArray array,
         return MlxPreciseArray(
             mx::array(array.shape(), mx::float64, std::move(primitive),
                       {std::move(array)}),
+            stream);
+    }
+    if (target_dtype == mx::float64 && targets_gpu(stream)) {
+        return MlxPreciseArray(
+            pack_existing_array_for_gpu(std::move(array), stream),
             stream);
     }
     return MlxPreciseArray(mx::astype(array, target_dtype, stream), stream);
@@ -4001,7 +4873,7 @@ MlxPreciseArray slice_precise_array(MlxPreciseArray array,
     }
 
     auto primitive = std::make_shared<PreciseFloat64GpuSlice>(
-        mx::to_stream(stream), start, normalized_stop, strides);
+        mx::to_stream(stream), start, out_shape, strides);
     return MlxPreciseArray(
         mx::array(std::move(out_shape), mx::float64, std::move(primitive),
                   {std::move(array)}),
@@ -4156,7 +5028,7 @@ MlxPreciseArray reshape_precise(nb::handle value,
         ? stream
         : array.stream_or_device();
     auto shape = requested_shape(shape_value);
-    auto output_shape = mx::Reshape::output_shape(array, shape);
+    auto output_shape = precise_reshape_output_shape(array, shape);
     if (array.dtype() == mx::float64 && targets_gpu(actual_stream)) {
         array = ensure_precise_float64(std::move(array), actual_stream);
         auto primitive = std::make_shared<PreciseFloat64GpuReshape>(
@@ -4251,6 +5123,51 @@ MlxPreciseArray transpose_precise(nb::handle value,
         actual_stream);
 }
 
+MlxPreciseArray take_precise(nb::handle value,
+                             nb::handle indices_value,
+                             nb::object axis_value,
+                             const mx::StreamOrDevice& stream)
+{
+    auto array = MlxPreciseArray::make(value, nb::none(), stream, 0);
+    auto actual_stream = has_explicit_stream(stream)
+        ? stream
+        : array.stream_or_device();
+    auto indices = MlxPreciseArray::make(
+        indices_value, nb::cast(mx::int32), actual_stream, 0);
+    bool flatten_input = axis_value.is_none();
+    int axis = 0;
+    if (!flatten_input) {
+        axis = nb::cast<int>(axis_value);
+        if (axis < 0) {
+            axis += array.ndim();
+        }
+    }
+
+    if (array.dtype() == mx::float64 && targets_gpu(actual_stream)) {
+        array = ensure_precise_float64(std::move(array), actual_stream);
+        if (indices.dtype() != mx::int32) {
+            indices = MlxPreciseArray(
+                mx::astype(indices, mx::int32, actual_stream), actual_stream);
+        }
+        auto output_shape = take_output_shape(
+            array, indices, axis, flatten_input);
+        auto primitive = std::make_shared<PreciseFloat64GpuTake>(
+            mx::to_stream(actual_stream), axis, flatten_input);
+        return MlxPreciseArray(
+            mx::array(std::move(output_shape), mx::float64,
+                      std::move(primitive),
+                      {std::move(array), std::move(indices)}),
+            actual_stream);
+    }
+
+    if (flatten_input) {
+        return MlxPreciseArray(
+            mx::take(array, indices, actual_stream), actual_stream);
+    }
+    return MlxPreciseArray(
+        mx::take(array, indices, axis, actual_stream), actual_stream);
+}
+
 nb::bytes array_bytes(nb::handle value, const mx::StreamOrDevice& stream)
 {
     auto array = MlxPreciseArray::make(value, nb::none(), stream, 0);
@@ -4265,9 +5182,6 @@ nb::bytes array_bytes(nb::handle value, const mx::StreamOrDevice& stream)
 nb::bytes float64_bytes(nb::handle value, const mx::StreamOrDevice& stream)
 {
     auto array = MlxPreciseArray::make(value, nb::cast(mx::float64), stream, 0);
-    if (!array.flags().row_contiguous) {
-        array = MlxPreciseArray(mx::contiguous(array, false, stream), stream);
-    }
     auto values = read_precise_float64_values(std::move(array));
     return nb::bytes(reinterpret_cast<const char*>(values.data()),
                      values.size() * sizeof(double));
@@ -4284,6 +5198,88 @@ nb::object item_precise(nb::handle value, const mx::StreamOrDevice& stream)
     }
     auto values = read_precise_float64_values(std::move(array));
     return nb::float_(values[0]);
+}
+
+bool is_sorted_and_has_non_nan_precise(nb::handle value,
+                                       const mx::StreamOrDevice& stream)
+{
+    auto array = MlxPreciseArray::make(value, nb::cast(mx::float64), stream, 0);
+    if (array.ndim() != 1) {
+        throw std::invalid_argument("array must be 1D");
+    }
+    MlxPreciseArray::eval(array);
+    bool has_value = false;
+    double previous = 0.0;
+    if (targets_gpu(array.stream_or_device())) {
+        auto ptr = array.data<PreciseFloat64>();
+        for (std::size_t i = 0; i < array.size(); ++i) {
+            auto offset = array.flags().row_contiguous
+                ? i
+                : row_major_offset(i, array.shape(), array.strides());
+            auto current = ptr[offset].value();
+            if (std::isnan(current)) {
+                continue;
+            }
+            if (has_value && current < previous) {
+                return false;
+            }
+            previous = current;
+            has_value = true;
+        }
+    } else {
+        auto ptr = array.data<double>();
+        for (std::size_t i = 0; i < array.size(); ++i) {
+            auto offset = array.flags().row_contiguous
+                ? i
+                : row_major_offset(i, array.shape(), array.strides());
+            auto current = ptr[offset];
+            if (std::isnan(current)) {
+                continue;
+            }
+            if (has_value && current < previous) {
+                return false;
+            }
+            previous = current;
+            has_value = true;
+        }
+    }
+    return has_value;
+}
+
+MlxPreciseArray sort_float64(nb::handle value,
+                             nb::object axis,
+                             const mx::StreamOrDevice& stream)
+{
+    auto array = MlxPreciseArray::make(value, nb::none(), stream, 0);
+    if (array.dtype() == mx::float64 && targets_gpu(stream)) {
+        if (array.ndim() != 1) {
+            throw std::invalid_argument(
+                "precise float64 GPU sort currently supports 1D arrays");
+        }
+        if (!axis.is_none()) {
+            auto ax = nb::cast<int>(axis);
+            if (ax < 0) {
+                ax += array.ndim();
+            }
+            if (ax != 0) {
+                throw std::invalid_argument("[sort] axis out of bounds");
+            }
+        }
+        auto values = read_precise_float64_values(std::move(array));
+        std::sort(values.begin(), values.end());
+        auto shape = std::vector<mx::ShapeElem>{
+            static_cast<mx::ShapeElem>(values.size())};
+        return MlxPreciseArray(
+            transfer_float64_to_gpu(
+                MlxPreciseArray::from_float64_data(values, shape, stream),
+                stream),
+            stream);
+    }
+    if (axis.is_none()) {
+        return MlxPreciseArray(mx::sort(array, stream), stream);
+    }
+    return MlxPreciseArray(
+        mx::sort(array, nb::cast<int>(axis), stream), stream);
 }
 
 MlxPreciseArray reduce_minmax_precise(nb::handle value,
@@ -4385,19 +5381,59 @@ nb::object coerce_float64_value(nb::handle target,
     return nb::cast(float64_scalar(scalar, stream));
 }
 
+mx::array unary_math_float64(nb::handle value,
+                             const mx::StreamOrDevice& stream,
+                             PreciseFloat64UnaryMathOp op)
+{
+    auto array = MlxPreciseArray::make(value, nb::none(), stream, 0);
+    if (targets_gpu(stream)) {
+        if (array.dtype() != mx::float64) {
+            array = astype_mlx_precise_array(
+                std::move(array), mx::float64, stream);
+        }
+        array = ensure_precise_float64(std::move(array), stream);
+        auto primitive = std::make_shared<PreciseFloat64GpuUnaryMath>(
+            mx::to_stream(stream), op);
+        return mx::array(array.shape(), mx::float64, std::move(primitive),
+                         {std::move(array)});
+    }
+    switch (op) {
+    case PreciseFloat64UnaryMathOp::Log:
+        return mx::log(as_float64_array(value, stream), stream);
+    case PreciseFloat64UnaryMathOp::Log2:
+        return mx::log2(as_float64_array(value, stream), stream);
+    case PreciseFloat64UnaryMathOp::Log10:
+        return mx::log10(as_float64_array(value, stream), stream);
+    case PreciseFloat64UnaryMathOp::Floor:
+        return mx::floor(as_float64_array(value, stream), stream);
+    case PreciseFloat64UnaryMathOp::Ceil:
+        return mx::ceil(as_float64_array(value, stream), stream);
+    }
+}
+
 mx::array log_float64(nb::handle value, const mx::StreamOrDevice& stream)
 {
-    return mx::log(as_float64_array(value, stream), stream);
+    return unary_math_float64(value, stream, PreciseFloat64UnaryMathOp::Log);
 }
 
 mx::array log2_float64(nb::handle value, const mx::StreamOrDevice& stream)
 {
-    return mx::log2(as_float64_array(value, stream), stream);
+    return unary_math_float64(value, stream, PreciseFloat64UnaryMathOp::Log2);
 }
 
 mx::array log10_float64(nb::handle value, const mx::StreamOrDevice& stream)
 {
-    return mx::log10(as_float64_array(value, stream), stream);
+    return unary_math_float64(value, stream, PreciseFloat64UnaryMathOp::Log10);
+}
+
+mx::array floor_float64(nb::handle value, const mx::StreamOrDevice& stream)
+{
+    return unary_math_float64(value, stream, PreciseFloat64UnaryMathOp::Floor);
+}
+
+mx::array ceil_float64(nb::handle value, const mx::StreamOrDevice& stream)
+{
+    return unary_math_float64(value, stream, PreciseFloat64UnaryMathOp::Ceil);
 }
 
 mx::array sin_float64(nb::handle value, const mx::StreamOrDevice& stream)
@@ -4660,12 +5696,68 @@ NB_MODULE(_mlx_overrides, m)
              "stream"_a = nb::none())
         .def("reshape",
              [](const MlxPreciseArray& self,
-                nb::handle shape,
-                const mx::StreamOrDevice& stream) {
+                nb::args args,
+                nb::kwargs kwargs) {
+                 if (args.size() == 0) {
+                     throw std::invalid_argument(
+                         "reshape requires at least one shape argument");
+                 }
+                 mx::StreamOrDevice stream = {};
+                 std::size_t known_kwargs = 0;
+                 if (kwargs.ptr() != nullptr && kwargs.contains("stream")) {
+                     stream = nb::cast<mx::StreamOrDevice>(kwargs["stream"]);
+                     known_kwargs = 1;
+                 }
+                 if (kwargs.ptr() != nullptr && kwargs.size() != known_kwargs) {
+                     throw std::invalid_argument(
+                         "reshape only accepts the stream keyword");
+                 }
+                 nb::object shape = nb::none();
+                 if (args.size() == 1) {
+                     shape = nb::borrow<nb::object>(args[0]);
+                 } else {
+                     nb::list shape_values;
+                     for (auto item : args) {
+                         shape_values.append(nb::cast<long long>(item));
+                     }
+                     shape = std::move(shape_values);
+                 }
                  auto self_obj = nb::cast(self);
                  return reshape_precise(self_obj, shape, stream);
+             })
+        .def("flatten",
+             [](const MlxPreciseArray& self,
+                nb::object order,
+                const mx::StreamOrDevice& stream) {
+                 if (!order.is_none()
+                         && nb::cast<std::string>(nb::str(order)) != "C") {
+                     throw std::invalid_argument(
+                         "only C-order flatten is supported");
+                 }
+                 auto self_obj = nb::cast(self);
+                 return reshape_precise(
+                     self_obj,
+                     nb::make_tuple(static_cast<mx::ShapeElem>(self.size())),
+                     stream);
              },
-             "shape"_a,
+             "order"_a = nb::none(),
+             "stream"_a = nb::none())
+        .def("ravel",
+             [](const MlxPreciseArray& self,
+                nb::object order,
+                const mx::StreamOrDevice& stream) {
+                 if (!order.is_none()
+                         && nb::cast<std::string>(nb::str(order)) != "C") {
+                     throw std::invalid_argument(
+                         "only C-order ravel is supported");
+                 }
+                 auto self_obj = nb::cast(self);
+                 return reshape_precise(
+                     self_obj,
+                     nb::make_tuple(static_cast<mx::ShapeElem>(self.size())),
+                     stream);
+             },
+             "order"_a = nb::none(),
              "stream"_a = nb::none())
         .def("transpose",
              [](const MlxPreciseArray& self,
@@ -4976,6 +6068,11 @@ NB_MODULE(_mlx_overrides, m)
           "value"_a,
           "axes"_a = nb::none(),
           "stream"_a = nb::none());
+    m.def("take_precise", &take_precise,
+          "value"_a,
+          "indices"_a,
+          "axis"_a = nb::none(),
+          "stream"_a = nb::none());
     m.def("array_bytes", &array_bytes,
           "value"_a,
           "stream"_a = nb::none());
@@ -4984,6 +6081,14 @@ NB_MODULE(_mlx_overrides, m)
           "stream"_a = nb::none());
     m.def("item_precise", &item_precise,
           "value"_a,
+          "stream"_a = nb::none());
+    m.def("is_sorted_and_has_non_nan_precise",
+          &is_sorted_and_has_non_nan_precise,
+          "value"_a,
+          "stream"_a = nb::none());
+    m.def("sort_float64", &sort_float64,
+          "value"_a,
+          "axis"_a = nb::none(),
           "stream"_a = nb::none());
     m.def("reduce_minmax_precise", &reduce_minmax_precise,
           "value"_a,
@@ -5015,6 +6120,12 @@ NB_MODULE(_mlx_overrides, m)
           "value"_a,
           "stream"_a = nb::none());
     m.def("log10_float64", &log10_float64,
+          "value"_a,
+          "stream"_a = nb::none());
+    m.def("floor_float64", &floor_float64,
+          "value"_a,
+          "stream"_a = nb::none());
+    m.def("ceil_float64", &ceil_float64,
           "value"_a,
           "stream"_a = nb::none());
     m.def("sin_float64", &sin_float64,

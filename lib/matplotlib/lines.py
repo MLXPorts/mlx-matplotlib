@@ -9,6 +9,7 @@ import logging
 import mlx.core as mx
 import matplotlib as mpl
 from . import _api, cbook, colors as mcolors, _docstring
+from . import _mlx_overrides as _mx_overrides
 from .artist import Artist, allow_rasterization
 from .cbook import (
     _to_unmasked_float_array, ls_mapper, ls_mapper_r, STEP_LOOKUP_MAP)
@@ -26,6 +27,12 @@ from .markers import (  # noqa
     TICKLEFT, TICKRIGHT, TICKUP, TICKDOWN)
 
 _log = logging.getLogger(__name__)
+
+
+def _is_sorted_and_has_non_nan(x):
+    if isinstance(x, mx.array) and getattr(x, "dtype", None) == mx.float64:
+        return _mx_overrides.is_sorted_and_has_non_nan_precise(x)
+    return _path.is_sorted_and_has_non_nan(x)
 
 
 def _get_dash_pattern(style):
@@ -687,7 +694,7 @@ class Line2D(Artist):
         self._subslice = False
         if (self.axes
                 and len(x) > self._subslice_optim_min_size
-                and _path.is_sorted_and_has_non_nan(x)
+                and _is_sorted_and_has_non_nan(x)
                 and self.axes.name == 'rectilinear'
                 and self.axes.get_xscale() == 'linear'
                 and self._markevery is None

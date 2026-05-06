@@ -4,6 +4,7 @@
 #include <nanobind/stl/variant.h>
 
 #include <array>
+#include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <limits>
@@ -670,6 +671,24 @@ least one non-nan value.
 
 static bool Py_is_sorted_and_has_non_nan(py::object obj)
 {
+    if (!PyObject_CheckBuffer(obj.ptr())) {
+        py::sequence sequence = py::reinterpret_borrow<py::sequence>(obj);
+        bool has_value = false;
+        double previous = 0.0;
+        for (auto item : sequence) {
+            double current = py::cast<double>(item);
+            if (std::isnan(current)) {
+                continue;
+            }
+            if (has_value && current < previous) {
+                return false;
+            }
+            previous = current;
+            has_value = true;
+        }
+        return has_value;
+    }
+
     py::buffer buf = py::reinterpret_borrow<py::buffer>(obj);
     auto info = buf.request(false);
     if (info.ndim != 1) {
