@@ -1228,23 +1228,33 @@ class Axis(martist.Artist):
             if v1 is None:
                 v1 = old1
 
-        if self.get_scale() == 'log' and (v0 <= 0 or v1 <= 0):
+        def scalar_limit(value):
+            if isinstance(value, mx.array) and value.size == 1:
+                return float(value.item())
+            return value
+
+        v0_scalar = scalar_limit(v0)
+        v1_scalar = scalar_limit(v1)
+
+        if self.get_scale() == 'log' and (v0_scalar <= 0 or v1_scalar <= 0):
             # Axes init calls set_xlim(0, 1) before get_xlim() can be called,
             # so only grab the limits if we really need them.
             old0, old1 = self.get_view_interval()
-            if v0 <= 0:
+            if v0_scalar <= 0:
                 _api.warn_external(f"Attempt to set non-positive {name}lim on "
                                    f"a log-scaled axis will be ignored.")
                 v0 = old0
-            if v1 <= 0:
+            if v1_scalar <= 0:
                 _api.warn_external(f"Attempt to set non-positive {name}lim on "
                                    f"a log-scaled axis will be ignored.")
                 v1 = old1
-        if v0 == v1:
+            v0_scalar = scalar_limit(v0)
+            v1_scalar = scalar_limit(v1)
+        if v0_scalar == v1_scalar:
             _api.warn_external(
                 f"Attempting to set identical low and high {name}lims "
                 f"makes transformation singular; automatically expanding.")
-        reverse = bool(v0 > v1)  # explicit cast needed for python3.8+mx.bool_.
+        reverse = bool(v0_scalar > v1_scalar)
         v0, v1 = self.get_major_locator().nonsingular(v0, v1)
         v0, v1 = self.limit_range_for_scale(v0, v1)
         v0, v1 = sorted([v0, v1], reverse=bool(reverse))

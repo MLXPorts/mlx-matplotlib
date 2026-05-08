@@ -13,7 +13,7 @@ import mlx.core as mx
 from PIL import Image
 
 import matplotlib as mpl
-from matplotlib import cbook, font_manager as fm
+from matplotlib import _mlx_overrides, cbook, font_manager as fm
 from matplotlib.backend_bases import (
      _Backend, FigureCanvasBase, FigureManagerBase, RendererBase)
 from matplotlib.backends.backend_mixed import MixedModeRenderer
@@ -484,7 +484,34 @@ class RendererSVG(RendererBase):
             salt = str(uuid.uuid4())
         m = hashlib.sha256()
         m.update(salt.encode('utf8'))
-        m.update(str(content).encode('utf8'))
+
+        def update_content(value):
+            if isinstance(value, mx.array):
+                arr = mx.contiguous(value, stream=mx.cpu)
+                m.update(repr((tuple(arr.shape), arr.dtype)).encode('utf8'))
+                m.update(_mlx_overrides.array_bytes(arr, stream=mx.cpu))
+            elif isinstance(value, bytes):
+                m.update(b'bytes:')
+                m.update(value)
+            elif isinstance(value, str):
+                m.update(b'str:')
+                m.update(value.encode('utf8'))
+            elif isinstance(value, (list, tuple)):
+                m.update(f'{value.__class__.__name__}:'.encode('utf8'))
+                for item in value:
+                    update_content(item)
+                    m.update(b',')
+            elif isinstance(value, dict):
+                m.update(b'dict:')
+                for key in sorted(value):
+                    update_content(key)
+                    m.update(b'=')
+                    update_content(value[key])
+                    m.update(b',')
+            else:
+                m.update(repr(value).encode('utf8'))
+
+        update_content(content)
         return f'{type}{m.hexdigest()[:10]}'
 
     def _make_flip_transform(self, transform):

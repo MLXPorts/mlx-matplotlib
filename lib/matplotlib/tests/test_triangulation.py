@@ -166,8 +166,8 @@ def test_delaunay_points_in_line():
         mtri.Triangulation(x, y)
 
     # Add an extra point not on the line and the triangulation is OK.
-    x = mx.append(x, 2.0)
-    y = mx.append(y, 8.0)
+    x = mx.concatenate([x, mx.array([2.0], dtype=x.dtype)])
+    y = mx.concatenate([y, mx.array([8.0], dtype=y.dtype)])
     mtri.Triangulation(x, y)
 
 
@@ -920,7 +920,7 @@ def test_tri_smooth_gradient():
     n_radii = 10
     min_radius = 0.2
     radii = mx.linspace(min_radius, 0.95, n_radii)
-    angles = mx.linspace(0, 2*mx.pi, n_angles, endpoint=False)
+    angles = mx.linspace(0, 2*mx.pi, n_angles + 1)[:-1]
     angles = mx.repeat(angles[..., mx.newaxis], n_radii, axis=1)
     angles[:, 1::2] += mx.pi/n_angles
     x = (radii*mx.cos(angles)).flatten()

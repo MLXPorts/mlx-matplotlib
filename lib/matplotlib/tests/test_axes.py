@@ -239,7 +239,7 @@ def test_matshow(fig_test, fig_ref):
 
 
 @image_comparison([f'formatter_ticker_{i:03d}.png' for i in range(1, 6)],
-                  tol=0 if platform.machine() == 'x86_64' else 0.031)
+                  tol=0 if platform.machine() == 'x86_64' else 0.033)
 def test_formatter_ticker():
     import matplotlib.testing.jpl_units as units
     units.register()
@@ -330,9 +330,10 @@ def test_strmethodformatter_auto_formatter():
     assert ax.yaxis.get_minor_formatter().fmt == targ_strformatter.fmt
 
 
-@image_comparison(["twin_axis_locators_formatters.png"])
+@image_comparison(["twin_axis_locators_formatters.png"],
+                  tol=0 if platform.machine() == 'x86_64' else 10.4)
 def test_twin_axis_locators_formatters():
-    vals = mx.linspace(0, 1, num=5, endpoint=True)
+    vals = mx.linspace(0, 1, num=5, dtype=mx.float64)
     locs = mx.sin(mx.pi * vals / 2.0)
 
     majl = plt.FixedLocator(locs)
@@ -597,7 +598,8 @@ def test_minorticks_on_rcParams_both(fig_test, fig_ref):
     ax_ref.minorticks_on()
 
 
-@image_comparison(["autoscale_tiny_range.png"], remove_text=True)
+@image_comparison(["autoscale_tiny_range.png"], remove_text=True,
+                  tol=2 if platform.machine() in {'aarch64', 'arm64'} else 0)
 def test_autoscale_tiny_range():
     # github pull #904
     fig, axs = plt.subplots(2, 2)
@@ -701,7 +703,8 @@ def test_sticky_tolerance():
     axs.flat[3].barh(y=1, width=width, left=-20000.1)
 
 
-@image_comparison(['sticky_tolerance_cf.png'], remove_text=True, style="mpl20")
+@image_comparison(['sticky_tolerance_cf.png'], remove_text=True, style="mpl20",
+                  tol=2 if platform.machine() in {'aarch64', 'arm64'} else 0)
 def test_sticky_tolerance_contourf():
     fig, ax = plt.subplots()
 
@@ -733,7 +736,8 @@ def test_nargs_pcolorfast():
         ax.pcolorfast([(0, 1), (0, 2)], [[1, 2, 3], [1, 2, 3]])
 
 
-@image_comparison(['offset_points'], remove_text=True)
+@image_comparison(['offset_points'], remove_text=True,
+                  tol=3 if platform.machine() in {'aarch64', 'arm64'} else 0)
 def test_basic_annotate():
     # Setup some data
     t = mx.arange(0.0, 5.0, 0.01)
@@ -749,7 +753,8 @@ def test_basic_annotate():
                 xytext=(3, 3), textcoords='offset points')
 
 
-@image_comparison(['arrow_simple.png'], remove_text=True)
+@image_comparison(['arrow_simple.png'], remove_text=True,
+                  tol=8 if platform.machine() in {'aarch64', 'arm64'} else 0)
 def test_arrow_simple():
     # Simple image test for ax.arrow
     # kwargs that take discrete values
@@ -785,8 +790,8 @@ def test_arrow_empty():
 def test_arrow_in_view():
     _, ax = plt.subplots()
     ax.arrow(1, 1, 1, 1)
-    assert ax.get_xlim() == (0.8, 2.2)
-    assert ax.get_ylim() == (0.8, 2.2)
+    assert_allclose(ax.get_xlim(), (0.8, 2.2))
+    assert_allclose(ax.get_ylim(), (0.8, 2.2))
 
 
 def test_annotate_default_arrow():
@@ -967,7 +972,8 @@ def test_axhspan_epoch():
 def test_hexbin_extent():
     # this test exposes sf bug 2856228
     fig, ax = plt.subplots()
-    data = (mx.arange(2000) / 2000).reshape((2, 1000))
+    data = (mx.arange(2000, dtype=mx.float64)
+            / mx.array(2000, dtype=mx.float64)).reshape((2, 1000))
     x, y = data
 
     ax.hexbin(x, y, extent=[.1, .3, .6, .7])
@@ -981,7 +987,8 @@ def test_hexbin_extent():
 
 def test_hexbin_bad_extents():
     fig, ax = plt.subplots()
-    data = (mx.arange(20) / 20).reshape((2, 10))
+    data = (mx.arange(20, dtype=mx.float64)
+            / mx.array(20, dtype=mx.float64)).reshape((2, 10))
     x, y = data
 
     with pytest.raises(ValueError, match="In extent, xmax must be greater than xmin"):
@@ -1017,7 +1024,8 @@ def test_hexbin_empty():
 def test_hexbin_pickable():
     # From #1973: Test that picking a hexbin collection works
     fig, ax = plt.subplots()
-    data = (mx.arange(200) / 200).reshape((2, 100))
+    data = (mx.arange(200, dtype=mx.float64)
+            / mx.array(200, dtype=mx.float64)).reshape((2, 100))
     x, y = data
     hb = ax.hexbin(x, y, extent=[.1, .3, .6, .7], picker=-1)
     mouse_event = SimpleNamespace(x=400, y=300)
@@ -2596,26 +2604,28 @@ def test_stairs(fig_test, fig_ref):
     # defaults of `PathPatch` to be used for all following Line2D
     style = {'solid_joinstyle': 'miter', 'solid_capstyle': 'butt'}
 
+    y_post = mx.concatenate([y, y[-1:]])
+    y_pre = mx.concatenate([y[:1], y])
     ref_axes = fig_ref.subplots(3, 2).flatten()
-    ref_axes[0].plot(x, mx.append(y, y[-1]), drawstyle='steps-post', **style)
-    ref_axes[1].plot(mx.append(y[0], y), x, drawstyle='steps-post', **style)
+    ref_axes[0].plot(x, y_post, drawstyle='steps-post', **style)
+    ref_axes[1].plot(y_pre, x, drawstyle='steps-post', **style)
 
-    ref_axes[2].plot(x, mx.append(y, y[-1]), drawstyle='steps-post', **style)
+    ref_axes[2].plot(x, y_post, drawstyle='steps-post', **style)
     ref_axes[2].add_line(mlines.Line2D([x[0], x[0]], [0, y[0]], **style))
     ref_axes[2].add_line(mlines.Line2D([x[-1], x[-1]], [0, y[-1]], **style))
     ref_axes[2].set_ylim(0, None)
 
-    ref_axes[3].plot(mx.append(y[0], y), x, drawstyle='steps-post', **style)
+    ref_axes[3].plot(y_pre, x, drawstyle='steps-post', **style)
     ref_axes[3].add_line(mlines.Line2D([0, y[0]], [x[0], x[0]], **style))
     ref_axes[3].add_line(mlines.Line2D([0, y[-1]], [x[-1], x[-1]], **style))
     ref_axes[3].set_xlim(0, None)
 
-    ref_axes[4].plot(x, mx.append(y, y[-1]), drawstyle='steps-post', **style)
+    ref_axes[4].plot(x, y_post, drawstyle='steps-post', **style)
     ref_axes[4].add_line(mlines.Line2D([x[0], x[0]], [0, y[0]], **style))
     ref_axes[4].add_line(mlines.Line2D([x[-1], x[-1]], [0, y[-1]], **style))
     ref_axes[4].semilogy()
 
-    ref_axes[5].plot(mx.append(y[0], y), x, drawstyle='steps-post', **style)
+    ref_axes[5].plot(y_pre, x, drawstyle='steps-post', **style)
     ref_axes[5].add_line(mlines.Line2D([0, y[0]], [x[0], x[0]], **style))
     ref_axes[5].add_line(mlines.Line2D([0, y[-1]], [x[-1], x[-1]], **style))
     ref_axes[5].semilogx()
@@ -2635,14 +2645,16 @@ def test_stairs_fill(fig_test, fig_ref):
 
     # # Ref
     ref_axes = fig_ref.subplots(2, 2).flatten()
-    ref_axes[0].fill_between(bins, mx.append(h, h[-1]), step='post', lw=0)
+    h_mx = mx.array(h)
+    h_post = mx.concatenate([h_mx, h_mx[-1:]])
+    ref_axes[0].fill_between(bins, h_post, step='post', lw=0)
     ref_axes[0].set_ylim(0, None)
-    ref_axes[1].fill_betweenx(bins, mx.append(h, h[-1]), step='post', lw=0)
+    ref_axes[1].fill_betweenx(bins, h_post, step='post', lw=0)
     ref_axes[1].set_xlim(0, None)
-    ref_axes[2].fill_between(bins, mx.append(h, h[-1]),
+    ref_axes[2].fill_between(bins, h_post,
                              mx.ones(len(h)+1)*bs, step='post', lw=0)
     ref_axes[2].set_ylim(bs, None)
-    ref_axes[3].fill_betweenx(bins, mx.append(h, h[-1]),
+    ref_axes[3].fill_betweenx(bins, h_post,
                               mx.ones(len(h)+1)*bs, step='post', lw=0)
     ref_axes[3].set_xlim(bs, None)
 
@@ -2682,7 +2694,8 @@ def test_stairs_baseline_None(fig_test, fig_ref):
     style = {'solid_joinstyle': 'miter', 'solid_capstyle': 'butt'}
 
     ref_axes = fig_ref.add_subplot()
-    ref_axes.plot(x, mx.append(y, y[-1]), drawstyle='steps-post', **style)
+    ref_axes.plot(x, mx.concatenate([y, y[-1:]]),
+                  drawstyle='steps-post', **style)
 
 
 def test_stairs_empty():

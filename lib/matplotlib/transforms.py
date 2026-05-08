@@ -439,8 +439,11 @@ class BboxBase(TransformNode):
         Return (:attr:`x0`, :attr:`y0`, :attr:`~BboxBase.width`,
         :attr:`~BboxBase.height`).
         """
-        (x0, y0), (x1, y1) = self.get_points()
-        return (x0, y0, x1 - x0, y1 - y0)
+        points = self.get_points()
+        x0, y0 = points[0, 0], points[0, 1]
+        x1, y1 = points[1, 0], points[1, 1]
+        return (_maybe_scalar(x0), _maybe_scalar(y0),
+                _maybe_scalar(x1 - x0), _maybe_scalar(y1 - y0))
 
     @property
     def extents(self):
@@ -1262,24 +1265,27 @@ class TransformedBbox(BboxBase):
             # Transform all four points, then make a new bounding box
             # from the result, taking care to make the orientation the
             # same.
-            points = self._transform.transform(
-                [[p[0, 0], p[0, 1]],
-                 [p[1, 0], p[0, 1]],
-                 [p[0, 0], p[1, 1]],
-                 [p[1, 0], p[1, 1]]])
+            points = self._transform.transform(mx.stack([
+                mx.stack([p[0, 0], p[0, 1]]),
+                mx.stack([p[1, 0], p[0, 1]]),
+                mx.stack([p[0, 0], p[1, 1]]),
+                mx.stack([p[1, 0], p[1, 1]]),
+            ]))
             points = _mx_plot_array(points)
 
-            xs = min(points[:, 0]), max(points[:, 0])
-            if p[0, 0] > p[1, 0]:
-                xs = xs[::-1]
+            x0 = mx.min(points[:, 0])
+            x1 = mx.max(points[:, 0])
+            flip_x = p[0, 0] > p[1, 0]
+            xs = (mx.where(flip_x, x1, x0), mx.where(flip_x, x0, x1))
 
-            ys = min(points[:, 1]), max(points[:, 1])
-            if p[0, 1] > p[1, 1]:
-                ys = ys[::-1]
+            y0 = mx.min(points[:, 1])
+            y1 = mx.max(points[:, 1])
+            flip_y = p[0, 1] > p[1, 1]
+            ys = (mx.where(flip_y, y1, y0), mx.where(flip_y, y0, y1))
 
-            self._points = mx.array([
-                [xs[0], ys[0]],
-                [xs[1], ys[1]]
+            self._points = mx.stack([
+                mx.stack([xs[0], ys[0]]),
+                mx.stack([xs[1], ys[1]]),
             ])
 
             self._invalid = 0
@@ -2721,7 +2727,7 @@ class BboxTransform(Affine2DBase):
             self._mtx = mx.array([[x_scale,     0.0, -inl*x_scale+outl],
                                   [    0.0, y_scale, -inb*y_scale+outb],
                                   [    0.0,     0.0,               1.0]],
-                                 mx.float32)
+                                 mx.float64)
             self._inverted = None
             self._invalid = 0
         return self._mtx
@@ -2759,7 +2765,7 @@ class BboxTransformTo(Affine2DBase):
             self._mtx = mx.array([[outw,  0.0, outl],
                                   [ 0.0, outh, outb],
                                   [ 0.0,  0.0,  1.0]],
-                                 mx.float32)
+                                 mx.float64)
             self._inverted = None
             self._invalid = 0
         return self._mtx
@@ -2794,7 +2800,7 @@ class BboxTransformFrom(Affine2DBase):
             self._mtx = mx.array([[x_scale,     0.0, -inl*x_scale],
                                   [    0.0, y_scale, -inb*y_scale],
                                   [    0.0,     0.0,          1.0]],
-                                 mx.float32)
+                                 mx.float64)
             self._inverted = None
             self._invalid = 0
         return self._mtx

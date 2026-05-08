@@ -235,7 +235,11 @@ def _resample(
             interpolation = 'nearest'
         else:
             interpolation = 'hanning'
-    out = mx.zeros(out_shape + data.shape[2:], data.dtype)  # 2D->2D, 3D->3D.
+    resample_stream = mx.cpu
+    # AGG resampling consumes CPU-addressable MLX storage; keep the transfer
+    # explicit so float64 tensors do not fall through MLX's GPU-only path.
+    out = mx.zeros(out_shape + data.shape[2:], data.dtype,
+                   stream=resample_stream)  # 2D->2D, 3D->3D.
     if resample is None:
         resample = image_obj.get_resample()
     _image.resample(data, out, transform,
@@ -243,7 +247,8 @@ def _resample(
                     resample,
                     alpha,
                     image_obj.get_filternorm(),
-                    image_obj.get_filterrad())
+                    image_obj.get_filterrad(),
+                    stream=resample_stream)
     return out
 
 
@@ -492,10 +497,7 @@ class _ImageBase(mcolorizer.ColorizingArtist):
                 # have to resample to the correct number of pixels
 
                 if A.dtype in _FLOAT_DTYPES:  # Float dtype: scale to same dtype.
-                    scaled_dtype = mx.float64 if A.dtype == mx.float64 else mx.float32
-                    if scaled_dtype != A.dtype and A.dtype == mx.float64:
-                        _api.warn_external(f"Casting input data from {A.dtype}"
-                                           f" to {scaled_dtype} for imshow.")
+                    scaled_dtype = mx.float32
                 else:  # Int dtype, likely.
                     # TODO slice input array first
                     # Scale to appropriately sized float: use float32 if the

@@ -604,7 +604,7 @@ class Colorbar:
         if self._extend_lower():
             y = mx.insert(y, 0, lims[0])
         if self._extend_upper():
-            y = mx.append(y, lims[1])
+            y = mx.concatenate([y, mx.array([lims[1]], dtype=y.dtype)])
         X, Y = mx.meshgrid([0, 1], y)
         if self.orientation == 'vertical':
             segments = mx.dstack([X, Y])

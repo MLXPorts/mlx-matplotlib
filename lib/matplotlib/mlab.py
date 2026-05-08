@@ -51,7 +51,7 @@ import functools
 from numbers import Integral, Number
 import sys
 import mlx.core as mx
-from matplotlib import _api, _docstring, cbook
+from matplotlib import _api, _docstring, _mlx_overrides, cbook
 
 
 def _mx_angle(values):
@@ -266,8 +266,24 @@ def _stride_windows(x, n, noverlap=0):
     x = mx.array(x)
     step = n - noverlap
     shape = (n, (x.shape[-1]-noverlap)//step)
-    strides = (x.strides[0], step*x.strides[0])
-    return mx.lib.stride_tricks.as_strided(x, shape=shape, strides=strides)
+    return _mlx_overrides.as_strided(x, shape=shape, step=step)
+
+
+def _fftfreq(n, d=1.0):
+    positive_count = (n - 1) // 2 + 1
+    negative_count = n // 2
+    positive = mx.arange(0, positive_count, dtype=mx.float64)
+    negative = mx.arange(-negative_count, 0, dtype=mx.float64)
+    return mx.concatenate([positive, negative]) / (n * d)
+
+
+def _resize_with_zeros(x, size):
+    x = mx.array(x)
+    if size <= x.size:
+        return x[:size]
+    result = mx.zeros((size,), dtype=x.dtype)
+    result[:x.size] = x
+    return result
 
 
 def _spectral_helper(x, y=None, NFFT=None, Fs=None, detrend_func=None,
@@ -326,14 +342,10 @@ def _spectral_helper(x, y=None, NFFT=None, Fs=None, detrend_func=None,
 
     # zero pad x and y up to NFFT if they are shorter than NFFT
     if len(x) < NFFT:
-        n = len(x)
-        x = mx.resize(x, NFFT)
-        x[n:] = 0
+        x = _resize_with_zeros(x, NFFT)
 
     if not same_data and len(y) < NFFT:
-        n = len(y)
-        y = mx.resize(y, NFFT)
-        y[n:] = 0
+        y = _resize_with_zeros(y, NFFT)
 
     if pad_to is None:
         pad_to = NFFT
@@ -365,21 +377,21 @@ def _spectral_helper(x, y=None, NFFT=None, Fs=None, detrend_func=None,
             "The window length must match the data's first dimension")
 
     if sys.maxsize > 2**32:
-        result = mx.lib.stride_tricks.sliding_window_view(
-            x, NFFT, axis=0)[::NFFT - noverlap].T
+        result = _mlx_overrides.sliding_window_view(
+            x, NFFT, axis=0, step=NFFT - noverlap).T
     else:
         # The MLXArrayBackend version on 32-bit will OOM, so use old implementation.
         result = _stride_windows(x, NFFT, noverlap=noverlap)
     result = detrend(result, detrend_func, axis=0)
     result = result * window.reshape((-1, 1))
     result = mx.fft.fft(result, n=pad_to, axis=0)[:numFreqs, :]
-    freqs = mx.fft.fftfreq(pad_to, 1/Fs)[:numFreqs]
+    freqs = _fftfreq(pad_to, 1/Fs)[:numFreqs]
 
     if not same_data:
         # if same_data is False, mode must be 'psd'
         if sys.maxsize > 2**32:
-            resultY = mx.lib.stride_tricks.sliding_window_view(
-                y, NFFT, axis=0)[::NFFT - noverlap].T
+            resultY = _mlx_overrides.sliding_window_view(
+                y, NFFT, axis=0, step=NFFT - noverlap).T
         else:
             # The MLXArrayBackend version on 32-bit will OOM, so use old implementation.
             resultY = _stride_windows(y, NFFT, noverlap=noverlap)

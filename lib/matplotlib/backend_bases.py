@@ -58,6 +58,14 @@ from matplotlib._enums import JoinStyle, CapStyle
 
 
 _log = logging.getLogger(__name__)
+
+
+def _int_pixel_size(value):
+    value = float(value)
+    rounded = round(value)
+    return int(rounded) if abs(value - rounded) < 1e-3 else int(value)
+
+
 _default_filetypes = {
     'eps': 'Encapsulated Postscript',
     'gif': 'Graphics Interchange Format',
@@ -2015,7 +2023,8 @@ class FigureCanvasBase:
             The size of the figure, in points or pixels, depending on the
             backend.
         """
-        return tuple(int(size / (1 if physical else self.device_pixel_ratio))
+        scale = 1 if physical else self.device_pixel_ratio
+        return tuple(_int_pixel_size(size / scale)
                      for size in self.figure.bbox.max)
 
     @classmethod

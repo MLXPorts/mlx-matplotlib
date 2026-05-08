@@ -2632,7 +2632,8 @@ class Axes3D(Axes):
             midpoints = mx.insert(midpoints, 0, min_level)
         if cset._extend_max:
             max_level = cset.levels[-1] + mx.diff(cset.levels[-2:]) / 2
-            midpoints = mx.append(midpoints, max_level)
+            midpoints = mx.concatenate([
+                midpoints, mx.array([max_level], dtype=midpoints.dtype)])
 
         art3d.collection_2d_to_3d(
             cset, zs=offset if offset is not None else midpoints, zdir=zdir,

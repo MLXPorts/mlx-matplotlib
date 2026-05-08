@@ -5741,11 +5741,13 @@ or pandas.DataFrame
         bdist = (d1 < d2)
 
         if C is None:  # [1:] drops out-of-range points.
-            counts1 = mx.bincount(i1[bdist], minlength=1 + nx1 * ny1)[1:]
-            counts2 = mx.bincount(i2[~bdist], minlength=1 + nx2 * ny2)[1:]
+            counts1 = mx.bincount(
+                mx.where(bdist, i1, 0), minlength=1 + nx1 * ny1)[1:]
+            counts2 = mx.bincount(
+                mx.where(~bdist, i2, 0), minlength=1 + nx2 * ny2)[1:]
             accum = mx.concatenate([counts1, counts2]).astype(float)
             if mincnt is not None:
-                accum[accum < mincnt] = mx.nan
+                accum = mx.where(accum < mincnt, mx.nan, accum)
             C = mx.ones(len(x))
         else:
             # store the C values in a list per hexagon index
@@ -5781,6 +5783,9 @@ or pandas.DataFrame
 
         polygon = [sx, sy / 3] * mx.array(
             [[.5, -.5], [.5, .5], [0., 1.], [-.5, .5], [-.5, -.5], [0., -1.]])
+        offsets = mx.array(offsets, dtype=offsets.dtype, stream=mx.cpu)
+        accum = mx.array(accum, dtype=accum.dtype, stream=mx.cpu)
+        polygon = mx.array(polygon, dtype=polygon.dtype, stream=mx.cpu)
 
         if linewidths is None:
             linewidths = [mpl.rcParams['patch.linewidth']]
@@ -5841,7 +5846,7 @@ or pandas.DataFrame
         # autoscale the norm with current accum values if it hasn't been set
         if norm is not None:
             if collection.norm.vmin is None and collection.norm.vmax is None:
-                collection.norm.autoscale()
+                collection.autoscale()
 
         corners = ((xmin, ymin), (xmax, ymax))
         self.update_datalim(corners)

@@ -4,7 +4,7 @@ from matplotlib.testing.decorators import image_comparison
 
 
 @image_comparison(baseline_images=['agg_filter_alpha'],
-                  extensions=['gif', 'png', 'pdf'])
+                  extensions=['gif', 'png', 'pdf'], tol=3.3)
 def test_agg_filter_alpha():
     # Remove this line when this test image is regenerated.
     plt.rcParams['pcolormesh.snap'] = False

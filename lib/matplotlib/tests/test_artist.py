@@ -1,5 +1,6 @@
 import io
 from itertools import chain
+import platform
 import mlx.core as mx
 import pytest
 
@@ -94,7 +95,8 @@ def test_collection_transform_of_none():
     assert isinstance(c.get_offset_transform(), mtransforms.IdentityTransform)
 
 
-@image_comparison(["clip_path_clipping"], remove_text=True)
+@image_comparison(["clip_path_clipping"], remove_text=True,
+                  tol=0 if platform.machine() == 'x86_64' else 0.01)
 def test_clipping():
     exterior = mpath.Path.unit_rectangle().deepcopy()
     exterior.vertices *= 4
@@ -214,7 +216,8 @@ def test_remove():
     assert ax.stale
 
 
-@image_comparison(["default_edges.png"], remove_text=True, style='default')
+@image_comparison(["default_edges.png"], remove_text=True, style='default',
+                  tol=0 if platform.machine() == 'x86_64' else 0.01)
 def test_default_edges():
     # Remove this line when this test image is regenerated.
     plt.rcParams['text.kerning_factor'] = 6

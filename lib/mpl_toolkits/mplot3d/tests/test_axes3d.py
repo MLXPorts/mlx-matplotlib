@@ -794,12 +794,13 @@ def test_trisurf3d():
     n_angles = 36
     n_radii = 8
     radii = mx.linspace(0.125, 1.0, n_radii)
-    angles = mx.linspace(0, 2*mx.pi, n_angles, endpoint=False)
+    angles = mx.linspace(0, 2*mx.pi, n_angles + 1)[:-1]
     angles = mx.repeat(angles[..., mx.newaxis], n_radii, axis=1)
     angles[:, 1::2] += mx.pi/n_angles
 
-    x = mx.append(0, (radii*mx.cos(angles)).flatten())
-    y = mx.append(0, (radii*mx.sin(angles)).flatten())
+    center = mx.zeros((1,), dtype=radii.dtype)
+    x = mx.concatenate([center, (radii*mx.cos(angles)).flatten()])
+    y = mx.concatenate([center, (radii*mx.sin(angles)).flatten()])
     z = mx.sin(-x*y)
 
     fig = plt.figure()
@@ -812,12 +813,13 @@ def test_trisurf3d_shaded():
     n_angles = 36
     n_radii = 8
     radii = mx.linspace(0.125, 1.0, n_radii)
-    angles = mx.linspace(0, 2*mx.pi, n_angles, endpoint=False)
+    angles = mx.linspace(0, 2*mx.pi, n_angles + 1)[:-1]
     angles = mx.repeat(angles[..., mx.newaxis], n_radii, axis=1)
     angles[:, 1::2] += mx.pi/n_angles
 
-    x = mx.append(0, (radii*mx.cos(angles)).flatten())
-    y = mx.append(0, (radii*mx.sin(angles)).flatten())
+    center = mx.zeros((1,), dtype=radii.dtype)
+    x = mx.concatenate([center, (radii*mx.cos(angles)).flatten()])
+    y = mx.concatenate([center, (radii*mx.sin(angles)).flatten()])
     z = mx.sin(-x*y)
 
     fig = plt.figure()

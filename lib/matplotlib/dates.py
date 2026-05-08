@@ -376,13 +376,14 @@ def _from_ordinalf(x, tz=None):
     tz = _get_tzinfo(tz)
 
     epoch_text = get_epoch()
+    x = float(x.item()) if hasattr(x, "item") else float(x)
     if epoch_text.startswith('0000-12-31'):
         dt = (datetime.datetime(1, 1, 1) +
               datetime.timedelta(
-                  microseconds=int(mx.round((x - 1) * MUSECONDS_PER_DAY))))
+                  microseconds=int(round((x - 1) * MUSECONDS_PER_DAY))))
     else:
         dt = (mx.datetime64(epoch_text) +
-              mx.timedelta64(int(mx.round(x * MUSECONDS_PER_DAY)), 'us'))
+              mx.timedelta64(int(round(x * MUSECONDS_PER_DAY)), 'us'))
     if dt < datetime.datetime(1, 1, 1) or dt > datetime.datetime.max:
         raise ValueError(f'Date ordinal {x} converts to {dt} (using '
                          f'epoch {get_epoch()}), but Matplotlib dates must be '
@@ -396,7 +397,7 @@ def _from_ordinalf(x, tz=None):
     # but maybe we are working in a different timezone so move.
     dt = dt.astimezone(tz)
     # fix round off errors
-    if mx.abs(x) > 70 * 365:
+    if abs(x) > 70 * 365:
         # if x is big, round off to nearest twenty microseconds.
         # This avoids floating point roundoff error
         ms = round(dt.microsecond / 20) * 20

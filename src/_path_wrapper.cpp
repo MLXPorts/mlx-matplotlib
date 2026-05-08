@@ -314,14 +314,14 @@ static py::object Py_points_in_path(const py::buffer &points_obj,
     return make_memoryview(results.data(), n, "B", py::make_tuple(n));
 }
 
-static py::tuple Py_get_path_collection_extents(agg::trans_affine master_transform,
-                                                mpl::PathGenerator paths,
-                                                const py::buffer &transforms_obj,
-                                                const py::buffer &offsets_obj,
-                                                agg::trans_affine offset_trans)
+template <class TransformArray, class OffsetArray>
+static py::tuple Py_get_path_collection_extents_impl(
+    agg::trans_affine master_transform,
+    mpl::PathGenerator paths,
+    TransformArray& transforms,
+    OffsetArray& offsets,
+    agg::trans_affine offset_trans)
 {
-    auto transforms = convert_transforms(transforms_obj);
-    auto offsets = convert_points(offsets_obj);
     extent_limits e;
 
     get_path_collection_extents(master_transform, paths, transforms, offsets, offset_trans, e);
@@ -341,18 +341,55 @@ static py::tuple Py_get_path_collection_extents(agg::trans_affine master_transfo
     return py::make_tuple(ext_mv, min_mv);
 }
 
-static py::object Py_point_in_path_collection(double x,
-                                              double y,
-                                              double radius,
-                                              agg::trans_affine master_transform,
-                                              mpl::PathGenerator paths,
-                                              const py::buffer &transforms_obj,
-                                              const py::buffer &offsets_obj,
-                                              agg::trans_affine offset_trans,
-                                              bool filled)
+static py::tuple Py_get_path_collection_extents(agg::trans_affine master_transform,
+                                                mpl::PathGenerator paths,
+                                                py::object transforms_obj,
+                                                py::object offsets_obj,
+                                                agg::trans_affine offset_trans)
 {
-    auto transforms = convert_transforms(transforms_obj);
-    auto offsets = convert_points(offsets_obj);
+    bool transforms_mlx = is_mlx_array_like(transforms_obj);
+    bool offsets_mlx = is_mlx_array_like(offsets_obj);
+    if (transforms_mlx && offsets_mlx) {
+        auto transforms = convert_mlx_transforms(transforms_obj);
+        auto offsets = convert_mlx_points(offsets_obj);
+        return Py_get_path_collection_extents_impl(
+            master_transform, paths, transforms, offsets, offset_trans);
+    }
+    if (transforms_mlx) {
+        auto transforms = convert_mlx_transforms(transforms_obj);
+        auto offsets_buf = py::reinterpret_borrow<py::buffer>(offsets_obj);
+        auto offsets = convert_points(offsets_buf);
+        return Py_get_path_collection_extents_impl(
+            master_transform, paths, transforms, offsets, offset_trans);
+    }
+    if (offsets_mlx) {
+        auto transforms_buf = py::reinterpret_borrow<py::buffer>(transforms_obj);
+        auto transforms = convert_transforms(transforms_buf);
+        auto offsets = convert_mlx_points(offsets_obj);
+        return Py_get_path_collection_extents_impl(
+            master_transform, paths, transforms, offsets, offset_trans);
+    }
+
+    auto transforms_buf = py::reinterpret_borrow<py::buffer>(transforms_obj);
+    auto offsets_buf = py::reinterpret_borrow<py::buffer>(offsets_obj);
+    auto transforms = convert_transforms(transforms_buf);
+    auto offsets = convert_points(offsets_buf);
+    return Py_get_path_collection_extents_impl(
+        master_transform, paths, transforms, offsets, offset_trans);
+}
+
+template <class TransformArray, class OffsetArray>
+static py::object Py_point_in_path_collection_impl(
+    double x,
+    double y,
+    double radius,
+    agg::trans_affine master_transform,
+    mpl::PathGenerator paths,
+    TransformArray& transforms,
+    OffsetArray& offsets,
+    agg::trans_affine offset_trans,
+    bool filled)
+{
     std::vector<int> result;
 
     point_in_path_collection(x,
@@ -372,6 +409,51 @@ static py::object Py_point_in_path_collection(double x,
                            n * static_cast<py::ssize_t>(sizeof(std::int32_t)),
                            "i",
                            py::make_tuple(n));
+}
+
+static py::object Py_point_in_path_collection(double x,
+                                              double y,
+                                              double radius,
+                                              agg::trans_affine master_transform,
+                                              mpl::PathGenerator paths,
+                                              py::object transforms_obj,
+                                              py::object offsets_obj,
+                                              agg::trans_affine offset_trans,
+                                              bool filled)
+{
+    bool transforms_mlx = is_mlx_array_like(transforms_obj);
+    bool offsets_mlx = is_mlx_array_like(offsets_obj);
+    if (transforms_mlx && offsets_mlx) {
+        auto transforms = convert_mlx_transforms(transforms_obj);
+        auto offsets = convert_mlx_points(offsets_obj);
+        return Py_point_in_path_collection_impl(
+            x, y, radius, master_transform, paths, transforms, offsets,
+            offset_trans, filled);
+    }
+    if (transforms_mlx) {
+        auto transforms = convert_mlx_transforms(transforms_obj);
+        auto offsets_buf = py::reinterpret_borrow<py::buffer>(offsets_obj);
+        auto offsets = convert_points(offsets_buf);
+        return Py_point_in_path_collection_impl(
+            x, y, radius, master_transform, paths, transforms, offsets,
+            offset_trans, filled);
+    }
+    if (offsets_mlx) {
+        auto transforms_buf = py::reinterpret_borrow<py::buffer>(transforms_obj);
+        auto transforms = convert_transforms(transforms_buf);
+        auto offsets = convert_mlx_points(offsets_obj);
+        return Py_point_in_path_collection_impl(
+            x, y, radius, master_transform, paths, transforms, offsets,
+            offset_trans, filled);
+    }
+
+    auto transforms_buf = py::reinterpret_borrow<py::buffer>(transforms_obj);
+    auto offsets_buf = py::reinterpret_borrow<py::buffer>(offsets_obj);
+    auto transforms = convert_transforms(transforms_buf);
+    auto offsets = convert_points(offsets_buf);
+    return Py_point_in_path_collection_impl(
+        x, y, radius, master_transform, paths, transforms, offsets,
+        offset_trans, filled);
 }
 
 static bool Py_path_in_path(mpl::PathIterator a,
@@ -616,6 +698,38 @@ static py::tuple Py_cleanup_path(mpl::PathIterator path,
     return py::make_tuple(v_mv, c_mv);
 }
 
+static py::tuple Py_cleanup_path_obj(mpl::PathIterator path,
+                                     py::object trans_obj,
+                                     bool remove_nans,
+                                     py::object clip_rect_obj,
+                                     py::object snap_mode_obj,
+                                     double stroke_width,
+                                     py::object simplify_obj,
+                                     bool return_curves,
+                                     py::object sketch_obj)
+{
+    agg::trans_affine trans;
+    if (!trans_obj.is_none()) {
+        convert_trans_affine(trans_obj, trans);
+    }
+    auto clip_rect = py::cast<agg::rect_d>(clip_rect_obj);
+    auto snap_mode = snap_mode_from_python(snap_mode_obj);
+    std::optional<bool> simplify;
+    if (!simplify_obj.is_none()) {
+        simplify = python_truth(simplify_obj);
+    }
+    auto sketch = py::cast<SketchParams>(sketch_obj);
+    return Py_cleanup_path(path,
+                           trans,
+                           remove_nans,
+                           clip_rect,
+                           snap_mode,
+                           stroke_width,
+                           simplify,
+                           return_curves,
+                           sketch);
+}
+
 const char *Py_convert_to_string__doc__ = R"""(--
 
 Convert *path* to a bytestring.
@@ -642,10 +756,27 @@ static py::object Py_convert_to_string(mpl::PathIterator path,
                                        std::optional<bool> simplify,
                                        SketchParams sketch,
                                        int precision,
-                                       const std::array<std::string, 5> &codes,
+                                       py::sequence codes_obj,
                                        bool postfix)
 {
     std::string buffer;
+    if (py::len(codes_obj) != 5) {
+        throw py::value_error("codes must contain five path operators");
+    }
+    std::array<std::string, 5> codes;
+    for (size_t i = 0; i < codes.size(); ++i) {
+        py::handle item = codes_obj[i];
+        if (PyBytes_Check(item.ptr())) {
+            char *data = nullptr;
+            Py_ssize_t size = 0;
+            if (PyBytes_AsStringAndSize(item.ptr(), &data, &size) != 0) {
+                py::raise_python_error();
+            }
+            codes[i].assign(data, static_cast<size_t>(size));
+        } else {
+            codes[i] = py::cast<std::string>(item);
+        }
+    }
 
     if (!simplify.has_value()) {
         simplify = path.should_simplify();
@@ -729,8 +860,10 @@ NB_MODULE(_path, m)
     nb::detail::init(NB_DOMAIN_STR);
 #endif
 
-    m.def("point_in_path", &Py_point_in_path, "x"_a, "y"_a, "radius"_a, "path"_a, "trans"_a);
-    m.def("points_in_path", &Py_points_in_path, "points"_a, "radius"_a, "path"_a, "trans"_a);
+    m.def("point_in_path", &Py_point_in_path,
+          "x"_a, "y"_a, "radius"_a, "path"_a, "trans"_a.none());
+    m.def("points_in_path", &Py_points_in_path,
+          "points"_a, "radius"_a, "path"_a, "trans"_a.none());
     m.def("get_path_collection_extents",
           &Py_get_path_collection_extents,
           "master_transform"_a,
@@ -749,7 +882,9 @@ NB_MODULE(_path, m)
           "offsets"_a,
           "offset_trans"_a,
           "filled"_a);
-    m.def("path_in_path", &Py_path_in_path, "path_a"_a, "trans_a"_a, "path_b"_a, "trans_b"_a);
+    m.def("path_in_path", &Py_path_in_path,
+          "path_a"_a, "trans_a"_a.none(),
+          "path_b"_a, "trans_b"_a.none());
     m.def("clip_path_to_rect", &Py_clip_path_to_rect, "path"_a, "rect"_a, "inside"_a);
     m.def("affine_transform", &Py_affine_transform,
           "points"_a,
@@ -769,28 +904,28 @@ NB_MODULE(_path, m)
     m.def("convert_path_to_polygons",
           &Py_convert_path_to_polygons,
           "path"_a,
-          "trans"_a,
+          "trans"_a.none(),
           "width"_a = 0.0,
           "height"_a = 0.0,
           "closed_only"_a = false);
     m.def("cleanup_path",
-          &Py_cleanup_path,
+          &Py_cleanup_path_obj,
           "path"_a,
-          "trans"_a,
+          "trans"_a.none(),
           "remove_nans"_a,
-          "clip_rect"_a,
-          "snap_mode"_a,
+          "clip_rect"_a.none(),
+          "snap_mode"_a.none(),
           "stroke_width"_a,
-          "simplify"_a,
+          "simplify"_a.none(),
           "return_curves"_a,
-          "sketch"_a);
+          "sketch"_a.none());
     m.def("convert_to_string",
           &Py_convert_to_string,
           "path"_a,
-          "trans"_a,
-          "clip_rect"_a,
-          "simplify"_a,
-          "sketch"_a,
+          "trans"_a.none(),
+          "clip_rect"_a.none(),
+          "simplify"_a.none(),
+          "sketch"_a.none(),
           "precision"_a,
           "codes"_a,
           "postfix"_a,

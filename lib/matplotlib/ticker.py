@@ -2202,17 +2202,17 @@ class MaxNLocator(Locator):
             # adjust the raw step to match the mpl3.8 appearance. The zoom
             # factor of 2/48, gives us the 23/24 modifier.
             raw_step = raw_step * 23/24
-        _vmin_scalar = _vmin.item() if isinstance(_vmin, mx.array) else _vmin
-        _vmax_scalar = _vmax.item() if isinstance(_vmax, mx.array) else _vmax
+        _vmin_array = (_vmin if isinstance(_vmin, mx.array)
+                       else mx.array(_vmin, dtype=steps.dtype))
+        _vmax_array = (_vmax if isinstance(_vmax, mx.array)
+                       else mx.array(_vmax, dtype=steps.dtype))
         large_steps = steps >= raw_step
         if mpl.rcParams['axes.autolimit_mode'] == 'round_numbers':
             # Classic round_numbers mode may require a larger step.
             # Get first multiple of steps that are <= _vmin
-            floored_vmins = mx.array([
-                math.floor(_vmin_scalar / step.item()) * step.item()
-                for step in steps], dtype=steps.dtype)
+            floored_vmins = mx.floor(_vmin_array / steps) * steps
             floored_vmaxs = floored_vmins + steps * nbins
-            large_steps = large_steps & (floored_vmaxs >= _vmax)
+            large_steps = large_steps & (floored_vmaxs >= _vmax_array)
 
         # Find index of smallest large step.
         istep = len(steps) - 1
@@ -2230,21 +2230,22 @@ class MaxNLocator(Locator):
             if (self._integer and
                     mx.floor(_vmax) - mx.ceil(_vmin) >= self._min_n_ticks - 1):
                 step_scalar = max(1, step_scalar)
-            best_vmin = math.floor(_vmin_scalar / step_scalar) * step_scalar
+                step = mx.maximum(step, mx.array(1, dtype=steps.dtype))
+            best_vmin = mx.floor(_vmin_array / step) * step
 
             # Find tick locations spanning the vmin-vmax range, taking into
             # account degradation of precision when there is a large offset.
             # The edge ticks beyond vmin and/or vmax are needed for the
             # "round_numbers" autolimit mode.
             edge = _Edge_integer(step_scalar, offset)
-            low = edge.le(_vmin_scalar - best_vmin)
-            high = edge.ge(_vmax_scalar - best_vmin)
+            low = edge.le(_vmin_array - best_vmin)
+            high = edge.ge(_vmax_array - best_vmin)
             low_i = int(low.item()) if isinstance(low, mx.array) else int(low)
             high_i = int(high.item()) if isinstance(high, mx.array) else int(high)
             ticks = (mx.arange(low_i, high_i + 1, dtype=mx.float64)
-                     * step_scalar + best_vmin)
+                     * step + best_vmin)
             # Count only the ticks that will be displayed.
-            nticks = ((ticks <= _vmax) & (ticks >= _vmin)).sum()
+            nticks = ((ticks <= _vmax_array) & (ticks >= _vmin_array)).sum()
             if int(nticks.item()) >= self._min_n_ticks:
                 break
         return ticks + offset
@@ -2275,11 +2276,24 @@ class MaxNLocator(Locator):
             dmax = max(abs(dmin), abs(dmax))
             dmin = -dmax
 
+        input_limits = mx.stack([
+            dmin if isinstance(dmin, mx.array) else mx.array(dmin),
+            dmax if isinstance(dmax, mx.array) else mx.array(dmax),
+        ])
         dmin, dmax = mtransforms.nonsingular(
             dmin, dmax, expander=1e-12, tiny=1e-13)
 
         if mpl.rcParams['axes.autolimit_mode'] == 'round_numbers':
-            return self._raw_ticks(dmin, dmax)[[0, -1]]
+            limits = self._raw_ticks(dmin, dmax)[[0, -1]]
+            data_limits = mx.stack([
+                dmin if isinstance(dmin, mx.array)
+                else mx.array(dmin, dtype=limits.dtype),
+                dmax if isinstance(dmax, mx.array)
+                else mx.array(dmax, dtype=limits.dtype),
+            ])
+            close = mx.isclose(limits, data_limits, rtol=1e-12, atol=1e-12)
+            unexpanded = mx.equal(data_limits, input_limits)
+            return mx.where(close & unexpanded, data_limits, limits)
         else:
             return dmin, dmax
 

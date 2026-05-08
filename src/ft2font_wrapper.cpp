@@ -1563,6 +1563,18 @@ PyFT2Font_get_path(PyFT2Font *self)
     self->x->get_path(vertices, codes);
 
     auto length = static_cast<py::ssize_t>(codes.size());
+    if (length == 0) {
+        static double empty_vertices[1] = {0.0};
+        static unsigned char empty_codes[1] = {0};
+        return py::make_tuple(
+            py::memoryview::from_buffer(
+                empty_vertices, {0, 2},
+                {2 * static_cast<py::ssize_t>(sizeof(double)),
+                 static_cast<py::ssize_t>(sizeof(double))}),
+            py::memoryview::from_buffer(
+                empty_codes, {0},
+                {static_cast<py::ssize_t>(sizeof(unsigned char))}));
+    }
 
     auto v_ba_size = length * 2 * static_cast<py::ssize_t>(sizeof(double));
     py::bytearray v_ba = py::reinterpret_steal<py::bytearray>(

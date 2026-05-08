@@ -197,7 +197,9 @@ class Path:
                                  f"to 'MOVETO' ({self.MOVETO}).  "
                                  f"Your first code is {codes[0]}")
         elif closed and len(vertices):
-            codes = mx.zeros((len(vertices),), dtype=self.code_type)
+            codes = mx.zeros(
+                (len(vertices),), dtype=self.code_type,
+                stream=getattr(vertices, "_mlx_stream", None))
             codes[0] = self.MOVETO
             codes[1:-1] = self.LINETO
             codes[-1] = self.CLOSEPOLY
@@ -254,7 +256,9 @@ class Path:
         an entry for the CLOSEPATH; this entry is added by `._create_closed`.
         """
         v = _to_unmasked_float_array(vertices)
-        return cls(mx.concatenate([v, v[:1]]), closed=True)
+        return cls(mx.concatenate(
+            [v, v[:1]], stream=getattr(v, "_mlx_stream", None)),
+            closed=True)
 
     def _update_values(self):
         self._simplify_threshold = mpl.rcParams['path.simplify_threshold']
@@ -546,7 +550,9 @@ class Path:
         if self.codes is None:
             yield self
         else:
-            idxs = mx.append((self.codes == Path.MOVETO).nonzero()[0], len(self.codes))
+            idxs = (self.codes == Path.MOVETO).nonzero()[0]
+            idxs = mx.concatenate([
+                idxs, mx.array([len(self.codes)], dtype=idxs.dtype)])
             for sl in map(slice, idxs, idxs[1:]):
                 yield Path._fast_from_codes_and_verts(
                     self.vertices[sl], self.codes[sl], self)

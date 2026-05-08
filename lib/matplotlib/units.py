@@ -57,10 +57,15 @@ def _is_natively_supported(x):
     array of objects of such types.
     """
     # Matplotlib natively supports all number types except Decimal.
-    if ((isinstance(x, mx.array)
-            or (hasattr(x, "ndim") and hasattr(x, "dtype")))
-            and x.ndim == 0):
-        return True
+    if (isinstance(x, mx.array)
+            or (hasattr(x, "ndim") and hasattr(x, "dtype"))):
+        if x.ndim == 0:
+            return True
+        try:
+            return (mx.issubdtype(x.dtype, mx.floating)
+                    or mx.issubdtype(x.dtype, mx.integer))
+        except TypeError:
+            pass
     if cbook.iterable(x):
         # Assume lists are homogeneous as other functions in unit system.
         for thisx in x:

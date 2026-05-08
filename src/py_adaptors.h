@@ -47,6 +47,8 @@ class PathIterator
     py::object m_codes_owner;
     std::optional<mx::array> m_vertices_array;
     std::optional<mx::array> m_codes_array;
+    bool m_vertices_cpu_direct;
+    bool m_codes_cpu_direct;
 
     enum class VertexDtype {
         Float32,
@@ -66,7 +68,9 @@ class PathIterator
 
   public:
     inline PathIterator()
-        : m_vertices_dtype(VertexDtype::Float64),
+        : m_vertices_cpu_direct(false),
+          m_codes_cpu_direct(false),
+          m_vertices_dtype(VertexDtype::Float64),
           m_iterator(0),
           m_total_vertices(0),
           m_should_simplify(false),
@@ -96,6 +100,8 @@ class PathIterator
         m_vertices_dtype = other.m_vertices_dtype;
         m_iterator = 0;
         m_total_vertices = other.m_total_vertices;
+        m_vertices_cpu_direct = other.m_vertices_cpu_direct;
+        m_codes_cpu_direct = other.m_codes_cpu_direct;
 
         m_should_simplify = other.m_should_simplify;
         m_simplify_threshold = other.m_simplify_threshold;
@@ -113,6 +119,19 @@ class PathIterator
     inline bool is_mlx_array_like(py::object obj)
     {
         return py::isinstance<mx::array>(obj);
+    }
+
+    inline bool has_explicit_cpu_stream(py::object obj)
+    {
+        if (!py::hasattr(obj, "_mlx_stream")) {
+            return false;
+        }
+        py::object stream = obj.attr("_mlx_stream");
+        if (stream.is_none()) {
+            return false;
+        }
+        auto text = std::string(py::str(stream).c_str());
+        return text.find("cpu") != std::string::npos;
     }
 
     inline py::object get_python_item(py::handle obj, py::handle key)
@@ -140,12 +159,26 @@ class PathIterator
 
     inline double vertex_scalar(size_t idx, int column)
     {
+        if (m_vertices_cpu_direct && m_vertices_array.has_value()) {
+            auto& array = *m_vertices_array;
+            auto offset = static_cast<std::int64_t>(idx) * array.strides(0)
+                + static_cast<std::int64_t>(column) * array.strides(1);
+            if (m_vertices_dtype == VertexDtype::Float64) {
+                return array.data<double>()[offset];
+            }
+            return static_cast<double>(array.data<float>()[offset]);
+        }
         auto scalar = mlx_scalar_at(m_vertices_owner, idx, column);
         return static_cast<double>(py::float_(scalar.attr("item")()));
     }
 
     inline unsigned code_scalar(size_t idx)
     {
+        if (m_codes_cpu_direct && m_codes_array.has_value()) {
+            auto& array = *m_codes_array;
+            auto offset = static_cast<std::int64_t>(idx) * array.strides(0);
+            return static_cast<unsigned>(array.data<std::uint8_t>()[offset]);
+        }
         auto scalar = mlx_scalar_at(m_codes_owner, idx);
         return static_cast<unsigned>(
             static_cast<unsigned long long>(py::int_(scalar.attr("item")())));
@@ -166,6 +199,10 @@ class PathIterator
             throw py::value_error("Unsupported vertices dtype");
         }
 
+        m_vertices_cpu_direct = has_explicit_cpu_stream(vertices);
+        if (m_vertices_cpu_direct) {
+            array.eval();
+        }
         m_vertices_owner = vertices;
         m_vertices_array = std::move(array);
         m_total_vertices = static_cast<unsigned>(m_vertices_array->shape(0));
@@ -183,6 +220,10 @@ class PathIterator
             throw py::value_error("Invalid codes array");
         }
 
+        m_codes_cpu_direct = has_explicit_cpu_stream(codes);
+        if (m_codes_cpu_direct) {
+            array.eval();
+        }
         m_codes_owner = codes;
         m_codes_array = std::move(array);
     }
@@ -194,6 +235,8 @@ class PathIterator
         m_simplify_threshold = simplify_threshold;
         m_vertices_array.reset();
         m_codes_array.reset();
+        m_vertices_cpu_direct = false;
+        m_codes_cpu_direct = false;
 
         m_vertices_owner = vertices;
         try {
@@ -218,6 +261,7 @@ class PathIterator
         } else {
             m_codes_array.reset();
             m_codes_owner = py::object();
+            m_codes_cpu_direct = false;
         }
 
         m_iterator = 0;

@@ -3050,7 +3050,8 @@ class _AxesBase(martist.Artist):
                       for val in getattr(ax.dataLim, f"interval{name}")
                       if mx.isfinite(val)]
             if values:
-                x0, x1 = (min(values), max(values))
+                values = mx.stack(values)
+                x0, x1 = mx.min(values), mx.max(values)
             elif getattr(self._viewLim, f"mutated{name}")():
                 # No data, but explicit viewLims already set:
                 # in mutatedx or mutatedy.
@@ -3079,14 +3080,14 @@ class _AxesBase(martist.Artist):
 
             # Add the margin in figure space and then transform back, to handle
             # non-linear scales.
-            transform = axis.get_transform()
-            inverse_trans = transform.inverted()
             x0, x1 = axis._scale.limit_range_for_scale(x0, x1, minimum_minpos)
-            x0t, x1t = transform.transform([x0, x1])
-            delta = (x1t - x0t) * margin
-            if not mx.isfinite(delta):
-                delta = 0  # If a bound isn't finite, set margin to zero.
-            x0, x1 = inverse_trans.transform([x0t - delta, x1t + delta])
+            if margin:
+                transform = axis.get_transform()
+                inverse_trans = transform.inverted()
+                x0t, x1t = transform.transform([x0, x1])
+                delta = (x1t - x0t) * margin
+                delta = mx.where(mx.isfinite(delta), delta, delta * 0)
+                x0, x1 = inverse_trans.transform([x0t - delta, x1t + delta])
 
             # Apply sticky bounds.
             if x0bound is not None:
@@ -3764,7 +3765,7 @@ class _AxesBase(martist.Artist):
         The x-axis may be inverted, in which case the *left* value will
         be greater than the *right* value.
         """
-        return tuple(self.viewLim.intervalx)
+        return tuple(self.viewLim.intervalx.tolist())
 
     def _validate_converted_limits(self, limit, convert):
         """
@@ -4032,7 +4033,7 @@ class _AxesBase(martist.Artist):
         The y-axis may be inverted, in which case the *bottom* value
         will be greater than the *top* value.
         """
-        return tuple(self.viewLim.intervaly)
+        return tuple(self.viewLim.intervaly.tolist())
 
     def set_ylim(self, bottom=None, top=None, *, emit=True, auto=False,
                  ymin=None, ymax=None):

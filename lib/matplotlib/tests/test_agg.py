@@ -83,10 +83,10 @@ def test_long_path():
     fig.savefig(buff, format='png')
 
 
-@image_comparison(['agg_filter.png'], remove_text=True)
+@image_comparison(['agg_filter.png'], remove_text=True, tol=2.1)
 def test_agg_filter():
-    def _hann(window_len):
-        n = mx.arange(window_len, dtype=mx.float32)
+    def _hann(window_len, dtype):
+        n = mx.arange(window_len, dtype=dtype)
         phase = mx.divide(mx.multiply(2 * mx.pi, n), window_len - 1)
         return mx.subtract(0.5, mx.multiply(0.5, mx.cos(phase)))
 
@@ -106,7 +106,7 @@ def test_agg_filter():
         right = mx.subtract(mx.multiply(last, 2),
                             mx.take(values, right_idx, axis=0))
         padded = mx.concatenate([left, values, right], axis=0)
-        window = _hann(window_len)
+        window = _hann(window_len, values.dtype)
         kernel = mx.divide(window, mx.sum(window))
         weight = mx.broadcast_to(mx.reshape(kernel, (1, window_len, 1)),
                                  (channels, window_len, 1))

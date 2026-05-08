@@ -1015,7 +1015,7 @@ def test_psd_onesided_norm():
                     detrend=mlab.detrend_none, noverlap=0, pad_to=None,
                     scale_by_freq=None,
                     sides='onesided')
-    Su_1side = mx.append([Su[0]], Su[1:4] + Su[4:][::-1])
+    Su_1side = mx.concatenate([Su[:1], Su[1:4] + Su[4:][::-1]])
     assert_allclose(P, Su_1side, atol=1e-06)
 
 
@@ -1028,5 +1028,5 @@ def test_psd_oversampling():
                     detrend=mlab.detrend_none, noverlap=0, pad_to=None,
                     scale_by_freq=None,
                     sides='onesided')
-    Su_1side = mx.append([Su[0]], Su[1:4] + Su[4:][::-1])
+    Su_1side = mx.concatenate([Su[:1], Su[1:4] + Su[4:][::-1]])
     assert_almost_equal(mx.sum(P), mx.sum(Su_1side))  # same energy

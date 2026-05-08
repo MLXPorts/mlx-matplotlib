@@ -51,7 +51,7 @@ class _ReferenceGrid(list):
 
     @property
     def flat(self):
-        return iter(self.ravel())
+        return self.ravel()
 
     @property
     def T(self):
@@ -84,6 +84,9 @@ class _ReferenceGrid(list):
 
     def ravel(self):
         return [item for row in self for item in row]
+
+    def flatten(self):
+        return self.ravel()
 
     def squeeze(self):
         rows, cols = self.shape

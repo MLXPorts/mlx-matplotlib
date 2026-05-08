@@ -29,7 +29,8 @@ from PIL import features
 import matplotlib as mpl
 from matplotlib import _api, cbook
 from matplotlib.backend_bases import (
-    _Backend, FigureCanvasBase, FigureManagerBase, RendererBase)
+    _Backend, FigureCanvasBase, FigureManagerBase, RendererBase,
+    _int_pixel_size)
 from matplotlib.font_manager import fontManager as _fontManager, get_font
 from matplotlib.ft2font import LoadFlags
 from matplotlib.mathtext import MathTextParser
@@ -97,9 +98,9 @@ class RendererAgg(RendererBase):
         super().__init__()
 
         self.dpi = dpi
-        self.width = width
-        self.height = height
-        self._renderer = _RendererAgg(int(width), int(height), dpi)
+        self.width = _int_pixel_size(width)
+        self.height = _int_pixel_size(height)
+        self._renderer = _RendererAgg(self.width, self.height, dpi)
         self._filter_renderers = []
 
         self._update_methods()
@@ -450,13 +451,16 @@ class RendererAgg(RendererBase):
 
         if cropped_img.size:
             img, ox, oy = post_processing(
-                mx.divide(cropped_img.astype(mx.float32), 255), self.dpi)
+                mx.divide(cropped_img.astype(mx.float64),
+                          mx.array(255, dtype=mx.float64)), self.dpi)
             gc = self.new_gc()
             if img.dtype in (mx.float16, mx.bfloat16, mx.float32, mx.float64):
                 img = mx.multiply(img, 255).astype(mx.uint8)
+            img = mx.contiguous(img)
+            mx.eval(img)
             self._renderer.draw_image(
                 gc, slice_x.start + ox, int(self.height) - slice_y.stop + oy,
-                mx.contiguous(img))
+                img)
 
 
 class FigureCanvasAgg(FigureCanvasBase):

@@ -55,13 +55,18 @@ class Triangulation:
         if triangles is None:
             # No triangulation specified, so use matplotlib._qhull to obtain
             # Delaunay triangulation.
-            self.triangles, self._neighbors = _qhull.delaunay(x, y, sys.flags.verbose)
+            qhull_x = mx.array(self.x, dtype=mx.float64, stream=mx.cpu)
+            qhull_y = mx.array(self.y, dtype=mx.float64, stream=mx.cpu)
+            triangles, neighbors = _qhull.delaunay(
+                qhull_x, qhull_y, sys.flags.verbose)
+            self.triangles = mx.array(triangles, dtype=mx.int32)
+            self._neighbors = mx.array(neighbors, dtype=mx.int32)
             self.is_delaunay = True
         else:
             # Triangulation specified. Copy, since we may correct triangle
             # orientation.
             try:
-                self.triangles = mx.array(triangles, dtype=mx.int32, order='C')
+                self.triangles = mx.array(triangles, dtype=mx.int32)
             except ValueError as e:
                 raise ValueError('triangles must be a (N, 3) int array, not '
                                  f'{triangles!r}') from e

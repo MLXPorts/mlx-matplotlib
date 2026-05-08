@@ -26,11 +26,31 @@ from . import artist
 
 
 def _mx_contour_array(value, dtype=mx.float32):
+    stream = mx.cpu if dtype == mx.float64 else None
     if isinstance(value, mx.array):
-        if value.dtype in (mx.float32, mx.float64):
-            return value
-        return value.astype(dtype)
-    return mx.array(value, dtype=dtype)
+        if value.dtype == dtype:
+            return mx.array(value, dtype=dtype, stream=stream)
+        return value.astype(dtype, stream=stream)
+    return mx.array(value, dtype=dtype, stream=stream)
+
+
+def _mx_contour_meshgrid(x, y):
+    stream = mx.cpu if x.dtype == mx.float64 or y.dtype == mx.float64 else None
+    nx, = x.shape
+    ny, = y.shape
+    x = mx.reshape(x, (1, nx), stream=stream)
+    y = mx.reshape(y, (ny, 1), stream=stream)
+    return (mx.broadcast_to(x, (ny, nx), stream=stream),
+            mx.broadcast_to(y, (ny, nx), stream=stream))
+
+
+def _resize_cycle_1d(values, shape):
+    flat = mx.reshape(values, (values.size,))
+    size = math.prod(shape)
+    if size <= flat.size:
+        return mx.reshape(flat[:size], shape)
+    repeats = (size + flat.size - 1) // flat.size
+    return mx.reshape(mx.concatenate([flat] * repeats)[:size], shape)
 
 
 def _contour_labeler_event_handler(cs, inline, inline_spacing, event):
@@ -264,8 +284,8 @@ class ContourLabeler:
         # Split contour into blocks of length ``block_size``, filling the last
         # block by cycling the contour start (per `mx.resize` semantics).  (Due
         # to cycling, the index returned is taken modulo ctr_size.)
-        xx = mx.resize(linecontour[:, 0], (n_blocks, block_size))
-        yy = mx.resize(linecontour[:, 1], (n_blocks, block_size))
+        xx = _resize_cycle_1d(linecontour[:, 0], (n_blocks, block_size))
+        yy = _resize_cycle_1d(linecontour[:, 1], (n_blocks, block_size))
         yfirst = yy[:, :1]
         ylast = yy[:, -1:]
         xfirst = xx[:, :1]
@@ -282,7 +302,7 @@ class ContourLabeler:
         adist = mx.argsort(distances)
         # If all candidates are `too_close()`, go back to the straightest part
         # (``adist[0]``).
-        for idx in mx.append(adist, adist[0]):
+        for idx in mx.concatenate([adist, adist[:1]]):
             x, y = xx[idx, hbsize], yy[idx, hbsize]
             if not self.too_close(x, y, labelwidth):
                 break
@@ -922,10 +942,15 @@ class ContourSet(ContourLabeler, mcoll.Collection):
             return self._paths
         cg = self._contour_generator
         empty_path = Path(mx.zeros((0, 2)))
+        def contourpy_scalars(values):
+            for value in values:
+                yield float(value)
         vertices_and_codes = (
-            map(cg.create_filled_contour, *self._get_lowers_and_uppers())
+            map(cg.create_filled_contour,
+                *(contourpy_scalars(values)
+                  for values in self._get_lowers_and_uppers()))
             if self.filled else
-            map(cg.create_contour, self.levels))
+            map(cg.create_contour, contourpy_scalars(self.levels)))
         paths = []
         for vs, cs in vertices_and_codes:
             if not len(vs):
@@ -1386,11 +1411,12 @@ class QuadContourSet(ContourSet):
 
         else:
             raise _api.nargs_error(fn, takes="from 1 to 4", given=nargs)
-        z = mx.where(mx.isfinite(z), z, mx.nan)
+        nan = mx.array(mx.nan, dtype=z.dtype)
+        z = mx.where(mx.isfinite(z), z, nan)
         self.zmax = float(mx.max(mx.where(mx.isfinite(z), z, -mx.inf)))
         self.zmin = float(mx.min(mx.where(mx.isfinite(z), z, mx.inf)))
         if self.logscale and self.zmin <= 0:
-            z = mx.where(z <= 0, mx.nan, z)
+            z = mx.where(z <= 0, nan, z)
             _api.warn_external('Log scale: values of z <= 0 have been masked')
             self.zmin = float(mx.min(mx.where(mx.isfinite(z), z, mx.inf)))
         self._process_contour_level_args(args, z.dtype)
@@ -1426,7 +1452,7 @@ class QuadContourSet(ContourSet):
             if ny != Ny:
                 raise TypeError(f"Length of y ({ny}) must match number of "
                                 f"rows in z ({Ny})")
-            x, y = mx.meshgrid(x, y)
+            x, y = _mx_contour_meshgrid(x, y)
         elif x.ndim == 2:
             if x.shape != z.shape:
                 raise TypeError(
@@ -1461,12 +1487,12 @@ class QuadContourSet(ContourSet):
             Ny, Nx = z.shape
         if self.origin is None:  # Not for image-matching.
             if self.extent is None:
-                return mx.meshgrid(mx.arange(Nx), mx.arange(Ny))
+                return _mx_contour_meshgrid(mx.arange(Nx), mx.arange(Ny))
             else:
                 x0, x1, y0, y1 = self.extent
                 x = mx.linspace(x0, x1, Nx)
                 y = mx.linspace(y0, y1, Ny)
-                return mx.meshgrid(x, y)
+                return _mx_contour_meshgrid(x, y)
         # Match image behavior:
         if self.extent is None:
             x0, x1, y0, y1 = (0, Nx, 0, Ny)
@@ -1478,7 +1504,7 @@ class QuadContourSet(ContourSet):
         y = y0 + (mx.arange(Ny) + 0.5) * dy
         if self.origin == 'upper':
             y = y[::-1]
-        return mx.meshgrid(x, y)
+        return _mx_contour_meshgrid(x, y)
 
 
 _docstring.interpd.register(contour_doc="""

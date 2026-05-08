@@ -27,14 +27,25 @@ _ORIGINAL_MX_SUBTRACT = mx.subtract
 _ORIGINAL_MX_MULTIPLY = mx.multiply
 _ORIGINAL_MX_DIVIDE = mx.divide
 _ORIGINAL_MX_POWER = mx.power
+_ORIGINAL_MX_REMAINDER = mx.remainder
+_ORIGINAL_MX_DIVMOD = mx.divmod
 _ORIGINAL_MX_MATMUL = mx.matmul
 _ORIGINAL_MX_ARCTAN2 = mx.arctan2
 _ORIGINAL_MX_LOG = mx.log
 _ORIGINAL_MX_LOG2 = mx.log2
 _ORIGINAL_MX_LOG10 = mx.log10
+_ORIGINAL_MX_SIN = mx.sin
+_ORIGINAL_MX_COS = mx.cos
+_ORIGINAL_MX_ARCSIN = mx.arcsin
+_ORIGINAL_MX_ARCCOS = mx.arccos
+_ORIGINAL_MX_ARCTAN = mx.arctan
 _ORIGINAL_MX_FLOOR = mx.floor
 _ORIGINAL_MX_CEIL = mx.ceil
+_ORIGINAL_MX_SQRT = mx.sqrt
+_ORIGINAL_MX_DEGREES = mx.degrees
+_ORIGINAL_MX_RADIANS = mx.radians
 _ORIGINAL_MX_SORT = mx.sort
+_ORIGINAL_MX_ARGSORT = mx.argsort
 _ORIGINAL_MX_WHERE = mx.where
 _ORIGINAL_MX_EQUAL = mx.equal
 _ORIGINAL_MX_NOT_EQUAL = mx.not_equal
@@ -42,6 +53,9 @@ _ORIGINAL_MX_LESS = mx.less
 _ORIGINAL_MX_LESS_EQUAL = mx.less_equal
 _ORIGINAL_MX_GREATER = mx.greater
 _ORIGINAL_MX_GREATER_EQUAL = mx.greater_equal
+_ORIGINAL_MX_LOGICAL_NOT = mx.logical_not
+_ORIGINAL_MX_LOGICAL_AND = mx.logical_and
+_ORIGINAL_MX_LOGICAL_OR = mx.logical_or
 _ORIGINAL_MX_CONCATENATE = mx.concatenate
 _ORIGINAL_MX_STACK = mx.stack
 _ORIGINAL_MX_ISFINITE = mx.isfinite
@@ -50,25 +64,37 @@ _ORIGINAL_MX_ISINF = mx.isinf
 _ORIGINAL_MX_ISCLOSE = mx.isclose
 _ORIGINAL_MX_ALLCLOSE = mx.allclose
 _ORIGINAL_MX_ROUND = mx.round
+_ORIGINAL_MX_SUM = mx.sum
+_ORIGINAL_MX_MEAN = mx.mean
 _ORIGINAL_MX_MIN = mx.min
 _ORIGINAL_MX_MAX = mx.max
 _ORIGINAL_MX_MINIMUM = mx.minimum
 _ORIGINAL_MX_MAXIMUM = mx.maximum
 _ORIGINAL_MX_CUMSUM = mx.cumsum
 _ORIGINAL_MX_TAKE = mx.take
+_ORIGINAL_MX_SLICE = mx.slice
+_ORIGINAL_MX_ROLL = mx.roll
 _ORIGINAL_MX_CLIP = mx.clip
+_ORIGINAL_MX_BROADCAST_ARRAYS = mx.broadcast_arrays
 _ORIGINAL_MX_BROADCAST_TO = mx.broadcast_to
+_ORIGINAL_MX_PAD = mx.pad
 _ORIGINAL_MX_EYE = mx.eye
 _ORIGINAL_MX_IDENTITY = mx.identity
 _ORIGINAL_MX_ZEROS = mx.zeros
 _ORIGINAL_MX_ONES = mx.ones
 _ORIGINAL_MX_FULL = mx.full
 _ORIGINAL_MX_ARANGE = mx.arange
+_ORIGINAL_MX_LINSPACE = mx.linspace
 _ORIGINAL_MX_RESHAPE = mx.reshape
 _ORIGINAL_MX_FLATTEN = getattr(mx, "flatten", None)
 _ORIGINAL_MX_SQUEEZE = mx.squeeze
 _ORIGINAL_MX_EXPAND_DIMS = mx.expand_dims
 _ORIGINAL_MX_TRANSPOSE = mx.transpose
+_ORIGINAL_MX_SWAPAXES = mx.swapaxes
+_ORIGINAL_MX_MOVEAXIS = mx.moveaxis
+_ORIGINAL_MX_REPEAT = mx.repeat
+_ORIGINAL_MX_TILE = mx.tile
+_ORIGINAL_MX_CONV1D = mx.conv1d
 _ORIGINAL_MX_DEFAULT_STREAM = mx.default_stream
 _ORIGINAL_MX_SET_DEFAULT_STREAM = mx.set_default_stream
 _ORIGINAL_MX_NEW_STREAM = mx.new_stream
@@ -87,20 +113,93 @@ def _precise_dtype(dtype: Any | None) -> Any | None:
     return _unwrap_dtype(dtype)
 
 
+def _is_structured_dtype(dtype: Any | None) -> bool:
+    return (isinstance(dtype, (list, tuple))
+            and _builtins.all(
+                isinstance(field, (list, tuple))
+                and len(field) >= 2
+                and isinstance(field[0], str)
+                for field in dtype))
+
+
+class _StructuredDType:
+    def __init__(self, fields: Sequence[Sequence[Any]]):
+        self.names = tuple(field[0] for field in fields)
+        self.fields = {
+            field[0]: (field[1], index)
+            for index, field in enumerate(fields)
+        }
+
+
+class _StructuredArray:
+    def __init__(self, values: Iterable[Any], dtype: Sequence[Sequence[Any]]):
+        self._rows = [tuple(row) for row in values]
+        self.dtype = _StructuredDType(dtype)
+
+    @property
+    def shape(self) -> Tuple[int]:
+        return (len(self._rows),)
+
+    @property
+    def ndim(self) -> int:
+        return 1
+
+    @property
+    def size(self) -> int:
+        return len(self._rows)
+
+    def __len__(self) -> int:
+        return len(self._rows)
+
+    def __iter__(self):
+        return iter(self._rows)
+
+    def __getitem__(self, key: Any):
+        if isinstance(key, str):
+            field_dtype, index = self.dtype.fields[key]
+            return _construct_mx_array(
+                [row[index] for row in self._rows],
+                dtype=field_dtype)
+        if isinstance(key, _ORIGINAL_MX_ARRAY):
+            key = key.tolist()
+        if isinstance(key, (list, tuple)):
+            return _StructuredArray(
+                [self._rows[int(index)] for index in key],
+                [(name, self.dtype.fields[name][0])
+                 for name in self.dtype.names])
+        if isinstance(key, slice):
+            return _StructuredArray(
+                self._rows[key],
+                [(name, self.dtype.fields[name][0])
+                 for name in self.dtype.names])
+        return self._rows[key]
+
+    def tolist(self) -> list[tuple[Any, ...]]:
+        return list(self._rows)
+
+
+def _contains_python_float(value: Any) -> bool:
+    if isinstance(value, _ORIGINAL_MX_ARRAY):
+        return False
+    if isinstance(value, float):
+        return True
+    if isinstance(value, (list, tuple)):
+        return _builtins.any(_contains_python_float(item) for item in value)
+    return False
+
+
 def _construct_mx_array(obj: Any, dtype: Any | None = None, *,
                         stream: Any | None = None, **kwargs: Any) -> mx.array:
+    if _is_structured_dtype(dtype):
+        return _StructuredArray(obj, dtype)
     target_dtype = _precise_dtype(dtype)
-    kwargs.pop("copy", None)
-    kwargs.pop("order", None)
-    kwargs.pop("subok", None)
-    kwargs.pop("like", None)
-    ndmin = int(kwargs.pop("ndmin", 0) or 0)
     if kwargs:
         bad = next(iter(kwargs))
         raise TypeError(f"array() got an unexpected keyword argument {bad!r}")
+    if target_dtype is None and _contains_python_float(obj):
+        target_dtype = mx.float64
     return _mx_overrides.MlxPreciseArray(
-        obj, dtype=target_dtype, stream=stream if stream is not None else _active_stream(),
-        ndmin=ndmin)
+        obj, dtype=target_dtype, stream=stream if stream is not None else _active_stream())
 
 
 def _eval_mx_arrays(*arrays: Any) -> None:
@@ -144,8 +243,16 @@ def _has_precise_float64(value: Any) -> bool:
             and getattr(value, "dtype", None) == mx.float64)
 
 
+def _needs_precise_scalar_route(value: Any) -> bool:
+    return _has_precise_array(value) or _contains_python_float(value)
+
+
 def _shadow_stream(stream: Any | None) -> Any | None:
     return stream if stream is not None else _active_stream()
+
+
+def _array_stream(value: Any) -> Any | None:
+    return getattr(value, "_mlx_stream", None) or _active_stream()
 
 
 def _abs_shadow(value: Any, *args: Any,
@@ -168,7 +275,9 @@ def _square_shadow(value: Any, *args: Any,
 
 def _shadow_binary(original: Any, precise: Any, left: Any, right: Any,
                    *args: Any, stream: Any | None = None, **kwargs: Any) -> Any:
-    if args or kwargs or not (_has_precise_array(left) or _has_precise_array(right)):
+    if args or kwargs or not (
+            _needs_precise_scalar_route(left)
+            or _needs_precise_scalar_route(right)):
         if stream is None:
             return original(left, right, *args, **kwargs)
         return original(left, right, *args, stream=stream, **kwargs)
@@ -205,6 +314,12 @@ def _power_shadow(left: Any, right: Any, *args: Any,
                           left, right, *args, stream=stream, **kwargs)
 
 
+def _remainder_shadow(left: Any, right: Any, *args: Any,
+                      stream: Any | None = None, **kwargs: Any) -> Any:
+    return _shadow_binary(_ORIGINAL_MX_REMAINDER, _mx_overrides.remainder_precise,
+                          left, right, *args, stream=stream, **kwargs)
+
+
 def _matmul_shadow(left: Any, right: Any, *args: Any,
                    stream: Any | None = None, **kwargs: Any) -> Any:
     return _shadow_binary(_ORIGINAL_MX_MATMUL, _mx_overrides.matmul_precise,
@@ -220,7 +335,8 @@ def _arctan2_shadow(left: Any, right: Any, *args: Any,
 
 def _where_shadow(condition: Any, x: Any, y: Any, *args: Any,
                   stream: Any | None = None, **kwargs: Any) -> Any:
-    if args or kwargs or not (_has_precise_array(x) or _has_precise_array(y)):
+    if args or kwargs or not (
+            _needs_precise_scalar_route(x) or _needs_precise_scalar_route(y)):
         if stream is None:
             return _ORIGINAL_MX_WHERE(condition, x, y, *args, **kwargs)
         return _ORIGINAL_MX_WHERE(
@@ -275,6 +391,45 @@ def _greater_equal_shadow(left: Any, right: Any, *args: Any,
             left, right, *args, stream=stream, **kwargs)
     return _mx_overrides.less_equal_precise(
         right, left, stream=_shadow_stream(stream))
+
+
+def _logical_not_shadow(value: Any, *args: Any,
+                        stream: Any | None = None, **kwargs: Any) -> Any:
+    if args or kwargs or not _needs_precise_scalar_route(value):
+        if stream is None:
+            return _ORIGINAL_MX_LOGICAL_NOT(value, *args, **kwargs)
+        return _ORIGINAL_MX_LOGICAL_NOT(value, *args, stream=stream, **kwargs)
+    return _mx_overrides.logical_not_precise(
+        value, stream=_shadow_stream(stream))
+
+
+def _logical_binary_shadow(original: Any, precise: Any,
+                           left: Any, right: Any, *args: Any,
+                           stream: Any | None = None,
+                           **kwargs: Any) -> Any:
+    if args or kwargs or not (
+            _needs_precise_scalar_route(left)
+            or _needs_precise_scalar_route(right)):
+        if stream is None:
+            return original(left, right, *args, **kwargs)
+        return original(left, right, *args, stream=stream, **kwargs)
+    return precise(left, right, stream=_shadow_stream(stream))
+
+
+def _logical_and_shadow(left: Any, right: Any, *args: Any,
+                        stream: Any | None = None, **kwargs: Any) -> Any:
+    return _logical_binary_shadow(
+        _ORIGINAL_MX_LOGICAL_AND,
+        _mx_overrides.logical_and_precise,
+        left, right, *args, stream=stream, **kwargs)
+
+
+def _logical_or_shadow(left: Any, right: Any, *args: Any,
+                       stream: Any | None = None, **kwargs: Any) -> Any:
+    return _logical_binary_shadow(
+        _ORIGINAL_MX_LOGICAL_OR,
+        _mx_overrides.logical_or_precise,
+        left, right, *args, stream=stream, **kwargs)
 
 
 def _minimum_shadow(left: Any, right: Any, *args: Any,
@@ -430,6 +585,38 @@ def _round_shadow(value: Any, *args: Any, decimals: int = 0,
         value, decimals=decimals, stream=_shadow_stream(stream))
 
 
+def _sum_shadow(value: Any, axis: Any | None = None, *args: Any,
+                keepdims: bool = False, stream: Any | None = None,
+                **kwargs: Any) -> Any:
+    if not _has_precise_array(value):
+        value = mx.array(value)
+    if args or kwargs or not _has_precise_array(value) or getattr(
+            value, "dtype", None) != mx.float64:
+        if stream is None:
+            return _ORIGINAL_MX_SUM(
+                value, *args, axis=axis, keepdims=keepdims, **kwargs)
+        return _ORIGINAL_MX_SUM(
+            value, *args, axis=axis, keepdims=keepdims, stream=stream, **kwargs)
+    return _mx_overrides.sum_float64(
+        value, axis=axis, keepdims=keepdims, stream=_shadow_stream(stream))
+
+
+def _mean_shadow(value: Any, axis: Any | None = None, *args: Any,
+                 keepdims: bool = False, stream: Any | None = None,
+                 **kwargs: Any) -> Any:
+    if not _has_precise_array(value):
+        value = mx.array(value)
+    if args or kwargs or not _has_precise_array(value) or getattr(
+            value, "dtype", None) != mx.float64:
+        if stream is None:
+            return _ORIGINAL_MX_MEAN(
+                value, *args, axis=axis, keepdims=keepdims, **kwargs)
+        return _ORIGINAL_MX_MEAN(
+            value, *args, axis=axis, keepdims=keepdims, stream=stream, **kwargs)
+    return _mx_overrides.mean_float64(
+        value, axis=axis, keepdims=keepdims, stream=_shadow_stream(stream))
+
+
 def _min_shadow(value: Any, axis: Any | None = None, *args: Any,
                 stream: Any | None = None, **kwargs: Any) -> Any:
     if args or kwargs or not _has_precise_array(value):
@@ -453,8 +640,7 @@ def _max_shadow(value: Any, axis: Any | None = None, *args: Any,
 def _cumsum_shadow(value: Any, axis: Any | None = None, *args: Any,
                    reverse: bool = False, inclusive: bool = True,
                    stream: Any | None = None, **kwargs: Any) -> Any:
-    if (args or kwargs or reverse or not inclusive
-            or not _has_precise_array(value)
+    if (args or kwargs or not _has_precise_array(value)
             or getattr(value, "dtype", None) != mx.float64):
         if stream is None:
             return _ORIGINAL_MX_CUMSUM(
@@ -463,7 +649,8 @@ def _cumsum_shadow(value: Any, axis: Any | None = None, *args: Any,
             value, axis=axis, reverse=reverse, inclusive=inclusive,
             stream=stream, **kwargs)
     return _mx_overrides.cumsum_precise(
-        value, axis, stream=_shadow_stream(stream))
+        value, axis, reverse=reverse, inclusive=inclusive,
+        stream=_shadow_stream(stream))
 
 
 def _clip_shadow(value: Any, a_min: Any, a_max: Any, *args: Any,
@@ -503,6 +690,78 @@ def _broadcast_to_shadow(value: Any, shape: Any, *args: Any,
     if stream is None:
         return _ORIGINAL_MX_BROADCAST_TO(value, target_shape)
     return _ORIGINAL_MX_BROADCAST_TO(value, target_shape, stream=stream)
+
+
+def _broadcast_arrays_shadow(*arrays: Any, stream: Any | None = None,
+                             **kwargs: Any) -> Tuple[mx.array, ...]:
+    if kwargs:
+        if stream is None:
+            return _ORIGINAL_MX_BROADCAST_ARRAYS(*arrays, **kwargs)
+        return _ORIGINAL_MX_BROADCAST_ARRAYS(*arrays, stream=stream, **kwargs)
+    values = tuple(
+        value if _has_precise_array(value) else mx.array(value)
+        for value in arrays)
+    shape = mx.broadcast_shapes(*(value.shape for value in values))
+    return tuple(mx.broadcast_to(value, shape, stream=stream)
+                 for value in values)
+
+
+def _normalize_pad_width(pad_width: Any, ndim: int) -> Tuple[Tuple[int, int], ...]:
+    if isinstance(pad_width, int):
+        return ((pad_width, pad_width),) * ndim
+    if isinstance(pad_width, _ORIGINAL_MX_ARRAY):
+        pad_width = pad_width.tolist()
+    if len(pad_width) == 2 and all(isinstance(item, int) for item in pad_width):
+        before, after = pad_width
+        return ((int(before), int(after)),) * ndim
+    pads = tuple((int(before), int(after)) for before, after in pad_width)
+    if len(pads) != ndim:
+        raise ValueError("pad_width must match array rank")
+    return pads
+
+
+def _pad_shadow(value: Any, pad_width: Any, mode: str = "constant",
+                *args: Any, constant_values: Any = 0,
+                stream: Any | None = None, **kwargs: Any) -> Any:
+    if args or kwargs or mode != "constant":
+        if stream is None:
+            return _ORIGINAL_MX_PAD(value, pad_width, mode, *args, **kwargs)
+        return _ORIGINAL_MX_PAD(
+            value, pad_width, mode, *args, stream=stream, **kwargs)
+    if not _has_precise_array(value):
+        value = mx.array(value)
+    if getattr(value, "dtype", None) != mx.float64:
+        if stream is None:
+            return _ORIGINAL_MX_PAD(
+                value, pad_width, mode, constant_values=constant_values)
+        return _ORIGINAL_MX_PAD(
+            value, pad_width, mode, constant_values=constant_values,
+            stream=stream)
+
+    result = value
+    actual_stream = _shadow_stream(stream)
+    pads = _normalize_pad_width(pad_width, result.ndim)
+    for axis, (before, after) in enumerate(pads):
+        if before < 0 or after < 0:
+            raise ValueError("pad_width cannot contain negative values")
+        if before == 0 and after == 0:
+            continue
+        pieces = []
+        if before:
+            shape = list(result.shape)
+            shape[axis] = before
+            pieces.append(mx.full(
+                tuple(shape), constant_values, dtype=result.dtype,
+                stream=actual_stream))
+        pieces.append(result)
+        if after:
+            shape = list(result.shape)
+            shape[axis] = after
+            pieces.append(mx.full(
+                tuple(shape), constant_values, dtype=result.dtype,
+                stream=actual_stream))
+        result = mx.concatenate(pieces, axis=axis, stream=actual_stream)
+    return result
 
 
 def _eye_shadow(n: int, m: int | None = None, k: int = 0,
@@ -582,6 +841,132 @@ def _full_shadow(shape: Any, fill_value: Any, dtype: Any | None = None, *,
         stream)
 
 
+class _DateTimeArray(list):
+    def __init__(self, values: Iterable[Any], unit: str = "D",
+                 shape: Tuple[int, ...] | None = None):
+        super().__init__(values)
+        self._unit = unit
+        self._shape = shape if shape is not None else (len(self),)
+
+    @property
+    def dtype(self) -> str:
+        return f"datetime64[{self._unit}]"
+
+    @property
+    def shape(self) -> Tuple[int]:
+        return self._shape
+
+    @property
+    def ndim(self) -> int:
+        return len(self._shape)
+
+    @property
+    def size(self) -> int:
+        return len(self)
+
+    def astype(self, dtype: Any, *args: Any, **kwargs: Any):
+        if _dtype_kind(dtype) == "M":
+            return _DateTimeArray(self, _datetime_unit(dtype, None, None))
+        if _dtype_kind(dtype) == "O":
+            return list(self)
+        raise TypeError("datetime data is not MLX tensor data")
+
+    def tolist(self) -> list[Any]:
+        return list(self)
+
+    def __getitem__(self, key: Any):
+        if isinstance(key, _ORIGINAL_MX_ARRAY):
+            key = key.tolist()
+        if isinstance(key, tuple):
+            if len(key) == 1:
+                return self[key[0]]
+            if len(key) == 2 and key[1] is None:
+                rows = self[key[0]]
+                values = rows.tolist() if isinstance(rows, _DateTimeArray) else [rows]
+                return _DateTimeArray(values, self._unit, (len(values), 1))
+            if len(key) == 2 and self.ndim == 2:
+                row_key, col_key = key
+                if isinstance(col_key, _ORIGINAL_MX_ARRAY):
+                    col_key = col_key.item()
+                if isinstance(col_key, slice):
+                    cols = range(*col_key.indices(self.shape[1]))
+                    if list(cols) != [0]:
+                        raise IndexError("datetime array column index out of range")
+                    rows = self[row_key]
+                    values = rows.tolist() if isinstance(rows, _DateTimeArray) else [rows]
+                    return _DateTimeArray(values, self._unit, (len(values), 1))
+                if int(col_key) != 0:
+                    raise IndexError("datetime array column index out of range")
+                return self[row_key]
+            if not any(part is None or isinstance(part, slice) for part in key):
+                return _DateTimeArray(
+                    [list.__getitem__(self, int(i)) for i in key],
+                    self._unit)
+            raise IndexError("too many indices for datetime array")
+        if isinstance(key, (list, tuple)):
+            return _DateTimeArray(
+                [list.__getitem__(self, int(i)) for i in key],
+                self._unit)
+        value = list.__getitem__(self, key)
+        if isinstance(key, slice):
+            return _DateTimeArray(value, self._unit)
+        return value
+
+
+def _datetime_unit(dtype: Any, start: Any, stop: Any) -> str:
+    if isinstance(dtype, str) and dtype.startswith("datetime64"):
+        if "[" in dtype and dtype.endswith("]"):
+            return dtype[dtype.index("[") + 1:-1] or "D"
+        return "D" if all(
+            isinstance(value, str) and "T" not in value and len(value) <= 10
+            for value in (start, stop) if value is not None) else "s"
+    return "D"
+
+
+def _datetime_step(value: Any, unit: str) -> timedelta:
+    if isinstance(value, timedelta):
+        return value
+    if isinstance(value, _ORIGINAL_MX_ARRAY):
+        value = value.item()
+    scale = {
+        "W": lambda v: timedelta(weeks=v),
+        "D": lambda v: timedelta(days=v),
+        "h": lambda v: timedelta(hours=v),
+        "m": lambda v: timedelta(minutes=v),
+        "s": lambda v: timedelta(seconds=v),
+        "ms": lambda v: timedelta(milliseconds=v),
+        "us": lambda v: timedelta(microseconds=v),
+        "ns": lambda v: timedelta(microseconds=v / 1000),
+    }.get(unit, lambda v: timedelta(days=v))
+    return scale(value)
+
+
+def _is_datetime_arange(start: Any, stop: Any, dtype: Any) -> bool:
+    return (_dtype_kind(dtype) == "M"
+            or isinstance(start, datetime)
+            or isinstance(stop, datetime))
+
+
+def _datetime_arange(start: Any, stop: Any, step: Any,
+                     dtype: Any) -> _DateTimeArray:
+    unit = _datetime_unit(dtype, start, stop)
+    current = datetime64(start)
+    end = datetime64(stop)
+    delta = _datetime_step(step, unit)
+    values = []
+    if delta.total_seconds() == 0:
+        raise ValueError("datetime arange step must be non-zero")
+    if delta.total_seconds() > 0:
+        while current < end:
+            values.append(current)
+            current = current + delta
+    else:
+        while current > end:
+            values.append(current)
+            current = current + delta
+    return _DateTimeArray(values, unit)
+
+
 def _arange_shadow(start: Any, stop: Any | None = None, step: Any = 1,
                    dtype: Any | None = None, *,
                    stream: Any | None = None) -> Any:
@@ -591,6 +976,8 @@ def _arange_shadow(start: Any, stop: Any | None = None, step: Any = 1,
     else:
         stop = _to_scalar(stop)
     step = _to_scalar(step)
+    if _is_datetime_arange(start, stop, dtype):
+        return _datetime_arange(start, stop, step, dtype)
     target_dtype = _unwrap_dtype(dtype)
     if target_dtype == mx.float64:
         return _mx_overrides.arange_float64(
@@ -611,6 +998,138 @@ def _arange_shadow(start: Any, stop: Any | None = None, step: Any = 1,
         stream)
 
 
+def _linspace_shadow(start: Any, stop: Any, num: int | None = 50,
+                     dtype: Any | None = None, *,
+                     stream: Any | None = None) -> Any:
+    target_dtype = _unwrap_dtype(dtype) or mx.float32
+    if target_dtype != mx.float64:
+        if stream is None:
+            return _wrap_factory_array(
+                _ORIGINAL_MX_LINSPACE(
+                    start, stop, num, dtype=target_dtype), stream)
+        return _wrap_factory_array(
+            _ORIGINAL_MX_LINSPACE(
+                start, stop, num, dtype=target_dtype, stream=stream), stream)
+
+    count = 50 if num is None else int(num)
+    if count < 0:
+        raise ValueError("Number of samples must be non-negative")
+    actual_stream = _shadow_stream(stream)
+    if count == 0:
+        return _mx_overrides.full_float64((0,), 0.0, stream=actual_stream)
+    start_value = float(_to_scalar(start))
+    stop_value = float(_to_scalar(stop))
+    if count == 1:
+        return _mx_overrides.full_float64(
+            (1,), start_value, stream=actual_stream)
+
+    step = (stop_value - start_value) / (count - 1)
+    indices = _mx_overrides.arange_float64(
+        0.0, float(count), 1.0, stream=actual_stream)
+    return _add_shadow(
+        _mx_overrides.float64_scalar(start_value, stream=actual_stream),
+        _multiply_shadow(
+            _mx_overrides.float64_scalar(step, stream=actual_stream),
+            indices, stream=actual_stream),
+        stream=actual_stream)
+
+
+def _repeat_shadow(value: Any, repeats: Any, axis: int | None = None,
+                   *, stream: Any | None = None) -> Any:
+    try:
+        repeat_count = operator.index(repeats)
+    except TypeError:
+        if isinstance(repeats, _ORIGINAL_MX_ARRAY) and repeats.size == 1:
+            repeat_count = int(repeats.item())
+        else:
+            if stream is None:
+                return _wrap_factory_array(
+                    _ORIGINAL_MX_REPEAT(value, repeats, axis=axis), stream)
+            return _wrap_factory_array(
+                _ORIGINAL_MX_REPEAT(value, repeats, axis=axis, stream=stream),
+                stream)
+    if repeat_count < 0:
+        raise ValueError("repeats must be non-negative")
+
+    actual_stream = _shadow_stream(stream)
+    if not _has_precise_array(value):
+        value = mx.array(value, stream=actual_stream)
+    if axis is None:
+        value = mx.reshape(value, (value.size,), stream=actual_stream)
+        axis = 0
+    else:
+        axis = int(axis)
+        if axis < 0:
+            axis += value.ndim
+        if axis < 0 or axis >= value.ndim:
+            raise ValueError("axis out of bounds")
+
+    expanded = mx.expand_dims(value, axis + 1, stream=actual_stream)
+    broadcast_shape = (
+        tuple(value.shape[:axis + 1])
+        + (repeat_count,)
+        + tuple(value.shape[axis + 1:]))
+    repeated = mx.broadcast_to(expanded, broadcast_shape, stream=actual_stream)
+    result_shape = tuple(value.shape)
+    result_shape = (
+        result_shape[:axis]
+        + (result_shape[axis] * repeat_count,)
+        + result_shape[axis + 1:])
+    return mx.reshape(repeated, result_shape, stream=actual_stream)
+
+
+def _tile_reps(reps: Any) -> Tuple[int, ...]:
+    try:
+        return (operator.index(reps),)
+    except TypeError:
+        pass
+    if isinstance(reps, _ORIGINAL_MX_ARRAY):
+        if reps.ndim == 0 or reps.size == 1:
+            return (int(reps.item()),)
+        reps = reps.tolist()
+    return tuple(operator.index(rep) for rep in reps)
+
+
+def _tile_shadow(value: Any, reps: Any, *args: Any,
+                 stream: Any | None = None, **kwargs: Any) -> Any:
+    if args or kwargs or not (
+            _needs_precise_scalar_route(value)
+            or _contains_python_float(value)):
+        if stream is None:
+            return _wrap_factory_array(
+                _ORIGINAL_MX_TILE(value, reps, *args, **kwargs), stream)
+        return _wrap_factory_array(
+            _ORIGINAL_MX_TILE(value, reps, *args, stream=stream, **kwargs),
+            stream)
+
+    actual_stream = _shadow_stream(stream)
+    if not _has_precise_array(value):
+        value = mx.array(value, stream=actual_stream)
+
+    reps_tuple = _tile_reps(reps)
+    if _builtins.any(rep < 0 for rep in reps_tuple):
+        raise ValueError("reps must be non-negative")
+
+    ndim = _builtins.max(value.ndim, len(reps_tuple))
+    if value.ndim < ndim:
+        value = mx.reshape(
+            value, (1,) * (ndim - value.ndim) + tuple(value.shape),
+            stream=actual_stream)
+    if len(reps_tuple) < ndim:
+        reps_tuple = (1,) * (ndim - len(reps_tuple)) + reps_tuple
+
+    reshape_shape = tuple(
+        dim for pair in zip((1,) * ndim, value.shape) for dim in pair)
+    broadcast_shape = tuple(
+        dim for pair in zip(reps_tuple, value.shape) for dim in pair)
+    result_shape = tuple(
+        dim * rep for dim, rep in zip(value.shape, reps_tuple))
+
+    tiled = mx.reshape(value, reshape_shape, stream=actual_stream)
+    tiled = mx.broadcast_to(tiled, broadcast_shape, stream=actual_stream)
+    return mx.reshape(tiled, result_shape, stream=actual_stream)
+
+
 def _reshape_shadow(value: Any, shape: Any, *args: Any,
                     stream: Any | None = None, **kwargs: Any) -> Any:
     if not _has_precise_array(value):
@@ -628,19 +1147,40 @@ def _reshape_shadow(value: Any, shape: Any, *args: Any,
         value, shape, stream=_shadow_stream(stream))
 
 
-def _flatten_shadow(value: Any, *args: Any,
-                    stream: Any | None = None, **kwargs: Any) -> Any:
+def _flattened_shape(shape: Sequence[int], start_axis: int, end_axis: int) -> Tuple[int, ...]:
+    ndim = len(shape)
+    if ndim == 0:
+        return ()
+    if start_axis < 0:
+        start_axis += ndim
+    if end_axis < 0:
+        end_axis += ndim
+    if start_axis < 0 or end_axis < 0 or start_axis >= ndim or end_axis >= ndim:
+        raise ValueError("flatten axis out of bounds")
+    if start_axis > end_axis:
+        raise ValueError("flatten start_axis must be less than or equal to end_axis")
+    flattened = math.prod(shape[start_axis:end_axis + 1])
+    return (*shape[:start_axis], flattened, *shape[end_axis + 1:])
+
+
+def _flatten_shadow(value: Any, start_axis: int = 0, end_axis: int = -1,
+                    *args: Any, stream: Any | None = None,
+                    **kwargs: Any) -> Any:
     if not _has_precise_array(value):
         value = mx.array(value)
     if (args or kwargs or not _has_precise_array(value)
             or getattr(value, "dtype", None) != mx.float64):
         if _ORIGINAL_MX_FLATTEN is None:
-            return _reshape_shadow(value, (_to_mx(value).size,), stream=stream)
+            shape = _flattened_shape(tuple(_to_mx(value).shape), start_axis, end_axis)
+            return _reshape_shadow(value, shape, stream=stream)
         if stream is None:
-            return _ORIGINAL_MX_FLATTEN(value, *args, **kwargs)
-        return _ORIGINAL_MX_FLATTEN(value, *args, stream=stream, **kwargs)
+            return _ORIGINAL_MX_FLATTEN(
+                value, start_axis=start_axis, end_axis=end_axis, **kwargs)
+        return _ORIGINAL_MX_FLATTEN(
+            value, start_axis=start_axis, end_axis=end_axis, stream=stream, **kwargs)
+    shape = _flattened_shape(tuple(value.shape), start_axis, end_axis)
     return _mx_overrides.reshape_precise(
-        value, (value.size,), stream=_shadow_stream(stream))
+        value, shape, stream=_shadow_stream(stream))
 
 
 def _take_shadow(value: Any, indices: Any, axis: Any | None = None,
@@ -660,6 +1200,110 @@ def _take_shadow(value: Any, indices: Any, axis: Any | None = None,
         return _ORIGINAL_MX_TAKE(value, indices, axis=axis, stream=stream)
     return _mx_overrides.take_precise(
         value, indices, axis, stream=_shadow_stream(stream))
+
+
+def _slice_shadow(value: Any, start_indices: Any, axes: Any,
+                  slice_size: Any, *args: Any,
+                  stream: Any | None = None, **kwargs: Any) -> Any:
+    if not _has_precise_array(value):
+        value = mx.array(value)
+    if (args or kwargs or not _has_precise_array(value)
+            or getattr(value, "dtype", None) != mx.float64):
+        if stream is None:
+            return _ORIGINAL_MX_SLICE(
+                value, start_indices, axes, slice_size, *args, **kwargs)
+        return _ORIGINAL_MX_SLICE(
+            value, start_indices, axes, slice_size, *args,
+            stream=stream, **kwargs)
+
+    actual_stream = _shadow_stream(stream)
+    if isinstance(start_indices, _ORIGINAL_MX_ARRAY):
+        start_values = start_indices.tolist()
+    else:
+        start_values = start_indices
+    if isinstance(axes, int):
+        axes_values = (axes,)
+    else:
+        axes_values = tuple(axes)
+    if isinstance(slice_size, int):
+        size_values = (slice_size,)
+    else:
+        size_values = tuple(slice_size)
+    if len(axes_values) != len(start_values) or len(axes_values) != len(size_values):
+        raise ValueError("slice axes, starts, and sizes must have the same length")
+
+    starts = [0] * value.ndim
+    stops = list(value.shape)
+    strides = [1] * value.ndim
+    for raw_axis, raw_start, raw_size in zip(
+            axes_values, start_values, size_values):
+        axis = int(raw_axis)
+        if axis < 0:
+            axis += value.ndim
+        if axis < 0 or axis >= value.ndim:
+            raise ValueError("slice axis out of bounds")
+        start = int(raw_start)
+        starts[axis] = start
+        stops[axis] = start + int(raw_size)
+    return _mx_overrides.slice_precise(
+        value, tuple(starts), tuple(stops), tuple(strides),
+        stream=actual_stream)
+
+
+def _roll_one_axis(value: Any, shift: int, axis: int,
+                   stream: Any | None = None) -> Any:
+    dim = value.shape[axis]
+    if dim == 0:
+        return value
+    shift %= dim
+    if shift == 0:
+        return value
+    starts = [0] * value.ndim
+    stops = list(value.shape)
+    strides = [1] * value.ndim
+    starts[axis] = dim - shift
+    tail = _mx_overrides.slice_precise(
+        value, tuple(starts), tuple(stops), tuple(strides), stream=stream)
+    starts[axis] = 0
+    stops[axis] = dim - shift
+    head = _mx_overrides.slice_precise(
+        value, tuple(starts), tuple(stops), tuple(strides), stream=stream)
+    return mx.concatenate((tail, head), axis=axis, stream=stream)
+
+
+def _roll_shadow(value: Any, shift: Any, axis: Any | None = None,
+                 *args: Any, stream: Any | None = None,
+                 **kwargs: Any) -> Any:
+    if not _has_precise_array(value):
+        value = mx.array(value)
+    if (args or kwargs or getattr(value, "dtype", None) != mx.float64):
+        if stream is None:
+            return _ORIGINAL_MX_ROLL(value, shift, axis=axis, *args, **kwargs)
+        return _ORIGINAL_MX_ROLL(
+            value, shift, axis=axis, *args, stream=stream, **kwargs)
+    actual_stream = _shadow_stream(stream)
+    original_shape = tuple(value.shape)
+    if axis is None:
+        value = mx.reshape(value, (value.size,), stream=actual_stream)
+        axes = (0,)
+    else:
+        axes = (axis,) if isinstance(axis, int) else tuple(axis)
+    shifts = (shift,) if isinstance(shift, int) else tuple(shift)
+    if len(shifts) == 1 and len(axes) > 1:
+        shifts = shifts * len(axes)
+    if len(shifts) != len(axes):
+        raise ValueError("shift and axis must have matching lengths")
+    for raw_shift, raw_axis in zip(shifts, axes):
+        axis_index = int(raw_axis)
+        if axis_index < 0:
+            axis_index += value.ndim
+        if axis_index < 0 or axis_index >= value.ndim:
+            raise ValueError("roll axis out of bounds")
+        value = _roll_one_axis(
+            value, int(raw_shift), axis_index, stream=actual_stream)
+    if axis is None:
+        value = mx.reshape(value, original_shape, stream=actual_stream)
+    return value
 
 
 def _log_shadow(value: Any, *args: Any,
@@ -725,6 +1369,79 @@ def _log10_shadow(value: Any, *args: Any,
         _mx_overrides.log10_float64(value, stream=actual_stream), actual_stream)
 
 
+def _sin_shadow(value: Any, *args: Any,
+                stream: Any | None = None, **kwargs: Any) -> Any:
+    if args or kwargs:
+        if stream is None:
+            return _ORIGINAL_MX_SIN(value, *args, **kwargs)
+        return _ORIGINAL_MX_SIN(value, *args, stream=stream, **kwargs)
+    if not _has_precise_array(value):
+        value = mx.array(value)
+    if getattr(value, "dtype", None) != mx.float64:
+        if stream is None:
+            return _ORIGINAL_MX_SIN(value)
+        return _ORIGINAL_MX_SIN(value, stream=stream)
+    actual_stream = _shadow_stream(stream)
+    return _wrap_factory_array(
+        _mx_overrides.sin_float64(value, stream=actual_stream), actual_stream)
+
+
+def _cos_shadow(value: Any, *args: Any,
+                stream: Any | None = None, **kwargs: Any) -> Any:
+    if args or kwargs:
+        if stream is None:
+            return _ORIGINAL_MX_COS(value, *args, **kwargs)
+        return _ORIGINAL_MX_COS(value, *args, stream=stream, **kwargs)
+    if not _has_precise_array(value):
+        value = mx.array(value)
+    if getattr(value, "dtype", None) != mx.float64:
+        if stream is None:
+            return _ORIGINAL_MX_COS(value)
+        return _ORIGINAL_MX_COS(value, stream=stream)
+    actual_stream = _shadow_stream(stream)
+    return _wrap_factory_array(
+        _mx_overrides.cos_float64(value, stream=actual_stream), actual_stream)
+
+
+def _unary_float64_shadow(original: Any, precise: Any, value: Any,
+                          *args: Any, stream: Any | None = None,
+                          **kwargs: Any) -> Any:
+    if args or kwargs:
+        if stream is None:
+            return original(value, *args, **kwargs)
+        return original(value, *args, stream=stream, **kwargs)
+    if not _has_precise_array(value):
+        value = mx.array(value)
+    if getattr(value, "dtype", None) != mx.float64:
+        if stream is None:
+            return original(value)
+        return original(value, stream=stream)
+    actual_stream = _shadow_stream(stream)
+    return _wrap_factory_array(
+        precise(value, stream=actual_stream), actual_stream)
+
+
+def _arcsin_shadow(value: Any, *args: Any,
+                   stream: Any | None = None, **kwargs: Any) -> Any:
+    return _unary_float64_shadow(
+        _ORIGINAL_MX_ARCSIN, _mx_overrides.arcsin_float64,
+        value, *args, stream=stream, **kwargs)
+
+
+def _arccos_shadow(value: Any, *args: Any,
+                   stream: Any | None = None, **kwargs: Any) -> Any:
+    return _unary_float64_shadow(
+        _ORIGINAL_MX_ARCCOS, _mx_overrides.arccos_float64,
+        value, *args, stream=stream, **kwargs)
+
+
+def _arctan_shadow(value: Any, *args: Any,
+                   stream: Any | None = None, **kwargs: Any) -> Any:
+    return _unary_float64_shadow(
+        _ORIGINAL_MX_ARCTAN, _mx_overrides.arctan_float64,
+        value, *args, stream=stream, **kwargs)
+
+
 def _floor_shadow(value: Any, *args: Any,
                   stream: Any | None = None, **kwargs: Any) -> Any:
     if args or kwargs:
@@ -767,6 +1484,78 @@ def _ceil_shadow(value: Any, *args: Any,
         _mx_overrides.ceil_float64(value, stream=actual_stream), actual_stream)
 
 
+def _divmod_shadow(left: Any, right: Any, *args: Any,
+                   stream: Any | None = None, **kwargs: Any) -> Any:
+    if args or kwargs or not (
+            _needs_precise_scalar_route(left)
+            or _needs_precise_scalar_route(right)):
+        if stream is None:
+            return _ORIGINAL_MX_DIVMOD(left, right, *args, **kwargs)
+        return _ORIGINAL_MX_DIVMOD(left, right, *args, stream=stream, **kwargs)
+    actual_stream = _shadow_stream(stream)
+    quotient = _floor_shadow(
+        _divide_shadow(left, right, stream=actual_stream),
+        stream=actual_stream)
+    remainder = _subtract_shadow(
+        left,
+        _multiply_shadow(quotient, right, stream=actual_stream),
+        stream=actual_stream)
+    return quotient, remainder
+
+
+def _sqrt_shadow(value: Any, *args: Any,
+                 stream: Any | None = None, **kwargs: Any) -> Any:
+    if args or kwargs:
+        if stream is None:
+            return _ORIGINAL_MX_SQRT(value, *args, **kwargs)
+        return _ORIGINAL_MX_SQRT(value, *args, stream=stream, **kwargs)
+    if not _has_precise_array(value):
+        value = mx.array(value)
+    if _has_precise_array(value) and getattr(value, "dtype", None) != mx.float64:
+        if stream is None:
+            return _ORIGINAL_MX_SQRT(value)
+        return _ORIGINAL_MX_SQRT(value, stream=stream)
+    actual_stream = _shadow_stream(stream)
+    return _wrap_factory_array(
+        _mx_overrides.sqrt_float64(value, stream=actual_stream), actual_stream)
+
+
+def _degrees_shadow(value: Any, *args: Any,
+                    stream: Any | None = None, **kwargs: Any) -> Any:
+    if args or kwargs:
+        if stream is None:
+            return _ORIGINAL_MX_DEGREES(value, *args, **kwargs)
+        return _ORIGINAL_MX_DEGREES(value, *args, stream=stream, **kwargs)
+    if not _has_precise_array(value):
+        value = mx.array(value)
+    if _has_precise_array(value) and getattr(value, "dtype", None) != mx.float64:
+        if stream is None:
+            return _ORIGINAL_MX_DEGREES(value)
+        return _ORIGINAL_MX_DEGREES(value, stream=stream)
+    actual_stream = _shadow_stream(stream)
+    return _wrap_factory_array(
+        _mx_overrides.degrees_float64(value, stream=actual_stream),
+        actual_stream)
+
+
+def _radians_shadow(value: Any, *args: Any,
+                    stream: Any | None = None, **kwargs: Any) -> Any:
+    if args or kwargs:
+        if stream is None:
+            return _ORIGINAL_MX_RADIANS(value, *args, **kwargs)
+        return _ORIGINAL_MX_RADIANS(value, *args, stream=stream, **kwargs)
+    if not _has_precise_array(value):
+        value = mx.array(value)
+    if _has_precise_array(value) and getattr(value, "dtype", None) != mx.float64:
+        if stream is None:
+            return _ORIGINAL_MX_RADIANS(value)
+        return _ORIGINAL_MX_RADIANS(value, stream=stream)
+    actual_stream = _shadow_stream(stream)
+    return _wrap_factory_array(
+        _mx_overrides.radians_float64(value, stream=actual_stream),
+        actual_stream)
+
+
 def _sort_shadow(value: Any, axis: Any | None = -1, *args: Any,
                  stream: Any | None = None, **kwargs: Any) -> Any:
     if args or kwargs or not _has_precise_array(value) or getattr(
@@ -777,6 +1566,22 @@ def _sort_shadow(value: Any, axis: Any | None = -1, *args: Any,
     actual_stream = _shadow_stream(stream)
     return _wrap_factory_array(
         _mx_overrides.sort_float64(value, axis=axis, stream=actual_stream),
+        actual_stream)
+
+
+def _argsort_shadow(value: Any, axis: Any | None = -1, *args: Any,
+                    stream: Any | None = None, **kwargs: Any) -> Any:
+    if not _has_precise_array(value):
+        value = mx.array(value)
+    if args or kwargs or not _has_precise_array(value) or getattr(
+            value, "dtype", None) != mx.float64:
+        if stream is None:
+            return _ORIGINAL_MX_ARGSORT(value, axis=axis, *args, **kwargs)
+        return _ORIGINAL_MX_ARGSORT(
+            value, axis=axis, *args, stream=stream, **kwargs)
+    actual_stream = _shadow_stream(stream)
+    return _wrap_factory_array(
+        _mx_overrides.argsort_float64(value, axis=axis, stream=actual_stream),
         actual_stream)
 
 
@@ -848,6 +1653,86 @@ def _transpose_shadow(value: Any, axes: Any | None = None, *args: Any,
         value, axes, stream=_shadow_stream(stream))
 
 
+def _swapaxes_shadow(value: Any, axis1: int, axis2: int, *args: Any,
+                     stream: Any | None = None, **kwargs: Any) -> Any:
+    if not _has_precise_array(value):
+        value = mx.array(value)
+    if (args or kwargs or getattr(value, "dtype", None) != mx.float64):
+        if stream is None:
+            return _ORIGINAL_MX_SWAPAXES(value, axis1, axis2, *args, **kwargs)
+        return _ORIGINAL_MX_SWAPAXES(
+            value, axis1, axis2, *args, stream=stream, **kwargs)
+    ndim = value.ndim
+    left = axis1 + ndim if axis1 < 0 else axis1
+    right = axis2 + ndim if axis2 < 0 else axis2
+    if left < 0 or right < 0 or left >= ndim or right >= ndim:
+        raise ValueError("swapaxes axis out of bounds")
+    axes = list(range(ndim))
+    axes[left], axes[right] = axes[right], axes[left]
+    return _transpose_shadow(value, axes, stream=stream)
+
+
+def _moveaxis_shadow(value: Any, source: Any, destination: Any, *args: Any,
+                     stream: Any | None = None, **kwargs: Any) -> Any:
+    if not _has_precise_array(value):
+        value = mx.array(value)
+    if (args or kwargs or getattr(value, "dtype", None) != mx.float64):
+        if stream is None:
+            return _ORIGINAL_MX_MOVEAXIS(
+                value, source, destination, *args, **kwargs)
+        return _ORIGINAL_MX_MOVEAXIS(
+            value, source, destination, *args, stream=stream, **kwargs)
+    sources = (source,) if isinstance(source, int) else tuple(source)
+    destinations = ((destination,) if isinstance(destination, int)
+                    else tuple(destination))
+    if len(sources) != len(destinations):
+        raise ValueError("source and destination arguments must have the same length")
+    ndim = value.ndim
+
+    def normalize(axis):
+        axis = axis + ndim if axis < 0 else axis
+        if axis < 0 or axis >= ndim:
+            raise ValueError("moveaxis axis out of bounds")
+        return axis
+
+    normalized_sources = [normalize(int(axis)) for axis in sources]
+    normalized_destinations = [normalize(int(axis)) for axis in destinations]
+    order = [axis for axis in range(ndim) if axis not in normalized_sources]
+    for destination_axis, source_axis in sorted(
+            zip(normalized_destinations, normalized_sources)):
+        order.insert(destination_axis, source_axis)
+    return _transpose_shadow(value, order, stream=stream)
+
+
+def _conv1d_shadow(input: Any, weight: Any, stride: int = 1,
+                   padding: int = 0, dilation: int = 1, groups: int = 1,
+                   *args: Any, stream: Any | None = None,
+                   **kwargs: Any) -> Any:
+    if not _has_precise_array(input):
+        input = mx.array(input)
+    if not _has_precise_array(weight):
+        weight = mx.array(weight)
+    wants_float64 = (
+        getattr(input, "dtype", None) == mx.float64
+        or getattr(weight, "dtype", None) == mx.float64)
+    if args or kwargs or not wants_float64:
+        if stream is None:
+            return _wrap_factory_array(
+                _ORIGINAL_MX_CONV1D(
+                    input, weight, stride, padding, dilation, groups,
+                    *args, **kwargs),
+                stream)
+        return _wrap_factory_array(
+            _ORIGINAL_MX_CONV1D(
+                input, weight, stride, padding, dilation, groups,
+                *args, stream=stream, **kwargs),
+            stream)
+    actual_stream = _shadow_stream(stream)
+    return _mx_overrides.conv1d_precise(
+        input, weight, stride=stride, padding=padding, dilation=dilation,
+        groups=groups, stream=actual_stream)
+
+
 mx.eval = _eval_mx_arrays
 mx.stream = _precise_stream
 mx.abs = _abs_shadow
@@ -857,14 +1742,25 @@ mx.subtract = _subtract_shadow
 mx.multiply = _multiply_shadow
 mx.divide = _divide_shadow
 mx.power = _power_shadow
+mx.remainder = _remainder_shadow
+mx.divmod = _divmod_shadow
 mx.matmul = _matmul_shadow
 mx.arctan2 = _arctan2_shadow
 mx.log = _log_shadow
 mx.log2 = _log2_shadow
 mx.log10 = _log10_shadow
+mx.sin = _sin_shadow
+mx.cos = _cos_shadow
+mx.arcsin = _arcsin_shadow
+mx.arccos = _arccos_shadow
+mx.arctan = _arctan_shadow
 mx.floor = _floor_shadow
 mx.ceil = _ceil_shadow
+mx.sqrt = _sqrt_shadow
+mx.degrees = _degrees_shadow
+mx.radians = _radians_shadow
 mx.sort = _sort_shadow
+mx.argsort = _argsort_shadow
 mx.where = _where_shadow
 mx.equal = _equal_shadow
 mx.not_equal = _not_equal_shadow
@@ -872,6 +1768,9 @@ mx.less = _less_shadow
 mx.less_equal = _less_equal_shadow
 mx.greater = _greater_shadow
 mx.greater_equal = _greater_equal_shadow
+mx.logical_not = _logical_not_shadow
+mx.logical_and = _logical_and_shadow
+mx.logical_or = _logical_or_shadow
 mx.concatenate = _concatenate_shadow
 mx.stack = _stack_shadow
 mx.isfinite = _isfinite_shadow
@@ -880,35 +1779,48 @@ mx.isinf = _isinf_shadow
 mx.isclose = _isclose_shadow
 mx.allclose = _allclose_shadow
 mx.round = _round_shadow
+mx.sum = _sum_shadow
+mx.mean = _mean_shadow
 mx.min = _min_shadow
 mx.max = _max_shadow
 mx.minimum = _minimum_shadow
 mx.maximum = _maximum_shadow
 mx.cumsum = _cumsum_shadow
 mx.take = _take_shadow
+mx.slice = _slice_shadow
+mx.roll = _roll_shadow
 mx.clip = _clip_shadow
+mx.broadcast_arrays = _broadcast_arrays_shadow
 mx.broadcast_to = _broadcast_to_shadow
+mx.pad = _pad_shadow
 mx.eye = _eye_shadow
 mx.identity = _identity_shadow
 mx.zeros = _zeros_shadow
 mx.ones = _ones_shadow
 mx.full = _full_shadow
 mx.arange = _arange_shadow
+mx.linspace = _linspace_shadow
 mx.reshape = _reshape_shadow
 if _ORIGINAL_MX_FLATTEN is not None:
     mx.flatten = _flatten_shadow
 mx.squeeze = _squeeze_shadow
 mx.expand_dims = _expand_dims_shadow
 mx.transpose = _transpose_shadow
+mx.swapaxes = _swapaxes_shadow
+mx.moveaxis = _moveaxis_shadow
+mx.repeat = _repeat_shadow
+mx.tile = _tile_shadow
+mx.conv1d = _conv1d_shadow
 mx.deg2rad = mx.radians
 mx.rad2deg = mx.degrees
 if not hasattr(mx.array, "copy"):
     mx.array.copy = lambda self: mx.array(self)
 if not hasattr(mx.array, "ravel"):
-    mx.array.ravel = lambda self: mx.reshape(self, (self.size,))
+    mx.array.ravel = lambda self, *, stream=None: mx.reshape(
+        self, (self.size,), stream=stream)
 if not hasattr(mx.array, "searchsorted"):
     mx.array.searchsorted = lambda self, v, side="left", sorter=None: searchsorted(
-        self, v, side=side)
+        self, v, side=side, sorter=sorter)
 if not hasattr(mx.array, "nonzero"):
     mx.array.nonzero = lambda self: nonzero(self)
 if not hasattr(mx.array, "__index__"):
@@ -922,29 +1834,23 @@ if not hasattr(mx.array, "_mlx_array_orig_item"):
 
     def _array_item(self, *args):
         if not args and getattr(self, "dtype", None) == mx.float64:
-            return _mx_overrides.item_precise(self, stream=_active_stream())
+            try:
+                return _mx_overrides.item_precise(
+                    self, stream=_array_stream(self))
+            except RuntimeError as exc:
+                if "without a primitive" not in str(exc):
+                    raise
         return mx.array._mlx_array_orig_item(self, *args)
 
     mx.array.item = _array_item
+
 if not hasattr(mx.array, "_mlx_array_orig_tolist"):
     mx.array._mlx_array_orig_tolist = mx.array.tolist
 
     def _array_tolist(self):
         if getattr(self, "dtype", None) != mx.float64:
             return mx.array._mlx_array_orig_tolist(self)
-        flat = mx.reshape(self, (-1,))
-
-        def nest(shape, offset):
-            if not shape:
-                return flat[offset].item(), offset + 1
-            items = []
-            for _ in range(shape[0]):
-                item, offset = nest(shape[1:], offset)
-                items.append(item)
-            return items, offset
-
-        result, _ = nest(tuple(self.shape), 0)
-        return result
+        return _mx_overrides.tolist_precise(self, stream=_array_stream(self))
 
     mx.array.tolist = _array_tolist
 if not hasattr(mx.array, "_mlx_array_orig_squeeze"):
@@ -973,16 +1879,19 @@ if not hasattr(mx.array, "_mlx_array_orig_reshape"):
 if hasattr(mx.array, "flatten") and not hasattr(mx.array, "_mlx_array_orig_flatten"):
     mx.array._mlx_array_orig_flatten = mx.array.flatten
 
-    def _array_flatten(self, *args, **kwargs):
+    def _array_flatten(self, start_axis=0, end_axis=-1, *args, **kwargs):
         stream = kwargs.pop("stream", None)
         if kwargs or args:
             return mx.array._mlx_array_orig_flatten(self, *args, **kwargs)
         if getattr(self, "dtype", None) == mx.float64:
+            shape = _flattened_shape(tuple(self.shape), start_axis, end_axis)
             return _mx_overrides.reshape_precise(
-                self, (self.size,), stream=_shadow_stream(stream))
+                self, shape, stream=_shadow_stream(stream))
         if stream is None:
-            return mx.array._mlx_array_orig_flatten(self)
-        return mx.array._mlx_array_orig_flatten(self, stream=stream)
+            return mx.array._mlx_array_orig_flatten(
+                self, start_axis=start_axis, end_axis=end_axis)
+        return mx.array._mlx_array_orig_flatten(
+            self, start_axis=start_axis, end_axis=end_axis, stream=stream)
 
     mx.array.flatten = _array_flatten
 if hasattr(mx.array, "ravel") and not hasattr(mx.array, "_mlx_array_orig_ravel"):
@@ -1011,12 +1920,15 @@ if not hasattr(mx.array, "__round__"):
     mx.array.__round__ = lambda self, ndigits=None: round(
         float(self.item()), ndigits) if ndigits is not None else round(
             float(self.item()))
+if not hasattr(mx.array, "__deepcopy__"):
+    def _array_deepcopy(self, memo):
+        return _mx_overrides.MlxPreciseArray(self, stream=_active_stream())
+
+    mx.array.__deepcopy__ = _array_deepcopy
 if not hasattr(mx.array, "__divmod__"):
-    mx.array.__divmod__ = lambda self, other: divmod(
-        _to_scalar(self), _to_scalar(other))
+    mx.array.__divmod__ = lambda self, other: _divmod_shadow(self, other)
 if not hasattr(mx.array, "__rdivmod__"):
-    mx.array.__rdivmod__ = lambda self, other: divmod(
-        _to_scalar(other), _to_scalar(self))
+    mx.array.__rdivmod__ = lambda self, other: _divmod_shadow(other, self)
 if not hasattr(mx.array, "__rand__"):
     mx.array.__rand__ = lambda self, other: mx.logical_and(_to_mx(other), self)
 if not hasattr(mx.array, "__ror__"):
@@ -1122,7 +2034,109 @@ if not hasattr(mx.array, "_mlx_array_orig_max"):
 if not hasattr(mx.array, "_mlx_array_orig_setitem"):
     mx.array._mlx_array_orig_setitem = mx.array.__setitem__
 
+    def _normalize_basic_setitem_key(array, key):
+        def scalar_index(value):
+            if isinstance(value, _ORIGINAL_MX_ARRAY) and value.size == 1:
+                if value.dtype == mx.bool_ or str(value.dtype).endswith("bool"):
+                    return value
+                return int(value.item())
+            return value
+
+        if isinstance(key, tuple):
+            parts = tuple(scalar_index(part) for part in key)
+        else:
+            parts = (scalar_index(key),)
+
+        if _builtins.any(part is None for part in parts):
+            return None
+
+        ellipsis_at = next(
+            (index for index, part in enumerate(parts) if part is Ellipsis),
+            None)
+        specified = _builtins.sum(1 for part in parts if part is not Ellipsis)
+        if ellipsis_at is not None:
+            fill = array.ndim - (specified - 1)
+            if fill < 0:
+                raise IndexError(
+                    f"too many indices for array with {array.ndim} dimensions")
+            parts = (parts[:ellipsis_at] + (slice(None),) * fill
+                     + parts[ellipsis_at + 1:])
+        else:
+            fill = array.ndim - specified
+            if fill < 0:
+                raise IndexError(
+                    f"too many indices for array with {array.ndim} dimensions")
+            parts = parts + (slice(None),) * fill
+
+        starts = []
+        stops = []
+        strides = []
+        exposed_shape = []
+        full_shape = []
+        for axis, part in enumerate(parts):
+            dim = int(array.shape[axis])
+            if isinstance(part, slice):
+                start, stop, step = part.indices(dim)
+                length = len(range(start, stop, step))
+                starts.append(start)
+                stops.append(stop)
+                strides.append(step)
+                exposed_shape.append(length)
+                full_shape.append(length)
+                continue
+            try:
+                index = operator.index(part)
+            except TypeError:
+                return None
+            if index < 0:
+                index += dim
+            if index < 0 or index >= dim:
+                raise IndexError("index out of bounds")
+            starts.append(index)
+            stops.append(index + 1)
+            strides.append(1)
+            full_shape.append(1)
+
+        return (
+            tuple(starts),
+            tuple(stops),
+            tuple(strides),
+            tuple(exposed_shape),
+            tuple(full_shape),
+        )
+
+    def _setitem_update_value(value, dtype, exposed_shape, full_shape, stream):
+        if isinstance(value, (list, tuple)):
+            value = mx.array(value, dtype=dtype, stream=stream)
+        elif not isinstance(value, _ORIGINAL_MX_ARRAY):
+            value = mx.array(value, dtype=dtype, stream=stream)
+        elif value.dtype != dtype:
+            value = value.astype(dtype, stream=stream)
+
+        value_shape = tuple(value.shape)
+        if exposed_shape:
+            if value_shape != exposed_shape:
+                value = mx.broadcast_to(value, exposed_shape, stream=stream)
+        elif value_shape != ():
+            if value.size != 1:
+                raise ValueError("cannot assign non-scalar value to scalar slice")
+            value = mx.reshape(value, (), stream=stream)
+
+        if tuple(value.shape) != full_shape:
+            value = mx.reshape(value, full_shape, stream=stream)
+        return value
+
     def _array_setitem(self, key, value):
+        if isinstance(self, _mx_overrides.MlxPreciseArray):
+            normalized = _normalize_basic_setitem_key(self, key)
+            if normalized is not None:
+                starts, stops, strides, exposed_shape, full_shape = normalized
+                stream = _array_stream(self)
+                update = _setitem_update_value(
+                    value, self.dtype, exposed_shape, full_shape, stream)
+                _mx_overrides.setitem_precise(
+                    self, update, starts, stops, strides, stream=stream)
+                return None
         if isinstance(value, (list, tuple)):
             value = mx.array(value, dtype=self.dtype)
         return _ORIGINAL_MX_ARRAY._mlx_array_orig_setitem(self, key, value)
@@ -1132,7 +2146,18 @@ if not hasattr(mx.array, "_mlx_array_orig_getitem"):
     mx.array._mlx_array_orig_getitem = mx.array.__getitem__
 
     def _array_getitem(self, key):
-        stream = _active_stream()
+        stream = _array_stream(self)
+        dtype = getattr(self, "dtype", None)
+        field_names = getattr(dtype, "names", None)
+        if isinstance(key, str) and field_names and key in field_names:
+            return self[(slice(None), field_names.index(key))]
+        if (isinstance(self, _mx_overrides.MlxPreciseArray)
+                and getattr(self, "dtype", None) == mx.float64):
+            try:
+                _mx_overrides.eval_precise_array(self)
+            except RuntimeError as exc:
+                if "without a primitive" not in str(exc):
+                    raise
 
         def scalar_index(value):
             if isinstance(value, _ORIGINAL_MX_ARRAY) and value.size == 1:
@@ -1154,7 +2179,9 @@ if not hasattr(mx.array, "_mlx_array_orig_getitem"):
                 (index for index, part in enumerate(key) if part is Ellipsis),
                 None)
             if ellipsis_at is not None:
-                fill = self.ndim - (len(key) - 1)
+                consumed = _builtins.sum(
+                    1 for part in key if part is not Ellipsis and part is not None)
+                fill = self.ndim - consumed
                 key = (key[:ellipsis_at] + (slice(None),) * fill
                        + key[ellipsis_at + 1:])
         else:
@@ -1368,6 +2395,10 @@ mx.array.__index__ = lambda self: int(self.item())
 mx.array.__int__ = lambda self: int(self.item())
 mx.array.__float__ = lambda self: float(self.item())
 mx.array.__format__ = lambda self, spec: format(self.item(), spec)
+mx.array.__deepcopy__ = lambda self, memo: _mx_overrides.MlxPreciseArray(
+    self, stream=_active_stream())
+mx.array.__divmod__ = lambda self, other: _divmod_shadow(self, other)
+mx.array.__rdivmod__ = lambda self, other: _divmod_shadow(other, self)
 
 @dataclass(frozen=True)
 class DType:
@@ -1489,6 +2520,8 @@ float128 = float64
 floating = float
 integer = int
 number = (int, float)
+_MLX_FLOATING_CATEGORY = getattr(mx, "floating", None)
+_MLX_INTEGER_CATEGORY = getattr(mx, "integer", None)
 _object_dtype = DType(_builtins.object, "object", "O", 0, "O")
 _DTYPE_BY_MX = {
     dt.mx_dtype: dt for dt in (
@@ -1742,18 +2775,14 @@ def _to_mx(x: Any, dtype: Any | None = None) -> mx.array:
 
 
 def _to_scalar(x: Any) -> Any:
-    if isinstance(x, mx.array) and x.size == 1:
+    if isinstance(x, _ORIGINAL_MX_ARRAY) and x.size == 1:
         return x.item()
     return x
 
 
-def array(obj: Any, dtype: Any | None = None, copy: bool | None = True,
-          order: Any | None = None, subok: bool = False, ndmin: int = 0,
-          like: Any | None = None) -> mx.array:
-    arr = _to_mx(obj, dtype=dtype)
-    while getattr(arr, "ndim", 0) < ndmin:
-        arr = arr.reshape((1,) + tuple(arr.shape))
-    return arr
+def array(obj: Any, dtype: Any | None = None, *,
+          stream: Any | None = None) -> mx.array:
+    return _construct_mx_array(obj, dtype=dtype, stream=stream)
 
 
 def atleast_1d(*arys: Any) -> Tuple[mx.array, ...] | mx.array:
@@ -1852,22 +2881,41 @@ def linspace(*args: Any, **kwargs: Any) -> mx.array:
     return mx.linspace(*args, **kwargs)
 
 
-def logspace(start: float, stop: float, num: int = 50, base: float = 10.0) -> mx.array:
-    return mx.power(base, mx.linspace(start, stop, num))
+def logspace(start: float, stop: float, num: int = 50, *,
+             base: float = 10.0, dtype: Any | None = None,
+             stream: Any | None = None) -> mx.array:
+    actual_stream = _shadow_stream(stream)
+    target_dtype = _unwrap_dtype(dtype) or mx.float64
+    exponents = mx.linspace(
+        start, stop, num, dtype=target_dtype, stream=actual_stream)
+    base_value = mx.array(base, dtype=target_dtype, stream=actual_stream)
+    return mx.power(base_value, exponents, stream=actual_stream)
 
 
-def geomspace(start: float, stop: float, num: int = 50) -> mx.array:
-    return mx.exp(mx.linspace(math.log(start), math.log(stop), num))
+def geomspace(start: float, stop: float, num: int = 50, *,
+              dtype: Any | None = None,
+              stream: Any | None = None) -> mx.array:
+    actual_stream = _shadow_stream(stream)
+    target_dtype = _unwrap_dtype(dtype) or mx.float64
+    start_value = mx.array(start, dtype=target_dtype, stream=actual_stream)
+    stop_value = mx.array(stop, dtype=target_dtype, stream=actual_stream)
+    if num == 0:
+        return mx.zeros((0,), dtype=target_dtype, stream=actual_stream)
+    if num == 1:
+        return mx.reshape(start_value, (1,), stream=actual_stream)
+    t = mx.linspace(0.0, 1.0, num, dtype=target_dtype, stream=actual_stream)
+    return start_value * mx.power(stop_value / start_value, t,
+                                  stream=actual_stream)
 
 
-def reshape(a: Any, newshape: Any) -> mx.array:
+def reshape(a: Any, newshape: Any, *, stream: Any | None = None) -> mx.array:
     arr = _to_mx(a)
-    return mx.reshape(arr, newshape)
+    return mx.reshape(arr, newshape, stream=stream)
 
 
-def ravel(a: Any) -> mx.array:
+def ravel(a: Any, *, stream: Any | None = None) -> mx.array:
     arr = _to_mx(a)
-    return mx.reshape(arr, (arr.size,))
+    return mx.reshape(arr, (arr.size,), stream=stream)
 
 
 def squeeze(a: Any, axis: Any | None = None) -> mx.array:
@@ -2029,8 +3077,8 @@ def divide(a: Any, b: Any, dtype: Any | None = None, **kwargs: Any) -> mx.array:
 true_divide = divide
 
 
-def mod(a: Any, b: Any) -> mx.array:
-    return _to_mx(a) % _to_mx(b)
+def mod(a: Any, b: Any, *, stream: Any | None = None) -> mx.array:
+    return mx.remainder(_to_mx(a), _to_mx(b), stream=stream)
 
 
 remainder = mod
@@ -2093,12 +3141,14 @@ def in1d(ar1: Any, ar2: Any, assume_unique: bool = False,
     return ravel(isin(ar1, ar2, assume_unique=assume_unique, invert=invert))
 
 
-def sort(a: Any, axis: int | None = -1) -> mx.array:
-    return mx.sort(_to_mx(a), axis=axis)
+def sort(a: Any, axis: int | None = -1, *,
+         stream: Any | None = None) -> mx.array:
+    return mx.sort(_to_mx(a), axis=axis, stream=stream)
 
 
-def argsort(a: Any, axis: int | None = -1) -> mx.array:
-    return mx.argsort(_to_mx(a), axis=axis)
+def argsort(a: Any, axis: int | None = -1, *,
+            stream: Any | None = None) -> mx.array:
+    return mx.argsort(_to_mx(a), axis=axis, stream=stream)
 
 
 def argmax(a: Any, axis: int | None = None) -> Any:
@@ -2109,12 +3159,16 @@ def argmin(a: Any, axis: int | None = None) -> Any:
     return _to_scalar(mx.argmin(_to_mx(a), axis=axis))
 
 
-def sum(a: Any, axis: int | None = None) -> Any:
-    return _to_scalar(mx.sum(_to_mx(a), axis=axis))
+def sum(a: Any, axis: Any | None = None, keepdims: bool = False, *,
+        stream: Any | None = None) -> Any:
+    return _to_scalar(mx.sum(_to_mx(a), axis=axis, keepdims=keepdims,
+                             stream=stream))
 
 
-def mean(a: Any, axis: int | None = None) -> Any:
-    return _to_scalar(mx.mean(_to_mx(a), axis=axis))
+def mean(a: Any, axis: Any | None = None, keepdims: bool = False, *,
+         stream: Any | None = None) -> Any:
+    return _to_scalar(mx.mean(_to_mx(a), axis=axis, keepdims=keepdims,
+                              stream=stream))
 
 
 def std(a: Any, axis: int | None = None) -> Any:
@@ -2169,8 +3223,10 @@ def roots(p: Any) -> mx.array:
     raise NotImplementedError("roots currently supports linear/quadratic polynomials")
 
 
-def cumsum(a: Any, axis: int | None = None) -> mx.array:
-    return mx.cumsum(_to_mx(a), axis=axis)
+def cumsum(a: Any, axis: int | None = None, *, reverse: bool = False,
+           inclusive: bool = True, stream: Any | None = None) -> mx.array:
+    return mx.cumsum(_to_mx(a), axis=axis, reverse=reverse,
+                     inclusive=inclusive, stream=stream)
 
 
 def cumprod(a: Any, axis: int | None = None) -> mx.array:
@@ -2290,8 +3346,8 @@ def abs(a: Any) -> mx.array:
     return mx.abs(_to_mx(a))
 
 
-def sqrt(a: Any) -> mx.array:
-    return mx.sqrt(_to_mx(a))
+def sqrt(a: Any, *, stream: Any | None = None) -> mx.array:
+    return mx.sqrt(_to_mx(a), stream=stream)
 
 
 def exp(a: Any) -> mx.array:
@@ -2358,12 +3414,12 @@ def arctan2(y: Any, x: Any) -> mx.array:
     return mx.arctan2(_to_mx(y), _to_mx(x))
 
 
-def degrees(a: Any) -> mx.array:
-    return mx.degrees(_to_mx(a))
+def degrees(a: Any, *, stream: Any | None = None) -> mx.array:
+    return mx.degrees(_to_mx(a), stream=stream)
 
 
-def radians(a: Any) -> mx.array:
-    return mx.radians(_to_mx(a))
+def radians(a: Any, *, stream: Any | None = None) -> mx.array:
+    return mx.radians(_to_mx(a), stream=stream)
 
 
 def deg2rad(a: Any) -> mx.array:
@@ -2380,8 +3436,8 @@ def hypot(x: Any, y: Any) -> mx.array:
     return mx.sqrt(x_mx * x_mx + y_mx * y_mx)
 
 
-def matmul(a: Any, b: Any) -> mx.array:
-    return mx.matmul(_to_mx(a), _to_mx(b))
+def matmul(a: Any, b: Any, *, stream: Any | None = None) -> mx.array:
+    return mx.matmul(_to_mx(a), _to_mx(b), stream=stream)
 
 
 def dot(a: Any, b: Any) -> mx.array:
@@ -2567,15 +3623,31 @@ def histogram2d(x: Any, y: Any, bins: int = 10, range: Tuple[Tuple[float, float]
     return mx.array(counts), mx.array(x_edges), mx.array(y_edges)
 
 
-def bincount(x: Any, minlength: int | None = None):
-    xs = [int(v) for v in _flatten(_to_mx(x).tolist())]
-    size = _py_max(xs) + 1 if xs else 0
-    if minlength is not None:
-        size = _py_max(size, minlength)
-    counts = [0] * size
-    for v in xs:
-        counts[v] += 1
-    return mx.array(counts)
+def bincount(x: Any, weights: Any | None = None,
+             minlength: int | None = None):
+    actual_stream = _active_stream()
+    x_arr = mx.reshape(_to_mx(x).astype(mx.int32), (-1,),
+                       stream=actual_stream)
+    if x_arr.size == 0:
+        size = 0 if minlength is None else minlength
+    elif minlength is None:
+        size = int(mx.max(x_arr, stream=actual_stream).item()) + 1
+    else:
+        size = minlength
+    if size == 0:
+        dtype = mx.int64 if weights is None else _to_mx(weights).dtype
+        return mx.zeros((0,), dtype=dtype, stream=actual_stream)
+    if weights is None:
+        return _mx_overrides.bincount_int32(
+            x_arr, minlength=size, stream=actual_stream)
+
+    bins = mx.arange(size, dtype=mx.int32, stream=actual_stream)
+    matches = (mx.expand_dims(bins, 1, stream=actual_stream)
+               == mx.expand_dims(x_arr, 0, stream=actual_stream))
+    weight_arr = mx.reshape(_to_mx(weights), (-1,), stream=actual_stream)
+    return mx.sum(matches.astype(weight_arr.dtype)
+                  * mx.expand_dims(weight_arr, 0, stream=actual_stream),
+                  axis=1, stream=actual_stream)
 
 
 def convolve(a: Any, v: Any, mode: str = "full") -> mx.array:
@@ -2608,43 +3680,67 @@ def correlate(a: Any, v: Any, mode: str = "valid") -> mx.array:
 
 
 def interp(x: Any, xp: Any, fp: Any):
-    x_list = _to_mx(x).tolist()
-    xp_list = _to_mx(xp).tolist()
-    fp_list = _to_mx(fp).tolist()
-    out = []
-    for xv in x_list:
-        if xv <= xp_list[0]:
-            out.append(fp_list[0])
-            continue
-        if xv >= xp_list[-1]:
-            out.append(fp_list[-1])
-            continue
-        for i in range(1, len(xp_list)):
-            if xv <= xp_list[i]:
-                x0, x1 = xp_list[i - 1], xp_list[i]
-                y0, y1 = fp_list[i - 1], fp_list[i]
-                t = (xv - x0) / (x1 - x0)
-                out.append(y0 + t * (y1 - y0))
-                break
-    return mx.array(out)
+    x_arr = _to_mx(x)
+    xp_arr = mx.reshape(_to_mx(xp), (-1,))
+    fp_arr = mx.reshape(_to_mx(fp), (-1,))
+    if xp_arr.size != fp_arr.size:
+        raise ValueError("xp and fp must have the same length")
+    if xp_arr.size == 0:
+        raise ValueError("xp must be non-empty")
+    if xp_arr.size == 1:
+        return mx.reshape(mx.full(x_arr.size, fp_arr[0], dtype=fp_arr.dtype),
+                          x_arr.shape)
+
+    x_flat = mx.reshape(x_arr, (-1,))
+    coord_dtype = mx.float64 if (
+        getattr(x_flat, "dtype", None) == mx.float64
+        or getattr(xp_arr, "dtype", None) == mx.float64
+        or getattr(fp_arr, "dtype", None) == mx.float64
+    ) else mx.float32
+    x_calc = x_flat.astype(coord_dtype)
+    xp_calc = xp_arr.astype(coord_dtype)
+    actual_stream = _active_stream()
+    x_expanded = mx.expand_dims(x_calc, 1, stream=actual_stream)
+    xp_expanded = mx.expand_dims(xp_calc, 0, stream=actual_stream)
+    hi = mx.sum(x_expanded > xp_expanded, axis=1, stream=actual_stream)
+    hi = mx.clip(hi, 1, xp_arr.size - 1, stream=actual_stream).astype(mx.int32)
+    lo = hi - 1
+
+    x0 = mx.take(xp_calc, lo, stream=actual_stream)
+    x1 = mx.take(xp_calc, hi, stream=actual_stream)
+    y0 = mx.take(fp_arr, lo, stream=actual_stream)
+    y1 = mx.take(fp_arr, hi, stream=actual_stream)
+    t = (x_calc - x0) / (x1 - x0)
+    out = y0 + t * (y1 - y0)
+    out = mx.where(x_calc <= xp_calc[0], fp_arr[0], out, stream=actual_stream)
+    out = mx.where(x_calc >= xp_calc[-1], fp_arr[-1], out, stream=actual_stream)
+    return mx.reshape(out, x_arr.shape, stream=actual_stream)
 
 
-def searchsorted(a: Any, v: Any, side: str = "left"):
-    arr = sorted(_flatten(_to_mx(a).tolist()))
-    scalar = isscalar(v)
-    values = _to_mx(v).tolist()
-    if not isinstance(values, list):
-        values = [values]
-    result = []
-    for val in values:
-        if side == "left":
-            idx = next((i for i, x in enumerate(arr) if x >= val), len(arr))
-        else:
-            idx = next((i for i, x in enumerate(arr) if x > val), len(arr))
-        result.append(idx)
-    if scalar:
-        return result[0]
-    return mx.array(result)
+def searchsorted(a: Any, v: Any, side: str = "left", sorter: Any | None = None):
+    if side not in {"left", "right"}:
+        raise ValueError("side must be 'left' or 'right'")
+    actual_stream = _active_stream()
+    arr = mx.reshape(_to_mx(a), (-1,), stream=actual_stream)
+    if sorter is not None:
+        arr = mx.take(arr, _to_mx(sorter).astype(mx.int32),
+                      stream=actual_stream)
+    values = _to_mx(v)
+    values_shape = tuple(values.shape)
+    values_flat = mx.reshape(values, (-1,), stream=actual_stream)
+    if arr.size == 0:
+        return mx.zeros(values_shape, dtype=mx.int32, stream=actual_stream)
+    edges = mx.expand_dims(arr, 1, stream=actual_stream)
+    probes = mx.expand_dims(values_flat, 0, stream=actual_stream)
+    if side == "left":
+        before = edges < probes
+    else:
+        before = edges <= probes
+    indices = mx.sum(before.astype(mx.int32), axis=0, stream=actual_stream)
+    return mx.reshape(indices, values_shape, stream=actual_stream)
+
+
+mx.searchsorted = searchsorted
 
 
 def nan_to_num(x: Any, nan: float = 0.0, posinf: float | None = None, neginf: float | None = None):
@@ -3020,9 +4116,9 @@ def _dtype_kind(value: Any) -> str | None:
 def issubdtype(arg1: Any, arg2: Any):
     kind1 = _dtype_kind(arg1)
     kind2 = _dtype_kind(arg2)
-    if arg2 is integer:
+    if arg2 is integer or arg2 is _MLX_INTEGER_CATEGORY:
         return kind1 in {"i", "u"}
-    if arg2 is floating:
+    if arg2 is floating or arg2 is _MLX_FLOATING_CATEGORY:
         return kind1 == "f"
     if kind2 is None:
         return arg1 == arg2
@@ -3498,11 +4594,11 @@ class _MA:
     masked = masked
     MaskedArray = MaskedArray
 
-    def array(self, data: Any, mask: Any | None = None, dtype: Any | None = None, copy: bool | None = None):
+    def array(self, data: Any, mask: Any | None = None, dtype: Any | None = None):
         return MaskedArray(data=_to_mx(data, dtype=dtype), mask=_to_mx(mask) if mask is not None else None)
 
-    def masked_array(self, data: Any, mask: Any | None = None, dtype: Any | None = None, copy: bool | None = None):
-        return self.array(data, mask=mask, dtype=dtype, copy=copy)
+    def masked_array(self, data: Any, mask: Any | None = None, dtype: Any | None = None):
+        return self.array(data, mask=mask, dtype=dtype)
 
     def isMA(self, data: Any) -> bool:
         return isinstance(data, MaskedArray)
@@ -3614,6 +4710,7 @@ def _install_mx_module_surface() -> None:
     mx.index_exp = index_exp
     mx.mgrid = mgrid
     mx.ogrid = ogrid
+    mx.indices = indices
     mx.atleast_1d = atleast_1d
     mx.atleast_2d = atleast_2d
     mx.atleast_3d = atleast_3d
@@ -3621,17 +4718,27 @@ def _install_mx_module_surface() -> None:
     mx.dstack = dstack
     mx.hstack = hstack
     mx.vstack = vstack
+    mx.sinc = sinc
+    mx.interp = interp
+    mx.bincount = bincount
+    mx.logspace = logspace
+    mx.geomspace = geomspace
     mx.zeros_like = zeros_like
     mx.ones_like = ones_like
     mx.empty_like = empty_like
     mx.full_like = full_like
+    mx.unique = unique
     mx.errstate = errstate
     mx.seterr = seterr
+    mx.dtype = dtype
+    mx.issubdtype = issubdtype
     mx.testing = testing
     if not hasattr(mx.random, "rand"):
         mx.random.rand = random.rand
     if not hasattr(mx.random, "randn"):
         mx.random.randn = random.randn
+    if not hasattr(mx.random, "random"):
+        mx.random.random = random.random
     if not hasattr(mx.random, "random_sample"):
         mx.random.random_sample = random.random_sample
     if not hasattr(mx.random, "sample"):

@@ -849,7 +849,9 @@ class Colormap:
         """
         self._ensure_inited()
 
-        xa = X if isinstance(X, mx.array) else mx.array(X)
+        input_mask = mx.ma.getmaskarray(X) if mx.ma.is_masked(X) else None
+        xa = X.data if mx.ma.is_masked(X) else (
+            X if isinstance(X, mx.array) else mx.array(X))
         if _dtype_kind(xa.dtype) == "f":
             xa = xa * self.N
             # xa == 1 (== N after multiplication) is not out of range.
@@ -860,6 +862,8 @@ class Colormap:
         mask_over = xa >= self.N
         mask_bad = mx.isnan(xa) if _dtype_kind(xa.dtype) == "f" else mx.zeros(
             xa.shape, dtype=mx.bool_)
+        if input_mask is not None:
+            mask_bad = mask_bad | input_mask
         # We need this cast for unsigned ints as well as floats.
         xa = xa.astype(mx.int32)
         xa = mx.where(mask_under, self._i_under, xa)
@@ -1801,8 +1805,8 @@ class BivarColormap:
         if not self._isinit:
             self._init()
 
-        X0 = mx.ma.array(X[0], copy=True)
-        X1 = mx.ma.array(X[1], copy=True)
+        X0 = mx.ma.array(X[0])
+        X1 = mx.ma.array(X[1])
         # clip to shape of colormap, circle square, etc.
         self._clip((X0, X1))
 
@@ -2302,7 +2306,7 @@ class BivarColormapFromImage(BivarColormap):
         # i.e.:
         # if isinstance(Image, lut):
         #    lut = image.pil_to_array(lut)
-        lut = mx.array(lut, copy=True)
+        lut = mx.array(lut)
         if lut.ndim != 3 or lut.shape[2] not in (3, 4):
             raise ValueError("The lut must be an array of shape (n, m, 3) or (n, m, 4)",
                              " or a PIL.image encoded as RGB or RGBA")
@@ -2974,11 +2978,21 @@ def _make_norm_from_scale(
             return value[0] if is_scalar else value
 
         def autoscale_None(self, A):
-            # i.e. A[mx.isfinite(...)], but also for non-array A's
-            in_trf_domain = mx.extract(mx.isfinite(self._trf.transform(A)), A)
-            if in_trf_domain.size == 0:
-                in_trf_domain = mx.ma.masked
-            return super().autoscale_None(in_trf_domain)
+            A = A if isinstance(A, mx.array) else mx.array(A)
+            in_trf_domain = mx.isfinite(self._trf.transform(A))
+            if not bool(mx.any(in_trf_domain)):
+                if self.vmin is None and self.vmax is None:
+                    self.vmin = self.vmax = 0
+                elif self.vmin is None:
+                    self.vmin = self.vmax
+                elif self.vmax is None:
+                    self.vmax = self.vmin
+                return
+            values = mx.array(A, dtype=mx.float64)
+            if self.vmin is None and values.size:
+                self.vmin = mx.min(mx.where(in_trf_domain, values, mx.inf))
+            if self.vmax is None and values.size:
+                self.vmax = mx.max(mx.where(in_trf_domain, values, -mx.inf))
 
     if base_norm_cls is Normalize:
         ScaleNorm.__name__ = f"{scale_cls.__name__}Norm"
@@ -3176,7 +3190,7 @@ class PowerNorm(Normalize):
             resdat /= (vmax - vmin)
             resdat[resdat > 0] = mx.power(resdat[resdat > 0], gamma)
 
-            result = mx.ma.array(resdat, mask=result.mask, copy=False)
+            result = mx.ma.array(resdat, mask=result.mask)
         if is_scalar:
             result = result[0]
         return result
@@ -3195,7 +3209,7 @@ class PowerNorm(Normalize):
         resdat *= (vmax - vmin)
         resdat += vmin
 
-        result = mx.ma.array(resdat, mask=result.mask, copy=False)
+        result = mx.ma.array(resdat, mask=result.mask)
         if is_scalar:
             result = result[0]
         return result
@@ -3660,11 +3674,9 @@ def rgb_to_hsv(arr):
                          f"shape {arr.shape} was found.")
 
     in_shape = arr.shape
-    arr = mx.array(
-        arr, copy=False,
-        dtype=mx.promote_types(arr.dtype, mx.float32),  # Don't work on ints.
-        ndmin=2,  # In case input was 1D.
-    )
+    arr = arr.astype(mx.promote_types(arr.dtype, mx.float32))  # Don't work on ints.
+    if arr.ndim < 2:  # In case input was 1D.
+        arr = mx.reshape(arr, (1, *arr.shape))
 
     out = mx.zeros_like(arr)
     arr_max = arr.max(-1)
@@ -3725,11 +3737,9 @@ def hsv_to_rgb(hsv):
                          f"shape {hsv.shape} was found.")
 
     in_shape = hsv.shape
-    hsv = mx.array(
-        hsv, copy=False,
-        dtype=mx.promote_types(hsv.dtype, mx.float32),  # Don't work on ints.
-        ndmin=2,  # In case input was 1D.
-    )
+    hsv = hsv.astype(mx.promote_types(hsv.dtype, mx.float32))  # Don't work on ints.
+    if hsv.ndim < 2:  # In case input was 1D.
+        hsv = mx.reshape(hsv, (1, *hsv.shape))
 
     h = hsv[..., 0]
     s = hsv[..., 1]

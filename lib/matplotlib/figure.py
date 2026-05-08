@@ -629,7 +629,8 @@ default: %(va)s
                     "The Axes must have been created in the present figure")
         else:
             rect, = args
-            if not mx.isfinite(rect).all():
+            rect_to_check = rect.bounds if isinstance(rect, Bbox) else rect
+            if not mx.isfinite(rect_to_check).all():
                 raise ValueError(f'all entries in rect must be finite not {rect}')
             projection_class, pkw = self._process_projection_requirements(**kwargs)
 
