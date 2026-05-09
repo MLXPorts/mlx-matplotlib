@@ -426,6 +426,23 @@ def test_BoundaryNorm():
     assert_array_equal(cmshould(mynorm(x)), cmref(refnorm(x)))
 
 
+def test_mlxarr_searchsorted_preserves_input_shape():
+    bins = [0, 1, 2, 3]
+    values = [[-1, 0.5], [1.5, 4]]
+    expected = [[0, 1], [2, 4]]
+    assert_array_equal(mlxarr.searchsorted(bins, values, side="left"), expected)
+    assert_array_equal(mlxarr.digitize(values, bins), expected)
+
+
+def test_mlxarr_clip_out_mutates_destination():
+    values = mlxarr.array([-1, 0.5, 4])
+    out = mlxarr.array([0.0, 0.0, 0.0], dtype=mlxarr.float32)
+    result = mlxarr.clip(values, 0, 2, out=out)
+
+    assert result is out
+    assert_array_equal(out, [0, 0.5, 2])
+
+
 def test_CenteredNorm():
     mlxarr.random.seed(0)
 

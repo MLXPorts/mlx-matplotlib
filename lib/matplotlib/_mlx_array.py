@@ -1649,8 +1649,12 @@ def copysign(x1: Any, x2: Any) -> mx.array:
     return _to_scalar(mx.sign(_to_mx(x2)) * mx.abs(_to_mx(x1)))
 
 
-def clip(a: Any, a_min: Any, a_max: Any) -> mx.array:
-    return mx.clip(_to_mx(a), a_min, a_max)
+def clip(a: Any, a_min: Any, a_max: Any, out: Any | None = None) -> mx.array:
+    result = mx.clip(_to_mx(a), a_min, a_max)
+    if out is not None:
+        out[:] = result.astype(out.dtype)
+        return out
+    return result
 
 
 def diff(a: Any, n: int = 1, axis: int = -1) -> mx.array:
@@ -2344,12 +2348,12 @@ def interp(x: Any, xp: Any, fp: Any,
 
 def searchsorted(a: Any, v: Any, side: str = "left"):
     arr = sorted(_flatten(_to_mx(a).tolist()))
-    scalar = isscalar(v)
     values = _to_mx(v).tolist()
-    if not isinstance(values, list):
-        values = [values]
+    shape = _infer_shape(values) if isinstance(values, list) else ()
+    scalar = shape == ()
+    flat_values = [values] if scalar else list(_flatten(values))
     result = []
-    for val in values:
+    for val in flat_values:
         if side == "left":
             idx = next((i for i, x in enumerate(arr) if x >= val), len(arr))
         else:
@@ -2357,7 +2361,7 @@ def searchsorted(a: Any, v: Any, side: str = "left"):
         result.append(idx)
     if scalar:
         return result[0]
-    return mx.array(result)
+    return mx.array(_reshape_flat(result, shape))
 
 
 def digitize(x: Any, bins: Any, right: bool = False):
