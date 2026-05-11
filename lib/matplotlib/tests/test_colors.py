@@ -449,12 +449,16 @@ def test_mlxarr_asarray_decimal_dtype_float():
     values = [Decimal("1.25"), Decimal("2.5")]
     result = mlxarr.asarray(values, dtype=mlxarr.float64)
     assert_array_equal(result, [1.25, 2.5])
+    as_int = mlxarr.asarray(values, dtype=mlxarr.int64)
+    assert_array_equal(as_int, [1, 2])
 
 
 def test_mlxarr_broadcast_to_object_shape_passthrough():
     labels = ["a", "b"]
     broadcasted = mlxarr.broadcast_to(labels, 2)
     assert_array_equal(broadcasted, labels)
+    broadcasted_2d = mlxarr.broadcast_to(labels, (3, 2))
+    assert_array_equal(broadcasted_2d, [["a", "b"], ["a", "b"], ["a", "b"]])
 
 
 def test_mlxarr_datetime_subtract_object_array():

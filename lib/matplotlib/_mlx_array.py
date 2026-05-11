@@ -1002,6 +1002,8 @@ class _PythonArray:
         try:
             return self._numeric() + other
         except (TypeError, ValueError):
+            if self.dtype is not _object_dtype:
+                raise
             return self._elementwise(other, operator.add)
 
     def __radd__(self, other: Any):
@@ -1010,6 +1012,8 @@ class _PythonArray:
         try:
             return other + self._numeric()
         except (TypeError, ValueError):
+            if self.dtype is not _object_dtype:
+                raise
             return self._elementwise(other, lambda left, right: operator.add(right, left))
 
     def __sub__(self, other: Any):
@@ -1018,6 +1022,8 @@ class _PythonArray:
         try:
             return self._numeric() - other
         except (TypeError, ValueError):
+            if self.dtype is not _object_dtype:
+                raise
             return self._elementwise(other, operator.sub)
 
     def __rsub__(self, other: Any):
@@ -1026,6 +1032,8 @@ class _PythonArray:
         try:
             return other - self._numeric()
         except (TypeError, ValueError):
+            if self.dtype is not _object_dtype:
+                raise
             return self._elementwise(other, lambda left, right: operator.sub(right, left))
 
     def tolist(self):
@@ -1248,10 +1256,16 @@ def _to_mx(x: Any, dtype: Any | None = None) -> mx.array:
         return mx.array(x, dtype=dtype)
     except (TypeError, ValueError):
         if dtype in {mx.float16, mx.float32, mx.float64, mx.bfloat16}:
-            return mx.array(_coerce_nested(x, float), dtype=dtype)
+            try:
+                return mx.array(_coerce_nested(x, float), dtype=dtype)
+            except (TypeError, ValueError):
+                return _PythonArray(x, dtype=_object_dtype)
         if dtype in {mx.int8, mx.int16, mx.int32, mx.int64,
                      mx.uint8, mx.uint16, mx.uint32, mx.uint64}:
-            return mx.array(_coerce_nested(x, int), dtype=dtype)
+            try:
+                return mx.array(_coerce_nested(x, int), dtype=dtype)
+            except (TypeError, ValueError):
+                return _PythonArray(x, dtype=_object_dtype)
         return _PythonArray(x, dtype=_object_dtype)
 
 
@@ -2117,7 +2131,7 @@ def broadcast_to(a: Any, shape: Any) -> mx.array:
     arr = _to_mx(a)
     shape_tuple = _shape_tuple(shape)
     if isinstance(arr, _PythonArray) and arr.shape == shape_tuple:
-        return _PythonArray(arr.tolist(), dtype=arr.dtype, shape=shape_tuple)
+        return arr
     try:
         return mx.broadcast_to(arr, shape_tuple)
     except (TypeError, ValueError):
