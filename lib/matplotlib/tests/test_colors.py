@@ -1,5 +1,7 @@
 import copy
 import itertools
+from datetime import datetime, timedelta
+from decimal import Decimal
 import unittest.mock
 
 from io import BytesIO
@@ -441,6 +443,24 @@ def test_mlxarr_clip_out_mutates_destination():
 
     assert result is out
     assert_array_equal(out, [0, 0.5, 2])
+
+
+def test_mlxarr_asarray_decimal_dtype_float():
+    values = [Decimal("1.25"), Decimal("2.5")]
+    result = mlxarr.asarray(values, dtype=mlxarr.float64)
+    assert_array_equal(result, [1.25, 2.5])
+
+
+def test_mlxarr_broadcast_to_object_shape_passthrough():
+    labels = ["a", "b"]
+    broadcasted = mlxarr.broadcast_to(labels, 2)
+    assert_array_equal(broadcasted, labels)
+
+
+def test_mlxarr_datetime_subtract_object_array():
+    dates = mlxarr.asarray([datetime(2024, 1, 2), datetime(2024, 1, 4)])
+    result = dates - datetime(2024, 1, 1)
+    assert_array_equal(result, [timedelta(days=1), timedelta(days=3)])
 
 
 def test_CenteredNorm():
