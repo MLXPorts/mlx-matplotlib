@@ -1,5 +1,7 @@
 import copy
 import itertools
+from datetime import datetime, timedelta
+from decimal import Decimal
 import unittest.mock
 
 from io import BytesIO
@@ -424,6 +426,45 @@ def test_BoundaryNorm():
     assert_array_equal(cmshould(mynorm(x)), cmshould([0, 1, 2]))
     x = mlxarr.random.randn(100) * 10 + 2
     assert_array_equal(cmshould(mynorm(x)), cmref(refnorm(x)))
+
+
+def test_mlxarr_searchsorted_preserves_input_shape():
+    bins = [0, 1, 2, 3]
+    values = [[-1, 0.5], [1.5, 4]]
+    expected = [[0, 1], [2, 4]]
+    assert_array_equal(mlxarr.searchsorted(bins, values, side="left"), expected)
+    assert_array_equal(mlxarr.digitize(values, bins), expected)
+
+
+def test_mlxarr_clip_out_mutates_destination():
+    values = mlxarr.array([-1, 0.5, 4])
+    out = mlxarr.array([0.0, 0.0, 0.0], dtype=mlxarr.float32)
+    result = mlxarr.clip(values, 0, 2, out=out)
+
+    assert result is out
+    assert_array_equal(out, [0, 0.5, 2])
+
+
+def test_mlxarr_asarray_decimal_dtype_float():
+    values = [Decimal("1.25"), Decimal("2.5")]
+    result = mlxarr.asarray(values, dtype=mlxarr.float64)
+    assert_array_equal(result, [1.25, 2.5])
+    as_int = mlxarr.asarray(values, dtype=mlxarr.int64)
+    assert_array_equal(as_int, [1, 2])
+
+
+def test_mlxarr_broadcast_to_object_shape_passthrough():
+    labels = ["a", "b"]
+    broadcasted = mlxarr.broadcast_to(labels, 2)
+    assert_array_equal(broadcasted, labels)
+    broadcasted_2d = mlxarr.broadcast_to(labels, (3, 2))
+    assert_array_equal(broadcasted_2d, [["a", "b"], ["a", "b"], ["a", "b"]])
+
+
+def test_mlxarr_datetime_subtract_object_array():
+    dates = mlxarr.asarray([datetime(2024, 1, 2), datetime(2024, 1, 4)])
+    result = dates - datetime(2024, 1, 1)
+    assert_array_equal(result, [timedelta(days=1), timedelta(days=3)])
 
 
 def test_CenteredNorm():
