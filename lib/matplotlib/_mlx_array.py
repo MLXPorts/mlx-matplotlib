@@ -47,7 +47,7 @@ if not hasattr(mx.array, "searchsorted"):
         self, v, side=side)
 # Always override nonzero to ensure consistent behavior with NumPy compatibility.
 # Native MLX nonzero (if present) may have different return semantics.
-mx.array.nonzero = lambda self: nonzero(self)
+mx.array.nonzero = nonzero
 if not hasattr(mx.array, "__index__"):
     mx.array.__index__ = lambda self: int(self.item())
 if not hasattr(mx.array, "__int__"):
