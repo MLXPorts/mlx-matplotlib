@@ -1,0 +1,131 @@
+---
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+      - v[0-9]+.[0-9]+.x
+  pull_request:
+    branches:
+      - main
+      - v[0-9]+.[0-9]+.x
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number }}-${{ github.event.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NO_AT_BRIDGE: 1
+  OPENBLAS_NUM_THREADS: 1
+  PYTHONFAULTHANDLER: 1
+
+jobs:
+  test:
+    name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    if: >-
+      !contains(github.event.head_commit.message, '[ci skip]') &&
+      !contains(github.event.head_commit.message, '[skip ci]')
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-14]
+        python-version: ['3.11', '3.12', '3.13']
+        include:
+          # Focus on Apple Silicon for MLX testing
+          - os: macos-14
+            python-version: '3.12'
+            test-mlx: true
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install system dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libfreetype6-dev \
+            libpng-dev \
+            pkg-config \
+            ccache
+
+      - name: Install system dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install pkg-config ccache
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install -r requirements/testing/all.txt
+
+      - name: Install MLX (Apple Silicon only)
+        if: matrix.test-mlx == true
+        run: |
+          python -m pip install mlx
+
+      - name: Build and install matplotlib
+        run: |
+          python -m pip install --no-build-isolation --verbose --editable .[dev]
+
+      - name: Check matplotlib imports
+        run: |
+          python -c "import matplotlib; print(f'Matplotlib version: {matplotlib.__version__}')"
+          python -c "import matplotlib.pyplot as plt; print('pyplot imports successfully')"
+
+      - name: Check MLX backend (Apple Silicon only)
+        if: matrix.test-mlx == true
+        run: |
+          python -c "import mlx.core as mx; print(f'MLX version: {mx.__version__}')"
+          python -c "import matplotlib; import mlx.core as mx; print('MLX + Matplotlib imports successfully')"
+
+      - name: Run tests
+        run: |
+          python -m pytest -rfEsXR --maxfail=50 --timeout=300 --durations=25 \
+            --color=yes lib/matplotlib/tests
+
+      - name: Upload coverage
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        uses: codecov/codecov-action@v4
+        continue-on-error: true
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ruff
+
+      - name: Run ruff
+        run: |
+          ruff check .
