@@ -625,8 +625,7 @@ class BboxBase(TransformNode):
         ----------
         bboxes : sequence of `.BboxBase`
         """
-        return count_bboxes_overlapping_bbox(
-            self, mlxarr.atleast_3d([mlxarr.array(x) for x in bboxes]))
+        return count_bboxes_overlapping_bbox(self, bboxes)
 
     def expanded(self, sw, sh):
         """

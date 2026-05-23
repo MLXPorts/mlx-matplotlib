@@ -45,8 +45,9 @@ if not hasattr(mx.array, "ravel"):
 if not hasattr(mx.array, "searchsorted"):
     mx.array.searchsorted = lambda self, v, side="left", sorter=None: searchsorted(
         self, v, side=side)
-if not hasattr(mx.array, "nonzero"):
-    mx.array.nonzero = lambda self: nonzero(self)
+# Always override nonzero to ensure consistent behavior with NumPy compatibility.
+# Native MLX nonzero (if present) may have different return semantics.
+mx.array.nonzero = nonzero
 if not hasattr(mx.array, "__index__"):
     mx.array.__index__ = lambda self: int(self.item())
 if not hasattr(mx.array, "__int__"):
