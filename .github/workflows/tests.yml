@@ -68,7 +68,7 @@ jobs:
 
       - name: Build and install matplotlib
         run: |
-          python -m pip install --no-build-isolation --verbose --editable .[dev]
+          python -m pip install --verbose --editable .[dev]
 
       - name: Check matplotlib imports
         run: |
