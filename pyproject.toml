@@ -80,6 +80,10 @@ requires = [
     # pybind11 3.x removed APIs we rely on (e.g. memoryview.request()).
     "pybind11>=2.13.2,!=2.13.3,<4",
     "setuptools_scm>=7",
+    # MLX is the tensor backend and is imported at configure time by
+    # src/meson.build (it links libmlx), so it must be present in the
+    # isolated build environment, not only at runtime. Apple Silicon only.
+    "mlx>=0.0.1",
 ]
 
 [tool.meson-python.args]
