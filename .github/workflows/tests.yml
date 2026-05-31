@@ -35,13 +35,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-14]
+        # MLX is an Apple Silicon tensor backend and is a hard build
+        # requirement (src/meson.build links libmlx), so tests run on
+        # macos-14 (arm64) only. ubuntu-latest cannot configure the build.
+        os: [macos-14]
         python-version: ['3.11', '3.12', '3.13']
-        include:
-          # Focus on Apple Silicon for MLX testing
-          - os: macos-14
-            python-version: '3.12'
-            test-mlx: true
 
     steps:
       - uses: actions/checkout@v4
@@ -55,18 +53,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
 
-      - name: Install system dependencies (Ubuntu)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libfreetype6-dev \
-            libpng-dev \
-            pkg-config \
-            ccache
-
       - name: Install system dependencies (macOS)
-        if: runner.os == 'macOS'
         run: |
           brew install pkg-config ccache
 
@@ -75,8 +62,7 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install -r requirements/testing/all.txt
 
-      - name: Install MLX (Apple Silicon only)
-        if: matrix.test-mlx == true
+      - name: Install MLX
         run: |
           python -m pip install mlx
 
@@ -89,8 +75,7 @@ jobs:
           python -c "import matplotlib; print(f'Matplotlib version: {matplotlib.__version__}')"
           python -c "import matplotlib.pyplot as plt; print('pyplot imports successfully')"
 
-      - name: Check MLX backend (Apple Silicon only)
-        if: matrix.test-mlx == true
+      - name: Check MLX backend
         run: |
           python -c "import mlx.core as mx; print(f'MLX version: {mx.__version__}')"
           python -c "import matplotlib; import mlx.core as mx; print('MLX + Matplotlib imports successfully')"
@@ -101,7 +86,7 @@ jobs:
             --color=yes lib/matplotlib/tests
 
       - name: Upload coverage
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        if: matrix.python-version == '3.12'
         uses: codecov/codecov-action@v4
         continue-on-error: true
 
