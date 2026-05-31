@@ -35,16 +35,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-14]
+        # MLX is an Apple Silicon tensor backend and is a hard build
+        # requirement (src/meson.build links libmlx), so tests run on
+        # macos-14 (arm64) only. ubuntu-latest cannot configure the build.
+        os: [macos-14]
         python-version: ['3.11', '3.12', '3.13']
-        include:
-          # Focus on Apple Silicon for MLX testing
-          - os: macos-14
-            python-version: '3.12'
-            test-mlx: true
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -55,18 +53,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
 
-      - name: Install system dependencies (Ubuntu)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libfreetype6-dev \
-            libpng-dev \
-            pkg-config \
-            ccache
-
       - name: Install system dependencies (macOS)
-        if: runner.os == 'macOS'
         run: |
           brew install pkg-config ccache
 
@@ -75,10 +62,25 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install -r requirements/testing/all.txt
 
-      - name: Install MLX (Apple Silicon only)
-        if: matrix.test-mlx == true
+      - name: Install MLX
         run: |
           python -m pip install mlx
+
+      - name: Install build dependencies
+        run: |
+          # meson-python editable installs rebuild the C extensions on every
+          # import via ninja, which needs the build backend (and nanobind's
+          # C++ sources) to persist in the environment. Install the build
+          # requirements here so the editable rebuild works with
+          # --no-build-isolation below; otherwise the isolated build env is
+          # discarded after install and the on-import rebuild fails.
+          python -m pip install \
+            "meson-python>=0.13.1,!=0.17.*" \
+            "meson>=1.2.3" \
+            ninja \
+            "nanobind>=2.4.0" \
+            "pybind11>=2.13.2,!=2.13.3,<4" \
+            "setuptools_scm>=7"
 
       - name: Build and install matplotlib
         run: |
@@ -89,8 +91,7 @@ jobs:
           python -c "import matplotlib; print(f'Matplotlib version: {matplotlib.__version__}')"
           python -c "import matplotlib.pyplot as plt; print('pyplot imports successfully')"
 
-      - name: Check MLX backend (Apple Silicon only)
-        if: matrix.test-mlx == true
+      - name: Check MLX backend
         run: |
           python -c "import mlx.core as mx; print(f'MLX version: {mx.__version__}')"
           python -c "import matplotlib; import mlx.core as mx; print('MLX + Matplotlib imports successfully')"
@@ -101,8 +102,8 @@ jobs:
             --color=yes lib/matplotlib/tests
 
       - name: Upload coverage
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
-        uses: codecov/codecov-action@v4
+        if: matrix.python-version == '3.12'
+        uses: codecov/codecov-action@v6
         continue-on-error: true
 
   lint:
@@ -110,7 +111,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           persist-credentials: false
