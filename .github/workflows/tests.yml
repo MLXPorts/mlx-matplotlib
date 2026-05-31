@@ -66,9 +66,25 @@ jobs:
         run: |
           python -m pip install mlx
 
+      - name: Install build dependencies
+        run: |
+          # meson-python editable installs rebuild the C extensions on every
+          # import via ninja, which needs the build backend (and nanobind's
+          # C++ sources) to persist in the environment. Install the build
+          # requirements here so the editable rebuild works with
+          # --no-build-isolation below; otherwise the isolated build env is
+          # discarded after install and the on-import rebuild fails.
+          python -m pip install \
+            "meson-python>=0.13.1,!=0.17.*" \
+            "meson>=1.2.3" \
+            ninja \
+            "nanobind>=2.4.0" \
+            "pybind11>=2.13.2,!=2.13.3,<4" \
+            "setuptools_scm>=7"
+
       - name: Build and install matplotlib
         run: |
-          python -m pip install --verbose --editable .[dev]
+          python -m pip install --no-build-isolation --verbose --editable .[dev]
 
       - name: Check matplotlib imports
         run: |
