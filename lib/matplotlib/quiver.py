@@ -15,6 +15,7 @@ the Quiver code.
 """
 
 import math
+import mlx.core as mx
 from matplotlib import _mlx_array as mlxarr
 from matplotlib._mlx_array import ma
 
@@ -368,7 +369,7 @@ class QuiverKey(martist.Artist):
             self._set_transform()
             with cbook._setattr_cm(self.Q, pivot=self.pivot[self.labelpos],
                                    # Hack: save and restore the Umask
-                                   Umask=ma.nomask):
+                                   Umask=None):
                 u = self.U * mlxarr.cos(mlxarr.radians(self.angle))
                 v = self.U * mlxarr.sin(mlxarr.radians(self.angle))
                 self.verts = self.Q._make_verts(
@@ -586,30 +587,34 @@ class Quiver(mcollections.PolyCollection):
         self.stale = False
 
     def set_UVC(self, U, V, C=None):
-        # We need to ensure we have a copy, not a reference
-        # to an array that might change before draw().
-        U = ma.masked_invalid(U, copy=True).ravel()
-        V = ma.masked_invalid(V, copy=True).ravel()
-        if C is not None:
-            C = ma.masked_invalid(C, copy=True).ravel()
-        for name, var in zip(('U', 'V', 'C'), (U, V, C)):
-            if not (var is None or var.size == self.N or var.size == 1):
-                raise ValueError(f'Argument {name} has a size {var.size}'
-                                 f' which does not match {self.N},'
-                                 ' the number of arrow positions')
-
-        mask = ma.mask_or(U.mask, V.mask, copy=False, shrink=True)
-        if C is not None:
-            mask = ma.mask_or(mask, C.mask, copy=False, shrink=True)
-            if mask is ma.nomask:
-                C = C.filled()
-            else:
-                C = ma.array(C, mask=mask, copy=False)
-        self.U = U.filled(1)
-        self.V = V.filled(1)
-        self.Umask = mask
-        if C is not None:
-            self.set_array(C)
+        arrays = []
+        masks = []
+        with mx.stream(mx.cpu):
+            for name, values in (("U", U), ("V", V), ("C", C)):
+                if values is None:
+                    arrays.append(None)
+                    continue
+                if isinstance(values, ma.MaskedArray):
+                    data = mx.array(values.data, dtype=mx.float64).reshape(-1)
+                    mask = mx.broadcast_to(mx.array(values.mask, dtype=mx.bool_),
+                                           values.shape).reshape(-1)
+                else:
+                    data = mx.array(values, dtype=mx.float64).reshape(-1)
+                    mask = mx.zeros(data.shape, dtype=mx.bool_)
+                if data.size not in (self.N, 1):
+                    raise ValueError(f'Argument {name} has a size {data.size}'
+                                     f' which does not match {self.N},'
+                                     ' the number of arrow positions')
+                mask = mx.logical_or(mask, mx.logical_not(mx.isfinite(data)))
+                arrays.append(data)
+                masks.append(mx.broadcast_to(mask, (self.N,)))
+            mask = mx.any(mx.stack(masks), axis=0)
+            self.Umask = mask if bool(mx.any(mask).item()) else None
+            self.U = mx.where(mx.isfinite(arrays[0]), arrays[0], 1)
+            self.V = mx.where(mx.isfinite(arrays[1]), arrays[1], 1)
+            if arrays[2] is not None:
+                self.set_array(mx.where(mask, mx.array(math.nan, dtype=mx.float64),
+                                        arrays[2]))
         self.stale = True
 
     def _dots_per_unit(self, units):
@@ -639,18 +644,19 @@ class Quiver(mcollections.PolyCollection):
 
     # Calculate angles and lengths for segment between (x, y), (x+u, y+v)
     def _angles_lengths(self, XY, U, V, eps=1):
-        xy = self.axes.transData.transform(XY)
-        uv = mlxarr.column_stack((U, V))
-        xyp = self.axes.transData.transform(XY + eps * uv)
-        dxy = xyp - xy
-        angles = mlxarr.arctan2(dxy[:, 1], dxy[:, 0])
-        lengths = mlxarr.hypot(*dxy.T) / eps
-        return angles, lengths
+        with mx.stream(mx.cpu):
+            XY = mx.array(XY, dtype=mx.float64)
+            xy = self.axes.transData.transform(XY)
+            uv = mx.stack((U, V), axis=1)
+            xyp = self.axes.transData.transform(mx.add(XY, mx.multiply(eps, uv)))
+            dxy = mx.subtract(xyp, xy)
+            angles = mx.arctan2(dxy[:, 1], dxy[:, 0])
+            lengths = mx.divide(mx.sqrt(mx.sum(mx.square(dxy), axis=1)), eps)
+            return angles, lengths
 
     # XY is stacked [X, Y].
     # See quiver() doc for meaning of X, Y, U, V, angles.
     def _make_verts(self, XY, U, V, angles):
-        uv = (U + V * 1j)
         str_angles = angles if isinstance(angles, str) else ''
         if str_angles == 'xy' and self.scale_units == 'xy':
             # Here eps is 1 so that if we get U, V by diffing
@@ -667,14 +673,15 @@ class Quiver(mcollections.PolyCollection):
         if str_angles and self.scale_units == 'xy':
             a = lengths
         else:
-            a = mlxarr.abs(uv)
+            a = mx.sqrt(mx.add(mx.square(U), mx.square(V)))
 
         if self.scale is None:
             sn = max(10, math.sqrt(self.N))
-            if self.Umask is not ma.nomask:
-                amean = a[~self.Umask].mean()
+            if self.Umask is not None:
+                valid = mx.logical_not(self.Umask)
+                amean = mx.divide(mx.sum(mx.where(valid, a, 0)), mx.sum(valid))
             else:
-                amean = a.mean()
+                amean = mx.mean(a)
             # crude auto-scaling
             # scale is typical arrow length as a multiple of the arrow width
             scale = 1.8 * amean * sn / self.span
@@ -696,79 +703,58 @@ class Quiver(mcollections.PolyCollection):
         if str_angles == 'xy':
             theta = angles
         elif str_angles == 'uv':
-            theta = mlxarr.angle(uv)
+            theta = mx.arctan2(V, U)
         else:
-            theta = ma.masked_invalid(mlxarr.deg2rad(angles)).filled(0)
-        theta = theta.reshape((-1, 1))  # for broadcasting
-        xy = (X + Y * 1j) * mlxarr.exp(1j * theta) * self.width
-        XY = mlxarr.stack((xy.real, xy.imag), axis=2)
-        if self.Umask is not ma.nomask:
-            XY = ma.array(XY)
-            XY[self.Umask] = ma.masked
-            # This might be handled more efficiently with nans, given
-            # that nans will end up in the paths anyway.
-
+            theta = mx.multiply(mx.array(angles, dtype=mx.float64),
+                                mx.array(math.pi / 180, dtype=mx.float64))
+            theta = mx.where(mx.isfinite(theta), theta, 0)
+        theta = theta.reshape((-1, 1))
+        cosine, sine = mx.cos(theta), mx.sin(theta)
+        XY = mx.multiply(mx.stack((
+            mx.subtract(mx.multiply(X, cosine), mx.multiply(Y, sine)),
+            mx.add(mx.multiply(X, sine), mx.multiply(Y, cosine))), axis=2),
+            mx.array(self.width, dtype=mx.float64))
+        if self.Umask is not None:
+            mask = mx.expand_dims(mx.expand_dims(self.Umask, -1), -1)
+            XY = mx.where(mask, mx.array(math.nan, dtype=mx.float64), XY)
         return XY
 
     def _h_arrows(self, length):
         """Length is in arrow width units."""
-        # It might be possible to streamline the code
-        # and speed it up a bit by using complex (x, y)
-        # instead of separate arrays; but any gain would be slight.
-        minsh = self.minshaft * self.headlength
-        N = len(length)
-        length = length.reshape(N, 1)
-        # This number is chosen based on when pixel values overflow in Agg
-        # causing rendering errors
-        # length = mlxarr.minimum(length, 2 ** 16)
-        mlxarr.clip(length, 0, 2 ** 16, out=length)
-        # x, y: normal horizontal arrow
-        x = mlxarr.array([0, -self.headaxislength,
-                          -self.headlength, 0],
-                         mlxarr.float64)
-        x = x + mlxarr.array([0, 1, 1, 1]) * length
-        y = 0.5 * mlxarr.array([1, 1, self.headwidth, 0], mlxarr.float64)
-        y = mlxarr.repeat(y[mlxarr.newaxis, :], N, axis=0)
-        # x0, y0: arrow without shaft, for short vectors
-        x0 = mlxarr.array([0, minsh - self.headaxislength,
-                           minsh - self.headlength, minsh], mlxarr.float64)
-        y0 = 0.5 * mlxarr.array([1, 1, self.headwidth, 0], mlxarr.float64)
-        ii = [0, 1, 2, 3, 2, 1, 0, 0]
-        X = x[:, ii]
-        Y = y[:, ii]
-        Y[:, 3:-1] *= -1
-        X0 = x0[ii]
-        Y0 = y0[ii]
-        Y0[3:-1] *= -1
-        shrink = length / minsh if minsh != 0. else 0.
-        X0 = shrink * X0[mlxarr.newaxis, :]
-        Y0 = shrink * Y0[mlxarr.newaxis, :]
-        short = mlxarr.repeat(length < minsh, 8, axis=1)
-        # Now select X0, Y0 if short, otherwise X, Y
-        mlxarr.copyto(X, X0, where=short)
-        mlxarr.copyto(Y, Y0, where=short)
-        if self.pivot == 'middle':
-            X -= 0.5 * X[:, 3, mlxarr.newaxis]
-        elif self.pivot == 'tip':
-            # array_backend bug? using -= does not work here unless we multiply by a
-            # float first, as with 'mid'.
-            X = X - X[:, 3, mlxarr.newaxis]
-        elif self.pivot != 'tail':
-            _api.check_in_list(["middle", "tip", "tail"], pivot=self.pivot)
-
-        tooshort = length < self.minlength
-        if tooshort.any():
-            # Use a heptagonal dot:
-            th = mlxarr.arange(0, 8, 1, mlxarr.float64) * (mlxarr.pi / 3.0)
-            x1 = mlxarr.cos(th) * self.minlength * 0.5
-            y1 = mlxarr.sin(th) * self.minlength * 0.5
-            X1 = mlxarr.repeat(x1[mlxarr.newaxis, :], N, axis=0)
-            Y1 = mlxarr.repeat(y1[mlxarr.newaxis, :], N, axis=0)
-            tooshort = mlxarr.repeat(tooshort, 8, 1)
-            mlxarr.copyto(X, X1, where=tooshort)
-            mlxarr.copyto(Y, Y1, where=tooshort)
-        # Mask handling is deferred to the caller, _make_verts.
-        return X, Y
+        with mx.stream(mx.cpu):
+            minsh = self.minshaft * self.headlength
+            length = mx.clip(length.reshape((-1, 1)), 0, 2 ** 16)
+            dtype = mx.float64
+            x = mx.add(mx.array([0, -self.headaxislength, -self.headlength, 0],
+                                dtype=dtype),
+                       mx.multiply(mx.array([0, 1, 1, 1], dtype=dtype), length))
+            y = mx.multiply(mx.array([1, 1, self.headwidth, 0], dtype=dtype), 0.5)
+            x0 = mx.array([0, minsh - self.headaxislength,
+                           minsh - self.headlength, minsh], dtype=dtype)
+            indices = mx.array([0, 1, 2, 3, 2, 1, 0, 0], dtype=mx.int32)
+            signs = mx.array([1, 1, 1, -1, -1, -1, -1, 1], dtype=dtype)
+            X = mx.take(x, indices, axis=1)
+            Y = mx.broadcast_to(mx.multiply(mx.take(y, indices), signs), X.shape)
+            shrink = mx.divide(length, minsh) if minsh != 0 else mx.zeros_like(length)
+            X0 = mx.multiply(shrink, mx.take(x0, indices))
+            Y0 = mx.multiply(shrink, mx.multiply(mx.take(y, indices), signs))
+            short = mx.less(length, minsh)
+            X = mx.where(short, X0, X)
+            Y = mx.where(short, Y0, Y)
+            if self.pivot in ('middle', 'tip'):
+                tip = mx.take(X, mx.array([3], dtype=mx.int32), axis=1)
+                offset = mx.multiply(tip, 0.5) if self.pivot == 'middle' else tip
+                X = mx.subtract(X, offset)
+            elif self.pivot != 'tail':
+                _api.check_in_list(["middle", "tip", "tail"], pivot=self.pivot)
+            # Replace sub-minimum vectors by a heptagonal dot, using native selection.
+            theta = mx.multiply(mx.arange(8, dtype=dtype),
+                                mx.array(math.pi / 3, dtype=dtype))
+            radius = mx.array(self.minlength * 0.5, dtype=dtype)
+            tooshort = mx.less(length, self.minlength)
+            X = mx.where(tooshort, mx.multiply(mx.cos(theta), radius), X)
+            Y = mx.where(tooshort, mx.multiply(mx.sin(theta), radius), Y)
+            return X, Y
 
 
 _barbs_doc = r"""
