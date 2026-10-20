@@ -62,18 +62,15 @@ def test_path_affine_transform_accepts_mlx_stream(device_name):
     if not mx.is_available(device_type):
         pytest.skip(f"MLX {device_name} device is not available")
 
-    values = mlxarr.array([[1.0, 2.0], [3.0, 4.0]], dtype=float)
-    matrix = mlxarr.array(
-        [[2.0, 0.0, 1.0],
-         [0.0, 3.0, -1.0],
-         [0.0, 0.0, 1.0]],
-        dtype=float)
+    dtype = mx.float32 if device_name == "gpu" else mx.float64
+    with mx.stream(device_type):
+        values = mx.array([[1., 2.], [3., 4.]], dtype=dtype)
+        matrix = mx.array([[2., 0., 1.], [0., 3., -1.], [0., 0., 1.]], dtype=dtype)
+        result = _path.affine_transform(values, matrix, stream=device_type)
 
-    result = _path.affine_transform(values, matrix, stream=device_type)
-
-    assert result.shape == (2, 2)
-    assert_allclose(mlxarr.array(result.tolist(), dtype=float),
-                    [[3.0, 5.0], [7.0, 11.0]])
+    assert isinstance(result, mx.array)
+    assert result.dtype == dtype
+    assert result.tolist() == [[3., 5.], [7., 11.]]
 
 
 @pytest.mark.parametrize("reverse", [False, True])
@@ -1206,3 +1203,17 @@ def test_scaledrotation_get_matrix_invalid():
                                       [1,  0]])
     assert matrix is not None
     assert_allclose(matrix[:2, :2], expected_rotation, atol=1e-15)
+
+
+@pytest.mark.parametrize("points, shape", [([1., 2.], (2,)), ([], (0, 2))])
+def test_native_affine_result_preserves_shape(points, shape):
+    import mlx.core as mx
+    from matplotlib import _path
+
+    with mx.stream(mx.cpu):
+        values = mx.array(points, dtype=mx.float64).reshape(shape)
+        result = _path.affine_transform(
+            values, mx.eye(3, dtype=mx.float64), stream=mx.cpu)
+    assert isinstance(result, mx.array)
+    assert tuple(result.shape) == shape
+    assert result.tolist() == values.tolist()

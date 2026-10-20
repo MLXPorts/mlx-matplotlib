@@ -83,9 +83,10 @@ def _as_float_memoryview(values):
 
 
 def affine_transform(values, mtx):
-    result = _path_affine_transform(
-        mlxarr.asarray(values, dtype=float), mlxarr.asarray(mtx, dtype=float))
-    return mlxarr.array(result.tolist(), dtype=float)
+    # Matplotlib geometry requires float64, which MLX supports on the CPU device.
+    with mx.stream(mx.cpu):
+        return _path_affine_transform(mx.array(values, dtype=mx.float64),
+                                      mx.array(mtx, dtype=mx.float64), stream=mx.cpu)
 
 
 def _maybe_scalar(value):
