@@ -241,3 +241,25 @@ def test_streamplot_inputs():  # test no exception occurs.
     # array-likes
     plt.streamplot(range(3), range(3),
                    mlxarr.random.rand(3, 3), mlxarr.random.rand(3, 3))
+
+
+def test_native_integrator_preserves_mask_and_trajectory_history():
+    import mlx.core as mx
+    from matplotlib.streamplot import Grid, StreamMask, DomainMap, _get_integrator
+
+    with mx.stream(mx.cpu):
+        grid = Grid(mx.arange(9, dtype=mx.float64), mx.arange(9, dtype=mx.float64))
+        mask = mx.array([[3 <= x < 6 and 3 <= y < 6 for x in range(9)]
+                         for y in range(9)])
+        u = mlxarr.ma.array(mx.ones((9, 9), dtype=mx.float64), mask=mask)
+        v = mx.zeros((9, 9), dtype=mx.float64)
+        integrate = _get_integrator(u, v, DomainMap(grid, StreamMask(1)),
+                                    0.1, 1, "forward")
+        assert integrate(4, 4) is None
+        points = integrate(0, 1)
+        assert isinstance(points, mx.array)
+        assert 0 <= points[0, 0].item() < 1
+        assert points[0, 1].item() == 1
+        assert points[-1, 0].item() > points[0, 0].item()
+        assert bool(mx.all(mx.isfinite(points)).item())
+        assert bool(mx.all(mx.greater_equal(mx.diff(points[:, 0]), 0)).item())

@@ -152,13 +152,19 @@ def streamplot(axes, x, y, u, v, density=1, linewidth=None, color=None,
     if integration_direction == 'both':
         maxlength /= 2.
 
-    use_multicolor_lines = isinstance(color, mlxarr.ndarray)
+    use_multicolor_lines = isinstance(color, (mx.array, mlxarr.ma.MaskedArray))
     if use_multicolor_lines:
         if color.shape != grid.shape:
             raise ValueError("If 'color' is given, it must match the shape of "
                              "the (x, y) grid")
         line_colors = [[]]  # Empty entry allows concatenation of zero arrays.
-        color = mlxarr.ma.masked_invalid(color)
+        with mx.stream(mx.cpu):
+            if isinstance(color, mlxarr.ma.MaskedArray):
+                color = mx.where(mx.array(color.mask, dtype=mx.bool_),
+                                 mx.array(math.nan, dtype=mx.float64),
+                                 mx.array(color.data, dtype=mx.float64))
+            else:
+                color = mx.array(color, dtype=mx.float64)
     else:
         line_kw['color'] = color
         arrow_kw['color'] = color
@@ -178,9 +184,6 @@ def streamplot(axes, x, y, u, v, density=1, linewidth=None, color=None,
     # Sanity checks.
     if u.shape != grid.shape or v.shape != grid.shape:
         raise ValueError("'u' and 'v' must match the shape of the (x, y) grid")
-
-    u = mlxarr.ma.masked_invalid(u)
-    v = mlxarr.ma.masked_invalid(v)
 
     integrate = _get_integrator(u, v, dmap, minlength, maxlength,
                                 integration_direction)
@@ -227,7 +230,13 @@ def streamplot(axes, x, y, u, v, density=1, linewidth=None, color=None,
 
     if use_multicolor_lines:
         if norm is None:
-            norm = mcolors.Normalize(color.min(), color.max())
+            finite = mx.isfinite(color)
+            if bool(mx.any(finite).item()):
+                lower = mx.min(mx.where(finite, color, math.inf)).item()
+                upper = mx.max(mx.where(finite, color, -math.inf)).item()
+                norm = mcolors.Normalize(lower, upper)
+            else:
+                norm = mcolors.Normalize(0, 1)
         cmap = cm._ensure_cmap(cmap)
 
     streamlines = []
@@ -278,7 +287,8 @@ def streamplot(axes, x, y, u, v, density=1, linewidth=None, color=None,
     lc.sticky_edges.x[:] = [grid.x_origin, grid.x_origin + grid.width]
     lc.sticky_edges.y[:] = [grid.y_origin, grid.y_origin + grid.height]
     if use_multicolor_lines:
-        lc.set_array(mlxarr.ma.hstack(line_colors))
+        lc.set_array(mx.concatenate([mx.array(values, dtype=mx.float64)
+                                     for values in line_colors]))
         lc.set_cmap(cmap)
         lc.set_norm(norm)
     axes.add_collection(lc)
@@ -400,14 +410,14 @@ class Grid:
         self.nx = len(x)
         self.ny = len(y)
 
-        self.dx = x[1] - x[0]
-        self.dy = y[1] - y[0]
+        self.dx = float(x[1] - x[0])
+        self.dy = float(y[1] - y[0])
 
-        self.x_origin = x[0]
-        self.y_origin = y[0]
+        self.x_origin = float(x[0])
+        self.y_origin = float(y[0])
 
-        self.width = x[-1] - x[0]
-        self.height = y[-1] - y[0]
+        self.width = float(x[-1] - x[0])
+        self.height = float(y[-1] - y[0])
 
         if not mlxarr.allclose(mlxarr.diff(x), self.width / (self.nx - 1)):
             raise ValueError("'x' values must be equally spaced")
@@ -437,7 +447,9 @@ class StreamMask:
 
     def __init__(self, density):
         try:
-            self.nx, self.ny = (30 * mlxarr.broadcast_to(density, 2)).astype(int)
+            dimensions = mx.astype(mx.multiply(mx.broadcast_to(mx.array(density), (2,)),
+                                               30), mx.int32)
+            self.nx, self.ny = dimensions.tolist()
         except ValueError as err:
             raise ValueError("'density' must be a scalar or be of length "
                              "2") from err
@@ -537,6 +549,9 @@ def _get_integrator(u, v, dmap, minlength, maxlength, integration_direction):
         resulting trajectory is None if it is shorter than `minlength`.
         """
 
+        # Trajectory coordinates and step sizes control an adaptive Python loop.
+        # Store scalar values so updates cannot mutate previously recorded points.
+        x0, y0 = float(x0), float(y0)
         stotal, xy_traj = 0., []
 
         try:
@@ -561,7 +576,8 @@ def _get_integrator(u, v, dmap, minlength, maxlength, integration_direction):
             xy_traj += xyt[1:]
 
         if stotal > minlength:
-            return mlxarr.broadcast_arrays(xy_traj, mlxarr.empty((1, 2)))[0]
+            with mx.stream(mx.cpu):
+                return mx.array(xy_traj, dtype=mx.float64)
         else:  # reject short trajectories
             dmap.undo_trajectory()
             return None
@@ -649,7 +665,10 @@ def _integrate_rk12(x0, y0, dmap, f, maxlength, broken_streamlines=True,
 
         ny, nx = dmap.grid.shape
         # Error is normalized to the axes coordinates
-        error = mlxarr.hypot((dx2 - dx1) / (nx - 1), (dy2 - dy1) / (ny - 1))
+        with mx.stream(mx.cpu):
+            delta = mx.array([(dx2 - dx1) / (nx - 1), (dy2 - dy1) / (ny - 1)],
+                             dtype=mx.float64)
+            error = mx.sqrt(mx.sum(mx.square(delta))).item()
 
         # Only save step if within error tolerance
         if error < maxerror:
