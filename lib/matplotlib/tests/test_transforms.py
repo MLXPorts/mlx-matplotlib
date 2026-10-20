@@ -76,6 +76,25 @@ def test_path_affine_transform_accepts_mlx_stream(device_name):
                     [[3.0, 5.0], [7.0, 11.0]])
 
 
+@pytest.mark.parametrize("reverse", [False, True])
+def test_path_affine_transform_strided_native_mlx(reverse):
+    import mlx.core as mx
+    from matplotlib import _path
+
+    with mx.stream(mx.cpu):
+        matrix = mx.transpose(mx.array(
+            [[2., 0., 0.], [0., 3., 0.], [1., -1., 1.]],
+            dtype=mx.float64))
+        points = mx.transpose(mx.array(
+            [[1., 3.], [2., 4.]], dtype=mx.float64))
+        if reverse:
+            points = points[::-1]
+        result = _path.affine_transform(points, matrix)
+
+    expected = [[3., 5.], [7., 11.]]
+    assert result.tolist() == (expected[::-1] if reverse else expected)
+
+
 class TestAffine2D:
     single_point = [1.0, 1.0]
     multiple_points = [[0.0, 2.0], [3.0, 3.0], [4.0, 0.0]]

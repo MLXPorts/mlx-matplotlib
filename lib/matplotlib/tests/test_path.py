@@ -655,3 +655,16 @@ def test_interpolated_moveto_closepoly():
 def test_interpolated_empty_path():
     path = Path(mlxarr.zeros((0, 2)))
     assert path.interpolated(42) is path
+
+
+@pytest.mark.parametrize("bounds", [(0., 0., 1., 1.), [0., 0., 1., 1.]])
+def test_clip_path_native_sequence_bounds(bounds):
+    from matplotlib import _path
+
+    path = Path([[0., 0.], [2., 0.], [2., 2.], [0., 2.], [0., 0.]])
+    polygons = _path.clip_path_to_rect(path, bounds, True)
+    assert polygons
+    for polygon in polygons:
+        for x, y in polygon.tolist():
+            assert 0 <= x <= 1
+            assert 0 <= y <= 1

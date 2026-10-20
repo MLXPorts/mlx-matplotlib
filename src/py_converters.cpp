@@ -119,10 +119,9 @@ bool convert_mlx_affine(const py::object& obj,
         return false;
     }
 
-    auto array = as_mlx_array(obj);
-    if (has_explicit_stream(stream)) {
-        array = mx::contiguous(array, false, stream);
-    }
+    // Lazy arrays do not necessarily expose their final layout flags yet.
+    // contiguous() is a no-op for row-major inputs and materializes other views.
+    auto array = mx::contiguous(as_mlx_array(obj), false, stream);
     {
         py::gil_scoped_release release;
         array.eval();
