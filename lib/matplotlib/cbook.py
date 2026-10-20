@@ -2033,9 +2033,9 @@ def _array_perimeter(arr):
     """
     # note we use Python's half-open ranges to avoid repeating
     # the corners
-    forward = mlxarr.s_[0:-1]      # [0 ... -1)
-    backward = mlxarr.s_[-1:0:-1]  # [-1 ... 0)
-    return mlxarr.concatenate((
+    forward = slice(0, -1)
+    backward = slice(-1, 0, -1)
+    return mx.concatenate((
         arr[0, forward],
         arr[forward, -1],
         arr[-1, backward],
@@ -2083,23 +2083,12 @@ def _unfold(arr, axis, size, step):
             [22, 23, 24],
             [24, 25, 26]]])
     """
-    if isinstance(arr, mlxarr.ndarray):
-        data = arr.tolist()
-        if axis < 0:
-            axis += arr.ndim
-        if arr.ndim == 2 and axis == 1:
-            return mlxarr.asarray([
-                [row[i:i + size] for i in range(0, len(row) - size + 1, step)]
-                for row in data
-            ])
-        if arr.ndim == 2 and axis == 0:
-            rows = range(0, len(data) - size + 1, step)
-            return mlxarr.asarray([
-                [[data[i + k][j] for k in range(size)]
-                 for j in range(len(data[0]))]
-                for i in rows
-            ])
-    raise ValueError("_unfold expects a 2D MLX array")
+    axis %= arr.ndim
+    n_windows = (arr.shape[axis] - size) // step + 1
+    # Gather the windows on the MLX device without copying values through Python.
+    indices = mx.add(
+        mx.multiply(mx.arange(n_windows)[:, None], step), mx.arange(size))
+    return mx.moveaxis(mx.take(arr, indices, axis=axis), axis + 1, -1)
 
 
 def _array_patch_perimeters(x, rstride, cstride):
@@ -2141,13 +2130,12 @@ def _array_patch_perimeters(x, rstride, cstride):
     #     number of perimeters that can be extracted horizontally,
     #     cstride for top and bottom and rstride for left and right)
     #
-    # Note that _unfold doesn't incur any memory copies, so the only costly
-    # operation here is the mlxarr.concatenate.
+    # Window gathering and perimeter assembly stay in MLX arrays.
     top = _unfold(x[:-1:rstride, :-1], 1, cstride, cstride)
     bottom = _unfold(x[rstride::rstride, 1:], 1, cstride, cstride)[..., ::-1]
     right = _unfold(x[:-1, cstride::cstride], 0, rstride, rstride)
     left = _unfold(x[1:, :-1:cstride], 0, rstride, rstride)[..., ::-1]
-    return (mlxarr.concatenate((top, right, bottom, left), axis=2)
+    return (mx.concatenate((top, right, bottom, left), axis=2)
             .reshape(-1, 2 * (rstride + cstride)))
 
 
