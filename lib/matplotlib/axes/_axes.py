@@ -6329,14 +6329,23 @@ or pandas.DataFrame
             # unit conversion allows e.g. datetime objects as axis values
             X, Y = args[:2]
             X, Y = self._process_unit_info([("x", X), ("y", Y)], kwargs)
-            X, Y = (cbook.safe_masked_invalid(a, copy=True) for a in [X, Y])
-
             if funcname == 'pcolormesh':
-                if mlxarr.ma.is_masked(X) or mlxarr.ma.is_masked(Y):
-                    raise ValueError(
-                        'x and y arguments to pcolormesh cannot have '
-                        'non-finite values or be of type '
-                        'array_backend.ma.MaskedArray with masked values')
+                with mx.stream(mx.cpu):
+                    coordinates = []
+                    for values in (X, Y):
+                        masked = isinstance(values, mlxarr.ma.MaskedArray)
+                        invalid_mask = (masked and values.mask is not None and
+                                        bool(mx.any(mx.array(values.mask)).item()))
+                        data = values.data if masked else values
+                        data = mx.array(data, dtype=mx.float64)
+                        if invalid_mask or not bool(mx.all(mx.isfinite(data)).item()):
+                            raise ValueError(
+                                'x and y arguments to pcolormesh cannot have '
+                                'non-finite values or masked values')
+                        coordinates.append(data)
+                    X, Y = coordinates
+            else:
+                X, Y = (cbook.safe_masked_invalid(a, copy=True) for a in [X, Y])
             nrows, ncols = C.shape[:2]
         else:
             raise _api.nargs_error(funcname, takes="1 or 3", given=len(args))
@@ -6379,6 +6388,28 @@ or pandas.DataFrame
                     # correctly, when expanding columns, the monotonicity of
                     # X coords needs to be checked. When expanding rows, the
                     # monotonicity of Y coords needs to be checked.
+                    if isinstance(X, mx.array):
+                        with mx.stream(mx.cpu):
+                            if X.shape[1] == 1:
+                                return mx.concatenate((X, X), axis=1)
+                            dX = mx.multiply(mx.subtract(X[:, 1:], X[:, :-1]), 0.5)
+                            if (require_monotonicity and not (
+                                    bool(mx.all(dX >= 0).item()) or
+                                    bool(mx.all(dX <= 0).item()))):
+                                _api.warn_external(
+                                    f"The input coordinates to {funcname} are "
+                                    "interpreted as cell centers, but are not "
+                                    "monotonically increasing or decreasing. "
+                                    "This may lead to incorrectly calculated cell "
+                                    "edges, in which case, please supply "
+                                    f"explicit cell edges to {funcname}.")
+                            first = mx.take(X, mx.array([0]), axis=1)
+                            last = mx.take(X, mx.array([X.shape[1] - 1]), axis=1)
+                            left = mx.take(dX, mx.array([0]), axis=1)
+                            right = mx.take(dX, mx.array([dX.shape[1] - 1]), axis=1)
+                            return mx.concatenate((mx.subtract(first, left),
+                                                   mx.add(X[:, :-1], dX),
+                                                   mx.add(last, right)), axis=1)
                     if mlxarr.shape(X)[1] > 1:
                         dX = mlxarr.diff(X, axis=1) * 0.5
                         if (require_monotonicity and

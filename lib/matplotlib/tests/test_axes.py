@@ -6,6 +6,7 @@ from functools import partial
 import gc
 import inspect
 import io
+import math
 from itertools import product
 import platform
 import sys
@@ -1628,9 +1629,10 @@ def test_pcolorargs():
     y = mlxarr.linspace(-1, 1, 3)
     X, Y = mlxarr.meshgrid(x, y)
     Z = mlxarr.zeros(X.shape)
-    mlxarr.random.seed(19680801)
-    noise_X = mlxarr.random.random(X.shape)
-    noise_Y = mlxarr.random.random(Y.shape)
+    # Bound perturbations explicitly; backend RNG sequences differ.
+    import mlx.core as mx
+    noise_X = mx.array([[0., .1, 0.], [.1, 0., .1], [0., .1, 0.]])
+    noise_Y = mx.transpose(noise_X)
     with pytest.warns(UserWarning,
                       match='are not monotonically increasing or '
                             'decreasing') as record:
@@ -1642,7 +1644,7 @@ def test_pcolorargs():
         # Large perturbations have disrupted the monotonicity of the X-coords
         # and Y-coords in their respective directions, thus resulting in two
         # bad grid warnings.
-        ax.pcolormesh(X+10*noise_X, Y+10*noise_Y, Z, shading='auto')
+        ax.pcolormesh(X+100*noise_X, Y+100*noise_Y, Z, shading='auto')
         assert len(record) == 2
 
 
@@ -10052,3 +10054,28 @@ def test_fill_between_native_masked_crossing_vertices():
     assert max(x for x, _ in vertices) == 1.5
     assert max(y for _, y in vertices) == 2
     ax.figure.canvas.draw()
+
+
+@pytest.mark.parametrize("invalid", [math.nan, math.inf, -math.inf])
+@pytest.mark.parametrize("axis", [0, 1])
+def test_pcolormesh_native_rejects_nonfinite_coordinates(invalid, axis):
+    import mlx.core as mx
+
+    coordinates = [[0., 1., 2.], [0., 1., 2.]]
+    coordinates[axis][1] = invalid
+    fig, ax = plt.subplots()
+    with pytest.raises(ValueError, match="non-finite"):
+        ax.pcolormesh(*coordinates, mx.ones((2, 2)))
+
+
+def test_pcolormesh_native_nearest_grid_preserves_axis_shape():
+    import mlx.core as mx
+
+    fig, ax = plt.subplots()
+    x, y, _, shading = ax._pcolorargs(
+        'pcolormesh', [0., 1., 2.], [0., 2., 4.], mx.ones((3, 3)),
+        shading='nearest')
+    assert shading == 'flat'
+    assert x.shape == y.shape == (4, 4)
+    assert x.tolist() == [[-0.5, 0.5, 1.5, 2.5]] * 4
+    assert y.tolist() == [[value] * 4 for value in [-1., 1., 3., 5.]]
