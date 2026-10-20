@@ -15,3 +15,14 @@ def test_split_bezier_with_large_values():
     # All we are testing is that this completes
     # The failure case is an infinite loop resulting from floating point precision
     # pytest will timeout if that occurs
+
+
+def test_cubic_native_mlx_coefficients_and_extrema():
+    from matplotlib.bezier import BezierSegment
+
+    curve = BezierSegment([[0, 0], [1, 0], [1, 1], [0, 1]])
+    assert curve.polynomial_coefficients.tolist() == [
+        [0, 0], [3, 0], [-3, 3], [0, -2]]
+    assert curve([0, 0.5, 1]).tolist() == [[0, 0], [0.75, 0.5], [0, 1]]
+    dims, roots = curve.axis_aligned_extrema()
+    assert sorted(zip(dims.tolist(), roots.tolist())) == [(0, 0.5), (1, 0), (1, 1)]
