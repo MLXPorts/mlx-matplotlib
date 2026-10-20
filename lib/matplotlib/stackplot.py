@@ -7,7 +7,7 @@ https://stackoverflow.com/q/2225995/
 """
 
 import itertools
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 from matplotlib import _api
 
 __all__ = ['stackplot']
@@ -78,7 +78,9 @@ def stackplot(axes, x, *args,
         stacked area plot.
     """
 
-    y = mlxarr.vstack(args)
+    with mx.stream(mx.cpu):
+        y = mx.concatenate([mx.atleast_2d(mx.array(values, dtype=mx.float64))
+                            for values in args], axis=0)
 
     labels = iter(labels)
     if colors is not None:
@@ -91,41 +93,35 @@ def stackplot(axes, x, *args,
     else:
         hatch = itertools.cycle(hatch)
 
-    # Assume data passed has not been 'stacked', so stack it here.
-    # We'll need a float buffer for the upcoming calculations.
-    stack = mlxarr.cumsum(
-        y, axis=0, dtype=mlxarr.promote_types(y.dtype, mlxarr.float32))
-
-    _api.check_in_list(['zero', 'sym', 'wiggle', 'weighted_wiggle'],
-                       baseline=baseline)
-    if baseline == 'zero':
-        first_line = 0.
-
-    elif baseline == 'sym':
-        first_line = -mlxarr.sum(y, 0) * 0.5
-        stack += first_line[None, :]
-
-    elif baseline == 'wiggle':
-        m = y.shape[0]
-        first_line = (y * (m - 0.5 - mlxarr.arange(m)[:, None])).sum(0)
-        first_line /= -m
-        stack += first_line
-
-    elif baseline == 'weighted_wiggle':
-        total = mlxarr.sum(y, 0)
-        # multiply by 1/total (or zero) to avoid infinities in the division:
-        inv_total = mlxarr.zeros_like(total)
-        mask = total > 0
-        inv_total[mask] = 1.0 / total[mask]
-        increase = mlxarr.hstack((y[:, 0:1], mlxarr.diff(y)))
-        below_size = total - stack
-        below_size += 0.5 * y
-        move_up = below_size * inv_total
-        move_up[:, 0] = 0.5
-        center = (move_up - 0.5) * increase
-        center = mlxarr.cumsum(center.sum(0))
-        first_line = center - 0.5 * total
-        stack += first_line
+    with mx.stream(mx.cpu):
+        stack = mx.cumsum(y, axis=0)
+        _api.check_in_list(['zero', 'sym', 'wiggle', 'weighted_wiggle'],
+                           baseline=baseline)
+        if baseline == 'zero':
+            first_line = 0.
+        elif baseline == 'sym':
+            first_line = mx.multiply(mx.sum(y, axis=0), -0.5)
+            stack = mx.add(stack, first_line)
+        elif baseline == 'wiggle':
+            m = y.shape[0]
+            factors = mx.subtract(mx.array(m - 0.5, dtype=mx.float64), mx.arange(m))
+            first_line = mx.divide(mx.sum(mx.multiply(y, mx.expand_dims(factors, 1)),
+                                         axis=0), -m)
+            stack = mx.add(stack, first_line)
+        elif baseline == 'weighted_wiggle':
+            total = mx.sum(y, axis=0)
+            positive = mx.greater(total, 0)
+            inv_total = mx.where(
+                positive, mx.divide(1, mx.where(positive, total, 1)), 0)
+            increase = mx.concatenate((y[:, :1], mx.diff(y, axis=1)), axis=1)
+            below_size = mx.add(mx.subtract(total, stack), mx.multiply(0.5, y))
+            move_up = mx.multiply(below_size, inv_total)
+            move_up = mx.concatenate((mx.full((y.shape[0], 1), 0.5, dtype=y.dtype),
+                                      move_up[:, 1:]), axis=1)
+            center = mx.cumsum(mx.sum(mx.multiply(mx.subtract(move_up, 0.5), increase),
+                                      axis=0))
+            first_line = mx.subtract(center, mx.multiply(0.5, total))
+            stack = mx.add(stack, first_line)
 
     # Color between x = 0 and the first array.
     coll = axes.fill_between(x, first_line, stack[0, :],

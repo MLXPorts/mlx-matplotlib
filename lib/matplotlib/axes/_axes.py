@@ -7793,13 +7793,70 @@ such objects
            elements into account.
         """
 
-        h, xedges, yedges = mlxarr.histogram2d(x, y, bins=bins, range=range,
-                                               density=density, weights=weights)
+        with mx.stream(mx.cpu):
+            x = mx.array(x, dtype=mx.float64)
+            y = mx.array(y, dtype=mx.float64)
+            _api.check_shape((None,), x=x, y=y)
+            if x.shape != y.shape:
+                raise ValueError("x and y must have the same length")
+            if weights is not None:
+                weights = mx.array(weights, dtype=mx.float64)
+                if weights.shape != x.shape:
+                    raise ValueError("weights must have the same shape as x and y")
+            if isinstance(bins, Integral):
+                bin_specs = (bins, bins)
+            else:
+                bin_specs = list(bins)
+                if len(bin_specs) != 2:
+                    bin_specs = (bins, bins)
+            edges = []
+            for axis, (values, spec) in enumerate(zip((x, y), bin_specs)):
+                if isinstance(spec, Integral):
+                    if spec < 1:
+                        raise ValueError("bins must be positive")
+                    if range is not None:
+                        lower, upper = map(float, range[axis])
+                    elif values.size:
+                        lower, upper = mx.min(values).item(), mx.max(values).item()
+                    else:
+                        lower, upper = 0., 1.
+                    if not math.isfinite(lower) or not math.isfinite(upper):
+                        raise ValueError("histogram range must be finite")
+                    if lower > upper:
+                        raise ValueError("histogram range must be increasing")
+                    if lower == upper:
+                        lower, upper = lower - 0.5, upper + 0.5
+                    edge = mx.linspace(lower, upper, int(spec) + 1, dtype=mx.float64)
+                else:
+                    edge = mx.array(spec, dtype=mx.float64)
+                    if edge.ndim != 1 or edge.size < 2:
+                        raise ValueError("bin edges must be a one-dimensional sequence")
+                    if bool(mx.any(mx.less(mx.diff(edge), 0)).item()):
+                        raise ValueError("bin edges must be increasing")
+                edges.append(edge)
+            xedges, yedges = edges
+            nx, ny = xedges.size - 1, yedges.size - 1
+            xi = mx.subtract(mx.searchsorted(xedges, x, side="right"), 1)
+            yi = mx.subtract(mx.searchsorted(yedges, y, side="right"), 1)
+            xi = mx.where(mx.equal(x, xedges[-1]), nx - 1, xi)
+            yi = mx.where(mx.equal(y, yedges[-1]), ny - 1, yi)
+            valid = mx.logical_and(mx.logical_and(xi >= 0, xi < nx),
+                                   mx.logical_and(yi >= 0, yi < ny))
+            valid = mx.logical_and(
+                valid, mx.logical_and(mx.isfinite(x), mx.isfinite(y)))
+            indices = mx.where(valid, mx.add(mx.multiply(xi, ny), yi), nx * ny)
+            values = mx.ones(x.shape, dtype=mx.float64) if weights is None else weights
+            # One extra cell receives all outliers and is excluded from the result.
+            counts = mx.zeros((nx * ny + 1,), dtype=mx.float64).at[indices].add(values)
+            h = counts[:-1].reshape((nx, ny))
+            if density:
+                area = mx.multiply(mx.expand_dims(mx.diff(xedges), 1), mx.diff(yedges))
+                h = mx.divide(mx.divide(h, area), mx.sum(h))
 
-        if cmin is not None:
-            h[h < cmin] = None
-        if cmax is not None:
-            h[h > cmax] = None
+            if cmin is not None:
+                h = mx.where(mx.less(h, cmin), mx.array(math.nan, dtype=h.dtype), h)
+            if cmax is not None:
+                h = mx.where(mx.greater(h, cmax), mx.array(math.nan, dtype=h.dtype), h)
 
         pc = self.pcolormesh(xedges, yedges, h.T, **kwargs)
 

@@ -9973,3 +9973,66 @@ def test_pie_all_zeros():
     fig, ax = plt.subplots()
     with pytest.raises(ValueError, match="All wedge sizes are zero"):
         ax.pie([0, 0], labels=["A", "B"])
+
+
+@pytest.mark.parametrize("density", [False, True])
+def test_hist2d_native_weighted_nonuniform_bins(density):
+    import math
+    import mlx.core as mx
+
+    _, ax = plt.subplots()
+    h, xedges, yedges, _ = ax.hist2d(
+        [0, 0.5, 1, 3, -1, 4, math.nan], [0, 1, 2, 3, 1, 1, 1],
+        bins=[[0, 1, 3], [0, 2, 3]], weights=[1, 2, 3, 4, 100, 100, 100],
+        density=density)
+    expected = [[0.15, 0], [0, 0.35]] if density else [[3, 0], [0, 7]]
+    assert isinstance(h, mx.array)
+    assert xedges.tolist() == [0, 1, 3]
+    assert yedges.tolist() == [0, 2, 3]
+    assert bool(mx.all(mx.isclose(h, mx.array(expected), atol=1e-7)).item())
+    if density:
+        area = mx.multiply(mx.expand_dims(mx.diff(xedges), 1), mx.diff(yedges))
+        assert math.isclose(mx.sum(mx.multiply(h, area)).item(), 1)
+    ax.figure.canvas.draw()
+
+
+@pytest.mark.parametrize("samples", [[], [5, 5]])
+def test_hist2d_native_empty_and_constant(samples):
+    import mlx.core as mx
+
+    _, ax = plt.subplots()
+    counts, xedges, _, _ = ax.hist2d(samples, samples, bins=2)
+    assert tuple(counts.shape) == (2, 2)
+    assert mx.sum(counts).item() == len(samples)
+    assert bool(mx.all(mx.greater(mx.diff(xedges), 0)).item())
+
+
+@pytest.mark.parametrize("kwargs", [
+    {"x": [0], "y": [0, 1]},
+    {"x": [0], "y": [0], "weights": [1, 2]},
+    {"x": [0], "y": [0], "bins": 0},
+    {"x": [0], "y": [0], "bins": [[0, 2, 1], [0, 1]]},
+])
+def test_hist2d_native_invalid_inputs(kwargs):
+    _, ax = plt.subplots()
+    with pytest.raises(ValueError):
+        ax.hist2d(**kwargs)
+
+
+@pytest.mark.parametrize("baseline, lower, upper", [
+    ("zero", [0, 0], [1, 2]),
+    ("sym", [-2, -3], [-1, -1]),
+    ("wiggle", [-1.5, -2.5], [-0.5, -0.5]),
+    ("weighted_wiggle", [-2, -17/6], [-1, -5/6]),
+])
+def test_stackplot_native_baseline_values(baseline, lower, upper):
+    import math
+
+    _, ax = plt.subplots()
+    layers = ax.stackplot([0, 1], [1, 2], [3, 4], baseline=baseline)
+    vertices = layers[0].get_paths()[0].vertices.tolist()
+    for x in (0, 1):
+        values = [y for px, y in vertices if px == x]
+        assert math.isclose(min(values), lower[x], abs_tol=1e-12)
+        assert math.isclose(max(values), upper[x], abs_tol=1e-12)
+    ax.figure.canvas.draw()
