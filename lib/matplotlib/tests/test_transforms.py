@@ -797,17 +797,23 @@ class TestBasicTransform:
                                     dtype=mlxarr.float64)
 
         # check we have the expected results from doing the affine part only
-        assert_array_almost_equal(na_pts, na_expected)
+        import mlx.core as mx
+
+        assert bool(mx.all(mx.isclose(na_pts, na_expected, atol=1e-6,
+                                      rtol=1e-6, equal_nan=True)).item())
         # check we have the expected results from a full transformation
-        assert_array_almost_equal(all_pts, all_expected)
+        assert bool(mx.all(mx.isclose(all_pts, all_expected, atol=1e-6,
+                                      rtol=1e-6, equal_nan=True)).item())
         # check we have the expected results from doing the transformation in
         # two steps
-        assert_array_almost_equal(self.stack1.transform_affine(na_pts),
-                                  all_expected)
+        assert bool(mx.all(mx.isclose(self.stack1.transform_affine(na_pts),
+                                      all_expected, atol=1e-6,
+                                      rtol=1e-6, equal_nan=True)).item())
         # check that getting the affine transformation first, then fully
         # transforming using that yields the same result as before.
-        assert_array_almost_equal(self.stack1.get_affine().transform(na_pts),
-                                  all_expected)
+        assert bool(mx.all(mx.isclose(self.stack1.get_affine().transform(na_pts),
+                                      all_expected, atol=1e-6,
+                                      rtol=1e-6, equal_nan=True)).item())
 
         # check that the affine part of stack1 & stack2 are equivalent
         # (i.e. the optimization is working)
@@ -982,8 +988,7 @@ CompositeGenericTransform(
                         IdentityTransform())),
                 LockableBbox(
                     Bbox(x0=0.0, y0=0.0, x1=6.283185307179586, y1=1.0),
-                    [[-- --]
-                     [-- --]])),
+                    [[None, None], [None, None]])),
             BboxTransformFrom(
                 _WedgeBbox(
                     (0.5, 0.5),
@@ -994,8 +999,7 @@ CompositeGenericTransform(
                             Affine2D().scale(1.0))),
                     LockableBbox(
                         Bbox(x0=0.0, y0=0.0, x1=6.283185307179586, y1=1.0),
-                        [[-- --]
-                         [-- --]])))),
+                        [[None, None], [None, None]])))),
         BboxTransformTo(
             TransformedBbox(
                 Bbox(x0=0.125, y0=0.09999999999999998, x1=0.9, y1=0.9),

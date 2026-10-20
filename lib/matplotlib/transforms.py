@@ -1249,9 +1249,8 @@ class LockableBbox(BboxBase):
         self._bbox = bbox
         self.set_children(bbox)
         self._points = None
-        fp = [x0, y0, x1, y1]
-        mask = [val is None for val in fp]
-        self._locked_points = mlxarr.ma.array(fp, float, mask=mask).reshape((2, 2))
+        # Locks are optional scalar metadata, not masked numerical arrays.
+        self._locked_points = [[x0, y0], [x1, y1]]
 
     __str__ = _make_str_method("_bbox", "_locked_points")
 
@@ -1259,9 +1258,12 @@ class LockableBbox(BboxBase):
         # docstring inherited
         if self._invalid:
             points = self._bbox.get_points()
-            self._points = mlxarr.where(self._locked_points.mask,
-                                        points,
-                                        self._locked_points)
+            with mx.stream(mx.cpu):
+                unlocked = mx.array([[value is None for value in row]
+                                     for row in self._locked_points])
+                locked = mx.array([[0 if value is None else value for value in row]
+                                   for row in self._locked_points], dtype=points.dtype)
+                self._points = mx.where(unlocked, points, locked)
             self._invalid = 0
         return self._points
 
@@ -1278,15 +1280,11 @@ class LockableBbox(BboxBase):
         """
         float or None: The value used for the locked x0.
         """
-        if self._locked_points.mask[0, 0]:
-            return None
-        else:
-            return self._locked_points[0, 0]
+        return self._locked_points[0][0]
 
     @locked_x0.setter
     def locked_x0(self, x0):
-        self._locked_points.mask[0, 0] = x0 is None
-        self._locked_points.data[0, 0] = x0
+        self._locked_points[0][0] = x0
         self.invalidate()
 
     @property
@@ -1294,15 +1292,11 @@ class LockableBbox(BboxBase):
         """
         float or None: The value used for the locked y0.
         """
-        if self._locked_points.mask[0, 1]:
-            return None
-        else:
-            return self._locked_points[0, 1]
+        return self._locked_points[0][1]
 
     @locked_y0.setter
     def locked_y0(self, y0):
-        self._locked_points.mask[0, 1] = y0 is None
-        self._locked_points.data[0, 1] = y0
+        self._locked_points[0][1] = y0
         self.invalidate()
 
     @property
@@ -1310,15 +1304,11 @@ class LockableBbox(BboxBase):
         """
         float or None: The value used for the locked x1.
         """
-        if self._locked_points.mask[1, 0]:
-            return None
-        else:
-            return self._locked_points[1, 0]
+        return self._locked_points[1][0]
 
     @locked_x1.setter
     def locked_x1(self, x1):
-        self._locked_points.mask[1, 0] = x1 is None
-        self._locked_points.data[1, 0] = x1
+        self._locked_points[1][0] = x1
         self.invalidate()
 
     @property
@@ -1326,15 +1316,11 @@ class LockableBbox(BboxBase):
         """
         float or None: The value used for the locked y1.
         """
-        if self._locked_points.mask[1, 1]:
-            return None
-        else:
-            return self._locked_points[1, 1]
+        return self._locked_points[1][1]
 
     @locked_y1.setter
     def locked_y1(self, y1):
-        self._locked_points.mask[1, 1] = y1 is None
-        self._locked_points.data[1, 1] = y1
+        self._locked_points[1][1] = y1
         self.invalidate()
 
 
@@ -1719,28 +1705,23 @@ class Transform(TransformNode):
         # Must be 2D
         if self.input_dims != 2 or self.output_dims != 2:
             raise NotImplementedError('Only defined in 2D')
-        angles = mlxarr.asarray(angles)
-        pts = mlxarr.asarray(pts)
-        _api.check_shape((None, 2), pts=pts)
-        _api.check_shape((None,), angles=angles)
-        if len(angles) != len(pts):
-            raise ValueError("There must be as many 'angles' as 'pts'")
-        # Convert to radians if desired
-        if not radians:
-            angles = mlxarr.deg2rad(angles)
-        # Move a short distance away
-        pts2 = pts + pushoff * mlxarr.column_stack([mlxarr.cos(angles),
-                                                    mlxarr.sin(angles)])
-        # Transform both sets of points
-        tpts = self.transform(pts)
-        tpts2 = self.transform(pts2)
-        # Calculate transformed angles
-        d = tpts2 - tpts
-        a = mlxarr.arctan2(d[:, 1], d[:, 0])
-        # Convert back to degrees if desired
-        if not radians:
-            a = mlxarr.rad2deg(a)
-        return a
+        with mx.stream(mx.cpu):
+            angles = mx.array(angles, dtype=mx.float64)
+            pts = mx.array(pts, dtype=mx.float64)
+            _api.check_shape((None, 2), pts=pts)
+            _api.check_shape((None,), angles=angles)
+            if len(angles) != len(pts):
+                raise ValueError("There must be as many 'angles' as 'pts'")
+            if not radians:
+                angles = mx.multiply(angles, mx.array(math.pi / 180, dtype=mx.float64))
+            direction = mx.stack((mx.cos(angles), mx.sin(angles)), axis=1)
+            pts2 = mx.add(pts, mx.multiply(direction,
+                                          mx.array(pushoff, dtype=mx.float64)))
+            displacement = mx.subtract(self.transform(pts2), self.transform(pts))
+            result = mx.arctan2(displacement[:, 1], displacement[:, 0])
+            if not radians:
+                result = mx.multiply(result, mx.array(180 / math.pi, dtype=mx.float64))
+            return result
 
     def inverted(self):
         """
