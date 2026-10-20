@@ -6004,8 +6004,21 @@ or pandas.DataFrame
 
     def _fill_between_process_units(self, ind_dir, dep_dir, ind, dep1, dep2, **kwargs):
         """Handle united data, such as dates."""
-        return map(mlxarr.ma.masked_invalid, self._process_unit_info(
-            [(ind_dir, ind), (dep_dir, dep1), (dep_dir, dep2)], kwargs))
+        converted = self._process_unit_info(
+            [(ind_dir, ind), (dep_dir, dep1), (dep_dir, dep2)], kwargs)
+        with mx.stream(mx.cpu):
+            data = []
+            for values in converted:
+                if isinstance(values, range):
+                    values = list(values)
+                if isinstance(values, mlxarr.ma.MaskedArray):
+                    values = mx.where(mx.array(values.mask, dtype=mx.bool_),
+                                      mx.array(math.nan, dtype=mx.float64),
+                                      mx.array(values.data, dtype=mx.float64))
+                else:
+                    values = mx.array(values, dtype=mx.float64)
+                data.append(values)
+            return data
 
     def fill_between(self, x, y1, y2=0, where=None, interpolate=False,
                      step=None, **kwargs):

@@ -191,28 +191,37 @@ def _mark_every_path(markevery, tpath, affine, ax):
                     "markevery is specified relative to the Axes size, but "
                     "the line does not have a Axes as parent")
 
-            # calc cumulative distance along path (in display coords):
-            fin = mlxarr.isfinite(verts).all(axis=1)
-            fverts = verts[fin]
-            disp_coords = affine.transform(fverts)
+            with mx.stream(mx.cpu):
+                finite = mx.all(mx.isfinite(verts), axis=1)
+                finite_indices = mx.sort(mx.where(finite, mx.arange(finite.size),
+                                                   finite.size))[:int(mx.sum(finite).item())]
+                fverts = mx.take(verts, finite_indices, axis=0)
+                if fverts.shape[0] == 0:
+                    return Path(mx.zeros((0, 2), dtype=verts.dtype))
+                disp_coords = affine.transform(fverts)
+                delta = mx.concatenate((mx.zeros((1, 2), dtype=disp_coords.dtype),
+                                        mx.subtract(disp_coords[1:], disp_coords[:-1])))
+                distance = mx.cumsum(mx.sqrt(mx.sum(mx.square(delta), axis=1)))
+                corners = ax.transAxes.transform([[0, 0], [1, 1]])
+                scale = mx.sqrt(mx.sum(mx.square(mx.subtract(corners[1], corners[0]))))
+                scale = float(scale.item())
+                targets = mx.arange(start * scale, distance[-1].item(), step * scale,
+                                    dtype=mx.float64)
+                if targets.size == 0:
+                    return Path(mx.zeros((0, 2), dtype=verts.dtype))
+                errors = mx.abs(mx.subtract(mx.expand_dims(distance, 0),
+                                            mx.expand_dims(targets, 1)))
+                indices = mx.sort(mx.argmin(errors, axis=1))
+                changed = mx.concatenate((mx.array([True]),
+                                          mx.not_equal(indices[1:], indices[:-1])))
+                keep = mx.sort(mx.where(
+                    changed, mx.arange(changed.size), changed.size))[
+                    :int(mx.sum(changed).item())]
+                indices = mx.take(indices, keep)
+                selected_codes = (None if codes is None else
+                                  mx.take(codes, mx.take(finite_indices, indices)))
+                return Path(mx.take(fverts, indices, axis=0), selected_codes)
 
-            delta = mlxarr.empty((len(disp_coords), 2))
-            delta[0, :] = 0
-            delta[1:, :] = disp_coords[1:, :] - disp_coords[:-1, :]
-            delta = mlxarr.hypot(*delta.T).cumsum()
-            # calc distance between markers along path based on the Axes
-            # bounding box diagonal being a distance of unity:
-            (x0, y0), (x1, y1) = ax.transAxes.transform([[0, 0], [1, 1]])
-            scale = mlxarr.hypot(x1 - x0, y1 - y0)
-            marker_delta = mlxarr.arange(start * scale, delta[-1], step * scale)
-            # find closest actual data point that is closest to
-            # the theoretical distance along the path:
-            inds = mlxarr.abs(delta[mlxarr.newaxis, :] - \
-                              marker_delta[:, mlxarr.newaxis])
-            inds = inds.argmin(axis=1)
-            inds = mlxarr.unique(inds)
-            # return, we are done here
-            return Path(fverts[inds], _slice_or_none(codes, inds))
         else:
             raise ValueError(
                 f"markevery={markevery!r} is a tuple with len 2, but its "

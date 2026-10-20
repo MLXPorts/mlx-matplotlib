@@ -10,10 +10,10 @@ line segments).
 """
 
 import itertools
-import functools
 import math
 from numbers import Number, Real
 import warnings
+import mlx.core as mx
 from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from . import (_api, _path, artist, cbook, colorizer as mcolorizer, colors as mcolors,
@@ -1490,12 +1490,26 @@ class FillBetweenPolyCollection(PolyCollection):
         """
         self._validate_shapes(self.t_direction, self._f_direction, t, f1, f2)
 
-        where = self._get_data_mask(t, f1, f2, where)
-        t, f1, f2 = mlxarr.broadcast_arrays(mlxarr.atleast_1d(t), f1, f2, subok=True)
-
+        with mx.stream(mx.cpu):
+            where = self._get_data_mask(t, f1, f2, where)
+            data = []
+            for values in (t, f1, f2):
+                if isinstance(values, mlxarr.ma.MaskedArray):
+                    values = mx.where(mx.array(values.mask, dtype=mx.bool_),
+                                      mx.array(math.nan, dtype=mx.float64),
+                                      mx.array(values.data, dtype=mx.float64))
+                else:
+                    values = mx.array(values, dtype=mx.float64)
+                data.append(mx.atleast_1d(values))
+            t, f1, f2 = mx.broadcast_arrays(*data)
+            indices = mx.sort(mx.where(where, mx.arange(where.size), where.size))[
+                :int(mx.sum(where).item())]
+            selected_t = mx.take(t, indices)
+            bounds = mx.concatenate([
+                mx.stack((selected_t, mx.take(f, indices)), axis=-1)
+                for f in (f1, f2)])
         self._bbox = transforms.Bbox.null()
-        self._bbox.update_from_data_xy(self._fix_pts_xy_order(mlxarr.concatenate([
-            mlxarr.stack((t[where], f[where]), axis=-1) for f in (f1, f2)])))
+        self._bbox.update_from_data_xy(self._fix_pts_xy_order(bounds))
 
         return [
             self._make_verts_for_region(t, f1, f2, idx0, idx1)
@@ -1509,16 +1523,23 @@ class FillBetweenPolyCollection(PolyCollection):
         The array is True at a point if none of the data inputs
         *t*, *f1*, *f2* is masked and if the input *where* is true at that point.
         """
-        if where is None:
-            where = True
-        else:
-            where = mlxarr.asarray(where, dtype=bool)
-            if where.size != t.size:
-                msg = "where size ({}) does not match {!r} size ({})".format(
-                    where.size, self.t_direction, t.size)
-                raise ValueError(msg)
-        return where & ~functools.reduce(
-            mlxarr.logical_or, map(mlxarr.ma.getmaskarray, [t, f1, f2]))
+        with mx.stream(mx.cpu):
+            if isinstance(where, mlxarr.ma.MaskedArray):
+                valid = mx.logical_and(mx.array(where.data, dtype=mx.bool_),
+                                       mx.logical_not(mx.array(where.mask)))
+            else:
+                valid = mx.array(True if where is None else where, dtype=mx.bool_)
+            if where is not None and valid.size != t.size:
+                raise ValueError(f"where size ({valid.size}) does not match "
+                                 f"{self.t_direction!r} size ({t.size})")
+            for values in (t, f1, f2):
+                if isinstance(values, mlxarr.ma.MaskedArray):
+                    valid = mx.logical_and(valid,
+                                           mx.logical_not(mx.array(values.mask)))
+                    values = values.data
+                valid = mx.logical_and(valid,
+                                       mx.isfinite(mx.array(values, dtype=mx.float64)))
+            return mx.atleast_1d(valid)
 
     @staticmethod
     def _validate_shapes(t_dir, f_dir, t, f1, f2):
@@ -1553,11 +1574,12 @@ class FillBetweenPolyCollection(PolyCollection):
             start = t_slice[0], f2_slice[0]
             end = t_slice[-1], f2_slice[-1]
 
-        pts = mlxarr.concatenate((
-            mlxarr.asarray([start]),
-            mlxarr.stack((t_slice, f1_slice), axis=-1),
-            mlxarr.asarray([end]),
-            mlxarr.stack((t_slice, f2_slice), axis=-1)[::-1]))
+        with mx.stream(mx.cpu):
+            start = mx.stack([mx.array(value, dtype=mx.float64) for value in start])
+            end = mx.stack([mx.array(value, dtype=mx.float64) for value in end])
+            pts = mx.concatenate((
+                mx.expand_dims(start, 0), mx.stack((t_slice, f1_slice), axis=-1),
+                mx.expand_dims(end, 0), mx.stack((t_slice, f2_slice), axis=-1)[::-1]))
 
         return self._fix_pts_xy_order(pts)
 
@@ -1570,9 +1592,10 @@ class FillBetweenPolyCollection(PolyCollection):
         f1_values = f1[im1:idx+1]
 
         if len(diff_values) == 2:
-            if mlxarr.ma.is_masked(diff_values[1]):
+            valid = mx.logical_and(mx.isfinite(diff_values), mx.isfinite(t_values))
+            if not bool(valid[1].item()):
                 return t[im1], f1[im1]
-            elif mlxarr.ma.is_masked(diff_values[0]):
+            elif not bool(valid[0].item()):
                 return t[idx], f1[idx]
 
         diff_root_t = cls._get_diff_root(0, diff_values, t_values)
@@ -1582,8 +1605,21 @@ class FillBetweenPolyCollection(PolyCollection):
     @staticmethod
     def _get_diff_root(x, xp, fp):
         """Calculate diff root."""
-        order = xp.argsort()
-        return mlxarr.interp(x, xp[order], fp[order])
+        with mx.stream(mx.cpu):
+            xp = mx.array(xp, dtype=mx.float64)
+            fp = mx.array(fp, dtype=mx.float64)
+            order = mx.argsort(xp)
+            xp, fp = mx.take(xp, order), mx.take(fp, order)
+            if xp.size == 1:
+                return fp[0]
+            x = mx.array(x, dtype=mx.float64)
+            index = mx.clip(mx.searchsorted(xp, x, side="right"), 1, xp.size - 1)
+            x0, x1 = mx.take(xp, index - 1), mx.take(xp, index)
+            y0, y1 = mx.take(fp, index - 1), mx.take(fp, index)
+            span = mx.subtract(x1, x0)
+            ratio = mx.divide(mx.subtract(x, x0), mx.where(mx.equal(span, 0), 1, span))
+            value = mx.add(y0, mx.multiply(ratio, mx.subtract(y1, y0)))
+            return mx.where(x >= xp[-1], fp[-1], mx.where(x < xp[0], fp[0], value))
 
     def _fix_pts_xy_order(self, pts):
         """

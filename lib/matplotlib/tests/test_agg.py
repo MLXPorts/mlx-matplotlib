@@ -378,3 +378,13 @@ def test_non_tuple_rgbaface():
     fig.add_subplot(projection="3d").scatter(
         [0, 1, 2], [0, 1, 2], path_effects=[patheffects.Stroke(linewidth=4)])
     fig.canvas.draw()
+
+
+def test_native_empty_path_collection_draws():
+    import mlx.core as mx
+
+    with mx.stream(mx.cpu):
+        path = Path(mx.zeros((0, 2), dtype=mx.float64))
+    fig, ax = plt.subplots()
+    ax.add_collection(collections.PathCollection([path], facecolors=['red']))
+    fig.canvas.draw()

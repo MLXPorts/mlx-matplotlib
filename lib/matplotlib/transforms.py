@@ -47,7 +47,6 @@ from matplotlib import _mlx_array as mlxarr
 from matplotlib import _api
 from matplotlib._path import (
     affine_transform as _path_affine_transform,
-    count_bboxes_overlapping_bbox,
 )
 from .path import Path
 
@@ -626,7 +625,21 @@ class BboxBase(TransformNode):
         ----------
         bboxes : sequence of `.BboxBase`
         """
-        return count_bboxes_overlapping_bbox(self, bboxes)
+        bboxes = list(bboxes)
+        if not bboxes:
+            return 0
+        with mx.stream(mx.cpu):
+            points = mx.array(self.get_points(), dtype=mx.float64)
+            boxes = mx.stack([mx.array(bbox.get_points(), dtype=mx.float64)
+                              for bbox in bboxes])
+            lower = mx.minimum(points[0], points[1])
+            upper = mx.maximum(points[0], points[1])
+            other_lower = mx.minimum(boxes[:, 0], boxes[:, 1])
+            other_upper = mx.maximum(boxes[:, 0], boxes[:, 1])
+            separated = mx.any(mx.logical_or(
+                mx.less_equal(other_upper, lower),
+                mx.greater_equal(other_lower, upper)), axis=1)
+            return int(mx.sum(mx.logical_not(separated)).item())
 
     def expanded(self, sw, sh):
         """
@@ -1553,7 +1566,7 @@ class Transform(TransformNode):
         # Convert the result back to the shape of the input values.
         if ndim == 0:
             assert not mlxarr.ma.is_masked(res)  # just to be on the safe side
-            return res[0, 0]
+            return mx.reshape(res, (-1,))[0] if isinstance(res, mx.array) else res[0, 0]
         if ndim == 1:
             return res.reshape(-1)
         elif ndim == 2:

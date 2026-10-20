@@ -106,6 +106,7 @@ jobs:
       - name: Run native MLX regressions
         run: |
           python -m pytest -ra --timeout=300 --junitxml=test-results/native.xml \
+            lib/matplotlib/tests/test_agg.py \
             lib/matplotlib/tests/test_axes.py \
             lib/matplotlib/tests/test_transforms.py \
             lib/matplotlib/tests/test_cbook.py \

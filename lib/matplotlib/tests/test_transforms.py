@@ -1221,3 +1221,19 @@ def test_native_affine_result_preserves_shape(points, shape):
     assert isinstance(result, mx.array)
     assert tuple(result.shape) == shape
     assert result.tolist() == values.tolist()
+
+
+def test_native_bbox_overlap_uses_strict_edges_and_normalizes_bounds():
+    bbox = Bbox([[2, 2], [0, 0]])
+    assert bbox.count_overlaps([]) == 0
+    others = [Bbox([[1, 1], [3, 3]]), Bbox([[1, 1], [0.5, 0.5]]),
+              Bbox([[2, 0], [3, 1]]), Bbox([[3, 3], [4, 4]])]
+    assert bbox.count_overlaps(others) == 2
+
+
+def test_native_scalar_function_transform_accepts_flat_result():
+    import mlx.core as mx
+
+    transform = scale.FuncTransform(lambda values: mx.reshape(values, (-1,)),
+                                    lambda values: mx.reshape(values, (-1,)))
+    assert float(transform.transform(0.5)) == 0.5

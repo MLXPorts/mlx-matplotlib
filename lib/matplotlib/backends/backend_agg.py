@@ -24,6 +24,7 @@ Still TODO:
 from contextlib import nullcontext
 from array import array as _array
 from math import radians, cos, sin
+import mlx.core as mx
 from matplotlib import _mlx_array as mlxarr
 from PIL import features
 
@@ -41,7 +42,11 @@ from matplotlib.backends._backend_agg import RendererAgg as _RendererAgg
 
 class _BufferPath:
     def __init__(self, path):
-        self.vertices = _as_float_memoryview(path.vertices)
+        if path.vertices.size == 0:
+            with mx.stream(mx.cpu):
+                self.vertices = mx.zeros((0, 2), dtype=mx.float64)
+        else:
+            self.vertices = _as_float_memoryview(path.vertices)
         self.codes = (
             None if path.codes is None
             else memoryview(_array("B", [int(code)
@@ -71,6 +76,16 @@ def _plain_float_buffer(values, empty_fallback=None):
         values = mlxarr.asarray(empty_fallback)
         shape = tuple(values.shape)
         data = values.tolist()
+
+    if empty_fallback is not None:
+        expected_shape = []
+        sample = empty_fallback
+        while isinstance(sample, list):
+            expected_shape.append(len(sample))
+            sample = sample[0] if sample else None
+        if shape == tuple(expected_shape[1:]):
+            shape = (1,) + shape
+            data = [data]
 
     def flatten(value):
         if isinstance(value, list):

@@ -10036,3 +10036,19 @@ def test_stackplot_native_baseline_values(baseline, lower, upper):
         assert math.isclose(min(values), lower[x], abs_tol=1e-12)
         assert math.isclose(max(values), upper[x], abs_tol=1e-12)
     ax.figure.canvas.draw()
+
+
+def test_fill_between_native_masked_crossing_vertices():
+    import math
+
+    _, ax = plt.subplots()
+    y = mlxarr.ma.array([0, 2, 0, 2], mask=[False, False, False, True])
+    collection = ax.fill_between([0, 1, 2, 3], y, 1, where=y >= 1, interpolate=True)
+    paths = collection.get_paths()
+    assert len(paths) == 1
+    vertices = paths[0].vertices.tolist()
+    assert all(math.isfinite(value) for point in vertices for value in point)
+    assert min(x for x, _ in vertices) == 0.5
+    assert max(x for x, _ in vertices) == 1.5
+    assert max(y for _, y in vertices) == 2
+    ax.figure.canvas.draw()
