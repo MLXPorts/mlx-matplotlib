@@ -7,6 +7,7 @@ import logging
 import math
 from numbers import Real
 import weakref
+import mlx.core as mx
 from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from . import _api, artist, cbook, _docstring
@@ -502,13 +503,17 @@ class Text(Artist):
 
             offsetx, offsety = M.transform((offsetx, offsety))
 
-        xmin -= offsetx
-        ymin -= offsety
+        # Alignment offsets can alias the native scalar bounds. Avoid in-place
+        # updates, which would overwrite the offsets before positioning lines.
+        xmin = mx.subtract(xmin, offsetx)
+        ymin = mx.subtract(ymin, offsety)
 
         bbox = Bbox.from_bounds(xmin, ymin, width, height)
 
         # now rotate the positions around the first (x, y) position
-        xys = M.transform(offset_layout) - (offsetx, offsety)
+        with mx.stream(mx.cpu):
+            offsets = mx.array([float(offsetx), float(offsety)], dtype=mx.float64)
+            xys = mx.subtract(M.transform(offset_layout), offsets)
 
         return bbox, list(zip(lines, zip(ws, hs), *xys.T)), descent
 

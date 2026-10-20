@@ -1182,3 +1182,11 @@ def test_ytick_rotation_mode():
         tick.set_rotation(angle)
 
     plt.subplots_adjust(left=0.4, right=0.6, top=.99, bottom=.01)
+
+
+def test_bottom_alignment_preserves_native_layout_offset():
+    fig, ax = plt.subplots()
+    text = ax.text(0.5, 0.5, "N", verticalalignment="bottom")
+    bounds, lines, descent = text._get_layout(fig.canvas.get_renderer())
+    assert float(bounds.y0) == 0
+    assert float(lines[0][3]) == descent
