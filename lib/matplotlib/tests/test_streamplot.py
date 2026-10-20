@@ -263,3 +263,15 @@ def test_native_integrator_preserves_mask_and_trajectory_history():
         assert points[-1, 0].item() > points[0, 0].item()
         assert bool(mx.all(mx.isfinite(points)).item())
         assert bool(mx.all(mx.greater_equal(mx.diff(points[:, 0]), 0)).item())
+
+
+def test_native_batched_grid_interpolation():
+    import mlx.core as mx
+    from matplotlib.streamplot import interpgrid
+
+    with mx.stream(mx.cpu):
+        fields = mx.array([[[0, 0, 7], [1, 2, 7]],
+                           [[1, -3, 7], [2, -1, 7]]], dtype=mx.float64)
+        result = interpgrid(fields, 0.25, 0.75)
+    assert tuple(result.shape) == (3,)
+    assert result.tolist() == [1, -1.75, 7]

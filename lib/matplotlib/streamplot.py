@@ -520,16 +520,16 @@ def _get_integrator(u, v, dmap, minlength, maxlength, integration_direction):
         u_ax = mx.divide(u, dmap.grid.nx - 1)
         v_ax = mx.divide(v, dmap.grid.ny - 1)
         speed = mx.sqrt(mx.add(mx.square(u_ax), mx.square(v_ax)))
+        # Interpolate all three fields in one native evaluation per solver step.
+        fields = mx.stack((speed, u, v), axis=-1)
 
     def forward_time(xi, yi):
         if not dmap.grid.within_grid(xi, yi):
             raise OutOfBounds
-        ds_dt = interpgrid(speed, xi, yi)
-        if ds_dt == 0:
+        ds_dt, ui, vi = interpgrid(fields, xi, yi).tolist()
+        if ds_dt == 0 or not all(math.isfinite(value) for value in (ds_dt, ui, vi)):
             raise TerminateTrajectory()
         dt_ds = 1. / ds_dt
-        ui = interpgrid(u, xi, yi)
-        vi = interpgrid(v, xi, yi)
         return ui * dt_ds, vi * dt_ds
 
     def backward_time(xi, yi):
@@ -717,9 +717,9 @@ def _euler_step(xyf_traj, dmap, f):
 # ========================
 
 def interpgrid(a, xi, yi):
-    """Fast 2D, linear interpolation on an integer grid"""
+    """Bilinearly interpolate an integer grid, preserving trailing fields."""
 
-    Ny, Nx = mlxarr.shape(a)
+    Ny, Nx = a.shape[:2]
     if isinstance(xi, mlxarr.ndarray):
         x = xi.astype(int)
         y = yi.astype(int)
@@ -745,14 +745,23 @@ def interpgrid(a, xi, yi):
     a11 = a[yn, xn]
     xt = xi - x
     yt = yi - y
-    a0 = a00 * (1 - xt) + a01 * xt
-    a1 = a10 * (1 - xt) + a11 * xt
-    ai = a0 * (1 - yt) + a1 * yt
+    if isinstance(a, mx.array):
+        xt = mx.array(xt, dtype=a.dtype)
+        yt = mx.array(yt, dtype=a.dtype)
+        a0 = mx.add(mx.multiply(a00, mx.subtract(1, xt)), mx.multiply(a01, xt))
+        a1 = mx.add(mx.multiply(a10, mx.subtract(1, xt)), mx.multiply(a11, xt))
+        ai = mx.add(mx.multiply(a0, mx.subtract(1, yt)), mx.multiply(a1, yt))
+    else:
+        a0 = a00 * (1 - xt) + a01 * xt
+        a1 = a10 * (1 - xt) + a11 * xt
+        ai = a0 * (1 - yt) + a1 * yt
 
     if not isinstance(xi, mlxarr.ndarray):
         if mlxarr.ma.is_masked(ai):
             raise TerminateTrajectory
         if isinstance(ai, mx.array):
+            if ai.ndim != 0:
+                return ai
             ai = ai.item()
         if not math.isfinite(ai):
             raise TerminateTrajectory
