@@ -2,6 +2,8 @@
 Streamline plotting for 2D vector fields.
 
 """
+import math
+import mlx.core as mx
 from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from matplotlib import _api, cm, patches
@@ -335,7 +337,8 @@ class DomainMap:
 
     def grid2mask(self, xi, yi):
         """Return nearest space in mask-coords from given grid-coords."""
-        return round(xi * self.x_grid2mask), round(yi * self.y_grid2mask)
+        return (round(float(xi * self.x_grid2mask)),
+                round(float(yi * self.y_grid2mask)))
 
     def mask2grid(self, xm, ym):
         return xm * self.x_mask2grid, ym * self.y_mask2grid
@@ -489,13 +492,22 @@ class TerminateTrajectory(Exception):
 
 def _get_integrator(u, v, dmap, minlength, maxlength, integration_direction):
 
-    # rescale velocity onto grid-coordinates for integrations.
-    u, v = dmap.data2grid(u, v)
-
-    # speed (path length) will be in axes-coordinates
-    u_ax = u / (dmap.grid.nx - 1)
-    v_ax = v / (dmap.grid.ny - 1)
-    speed = mlxarr.ma.sqrt(u_ax ** 2 + v_ax ** 2)
+    with mx.stream(mx.cpu):
+        # Carry invalid samples as NaNs in native MLX arrays. Interpolation
+        # terminates a trajectory when it reaches one of these samples.
+        velocity = []
+        for values in (u, v):
+            if isinstance(values, mlxarr.ma.MaskedArray):
+                data = mx.array(values.data, dtype=mx.float64)
+                data = mx.where(mx.array(values.mask, dtype=mx.bool_),
+                                mx.array(math.nan, dtype=mx.float64), data)
+            else:
+                data = mx.array(values, dtype=mx.float64)
+            velocity.append(data)
+        u, v = dmap.data2grid(*velocity)
+        u_ax = mx.divide(u, dmap.grid.nx - 1)
+        v_ax = mx.divide(v, dmap.grid.ny - 1)
+        speed = mx.sqrt(mx.add(mx.square(u_ax), mx.square(v_ax)))
 
     def forward_time(xi, yi):
         if not dmap.grid.within_grid(xi, yi):
@@ -720,6 +732,10 @@ def interpgrid(a, xi, yi):
 
     if not isinstance(xi, mlxarr.ndarray):
         if mlxarr.ma.is_masked(ai):
+            raise TerminateTrajectory
+        if isinstance(ai, mx.array):
+            ai = ai.item()
+        if not math.isfinite(ai):
             raise TerminateTrajectory
 
     return ai
