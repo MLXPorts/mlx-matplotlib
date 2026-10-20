@@ -40,9 +40,9 @@ import itertools
 import textwrap
 import weakref
 import math
+import mlx.core as mx
 from array import array as _array
 from matplotlib import _mlx_array as mlxarr
-inv = mlxarr.linalg.inv
 
 from matplotlib import _api
 from matplotlib._path import (
@@ -912,7 +912,8 @@ class Bbox(BboxBase):
             return
 
         if ignore:
-            points = mlxarr.array([[mlxarr.inf, mlxarr.inf], [-mlxarr.inf, -mlxarr.inf]])
+            points = mlxarr.array(
+                [[mlxarr.inf, mlxarr.inf], [-mlxarr.inf, -mlxarr.inf]])
             minpos = mlxarr.array([mlxarr.inf, mlxarr.inf])
         else:
             points = self._points.copy()
@@ -1258,8 +1259,8 @@ class LockableBbox(BboxBase):
         if self._invalid:
             points = self._bbox.get_points()
             self._points = mlxarr.where(self._locked_points.mask,
-                                    points,
-                                    self._locked_points)
+                                        points,
+                                        self._locked_points)
             self._invalid = 0
         return self._points
 
@@ -1728,7 +1729,7 @@ class Transform(TransformNode):
             angles = mlxarr.deg2rad(angles)
         # Move a short distance away
         pts2 = pts + pushoff * mlxarr.column_stack([mlxarr.cos(angles),
-                                                mlxarr.sin(angles)])
+                                                    mlxarr.sin(angles)])
         # Transform both sets of points
         tpts = self.transform(pts)
         tpts2 = self.transform(pts2)
@@ -1944,7 +1945,7 @@ class Affine2DBase(AffineBase):
             shorthand_name = None
             if self._shorthand_name:
                 shorthand_name = '(%s)-1' % self._shorthand_name
-            self._inverted = Affine2D(inv(mtx), shorthand_name=shorthand_name)
+            self._inverted = Affine2D(mx.linalg.inv(mtx), shorthand_name=shorthand_name)
             self._invalid = 0
         return self._inverted
 
@@ -2488,7 +2489,7 @@ class CompositeGenericTransform(Transform):
             return self._a.transform_path_non_affine(path)
         else:
             return self._b.transform_path_non_affine(
-                                    self._a.transform_path(path))
+                self._a.transform_path(path))
 
     def get_affine(self):
         # docstring inherited
@@ -2496,7 +2497,7 @@ class CompositeGenericTransform(Transform):
             return self._b.get_affine()
         else:
             return Affine2D(mlxarr.dot(self._b.get_affine().get_matrix(),
-                                   self._a.get_affine().get_matrix()))
+                                       self._a.get_affine().get_matrix()))
 
     def inverted(self):
         # docstring inherited
@@ -2618,9 +2619,9 @@ class BboxTransform(Affine2DBase):
                 raise ValueError(
                     "Transforming from or to a singular bounding box")
             self._mtx = mlxarr.array([[x_scale,     0.0, -inl*x_scale+outl],
-                                  [    0.0, y_scale, -inb*y_scale+outb],
-                                  [    0.0,     0.0,               1.0]],
-                                 float)
+                                      [    0.0, y_scale, -inb*y_scale+outb],
+                                      [    0.0,     0.0,               1.0]],
+                                     float)
             self._inverted = None
             self._invalid = 0
         return self._mtx
@@ -2656,9 +2657,9 @@ class BboxTransformTo(Affine2DBase):
             if DEBUG and (outw == 0 or outh == 0):
                 raise ValueError("Transforming to a singular bounding box.")
             self._mtx = mlxarr.array([[outw,  0.0, outl],
-                                  [ 0.0, outh, outb],
-                                  [ 0.0,  0.0,  1.0]],
-                                 float)
+                                      [ 0.0, outh, outb],
+                                      [ 0.0,  0.0,  1.0]],
+                                     float)
             self._inverted = None
             self._invalid = 0
         return self._mtx
@@ -2691,9 +2692,9 @@ class BboxTransformFrom(Affine2DBase):
             x_scale = 1.0 / inw
             y_scale = 1.0 / inh
             self._mtx = mlxarr.array([[x_scale,     0.0, -inl*x_scale],
-                                  [    0.0, y_scale, -inb*y_scale],
-                                  [    0.0,     0.0,          1.0]],
-                                 float)
+                                      [    0.0, y_scale, -inb*y_scale],
+                                      [    0.0,     0.0,          1.0]],
+                                     float)
             self._inverted = None
             self._invalid = 0
         return self._mtx

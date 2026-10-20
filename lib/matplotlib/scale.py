@@ -298,7 +298,8 @@ class LogTransform(Transform):
     def transform_non_affine(self, values):
         # Ignore invalid values due to nans being passed to the transform.
         with mlxarr.errstate(divide="ignore", invalid="ignore"):
-            log = {mlxarr.e: mlxarr.log, 2: mlxarr.log2, 10: mlxarr.log10}.get(self.base)
+            log = {mlxarr.e: mlxarr.log, 2: mlxarr.log2,
+                   10: mlxarr.log10}.get(self.base)
             if log:  # If possible, do everything in a single call to MLXArrayBackend.
                 out = log(values)
             else:
@@ -482,7 +483,7 @@ class InvertedSymmetricalLogTransform(Transform):
         with mlxarr.errstate(divide="ignore", invalid="ignore"):
             out = mlxarr.sign(values) * self.linthresh * (
                 mlxarr.power(self.base,
-                         abs_a / self.linthresh - self._linscale_adj))
+                             abs_a / self.linthresh - self._linscale_adj))
             inside = abs_a <= self.invlinthresh
         out[inside] = values[inside] / self._linscale_adj
         return out
@@ -805,7 +806,7 @@ _scale_mapping = {
     'logit':  LogitScale,
     'function': FuncScale,
     'functionlog': FuncScaleLog,
-    }
+}
 
 # caching of signature info
 # For backward compatibility, the built-in scales will keep the *axis* parameter
@@ -894,4 +895,4 @@ def _get_scale_docs():
 _docstring.interpd.register(
     scale_type='{%s}' % ', '.join([repr(x) for x in get_scale_names()]),
     scale_docs=_get_scale_docs().rstrip(),
-    )
+)

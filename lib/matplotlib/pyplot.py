@@ -3335,7 +3335,10 @@ def csd(
     *,
     data=None,
     **kwargs,
-) -> tuple[mlxarr.ndarray, mlxarr.ndarray] | tuple[mlxarr.ndarray, mlxarr.ndarray, Line2D]:
+) -> (
+    tuple[mlxarr.ndarray, mlxarr.ndarray]
+    | tuple[mlxarr.ndarray, mlxarr.ndarray, Line2D]
+):
     return gca().csd(
         x,
         y,
@@ -4012,7 +4015,10 @@ def psd(
     *,
     data=None,
     **kwargs,
-) -> tuple[mlxarr.ndarray, mlxarr.ndarray] | tuple[mlxarr.ndarray, mlxarr.ndarray, Line2D]:
+) -> (
+    tuple[mlxarr.ndarray, mlxarr.ndarray]
+    | tuple[mlxarr.ndarray, mlxarr.ndarray, Line2D]
+):
     return gca().psd(
         x,
         NFFT=NFFT,

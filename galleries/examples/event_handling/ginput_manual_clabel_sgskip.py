@@ -19,6 +19,8 @@ import time
 
 import matplotlib.pyplot as plt
 from matplotlib import _mlx_array as mlxarr
+
+
 def tellme(s):
     print(s)
     plt.title(s, fontsize=16)

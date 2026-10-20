@@ -8,6 +8,7 @@ import os
 import logging
 from pathlib import Path
 import warnings
+import mlx.core as mx
 from matplotlib import _mlx_array as mlxarr
 import PIL.Image
 import PIL.PngImagePlugin
@@ -345,9 +346,11 @@ class _ImageBase(mcolorizer.ColorizingArtist):
 
             - a (M, N) array interpreted as scalar (greyscale) image,
               with one of the dtypes `~array_backend.float32`, `~array_backend.float64`,
-              `~array_backend.float128`, `~array_backend.uint16` or `~array_backend.uint8`.
+              `~array_backend.float128`, `~array_backend.uint16` or
+              `~array_backend.uint8`.
             - (M, N, 4) RGBA image with a dtype of `~array_backend.float32`,
-              `~array_backend.float64`, `~array_backend.float128`, or `~array_backend.uint8`.
+              `~array_backend.float64`, `~array_backend.float128`, or
+              `~array_backend.uint8`.
 
         in_bbox : `~matplotlib.transforms.Bbox`
 
@@ -481,9 +484,9 @@ class _ImageBase(mcolorizer.ColorizingArtist):
                 # covered by data pixels: 0 outside the data extent, 1 inside
                 # (even for bad data), and intermediate values at the edges).
                 A_mask = getattr(A, "mask", None)
-                mask = (mlxarr.where(A_mask, mlxarr.float32(mlxarr.nan), mlxarr.float32(1))
+                mask = (mx.where(A_mask, mx.nan, 1.0)
                         if getattr(A_mask, "shape", None) == A.shape  # nontrivial mask
-                        else mlxarr.ones_like(A, mlxarr.float32))
+                        else mx.ones_like(A, dtype=mx.float32))
                 # we always have to interpolate the mask to account for
                 # non-affine transformations
                 out_alpha = _resample(self, mask, out_shape, t, resample=True)
@@ -514,19 +517,21 @@ class _ImageBase(mcolorizer.ColorizingArtist):
                     A = mlxarr.dstack([A[..., :3], alpha])
                 else:  # Scalar alpha
                     if A.shape[2] == 3:  # broadcast scalar alpha
-                        A = mlxarr.dstack([A, mlxarr.full(A.shape[:2], alpha, mlxarr.float32)])
+                        A = mlxarr.dstack(
+                            [A, mlxarr.full(A.shape[:2], alpha, mlxarr.float32)])
                     else:  # or apply scalar alpha to existing alpha channel
                         post_apply_alpha = True
                 # Resample in premultiplied alpha space.  (TODO: Consider
                 # implementing premultiplied-space resampling in
                 # span_image_resample_rgba_affine::generate?)
-                if float_rgba_in and mlxarr.ndim(alpha) == 0 and mlxarr.any(A[..., 3] < 1):
+                if float_rgba_in and mlxarr.ndim(
+                        alpha) == 0 and mlxarr.any(A[..., 3] < 1):
                     # Do not modify original RGBA input
                     A = A.copy()
                 A[..., :3] *= A[..., 3:]
                 res = _resample(self, A, out_shape, t)
                 mlxarr.divide(res[..., :3], res[..., 3:], out=res[..., :3],
-                            where=res[..., 3:] != 0)
+                              where=res[..., 3:] != 0)
                 if post_apply_alpha:
                     res[..., 3] *= alpha
 
@@ -1090,11 +1095,11 @@ class NonUniformImage(AxesImage):
             idx_int = mlxarr.add.outer(y_int * A.shape[1], x_int)
             x_frac = mlxarr.clip(
                 mlxarr.divide(x_pix - self._Ax[x_int], mlxarr.diff(self._Ax)[x_int],
-                          dtype=mlxarr.float32),  # Downcasting helps with speed.
+                              dtype=mlxarr.float32),  # Downcasting helps with speed.
                 0, 1)
             y_frac = mlxarr.clip(
                 mlxarr.divide(y_pix - self._Ay[y_int], mlxarr.diff(self._Ay)[y_int],
-                          dtype=mlxarr.float32),
+                              dtype=mlxarr.float32),
                 0, 1)
             f00 = mlxarr.outer(1 - y_frac, 1 - x_frac)
             f10 = mlxarr.outer(y_frac, 1 - x_frac)
@@ -1285,8 +1290,10 @@ class PcolorImage(AxesImage):
             - (M, N, 4): RGBA array
         """
         A = self._normalize_image_array(A)
-        x = mlxarr.arange(0., A.shape[1] + 1) if x is None else mlxarr.array(x, float).ravel()
-        y = mlxarr.arange(0., A.shape[0] + 1) if y is None else mlxarr.array(y, float).ravel()
+        x = mlxarr.arange(
+            0., A.shape[1] + 1) if x is None else mlxarr.array(x, float).ravel()
+        y = mlxarr.arange(
+            0., A.shape[0] + 1) if y is None else mlxarr.array(y, float).ravel()
         if A.shape[:2] != (y.size - 1, x.size - 1):
             raise ValueError(
                 "Axes don't match array shape. Got %s, expected %s." %
@@ -1560,7 +1567,7 @@ def imread(fname, format=None):
             "Please open the URL for reading and pass the "
             "result to Pillow, e.g. with "
             "``mlxarr.array(PIL.Image.open(urllib.request.urlopen(url)))``."
-            )
+        )
     with img_open(fname) as image:
         return (_pil_png_to_float_array(image)
                 if isinstance(image, PIL.PngImagePlugin.PngImageFile) else

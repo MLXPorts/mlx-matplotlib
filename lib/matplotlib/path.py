@@ -13,6 +13,7 @@ import copy
 from array import array as _array
 from functools import lru_cache
 from weakref import WeakValueDictionary
+import mlx.core as mx
 from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from . import _api, _path
@@ -505,10 +506,10 @@ class Path:
                 yield BezierSegment(mlxarr.array([prev_vert, verts])), code
             elif code == Path.CURVE3:
                 yield BezierSegment(mlxarr.array([prev_vert, verts[:2],
-                                              verts[2:]])), code
+                                                  verts[2:]])), code
             elif code == Path.CURVE4:
                 yield BezierSegment(mlxarr.array([prev_vert, verts[:2],
-                                              verts[2:4], verts[4:]])), code
+                                                  verts[2:4], verts[4:]])), code
             elif code == Path.CLOSEPOLY:
                 yield BezierSegment(mlxarr.array([prev_vert, first_vert])), code
             elif code == Path.STOP:
@@ -522,7 +523,12 @@ class Path:
         if self.codes is None:
             yield self
         else:
-            idxs = mlxarr.append((self.codes == Path.MOVETO).nonzero()[0], len(self.codes))
+            moves = mx.equal(self.codes, Path.MOVETO)
+            starts = mx.sort(mx.where(
+                moves, mx.arange(moves.size), moves.size))[
+                    :int(mx.sum(moves).item())]
+            idxs = mx.concatenate((
+                starts, mx.array([len(self.codes)], dtype=starts.dtype))).tolist()
             for sl in map(slice, idxs, idxs[1:]):
                 yield Path._fast_from_codes_and_verts(
                     self.vertices[sl], self.codes[sl], self)
@@ -696,7 +702,7 @@ class Path:
             # each line segment's end-points
             # (recall that STOP and CLOSEPOLY vertices are ignored)
             xys = self.vertices[mlxarr.isin(self.codes,
-                                        [Path.MOVETO, Path.LINETO])]
+                                            [Path.MOVETO, Path.LINETO])]
         else:
             xys = []
             for curve, code in self.iter_bezier(**kwargs):
@@ -765,7 +771,7 @@ class Path:
         codes = self.codes
         if codes is not None:
             new_codes = mlxarr.full((len(codes) - 1) * steps + 1, Path.LINETO,
-                                dtype=self.code_type)
+                                    dtype=self.code_type)
             new_codes[0::steps] = codes
         else:
             new_codes = None
@@ -956,40 +962,40 @@ class Path:
 
         vertices = mlxarr.array([[0.0, -1.0],
 
-                             [MAGIC, -1.0],
-                             [SQRTHALF-MAGIC45, -SQRTHALF-MAGIC45],
-                             [SQRTHALF, -SQRTHALF],
+                                 [MAGIC, -1.0],
+                                 [SQRTHALF-MAGIC45, -SQRTHALF-MAGIC45],
+                                 [SQRTHALF, -SQRTHALF],
 
-                             [SQRTHALF+MAGIC45, -SQRTHALF+MAGIC45],
-                             [1.0, -MAGIC],
-                             [1.0, 0.0],
+                                 [SQRTHALF+MAGIC45, -SQRTHALF+MAGIC45],
+                                 [1.0, -MAGIC],
+                                 [1.0, 0.0],
 
-                             [1.0, MAGIC],
-                             [SQRTHALF+MAGIC45, SQRTHALF-MAGIC45],
-                             [SQRTHALF, SQRTHALF],
+                                 [1.0, MAGIC],
+                                 [SQRTHALF+MAGIC45, SQRTHALF-MAGIC45],
+                                 [SQRTHALF, SQRTHALF],
 
-                             [SQRTHALF-MAGIC45, SQRTHALF+MAGIC45],
-                             [MAGIC, 1.0],
-                             [0.0, 1.0],
+                                 [SQRTHALF-MAGIC45, SQRTHALF+MAGIC45],
+                                 [MAGIC, 1.0],
+                                 [0.0, 1.0],
 
-                             [-MAGIC, 1.0],
-                             [-SQRTHALF+MAGIC45, SQRTHALF+MAGIC45],
-                             [-SQRTHALF, SQRTHALF],
+                                 [-MAGIC, 1.0],
+                                 [-SQRTHALF+MAGIC45, SQRTHALF+MAGIC45],
+                                 [-SQRTHALF, SQRTHALF],
 
-                             [-SQRTHALF-MAGIC45, SQRTHALF-MAGIC45],
-                             [-1.0, MAGIC],
-                             [-1.0, 0.0],
+                                 [-SQRTHALF-MAGIC45, SQRTHALF-MAGIC45],
+                                 [-1.0, MAGIC],
+                                 [-1.0, 0.0],
 
-                             [-1.0, -MAGIC],
-                             [-SQRTHALF-MAGIC45, -SQRTHALF+MAGIC45],
-                             [-SQRTHALF, -SQRTHALF],
+                                 [-1.0, -MAGIC],
+                                 [-SQRTHALF-MAGIC45, -SQRTHALF+MAGIC45],
+                                 [-SQRTHALF, -SQRTHALF],
 
-                             [-SQRTHALF+MAGIC45, -SQRTHALF-MAGIC45],
-                             [-MAGIC, -1.0],
-                             [0.0, -1.0],
+                                 [-SQRTHALF+MAGIC45, -SQRTHALF-MAGIC45],
+                                 [-MAGIC, -1.0],
+                                 [0.0, -1.0],
 
-                             [0.0, -1.0]],
-                            dtype=float)
+                                 [0.0, -1.0]],
+                                dtype=float)
 
         codes = [cls.CURVE4] * 26
         codes[0] = cls.MOVETO

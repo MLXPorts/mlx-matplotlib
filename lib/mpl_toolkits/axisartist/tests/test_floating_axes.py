@@ -126,7 +126,8 @@ def test_transform_with_zero_derivatives():
     # at x=0, exp(-x**-2)=0; div-by-zero can be ignored.
     @mlxarr.errstate(divide="ignore")
     def tr(x, y):
-        return mlxarr.exp(-x**-2) - mlxarr.exp(-y**-2), mlxarr.exp(-x**-2) + mlxarr.exp(-y**-2)
+        return (mlxarr.exp(-x**-2) - mlxarr.exp(-y**-2),
+                mlxarr.exp(-x**-2) + mlxarr.exp(-y**-2))
 
     def inv_tr(u, v):
         return (-mlxarr.log((u+v)/2))**(1/2), (-mlxarr.log((v-u)/2))**(1/2)

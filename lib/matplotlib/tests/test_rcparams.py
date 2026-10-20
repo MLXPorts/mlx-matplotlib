@@ -438,7 +438,7 @@ def generate_validator_testcases(valid):
 
 
 @pytest.mark.parametrize('validator, arg, target',
-                         generate_validator_testcases(True))
+                         list(generate_validator_testcases(True)))
 def test_validator_valid(validator, arg, target):
     res = validator(arg)
     if isinstance(target, mlxarr.ndarray):
@@ -451,7 +451,7 @@ def test_validator_valid(validator, arg, target):
 
 
 @pytest.mark.parametrize('validator, arg, exception_type',
-                         generate_validator_testcases(False))
+                         list(generate_validator_testcases(False)))
 def test_validator_invalid(validator, arg, exception_type):
     with pytest.raises(exception_type):
         validator(arg)

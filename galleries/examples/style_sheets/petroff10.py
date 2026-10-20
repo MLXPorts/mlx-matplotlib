@@ -15,6 +15,8 @@ distinction between data series.
 
 import matplotlib.pyplot as plt
 from matplotlib import _mlx_array as mlxarr
+
+
 def colored_lines_example(ax):
     t = mlxarr.linspace(-10, 10, 100)
     nb_colors = len(plt.rcParams['axes.prop_cycle'])

@@ -210,7 +210,7 @@ class RendererAgg(RendererBase):
                         "by default and path.simplify_threshold "
                         f"= {path.simplify_threshold} "
                         "on the input)."
-                        )
+                    )
                     if nmax > 100:
                         msg = (
                             "Exceeded cell block limit in Agg.  Please reduce "
@@ -274,8 +274,8 @@ class RendererAgg(RendererBase):
 
         xd = descent * sin(radians(angle))
         yd = descent * cos(radians(angle))
-        x = round(x + ox + xd)
-        y = round(y - oy + yd)
+        x = round(float(x + ox + xd))
+        y = round(float(y - oy + yd))
         self._renderer.draw_text_image(font_image, x, y + 1, angle, gc)
 
     def draw_text(self, gc, x, y, s, prop, angle, ismath=False, mtext=None):
@@ -295,8 +295,8 @@ class RendererAgg(RendererBase):
         yo /= 64.0
         xd = d * sin(radians(angle))
         yd = d * cos(radians(angle))
-        x = round(x + xo + xd)
-        y = round(y + yo + yd)
+        x = round(float(x + xo + xd))
+        y = round(float(y + yo + yd))
         self._renderer.draw_text_image(font, x, y + 1, angle, gc)
 
     def get_text_width_height_descent(self, s, prop, ismath):

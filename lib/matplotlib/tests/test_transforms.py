@@ -1,7 +1,7 @@
 import copy
 from matplotlib import _mlx_array as mlxarr
 from matplotlib.mlx_testing import (assert_allclose, assert_almost_equal,
-                           assert_array_equal, assert_array_almost_equal)
+                                    assert_array_equal, assert_array_almost_equal)
 import pytest
 
 from matplotlib import scale
@@ -406,11 +406,11 @@ class TestAffine2D:
 class TestAffineDeltaTransform:
     def test_invalidate(self):
         before = mlxarr.array([[1.0, 4.0, 0.0],
-                           [5.0, 1.0, 0.0],
-                           [0.0, 0.0, 1.0]])
+                               [5.0, 1.0, 0.0],
+                               [0.0, 0.0, 1.0]])
         after = mlxarr.array([[1.0, 3.0, 0.0],
-                          [5.0, 1.0, 0.0],
-                          [0.0, 0.0, 1.0]])
+                              [5.0, 1.0, 0.0],
+                              [0.0, 0.0, 1.0]])
 
         # Translation and skew present
         base = mtransforms.Affine2D.from_values(1, 5, 4, 1, 2, 3)
@@ -523,36 +523,39 @@ def test_pre_transform_plotting():
 
 def test_contour_pre_transform_limits():
     ax = plt.axes()
-    xs, ys = mlxarr.meshgrid(mlxarr.linspace(15, 20, 15), mlxarr.linspace(12.4, 12.5, 20))
+    xs, ys = mlxarr.meshgrid(mlxarr.linspace(15, 20, 15),
+                             mlxarr.linspace(12.4, 12.5, 20))
     ax.contourf(xs, ys, mlxarr.log(xs * ys),
                 transform=mtransforms.Affine2D().scale(0.1) + ax.transData)
 
     expected = mlxarr.array([[1.5, 1.24],
-                         [2., 1.25]])
+                             [2., 1.25]])
     assert_almost_equal(expected, ax.dataLim.get_points())
 
 
 def test_pcolor_pre_transform_limits():
     # Based on test_contour_pre_transform_limits()
     ax = plt.axes()
-    xs, ys = mlxarr.meshgrid(mlxarr.linspace(15, 20, 15), mlxarr.linspace(12.4, 12.5, 20))
+    xs, ys = mlxarr.meshgrid(mlxarr.linspace(15, 20, 15),
+                             mlxarr.linspace(12.4, 12.5, 20))
     ax.pcolor(xs, ys, mlxarr.log(xs * ys)[:-1, :-1],
               transform=mtransforms.Affine2D().scale(0.1) + ax.transData)
 
     expected = mlxarr.array([[1.5, 1.24],
-                         [2., 1.25]])
+                             [2., 1.25]])
     assert_almost_equal(expected, ax.dataLim.get_points())
 
 
 def test_pcolormesh_pre_transform_limits():
     # Based on test_contour_pre_transform_limits()
     ax = plt.axes()
-    xs, ys = mlxarr.meshgrid(mlxarr.linspace(15, 20, 15), mlxarr.linspace(12.4, 12.5, 20))
+    xs, ys = mlxarr.meshgrid(mlxarr.linspace(15, 20, 15),
+                             mlxarr.linspace(12.4, 12.5, 20))
     ax.pcolormesh(xs, ys, mlxarr.log(xs * ys)[:-1, :-1],
                   transform=mtransforms.Affine2D().scale(0.1) + ax.transData)
 
     expected = mlxarr.array([[1.5, 1.24],
-                         [2., 1.25]])
+                             [2., 1.25]])
     assert_almost_equal(expected, ax.dataLim.get_points())
 
 
@@ -577,9 +580,9 @@ def test_pcolormesh_gouraud_nans():
 
 def test_Affine2D_from_values():
     points = mlxarr.array([[0, 0],
-                       [10, 20],
-                       [-1, 0],
-                       ])
+                           [10, 20],
+                           [-1, 0],
+                           ])
 
     t = mtransforms.Affine2D.from_values(1, 0, 0, 0, 0, 0)
     actual = t.transform(points)
@@ -766,15 +769,16 @@ class TestBasicTransform:
         # necessary "non-affine" allowing the best possible optimization with
         # complex transformation stacks.
         points = mlxarr.array([[0, 0], [10, 20], [mlxarr.nan, 1], [-1, 0]],
-                          dtype=mlxarr.float64)
+                              dtype=mlxarr.float64)
         na_pts = self.stack1.transform_non_affine(points)
         all_pts = self.stack1.transform(points)
 
         na_expected = mlxarr.array([[1., 2.], [-19., 12.],
-                                [mlxarr.nan, mlxarr.nan], [1., 1.]], dtype=mlxarr.float64)
+                                    [mlxarr.nan, mlxarr.nan], [1., 1.]],
+                                   dtype=mlxarr.float64)
         all_expected = mlxarr.array([[11., 4.], [-9., 24.],
-                                 [mlxarr.nan, mlxarr.nan], [11., 2.]],
-                                dtype=mlxarr.float64)
+                                     [mlxarr.nan, mlxarr.nan], [11., 2.]],
+                                    dtype=mlxarr.float64)
 
         # check we have the expected results from doing the affine part only
         assert_array_almost_equal(na_pts, na_expected)
@@ -806,7 +810,7 @@ class TestTransformPlotInterface:
         ax.plot([0.1, 1.2, 0.8], [0.9, 0.5, 0.8], transform=ax.transAxes)
         assert_array_equal(ax.dataLim.get_points(),
                            mlxarr.array([[mlxarr.inf, mlxarr.inf],
-                                     [-mlxarr.inf, -mlxarr.inf]]))
+                                         [-mlxarr.inf, -mlxarr.inf]]))
 
     def test_line_extent_data_coords(self):
         # a simple line in data coordinates
@@ -824,7 +828,7 @@ class TestTransformPlotInterface:
         ax.plot([0.1, 1.2, 0.8], [35, -5, 18], transform=trans)
         assert_array_equal(ax.dataLim.get_points(),
                            mlxarr.array([[mlxarr.inf, -5.],
-                                     [-mlxarr.inf, 35.]]))
+                                         [-mlxarr.inf, 35.]]))
 
     def test_line_extent_predata_transform_coords(self):
         # a simple line in (offset + data) coordinates
@@ -1180,6 +1184,6 @@ def test_scaledrotation_get_matrix_invalid():
     matrix = scaled_rot.get_matrix()
     trans_shift.transform.assert_called_once_with([[theta, 0]])
     expected_rotation = mlxarr.array([[0, -1],
-                                  [1,  0]])
+                                      [1,  0]])
     assert matrix is not None
     assert_allclose(matrix[:2, :2], expected_rotation, atol=1e-15)

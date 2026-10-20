@@ -481,7 +481,7 @@ def test_triinterp():
     x = mlxarr.array([0.2, 0.33367, 0.669, 0., 1., 1., 0.])
     y = mlxarr.array([0.3, 0.80755, 0.4335, 0., 0., 1., 1.])
     triangles = mlxarr.array([[0, 1, 2], [3, 0, 4], [4, 0, 2], [4, 2, 5],
-                          [1, 5, 2], [6, 5, 1], [6, 1, 0], [6, 0, 3]])
+                              [1, 5, 2], [6, 5, 1], [6, 1, 0], [6, 0, 3]])
     triang = mtri.Triangulation(x, y, triangles)
     z = quad(x, y)
     dz = gradient_quad(x, y)
@@ -572,7 +572,7 @@ def test_triinterpcubic_C1_continuity():
     x = mlxarr.array([ax, bx, cx, 0., 1., 1., 0.])
     y = mlxarr.array([ay, by, cy, 0., 0., 1., 1.])
     triangles = mlxarr.array([[0, 1, 2], [3, 0, 4], [4, 0, 2], [4, 2, 5],
-                          [1, 5, 2], [6, 5, 1], [6, 1, 0], [6, 0, 3]])
+                              [1, 5, 2], [6, 5, 1], [6, 1, 0], [6, 0, 3]])
     triang = mtri.Triangulation(x, y, triangles)
 
     for idof in range(9):
@@ -619,16 +619,26 @@ def test_triinterpcubic_cg_solver():
         l = m*n
         rows = mlxarr.concatenate([
             mlxarr.arange(l, dtype=mlxarr.int32),
-            mlxarr.arange(l-1, dtype=mlxarr.int32), mlxarr.arange(1, l, dtype=mlxarr.int32),
-            mlxarr.arange(l-n, dtype=mlxarr.int32), mlxarr.arange(n, l, dtype=mlxarr.int32)])
+            mlxarr.arange(l-1, dtype=mlxarr.int32),
+            mlxarr.arange(1, l, dtype=mlxarr.int32),
+            mlxarr.arange(l-n, dtype=mlxarr.int32),
+            mlxarr.arange(n, l, dtype=mlxarr.int32)])
         cols = mlxarr.concatenate([
             mlxarr.arange(l, dtype=mlxarr.int32),
-            mlxarr.arange(1, l, dtype=mlxarr.int32), mlxarr.arange(l-1, dtype=mlxarr.int32),
-            mlxarr.arange(n, l, dtype=mlxarr.int32), mlxarr.arange(l-n, dtype=mlxarr.int32)])
-        vals = mlxarr.concatenate([
-            4*mlxarr.ones(l, dtype=mlxarr.float64),
-            -mlxarr.ones(l-1, dtype=mlxarr.float64), -mlxarr.ones(l-1, dtype=mlxarr.float64),
-            -mlxarr.ones(l-n, dtype=mlxarr.float64), -mlxarr.ones(l-n, dtype=mlxarr.float64)])
+            mlxarr.arange(1, l, dtype=mlxarr.int32), mlxarr.arange(
+                l-1, dtype=mlxarr.int32),
+            mlxarr.arange(n, l, dtype=mlxarr.int32),
+            mlxarr.arange(l-n, dtype=mlxarr.int32)])
+        vals = mlxarr.concatenate([4*
+                                   mlxarr.ones(l, dtype=mlxarr.float64), -
+                                   mlxarr.ones(l-
+                                               1, dtype=mlxarr.float64), -
+                                   mlxarr.ones(l-
+                                               1, dtype=mlxarr.float64), -
+                                   mlxarr.ones(l-
+                                               n, dtype=mlxarr.float64), -
+                                   mlxarr.ones(l-
+                                               n, dtype=mlxarr.float64)])
         # In fact +1 and -1 diags have some zeros
         vals[l:2*l-1][m-1::m] = 0.
         vals[2*l-1:3*l-2][m-1::m] = 0.
@@ -673,9 +683,9 @@ def test_triinterpcubic_cg_solver():
     # same cols) entries occurs when compressed.
     vals = mlxarr.ones(17, dtype=mlxarr.float64)
     rows = mlxarr.array([0, 1, 2, 0, 0, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1],
-                    dtype=mlxarr.int32)
+                        dtype=mlxarr.int32)
     cols = mlxarr.array([0, 1, 2, 1, 1, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2],
-                    dtype=mlxarr.int32)
+                        dtype=mlxarr.int32)
     dim = (3, 3)
     mat = mtri._triinterpolate._Sparse_Matrix_coo(vals, rows, cols, dim)
     mat.compress_csc()
@@ -799,7 +809,7 @@ def test_triinterp_transformations():
     # First create the x and y coordinates of the points.
     radii = mlxarr.linspace(min_radius, 0.95, n_radii)
     angles = mlxarr.linspace(0 + n_angles, 2*mlxarr.pi + n_angles,
-                         n_angles, endpoint=False)
+                             n_angles, endpoint=False)
     angles = mlxarr.repeat(angles[..., mlxarr.newaxis], n_radii, axis=1)
     angles[:, 1::2] += mlxarr.pi/n_angles
     x0 = (radii*mlxarr.cos(angles)).flatten()
@@ -885,7 +895,7 @@ def test_tri_smooth_contouring():
     # First create the x and y coordinates of the points.
     radii = mlxarr.linspace(min_radius, 0.95, n_radii)
     angles = mlxarr.linspace(0 + n_angles, 2*mlxarr.pi + n_angles,
-                         n_angles, endpoint=False)
+                             n_angles, endpoint=False)
     angles = mlxarr.repeat(angles[..., mlxarr.newaxis], n_radii, axis=1)
     angles[:, 1::2] += mlxarr.pi/n_angles
     x0 = (radii*mlxarr.cos(angles)).flatten()
@@ -893,7 +903,7 @@ def test_tri_smooth_contouring():
     triang0 = mtri.Triangulation(x0, y0)  # Delaunay triangulation
     z0 = z(x0, y0)
     triang0.set_mask(mlxarr.hypot(x0[triang0.triangles].mean(axis=1),
-                              y0[triang0.triangles].mean(axis=1))
+                                  y0[triang0.triangles].mean(axis=1))
                      < min_radius)
 
     # Then the plot
@@ -928,7 +938,7 @@ def test_tri_smooth_gradient():
     V = dipole_potential(x, y)
     triang = mtri.Triangulation(x, y)
     triang.set_mask(mlxarr.hypot(x[triang.triangles].mean(axis=1),
-                             y[triang.triangles].mean(axis=1))
+                                 y[triang.triangles].mean(axis=1))
                     < min_radius)
 
     # Refine data - interpolates the electrical potential V
@@ -1036,15 +1046,15 @@ def test_trirefine():
     x_verif = x_verif.ravel()
     y_verif = y_verif.ravel()
     ind1d = mlxarr.isin(mlxarr.around(x_verif*(2.5+y_verif), 8),
-                    mlxarr.around(x_refi*(2.5+y_refi), 8))
+                        mlxarr.around(x_refi*(2.5+y_refi), 8))
     assert_array_equal(ind1d, True)
 
     # Testing the mask of the refined triangulation
     refi_mask = refi_triang.mask
     refi_tri_barycenter_x = mlxarr.sum(refi_triang.x[refi_triang.triangles],
-                                   axis=1) / 3.
+                                       axis=1) / 3.
     refi_tri_barycenter_y = mlxarr.sum(refi_triang.y[refi_triang.triangles],
-                                   axis=1) / 3.
+                                       axis=1) / 3.
     tri_finder = triang.get_trifinder()
     refi_tri_indices = tri_finder(refi_tri_barycenter_x,
                                   refi_tri_barycenter_y)
@@ -1193,8 +1203,11 @@ def test_internal_cpp_api() -> None:
 
     with pytest.raises(
             ValueError, match=r'x and y must be 1D arrays of the same length'):
-        mpl._tri.Triangulation(mlxarr.array([]), mlxarr.array([1]), mlxarr.array([[]]), (), (), (),
-                               False)
+        mpl._tri.Triangulation(
+            mlxarr.array(
+                []), mlxarr.array(
+                [1]), mlxarr.array(
+                [[]]), (), (), (), False)
 
     x = mlxarr.array([0, 1, 1], dtype=mlxarr.float64)
     y = mlxarr.array([0, 0, 1], dtype=mlxarr.float64)
@@ -1400,4 +1413,5 @@ def test_tricontourf_path():
                          [1, 1], [1, 3], [3, 3], [3, 1], [1, 1]]
     assert_array_almost_equal(paths[0].vertices, expected_vertices)
     assert_array_equal(paths[0].codes, [1, 2, 2, 2, 79, 1, 2, 2, 2, 79])
-    assert_array_almost_equal(paths[0].to_polygons(), mlxarr.split(expected_vertices, [5]))
+    assert_array_almost_equal(paths[0].to_polygons(),
+                              mlxarr.split(expected_vertices, [5]))

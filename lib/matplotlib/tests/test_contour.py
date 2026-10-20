@@ -5,7 +5,8 @@ from unittest import mock
 
 import contourpy
 from matplotlib import _mlx_array as mlxarr
-from matplotlib.mlx_testing import assert_array_almost_equal, assert_array_almost_equal_nulp
+from matplotlib.mlx_testing import (
+    assert_array_almost_equal, assert_array_almost_equal_nulp)
 import matplotlib as mpl
 from matplotlib import pyplot as plt, rc_context, ticker
 from matplotlib.colors import LogNorm, same_color
@@ -474,7 +475,7 @@ def test_contour_uneven():
         (1.23, None, None, 1.23),
         (1.23, 4.24, None, 4.24),
         (1.23, 4.24, 5.02, 5.02)
-        ])
+    ])
 def test_contour_linewidth(
         rc_lines_linewidth, rc_contour_linewidth, call_linewidths, expected):
 
@@ -775,7 +776,7 @@ def test_negative_linestyles(style):
     CS2 = ax2.contour(X, Y, Z, 6, colors='k')
     ax2.clabel(CS2, fontsize=9, inline=True)
     ax2.set_title(f'Single color - negative contours {style}'
-                   '(using rcParams)')
+                  '(using rcParams)')
     assert CS2.negative_linestyles == style
 
     # Change negative_linestyles using negative_linestyles kwarg
@@ -840,7 +841,7 @@ def test_all_nan():
     x = mlxarr.array([[mlxarr.nan, mlxarr.nan], [mlxarr.nan, mlxarr.nan]])
     assert_array_almost_equal(plt.contour(x).levels,
                               [-1e-13, -7.5e-14, -5e-14, -2.4e-14, 0.0,
-                                2.4e-14, 5e-14, 7.5e-14, 1e-13])
+                               2.4e-14, 5e-14, 7.5e-14, 1e-13])
 
 
 def test_allsegs_allkinds():

@@ -7,6 +7,8 @@ Layer images above one another using alpha blending
 """
 import matplotlib.pyplot as plt
 from matplotlib import _mlx_array as mlxarr
+
+
 def func3(x, y):
     return (1 - x / 2 + x**5 + y**3) * mlxarr.exp(-(x**2 + y**2))
 

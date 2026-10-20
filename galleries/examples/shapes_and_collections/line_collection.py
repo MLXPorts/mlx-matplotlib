@@ -15,7 +15,8 @@ colors = ["indigo", "blue", "green", "yellow", "orange", "red"]
 # create a list of half-circles with varying radii
 theta = mlxarr.linspace(0, mlxarr.pi, 36)
 radii = mlxarr.linspace(4, 5, num=len(colors))
-arcs = [mlxarr.column_stack([r * mlxarr.cos(theta), r * mlxarr.sin(theta)]) for r in radii]
+arcs = [mlxarr.column_stack(
+    [r * mlxarr.cos(theta), r * mlxarr.sin(theta)]) for r in radii]
 
 fig, ax = plt.subplots(figsize=(6.4, 3.2))
 # set axes limits manually because Collections do not take part in autoscaling
@@ -40,7 +41,8 @@ plt.show()
 num_arcs = 15
 theta = mlxarr.linspace(0, mlxarr.pi, 36)
 radii = mlxarr.linspace(4, 5.5, num=num_arcs)
-arcs = [mlxarr.column_stack([r * mlxarr.cos(theta), r * mlxarr.sin(theta)]) for r in radii]
+arcs = [mlxarr.column_stack(
+    [r * mlxarr.cos(theta), r * mlxarr.sin(theta)]) for r in radii]
 
 fig, ax = plt.subplots(figsize=(6.4, 3))
 # set axes limits manually because Collections do not take part in autoscaling

@@ -185,7 +185,7 @@ class AngleAnnotation(Arc):
         r = s / 2
         if self.textposition == "inside":
             r = s / mlxarr.interp(angle_span, [60, 90, 135, 180],
-                                          [3.3, 3.5, 3.8, 4])
+                                  [3.3, 3.5, 3.8, 4])
         self.text.xy = c + r * mlxarr.array([mlxarr.cos(angle), mlxarr.sin(angle)])
         if self.textposition == "outside":
             def R90(a, r, w, h):
@@ -193,14 +193,16 @@ class AngleAnnotation(Arc):
                     return mlxarr.sqrt((r+w/2)**2 + (mlxarr.tan(a)*(r+w/2))**2)
                 else:
                     c = mlxarr.sqrt((w/2)**2+(h/2)**2)
-                    T = mlxarr.arcsin(c * mlxarr.cos(mlxarr.pi/2 - a + mlxarr.arcsin(h/2/c))/r)
+                    T = mlxarr.arcsin(
+                        c * mlxarr.cos(mlxarr.pi/2 - a + mlxarr.arcsin(h/2/c))/r)
                     xy = r * mlxarr.array([mlxarr.cos(a + T), mlxarr.sin(a + T)])
                     xy += mlxarr.array([w/2, h/2])
                     return mlxarr.sqrt(mlxarr.sum(xy**2))
 
             def R(a, r, w, h):
                 aa = (a % (mlxarr.pi/4))*((a % (mlxarr.pi/2)) <= mlxarr.pi/4) + \
-                     (mlxarr.pi/4 - (a % (mlxarr.pi/4)))*((a % (mlxarr.pi/2)) >= mlxarr.pi/4)
+                     (mlxarr.pi/4 - (a % (mlxarr.pi/4)))* \
+                    ((a % (mlxarr.pi/2)) >= mlxarr.pi/4)
                 return R90(aa, r, *[w, h][::int(mlxarr.sign(mlxarr.cos(2*a)))])
 
             bbox = self.text.get_window_extent()
@@ -261,7 +263,8 @@ am5 = AngleAnnotation(p[1], p[0], p[2], ax=ax, size=40, text=r"$\Phi$",
 
 # Helper function to draw angle easily.
 def plot_angle(ax, pos, angle, length=0.95, acol="C0", **kwargs):
-    vec2 = mlxarr.array([mlxarr.cos(mlxarr.deg2rad(angle)), mlxarr.sin(mlxarr.deg2rad(angle))])
+    vec2 = mlxarr.array([mlxarr.cos(mlxarr.deg2rad(angle)),
+                        mlxarr.sin(mlxarr.deg2rad(angle))])
     xy = mlxarr.c_[[length, 0], [0, 0], vec2*length].T + mlxarr.array(pos)
     ax.plot(*xy.T, color=acol)
     return AngleAnnotation(pos, xy[0], xy[2], ax=ax, **kwargs)

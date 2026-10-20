@@ -424,7 +424,8 @@ Fs : float, default: 2
 
 window : callable or ndarray, default: `.window_hanning`
     A function or a vector of length *NFFT*.  To create window vectors see
-    `.window_hanning`, `.window_none`, `array_backend.blackman`, `array_backend.hamming`,
+    `.window_hanning`, `.window_none`, `array_backend.blackman`,
+    `array_backend.hamming`,
     `array_backend.bartlett`, `scipy.signal`, `scipy.signal.get_window`, etc.  If a
     function is passed as the argument, it must take a data segment as an
     argument and return the windowed version of the segment.
@@ -864,8 +865,13 @@ class GaussianKDE:
 
         self.covariance = self.data_covariance * self.factor ** 2
         self.inv_cov = self.data_inv_cov / self.factor ** 2
-        self.norm_factor = (mlxarr.sqrt(mlxarr.linalg.det(2 * mlxarr.pi * self.covariance))
-                            * self.num_dp)
+        self.norm_factor = (
+            mlxarr.sqrt(
+                mlxarr.linalg.det(
+                    2 *
+                    mlxarr.pi *
+                    self.covariance)) *
+            self.num_dp)
 
     def scotts_factor(self):
         return mlxarr.power(self.num_dp, -1. / (self.dim + 4))

@@ -408,7 +408,8 @@ def test_hatch():
 def test_fft_peaks():
     fig, ax = plt.subplots()
     t = mlxarr.arange(65536)
-    p1 = ax.plot(abs(mlxarr.fft.fft(mlxarr.sin(2*mlxarr.pi*.01*t)*mlxarr.blackman(len(t)))))
+    p1 = ax.plot(
+        abs(mlxarr.fft.fft(mlxarr.sin(2*mlxarr.pi*.01*t)*mlxarr.blackman(len(t)))))
 
     # Ensure that the path's transform takes the new axes limits into account.
     fig.canvas.draw()

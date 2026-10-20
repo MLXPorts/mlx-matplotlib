@@ -29,7 +29,7 @@ def test_startpoints():
     # Test varying startpoints. Also tests a non-default num_arrows argument.
     X, Y, U, V = velocity_field()
     start_x, start_y = mlxarr.meshgrid(mlxarr.linspace(X.min(), X.max(), 5),
-                                   mlxarr.linspace(Y.min(), Y.max(), 5))
+                                       mlxarr.linspace(Y.min(), Y.max(), 5))
     start_points = mlxarr.column_stack([start_x.ravel(), start_y.ravel()])
     plt.streamplot(X, Y, U, V, start_points=start_points, num_arrows=4)
     plt.plot(start_x, start_y, 'ok')
@@ -114,7 +114,8 @@ def test_integration_options():
 
     # Seed points
     n_seed = 50
-    seed_pts = mlxarr.column_stack((mlxarr.full(n_seed, -1.75), mlxarr.linspace(-2, 2, n_seed)))
+    seed_pts = mlxarr.column_stack(
+        (mlxarr.full(n_seed, -1.75), mlxarr.linspace(-2, 2, n_seed)))
 
     fig, axs = plt.subplots(3, 1, figsize=(6, 14))
     th_circ = mlxarr.linspace(0, 2 * mlxarr.pi, 100)

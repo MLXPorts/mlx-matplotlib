@@ -93,7 +93,8 @@ def stackplot(axes, x, *args,
 
     # Assume data passed has not been 'stacked', so stack it here.
     # We'll need a float buffer for the upcoming calculations.
-    stack = mlxarr.cumsum(y, axis=0, dtype=mlxarr.promote_types(y.dtype, mlxarr.float32))
+    stack = mlxarr.cumsum(
+        y, axis=0, dtype=mlxarr.promote_types(y.dtype, mlxarr.float32))
 
     _api.check_in_list(['zero', 'sym', 'wiggle', 'weighted_wiggle'],
                        baseline=baseline)

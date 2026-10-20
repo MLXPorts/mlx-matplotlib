@@ -22,7 +22,8 @@ import types
 import weakref
 import mlx.core as mx
 from . import _mlx_array as mlxarr
-# MLXArrayBackend's VisibleDeprecationWarning is used by Matplotlib for user-facing warnings.
+# MLXArrayBackend's VisibleDeprecationWarning is used by Matplotlib for user-facing
+# warnings.
 # In this MLX fork, import the compatibility version from our shim.
 from matplotlib._mlx_array import VisibleDeprecationWarning
 
@@ -920,8 +921,10 @@ def simple_linear_interpolation(a, steps):
         # Searchsorted via broadcast: count xp elements <= each x query
         idx = mx.sum((xp[None, :] <= x[:, None]).astype(mx.int32), axis=1) - 1
         idx = mx.clip(idx, 0, xp.shape[0] - 2)
-        x0 = xp[idx]; x1 = xp[idx + 1]
-        y0 = fp[idx]; y1 = fp[idx + 1]
+        x0 = xp[idx]
+        x1 = xp[idx + 1]
+        y0 = fp[idx]
+        y1 = fp[idx + 1]
         t = mx.clip((x - x0) / (x1 - x0), mx.array(0.0), mx.array(1.0))
         return y0 + t * (y1 - y0)
 
@@ -997,8 +1000,9 @@ def delete_masked_points(*args):
             except Exception:  # Fixme: put in tuple of possible exceptions?
                 pass
     if len(masks):
-        mask = mlxarr.logical_and.reduce(masks)
-        igood = mask.nonzero()[0]
+        mask = mx.all(mx.stack(masks), axis=0)
+        igood = mx.sort(mx.where(mask, mx.arange(mask.size), mask.size))[
+            :int(mx.sum(mask).item())]
         if len(igood) < nrecs:
             for i, x in enumerate(margs):
                 if seqlist[i]:
@@ -1121,8 +1125,10 @@ def _broadcast_with_masks(*args, compress=False):
             inputs = [mlxarr.ma.array(k, mask=mask).compressed()
                       for k in inputs]
         else:
-            inputs = [mlxarr.ma.array(k, mask=mask, dtype=float).filled(mlxarr.nan).ravel()
-                      for k in inputs]
+            inputs = [
+                mlxarr.ma.array(
+                    k, mask=mask, dtype=float).filled(
+                    mlxarr.nan).ravel() for k in inputs]
     else:
         inputs = [mlxarr.ravel(k) for k in inputs]
     return inputs
@@ -1159,8 +1165,10 @@ def _median(a, axis=None):
         idx[axis] = n // 2
         return sorted_a[tuple(idx)]
     else:
-        idx_lo = list(idx); idx_lo[axis] = n // 2 - 1
-        idx_hi = list(idx); idx_hi[axis] = n // 2
+        idx_lo = list(idx)
+        idx_lo[axis] = n // 2 - 1
+        idx_hi = list(idx)
+        idx_hi[axis] = n // 2
         return (sorted_a[tuple(idx_lo)] + sorted_a[tuple(idx_hi)]) / 2
 
 
@@ -1376,17 +1384,18 @@ def contiguous_regions(mask):
     Return a list of (ind0, ind1) such that ``mask[ind0:ind1].all()`` is
     True and we cover all such regions.
     """
-    mask = mlxarr.asarray(mask, dtype=bool)
+    mask = mx.array(mask, dtype=mx.bool_)
 
     if not mask.size:
         return []
 
     # Find the indices of region changes, and correct offset
-    idx, = mlxarr.nonzero(mask[:-1] != mask[1:])
-    idx += 1
+    changes = mx.not_equal(mask[:-1], mask[1:])
+    idx = mx.sort(mx.where(changes, mx.arange(changes.size), changes.size))[
+        :int(mx.sum(changes).item())]
 
-    # List operations are faster for moderately sized arrays
-    idx = idx.tolist()
+    # Region boundaries are Python slice metadata, not numerical array data.
+    idx = mx.add(idx, 1).tolist()
 
     # Add first and/or last index if needed
     if mask[0]:
@@ -1786,7 +1795,8 @@ def safe_first_element(obj):
     """
     if isinstance(obj, collections.abc.Iterator):
         # needed to accept `array.flat` as input.
-        # mlxarr.flatiter reports as an instance of collections.Iterator but can still be
+        # mlxarr.flatiter reports as an instance of collections.Iterator but can still
+        # be
         # indexed via []. This has the side effect of re-setting the iterator, but
         # that is acceptable.
         try:
@@ -2138,7 +2148,7 @@ def _array_patch_perimeters(x, rstride, cstride):
     right = _unfold(x[:-1, cstride::cstride], 0, rstride, rstride)
     left = _unfold(x[1:, :-1:cstride], 0, rstride, rstride)[..., ::-1]
     return (mlxarr.concatenate((top, right, bottom, left), axis=2)
-              .reshape(-1, 2 * (rstride + cstride)))
+            .reshape(-1, 2 * (rstride + cstride)))
 
 
 @contextlib.contextmanager
@@ -2256,14 +2266,15 @@ def _get_nonzero_slices(buf):
     that encloses all non-zero entries in *buf*.  If *buf* is fully zero, then
     ``(slice(0, 0), slice(0, 0))`` is returned.
     """
-    x_nz, = buf.any(axis=0).nonzero()
-    y_nz, = buf.any(axis=1).nonzero()
-    if len(x_nz) and len(y_nz):
-        l, r = x_nz[[0, -1]]
-        b, t = y_nz[[0, -1]]
-        return slice(b, t + 1), slice(l, r + 1)
-    else:
+    if not mx.any(buf).item():
         return slice(0, 0), slice(0, 0)
+    columns = mx.any(buf, axis=0)
+    rows = mx.any(buf, axis=1)
+    left = int(mx.argmax(columns).item())
+    right = buf.shape[1] - int(mx.argmax(columns[::-1]).item())
+    bottom = int(mx.argmax(rows).item())
+    top = buf.shape[0] - int(mx.argmax(rows[::-1]).item())
+    return slice(bottom, top), slice(left, right)
 
 
 def _pformat_subprocess(command):
@@ -2495,7 +2506,8 @@ def _unpack_to_array_backend(x):
         # If array_backend, return directly
         return x
     if hasattr(x, 'to_array_backend'):
-        # Assume that any to_array_backend() method actually returns a array_backend array
+        # Assume that any to_array_backend() method actually returns a
+        # array_backend array
         return x.to_array_backend()
     if hasattr(x, 'to_dict') and hasattr(x, 'columns'):
         try:

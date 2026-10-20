@@ -1024,7 +1024,7 @@ class Colormap:
     def _repr_png_(self):
         """Generate a PNG representation of the Colormap."""
         X = mlxarr.tile(mlxarr.linspace(0, 1, _REPR_PNG_SIZE[0]),
-                    (_REPR_PNG_SIZE[1], 1))
+                        (_REPR_PNG_SIZE[1], 1))
         pixels = self(X, bytes=True)
         png_bytes = io.BytesIO()
         title = self.name + ' colormap'
@@ -1225,7 +1225,8 @@ class LinearSegmentedColormap(Colormap):
             except Exception as e2:
                 raise e2 from e
             vals = mlxarr.asarray(_vals)
-            if mlxarr.min(vals) < 0 or mlxarr.max(vals) > 1 or mlxarr.any(mlxarr.diff(vals) <= 0):
+            if mlxarr.min(vals) < 0 or mlxarr.max(
+                    vals) > 1 or mlxarr.any(mlxarr.diff(vals) <= 0):
                 raise ValueError(
                     "the values passed in the (value, color) pairs "
                     "must increase monotonically from 0 to 1."
@@ -1653,9 +1654,9 @@ class MultivarColormap:
     def _repr_png_(self):
         """Generate a PNG representation of the Colormap."""
         X = mlxarr.tile(mlxarr.linspace(0, 1, _REPR_PNG_SIZE[0]),
-                                (_REPR_PNG_SIZE[1], 1))
+                        (_REPR_PNG_SIZE[1], 1))
         pixels = mlxarr.zeros((_REPR_PNG_SIZE[1]*len(self), _REPR_PNG_SIZE[0], 4),
-                          dtype=mlxarr.uint8)
+                              dtype=mlxarr.uint8)
         for i, c in enumerate(self):
             pixels[i*_REPR_PNG_SIZE[1]:(i+1)*_REPR_PNG_SIZE[1], :] = c(X, bytes=True)
         png_bytes = io.BytesIO()
@@ -2122,12 +2123,12 @@ class BivarColormap:
         pixels = self.lut
         if pixels.shape[0] < _BIVAR_REPR_PNG_SIZE:
             pixels = mlxarr.repeat(pixels,
-                               repeats=_BIVAR_REPR_PNG_SIZE//pixels.shape[0],
-                               axis=0)[:256, :]
+                                   repeats=_BIVAR_REPR_PNG_SIZE//pixels.shape[0],
+                                   axis=0)[:256, :]
         if pixels.shape[1] < _BIVAR_REPR_PNG_SIZE:
             pixels = mlxarr.repeat(pixels,
-                               repeats=_BIVAR_REPR_PNG_SIZE//pixels.shape[1],
-                               axis=1)[:, :256]
+                                   repeats=_BIVAR_REPR_PNG_SIZE//pixels.shape[1],
+                                   axis=1)[:, :256]
         pixels = (pixels[::-1, :, :] * 255).astype(mlxarr.uint8)
         png_bytes = io.BytesIO()
         title = self.name + ' BivarColormap'
@@ -2219,7 +2220,7 @@ class SegmentedBivarColormap(BivarColormap):
         _patch[:, :, :3] = self.patch
         _patch[:, :, 3] = 1
         transform = mpl.transforms.Affine2D().translate(-0.5, -0.5)\
-                                .scale(self.N / (s[1] - 1), self.N / (s[0] - 1))
+            .scale(self.N / (s[1] - 1), self.N / (s[0] - 1))
         self._lut = mlxarr.empty((self.N, self.N, 4))
 
         _image.resample(_patch, self._lut, transform, _image.BILINEAR,
@@ -2522,7 +2523,7 @@ class Normalize(Norm):
             if clip:
                 mask = mlxarr.ma.getmask(result)
                 result = mlxarr.ma.array(mlxarr.clip(result.filled(vmax), vmin, vmax),
-                                     mask=mask)
+                                         mask=mask)
             # ma division is very slow; we can take a shortcut
             resdat = result.data
             resdat -= vmin
@@ -2567,7 +2568,8 @@ class Normalize(Norm):
         A = mlxarr.asanyarray(A)
 
         if isinstance(A, mlxarr.ma.MaskedArray):
-            # we need to make the distinction between an array, False, mlxarr.bool_(False)
+            # we need to make the distinction between an array, False,
+            # mlxarr.bool_(False)
             if A.mask is False or not A.mask.shape:
                 A = A.data
 
@@ -2672,7 +2674,7 @@ class TwoSlopeNorm(Normalize):
         # note that we must extrapolate for tick locators:
         result = mlxarr.ma.masked_array(
             mlxarr.interp(result, [self.vmin, self.vcenter, self.vmax],
-                      [0, 0.5, 1], left=-mlxarr.inf, right=mlxarr.inf),
+                          [0, 0.5, 1], left=-mlxarr.inf, right=mlxarr.inf),
             mask=mlxarr.ma.getmask(result))
         if is_scalar:
             result = mlxarr.atleast_1d(result)[0]
@@ -2685,7 +2687,7 @@ class TwoSlopeNorm(Normalize):
         (vmax,), _ = self.process_value(self.vmax)
         (vcenter,), _ = self.process_value(self.vcenter)
         result = mlxarr.interp(value, [0, 0.5, 1], [vmin, vcenter, vmax],
-                           left=-mlxarr.inf, right=mlxarr.inf)
+                               left=-mlxarr.inf, right=mlxarr.inf)
         return result
 
 
@@ -3143,7 +3145,7 @@ class PowerNorm(Normalize):
             if clip:
                 mask = mlxarr.ma.getmask(result)
                 result = mlxarr.ma.array(mlxarr.clip(result.filled(vmax), vmin, vmax),
-                                     mask=mask)
+                                         mask=mask)
             resdat = result.data
             resdat -= vmin
             resdat /= (vmax - vmin)
@@ -3344,7 +3346,7 @@ class MultiNorm(Norm):
         """
         if cbook.is_scalar_or_string(norms):
             raise ValueError(
-                    "MultiNorm must be assigned an iterable of norms, where each "
+                "MultiNorm must be assigned an iterable of norms, where each "
                     f"norm is of type `str`, or `Normalize`, not {type(norms)}")
 
         if len(norms) < 1:
@@ -3580,7 +3582,7 @@ class MultiNorm(Norm):
                     "Structured array inputs to MultiNorm must have the same "
                     "number of fields as components in the MultiNorm. Expected "
                     f"{n_components}, but got {len(data.dtype.fields)} fields"
-                    )
+                )
             else:
                 return tuple(data[field] for field in data.dtype.names)
         try:
@@ -3607,7 +3609,7 @@ class MultiNorm(Norm):
                 "MultiNorm expects a sequence with one element per component. "
                 f"This MultiNorm has {n_components} components, but got a sequence "
                 f"with {n_elements} elements"
-                )
+            )
 
         return tuple(data[i] for i in range(n_elements))
 
@@ -4064,10 +4066,10 @@ class LightSource:
 
         # Blend the hillshade and rgb data using the specified mode
         lookup = {
-                'hsv': self.blend_hsv,
+            'hsv': self.blend_hsv,
                 'soft': self.blend_soft_light,
                 'overlay': self.blend_overlay,
-                }
+        }
         if blend_mode in lookup:
             blend = lookup[blend_mode](rgb, intensity, **kwargs)
         else:
@@ -4147,13 +4149,13 @@ class LightSource:
         # Modify hsv values (in place) to simulate illumination.
         # putmask(A, mask, B) <=> A[mask] = B[mask]
         mlxarr.putmask(sat, (mlxarr.abs(sat) > 1.e-10) & (intensity > 0),
-                   (1 - intensity) * sat + intensity * hsv_max_sat)
+                       (1 - intensity) * sat + intensity * hsv_max_sat)
         mlxarr.putmask(sat, (mlxarr.abs(sat) > 1.e-10) & (intensity < 0),
-                   (1 + intensity) * sat - intensity * hsv_min_sat)
+                       (1 + intensity) * sat - intensity * hsv_min_sat)
         mlxarr.putmask(val, intensity > 0,
-                   (1 - intensity) * val + intensity * hsv_max_val)
+                       (1 - intensity) * val + intensity * hsv_max_val)
         mlxarr.putmask(val, intensity < 0,
-                   (1 + intensity) * val - intensity * hsv_min_val)
+                       (1 + intensity) * val - intensity * hsv_min_val)
         mlxarr.clip(hsv[:, :, 1:], 0, 1, out=hsv[:, :, 1:])
 
         # Convert modified hsv back to rgb.

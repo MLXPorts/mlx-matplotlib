@@ -1,7 +1,7 @@
 """Typing helpers for MLX-backed arrays."""
 from __future__ import annotations
 
-from typing import Any, Iterable, Protocol, TypeAlias
+from typing import Any, Protocol, TypeAlias
 
 import mlx.core as mx
 

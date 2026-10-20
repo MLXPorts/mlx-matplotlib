@@ -14,7 +14,8 @@ manually set the Axes limits in such a case.
 
 import matplotlib.pyplot as plt
 from matplotlib import _mlx_array as mlxarr
-X, Y = mlxarr.meshgrid(mlxarr.arange(0, 2 * mlxarr.pi, .2), mlxarr.arange(0, 2 * mlxarr.pi, .2))
+X, Y = mlxarr.meshgrid(mlxarr.arange(0, 2 * mlxarr.pi, .2),
+                       mlxarr.arange(0, 2 * mlxarr.pi, .2))
 U = mlxarr.cos(X)
 V = mlxarr.sin(Y)
 

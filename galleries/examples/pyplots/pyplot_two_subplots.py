@@ -8,6 +8,8 @@ Create a figure with two subplots using `.pyplot.subplot`.
 
 import matplotlib.pyplot as plt
 from matplotlib import _mlx_array as mlxarr
+
+
 def f(t):
     return mlxarr.exp(-t) * mlxarr.cos(2*mlxarr.pi*t)
 

@@ -9,6 +9,8 @@ This example uses the Fahrenheit and Celsius scales.
 """
 import matplotlib.pyplot as plt
 from matplotlib import _mlx_array as mlxarr
+
+
 def fahrenheit2celsius(temp):
     """
     Returns temperature in Celsius given Fahrenheit temperature.

@@ -29,7 +29,8 @@ def test_legend_bar():
                   tol=0 if platform.machine() == 'x86_64' else 0.011)
 def test_fancy():
     fig, ax = plt.subplots(subplot_kw=dict(projection='3d'))
-    ax.plot(mlxarr.arange(10), mlxarr.full(10, 5), mlxarr.full(10, 5), 'o--', label='line')
+    ax.plot(mlxarr.arange(10), mlxarr.full(10, 5),
+            mlxarr.full(10, 5), 'o--', label='line')
     ax.scatter(mlxarr.arange(10), mlxarr.arange(10, 0, -1), label='scatter')
     ax.errorbar(mlxarr.full(10, 5), mlxarr.arange(10), mlxarr.full(10, 10),
                 xerr=0.5, zerr=0.5, label='errorbar')

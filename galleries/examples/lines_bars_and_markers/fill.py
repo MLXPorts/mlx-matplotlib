@@ -14,6 +14,8 @@ This example uses the `Koch snowflake`_ as an example polygon.
 
 import matplotlib.pyplot as plt
 from matplotlib import _mlx_array as mlxarr
+
+
 def koch_snowflake(order, scale=10):
     """
     Return two lists x, y of point coordinates of the Koch snowflake.

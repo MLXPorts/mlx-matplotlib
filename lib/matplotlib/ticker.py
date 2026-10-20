@@ -136,6 +136,7 @@ import locale
 import math
 from numbers import Integral
 import string
+import mlx.core as mx
 from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from matplotlib import _api, cbook
@@ -547,7 +548,7 @@ class ScalarFormatter(Formatter):
         Format *arg* with *fmt*, applying Unicode minus and locale if desired.
         """
         return self.fix_minus(
-                # Escape commas introduced by locale.format_string if using math text,
+            # Escape commas introduced by locale.format_string if using math text,
                 # but not those present from the beginning in fmt.
                 (",".join(locale.format_string(part, (arg,), True).replace(",", "{,}")
                           for part in fmt.split(",")) if self._useMathText
@@ -2167,7 +2168,7 @@ class MaxNLocator(Locator):
         if self._nbins == 'auto':
             if self.axis is not None:
                 nbins = mlxarr.clip(self.axis.get_tick_space(),
-                                max(1, self._min_n_ticks - 1), 9)
+                                    max(1, self._min_n_ticks - 1), 9)
             else:
                 nbins = 9
         else:
@@ -2198,7 +2199,7 @@ class MaxNLocator(Locator):
 
         # Find index of smallest large step
         if any(large_steps):
-            istep = mlxarr.nonzero(large_steps)[0][0]
+            istep = int(mx.argmax(large_steps).item())
         else:
             istep = len(steps) - 1
 
@@ -2522,7 +2523,7 @@ class LogLocator(Locator):
                 and stride == 1
                 and (len(decades) - 2  # major
                      + ((vmin <= ticklocs) & (ticklocs <= vmax)).sum())  # minor
-                     <= 1):
+                <= 1):
             # If we're a minor locator *that expects at least two ticks per
             # decade* and the major locator stride is 1 and there's no more
             # than one major or minor tick, switch to AutoLocator.
@@ -2681,7 +2682,7 @@ class SymmetricalLogLocator(Locator):
         decades = []
         if has_a:
             decades.extend(-1 * (base ** (mlxarr.arange(a_lo, a_hi,
-                                                    stride)[::-1])))
+                                                        stride)[::-1])))
 
         if has_b:
             decades.append(0.0)
@@ -2785,7 +2786,7 @@ class AsinhLocator(Locator):
     def tick_values(self, vmin, vmax):
         # Construct a set of uniformly-spaced "on-screen" locations.
         ymin, ymax = self.linear_width * mlxarr.arcsinh(mlxarr.array([vmin, vmax])
-                                                    / self.linear_width)
+                                                        / self.linear_width)
         ys = mlxarr.linspace(ymin, ymax, self.numticks)
         zero_dev = abs(ys / (ymax - ymin))
         if ymin * ymax < 0:
@@ -2800,8 +2801,8 @@ class AsinhLocator(Locator):
         # positive and negative values separately and carefully treating the zero value.
         with mlxarr.errstate(divide="ignore"):  # base ** log(0) = base ** -inf = 0.
             if self.base > 1:
-                pows = (mlxarr.sign(xs)
-                        * self.base ** mlxarr.floor(mlxarr.log(abs(xs)) / math.log(self.base)))
+                pows = (mlxarr.sign(xs) * self.base **
+                        mlxarr.floor(mlxarr.log(abs(xs)) / math.log(self.base)))
                 qs = mlxarr.outer(pows, self.subs).flatten() if self.subs else pows
             else:  # No need to adjust sign(pows), as it cancels out when computing qs.
                 pows = mlxarr.where(zero_xs, 1, 10**mlxarr.floor(mlxarr.log10(abs(xs))))
@@ -3023,7 +3024,8 @@ class AutoMinorLocator(Locator):
 
         if self.ndivs == 'auto':
             majorstep_mantissa = 10 ** (mlxarr.log10(majorstep) % 1)
-            ndivs = 5 if mlxarr.isclose(majorstep_mantissa, [1, 2.5, 5, 10]).any() else 4
+            ndivs = 5 if mlxarr.isclose(
+                majorstep_mantissa, [1, 2.5, 5, 10]).any() else 4
         else:
             ndivs = self.ndivs
 

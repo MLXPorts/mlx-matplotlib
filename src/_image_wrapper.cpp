@@ -493,6 +493,34 @@ std::string shape_to_string(const ArrayInfo &info)
     return result;
 }
 
+// Pillow and other host-buffer callers cross into MLX once at ingress.
+// Keep ownership of the copied data in the resulting MLX array.
+mx::array image_array_from_info(const ArrayInfo &info)
+{
+    if (info.mlx_array) {
+        return *info.mlx_array;
+    }
+    mx::Shape shape;
+    size_t size = 1;
+    for (auto extent : info.shape) {
+        shape.push_back(static_cast<mx::ShapeElem>(extent));
+        size *= static_cast<size_t>(extent);
+    }
+    std::vector<std::uint8_t> data(size);
+    auto *base = static_cast<const std::uint8_t *>(info.ptr);
+    for (size_t linear = 0; linear < size; ++linear) {
+        auto remaining = linear;
+        py::ssize_t offset = 0;
+        for (py::ssize_t axis = info.ndim - 1; axis >= 0; --axis) {
+            auto extent = static_cast<size_t>(info.shape[axis]);
+            offset += static_cast<py::ssize_t>(remaining % extent) * info.strides[axis];
+            remaining /= extent;
+        }
+        data[linear] = base[offset];
+    }
+    return mx::array(data.begin(), shape, mx::uint8);
+}
+
 static py::tuple calculate_rms_and_diff(py::object expected_image,
                                        py::object actual_image,
                                        py::object stream)
@@ -533,37 +561,36 @@ static py::tuple calculate_rms_and_diff(py::object expected_image,
     auto width = expected.shape[1];
     auto depth = expected.shape[2];
 
-    std::vector<unsigned char> diff;
-    diff.resize(static_cast<size_t>(height * width * depth));
-
-    auto at = [](const ArrayInfo &info, py::ssize_t y, py::ssize_t x, py::ssize_t c) {
-        auto base = static_cast<const unsigned char *>(info.ptr);
-        auto offset = y * info.strides[0] + x * info.strides[1] + c * info.strides[2];
-        return *(base + offset);
-    };
-
-    double sum_sq = 0.0;
-    for (py::ssize_t y = 0; y < height; ++y) {
-        for (py::ssize_t x = 0; x < width; ++x) {
-            for (py::ssize_t c = 0; c < depth; ++c) {
-                auto e = at(expected, y, x, c);
-                auto a = at(actual, y, x, c);
-                auto d = static_cast<int>(e) - static_cast<int>(a);
-                sum_sq += static_cast<double>(d * d);
-                diff[static_cast<size_t>((y * width + x) * depth + c)] = static_cast<unsigned char>(std::abs(d));
-            }
-        }
+    auto expected_array = image_array_from_info(expected);
+    auto actual_array = image_array_from_info(actual);
+    auto expected_i32 = mx::astype(expected_array, mx::int32, stream_or_device);
+    auto actual_i32 = mx::astype(actual_array, mx::int32, stream_or_device);
+    auto difference = mx::abs(mx::subtract(expected_i32, actual_i32, stream_or_device),
+                              stream_or_device);
+    auto difference_f32 = mx::astype(difference, mx::float32, stream_or_device);
+    auto rms_array = mx::sqrt(mx::mean(mx::square(difference_f32, stream_or_device),
+                                      stream_or_device),
+                             stream_or_device);
+    auto diff_uint8 = mx::astype(difference, mx::uint8, stream_or_device);
+    // The diff is consumed by Pillow as host bytes. Stage only this final output.
+    auto host_diff = mx::copy(diff_uint8, mx::Device(mx::Device::cpu));
+    double rms;
+    {
+        py::gil_scoped_release release;
+        rms_array.eval();
+        host_diff.eval();
+        rms = static_cast<double>(rms_array.item<float>());
     }
-
-    double rms = std::sqrt(sum_sq / static_cast<double>(height * width * depth));
+    const auto diff_size = static_cast<py::ssize_t>(height * width * depth);
 
     // Return diff as a shaped memoryview so callers can wrap it into an MLX array.
     py::bytearray ba = py::reinterpret_steal<py::bytearray>(
-        PyByteArray_FromStringAndSize(nullptr, static_cast<py::ssize_t>(diff.size())));
+        PyByteArray_FromStringAndSize(nullptr, diff_size));
     if (!ba) {
         throw py::error_already_set();
     }
-    std::memcpy(PyByteArray_AsString(ba.ptr()), diff.data(), diff.size());
+    std::memcpy(PyByteArray_AsString(ba.ptr()), host_diff.data<std::uint8_t>(),
+                static_cast<size_t>(diff_size));
     py::object mv = py::module_::import("builtins").attr("memoryview")(ba);
     mv = mv.attr("cast")("B", py::make_tuple(height, width, depth));
 
@@ -572,7 +599,11 @@ static py::tuple calculate_rms_and_diff(py::object expected_image,
 
 PYBIND11_MODULE(_image, m)
 {
-#if NB_VERSION_MAJOR > 2 || (NB_VERSION_MAJOR == 2 && NB_VERSION_MINOR >= 12)
+#if NB_VERSION_MAJOR >= 3
+    if (!nb::register_module(nb::handle(m.ptr()))) {
+        throw py::error_already_set();
+    }
+#elif NB_VERSION_MAJOR == 2 && NB_VERSION_MINOR >= 12
     nb::detail::nb_module_exec(NB_DOMAIN_STR, m.ptr());
 #else
     nb::detail::init(NB_DOMAIN_STR);

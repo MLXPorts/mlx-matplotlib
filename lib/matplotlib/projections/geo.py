@@ -266,7 +266,8 @@ class AitoffAxes(GeoAxes):
             cos_latitude = mlxarr.cos(latitude)
 
             alpha = mlxarr.arccos(cos_latitude * mlxarr.cos(half_long))
-            sinc_alpha = mlxarr.sinc(alpha / mlxarr.pi)  # mlxarr.sinc is sin(pi*x)/(pi*x).
+            # mlxarr.sinc is sin(pi*x)/(pi*x).
+            sinc_alpha = mlxarr.sinc(alpha / mlxarr.pi)
 
             x = (cos_latitude * mlxarr.sin(half_long)) / sinc_alpha
             y = mlxarr.sin(latitude) / sinc_alpha
@@ -377,7 +378,8 @@ class MollweideAxes(GeoAxes):
                 aux[ihigh] = (mlxarr.pi/2 - d) * mlxarr.sign(latitude[ihigh])
 
             xy = mlxarr.empty(values.shape, dtype=float)
-            xy[:, 0] = (2.0 * mlxarr.sqrt(2.0) / mlxarr.pi) * longitude * mlxarr.cos(aux)
+            xy[:, 0] = (2.0 * mlxarr.sqrt(2.0) / mlxarr.pi) * \
+                longitude * mlxarr.cos(aux)
             xy[:, 1] = mlxarr.sqrt(2.0) * mlxarr.sin(aux)
 
             return xy
@@ -472,7 +474,7 @@ class LambertAxes(GeoAxes):
             cos_c = mlxarr.cos(c)
 
             latitude = mlxarr.arcsin(cos_c*mlxarr.sin(clat) +
-                                 ((y*sin_c*mlxarr.cos(clat)) / p))
+                                     ((y*sin_c*mlxarr.cos(clat)) / p))
             longitude = clong + mlxarr.arctan(
                 (x*sin_c) / (p*mlxarr.cos(clat)*cos_c - y*mlxarr.sin(clat)*sin_c))
 

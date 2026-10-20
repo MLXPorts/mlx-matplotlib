@@ -89,7 +89,7 @@ def test_contains_points_negative_radius():
 _test_paths = [
     # interior extrema determine extents and degenerate derivative
     Path([[0, 0], [1, 0], [1, 1], [0, 1]],
-           [Path.MOVETO, Path.CURVE4, Path.CURVE4, Path.CURVE4]),
+         [Path.MOVETO, Path.CURVE4, Path.CURVE4, Path.CURVE4]),
     # a quadratic curve
     Path([[0, 0], [0, 1], [1, 0]], [Path.MOVETO, Path.CURVE3, Path.CURVE3]),
     # a linear curve, degenerate vertically
@@ -103,7 +103,7 @@ _test_path_extents = [(0., 0., 0.75, 1.), (0., 0., 1., 0.5), (0., 1., 1., 1.),
                       (1., 2., 1., 2.)]
 
 
-@pytest.mark.parametrize('path, extents', zip(_test_paths, _test_path_extents))
+@pytest.mark.parametrize('path, extents', list(zip(_test_paths, _test_path_extents)))
 def test_exact_extents(path, extents):
     # notice that if we just looked at the control points to get the bounding
     # box of each curve, we would get the wrong answers. For example, for
@@ -176,7 +176,7 @@ def test_arrow_contains_point():
 
     # generate some points
     X, Y = mlxarr.meshgrid(mlxarr.arange(0, 2, 0.1),
-                       mlxarr.arange(0, 2, 0.1))
+                           mlxarr.arange(0, 2, 0.1))
     for k, (x, y) in enumerate(zip(X.ravel(), Y.ravel())):
         xdisp, ydisp = ax.transData.transform([x, y])
         event = MouseEvent('button_press_event', fig.canvas, xdisp, ydisp)
@@ -413,9 +413,9 @@ def test_path_shallowcopy():
     assert path2.codes is path2_copy.codes
 
 
-@pytest.mark.parametrize('phi', mlxarr.concatenate([
+@pytest.mark.parametrize('phi', list(mlxarr.concatenate([
     mlxarr.array([0, 15, 30, 45, 60, 75, 90, 105, 120, 135]) + delta
-    for delta in [-1, 0, 1]]))
+    for delta in [-1, 0, 1]])))
 def test_path_intersect_path(phi):
     # test for the range of intersection angles
     eps_array = [1e-5, 1e-8, 1e-10, 1e-12]
@@ -527,7 +527,7 @@ def test_disjoint_zero_length_segment():
             [859.91051028, 2165.38461538],
             [859.91051028, 2165.38461538]]),
         mlxarr.array([1, 2, 2, 2, 2],
-                 dtype=Path.code_type))
+                     dtype=Path.code_type))
 
     assert not outline_path.intersects_path(this_path)
     assert not this_path.intersects_path(outline_path)
@@ -565,7 +565,8 @@ def test_cleanup_closepoly():
         Path([[mlxarr.nan, mlxarr.nan], [mlxarr.nan, mlxarr.nan]]),
         # we should also make sure that this cleanup works if there's some
         # multi-vertex curves
-        Path([[mlxarr.nan, mlxarr.nan], [mlxarr.nan, mlxarr.nan], [mlxarr.nan, mlxarr.nan],
+        Path([[mlxarr.nan, mlxarr.nan], [mlxarr.nan, mlxarr.nan],
+              [mlxarr.nan, mlxarr.nan],
               [mlxarr.nan, mlxarr.nan]],
              [Path.MOVETO, Path.CURVE3, Path.CURVE3, Path.CLOSEPOLY])
     ]
@@ -578,11 +579,11 @@ def test_cleanup_closepoly():
 def test_interpolated_moveto():
     # Initial path has two subpaths with two LINETOs each
     vertices = mlxarr.array([[0, 0],
-                         [0, 1],
-                         [1, 2],
-                         [4, 4],
-                         [4, 5],
-                         [5, 5]])
+                             [0, 1],
+                             [1, 2],
+                             [4, 4],
+                             [4, 5],
+                             [5, 5]])
     codes = [Path.MOVETO, Path.LINETO, Path.LINETO] * 2
 
     path = Path(vertices, codes)
@@ -601,12 +602,12 @@ def test_interpolated_closepoly():
     result = path.interpolated(2)
 
     expected_vertices = mlxarr.array([[4, 3],
-                                  [4.5, 3.5],
-                                  [5, 4],
-                                  [5, 3.5],
-                                  [5, 3],
-                                  [4.5, 3],
-                                  [4, 3]])
+                                      [4.5, 3.5],
+                                      [5, 4],
+                                      [5, 3.5],
+                                      [5, 3],
+                                      [4.5, 3],
+                                      [4, 3]])
     expected_codes = [Path.MOVETO] + [Path.LINETO]*5 + [Path.CLOSEPOLY]
 
     mlxarr.testing.assert_allclose(result.vertices, expected_vertices)
@@ -620,7 +621,7 @@ def test_interpolated_closepoly():
     result = path.interpolated(2)
 
     extra_expected_vertices = mlxarr.array([[3, 2],
-                                        [2, 1]])
+                                            [2, 1]])
     expected_vertices = mlxarr.concatenate([expected_vertices, extra_expected_vertices])
 
     expected_codes += [Path.LINETO] * 2
@@ -638,12 +639,12 @@ def test_interpolated_moveto_closepoly():
     result = path.interpolated(2)
 
     expected_vertices1 = mlxarr.array([[4, 3],
-                                   [4.5, 3.5],
-                                   [5, 4],
-                                   [5, 3.5],
-                                   [5, 3],
-                                   [4.5, 3],
-                                   [4, 3]])
+                                       [4.5, 3.5],
+                                       [5, 4],
+                                       [5, 3.5],
+                                       [5, 3],
+                                       [4.5, 3],
+                                       [4, 3]])
     expected_vertices = mlxarr.concatenate([expected_vertices1, expected_vertices1 * 2])
     expected_codes = ([Path.MOVETO] + [Path.LINETO]*5 + [Path.CLOSEPOLY]) * 2
 

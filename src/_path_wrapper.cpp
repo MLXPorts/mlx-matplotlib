@@ -593,7 +593,11 @@ static bool Py_is_sorted_and_has_non_nan(py::object obj)
 
 PYBIND11_MODULE(_path, m, py::mod_gil_not_used())
 {
-#if NB_VERSION_MAJOR > 2 || (NB_VERSION_MAJOR == 2 && NB_VERSION_MINOR >= 12)
+#if NB_VERSION_MAJOR >= 3
+    if (!nb::register_module(nb::handle(m.ptr()))) {
+        throw py::error_already_set();
+    }
+#elif NB_VERSION_MAJOR == 2 && NB_VERSION_MINOR >= 12
     nb::detail::nb_module_exec(NB_DOMAIN_STR, m.ptr());
 #else
     nb::detail::init(NB_DOMAIN_STR);

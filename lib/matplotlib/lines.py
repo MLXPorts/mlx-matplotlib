@@ -6,6 +6,7 @@ import copy
 
 from numbers import Integral, Number, Real
 import logging
+import mlx.core as mx
 from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from . import _api, cbook, colors as mcolors, _docstring
@@ -100,8 +101,9 @@ def segment_hits(cx, cy, x, y, radius):
     """
     # Process single points specially
     if len(x) <= 1:
-        res, = mlxarr.nonzero((cx - x) ** 2 + (cy - y) ** 2 <= radius ** 2)
-        return res
+        hits = (cx - x) ** 2 + (cy - y) ** 2 <= radius ** 2
+        return mx.sort(mx.where(hits, mx.arange(hits.size), hits.size))[
+            :int(mx.sum(hits).item())]
 
     # We need to lop the last element off a lot.
     xr, yr = x[:-1], y[:-1]
@@ -125,9 +127,15 @@ def segment_hits(cx, cy, x, y, radius):
     px, py = xr + u * dx, yr + u * dy
     line_hits = (cx - px) ** 2 + (cy - py) ** 2 <= radius ** 2
     line_hits = line_hits & candidates
-    points, = point_hits.ravel().nonzero()
-    lines, = line_hits.ravel().nonzero()
-    return mlxarr.concatenate((points, lines))
+    point_hits = mx.reshape(point_hits, (-1,))
+    line_hits = mx.reshape(line_hits, (-1,))
+    points = mx.sort(mx.where(
+        point_hits, mx.arange(point_hits.size), point_hits.size))[
+            :int(mx.sum(point_hits).item())]
+    lines = mx.sort(mx.where(
+        line_hits, mx.arange(line_hits.size), line_hits.size))[
+            :int(mx.sum(line_hits).item())]
+    return mx.concatenate((points, lines))
 
 
 def _mark_every_path(markevery, tpath, affine, ax):
@@ -199,7 +207,8 @@ def _mark_every_path(markevery, tpath, affine, ax):
             marker_delta = mlxarr.arange(start * scale, delta[-1], step * scale)
             # find closest actual data point that is closest to
             # the theoretical distance along the path:
-            inds = mlxarr.abs(delta[mlxarr.newaxis, :] - marker_delta[:, mlxarr.newaxis])
+            inds = mlxarr.abs(delta[mlxarr.newaxis, :] - \
+                              marker_delta[:, mlxarr.newaxis])
             inds = inds.argmin(axis=1)
             inds = mlxarr.unique(inds)
             # return, we are done here
@@ -481,9 +490,10 @@ class Line2D(Artist):
             # Check for collision
             if self._linestyle in ['None', None]:
                 # If no line, return the nearby point(s)
-                ind, = mlxarr.nonzero(
-                    (xt - mouseevent.x) ** 2 + (yt - mouseevent.y) ** 2
-                    <= pixels ** 2)
+                hits = ((xt - mouseevent.x) ** 2 + (yt - mouseevent.y) ** 2
+                        <= pixels ** 2)
+                ind = mx.sort(mx.where(hits, mx.arange(hits.size), hits.size))[
+                    :int(mx.sum(hits).item())]
             else:
                 # If line, return the nearby segment(s)
                 ind = segment_hits(mouseevent.x, mouseevent.y, xt, yt, pixels)
@@ -879,8 +889,8 @@ class Line2D(Artist):
                     alt_marker_trans = marker.get_alt_transform()
                     alt_marker_trans = alt_marker_trans.scale(w)
                     renderer.draw_markers(
-                            gc, alt_marker_path, alt_marker_trans, subsampled,
-                            affine.frozen(), fcalt_rgba)
+                        gc, alt_marker_path, alt_marker_trans, subsampled,
+                        affine.frozen(), fcalt_rgba)
 
             gc.restore()
 
@@ -1632,7 +1642,7 @@ class VertexSelector:
     something with the picks.
 
     Here is an example which highlights the selected verts with red circles::
-from matplotlib import _mlx_array as mlxarr
+        import mlx.core as mx
         import matplotlib.pyplot as plt
         import matplotlib.lines as lines
 
@@ -1646,7 +1656,7 @@ from matplotlib import _mlx_array as mlxarr
                 self.canvas.draw()
 
         fig, ax = plt.subplots()
-        x, y = mlxarr.random.rand(2, 30)
+        x, y = mx.random.uniform(shape=(2, 30))
         line, = ax.plot(x, y, 'bs-', picker=5)
 
         selector = HighlightSelected(line)

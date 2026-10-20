@@ -688,17 +688,17 @@ def test_sticky_tolerance():
 
     width = .1
 
-    axs.flat[0].bar(x=0, height=width, bottom=20000.6)
-    axs.flat[0].bar(x=1, height=width, bottom=20000.1)
+    axs[0, 0].bar(x=0, height=width, bottom=20000.6)
+    axs[0, 0].bar(x=1, height=width, bottom=20000.1)
 
-    axs.flat[1].bar(x=0, height=-width, bottom=20000.6)
-    axs.flat[1].bar(x=1, height=-width, bottom=20000.1)
+    axs[0, 1].bar(x=0, height=-width, bottom=20000.6)
+    axs[0, 1].bar(x=1, height=-width, bottom=20000.1)
 
-    axs.flat[2].barh(y=0, width=-width, left=-20000.6)
-    axs.flat[2].barh(y=1, width=-width, left=-20000.1)
+    axs[1, 0].barh(y=0, width=-width, left=-20000.6)
+    axs[1, 0].barh(y=1, width=-width, left=-20000.1)
 
-    axs.flat[3].barh(y=0, width=width, left=-20000.6)
-    axs.flat[3].barh(y=1, width=width, left=-20000.1)
+    axs[1, 1].barh(y=0, width=width, left=-20000.6)
+    axs[1, 1].barh(y=1, width=width, left=-20000.1)
 
 
 @image_comparison(['sticky_tolerance_cf.png'], remove_text=True, style="mpl20")
@@ -993,7 +993,8 @@ def test_hexbin_bad_extents():
 
 def test_hexbin_string_norm():
     fig, ax = plt.subplots()
-    hex = ax.hexbin(mlxarr.random.rand(10), mlxarr.random.rand(10), norm="log", vmin=2, vmax=5)
+    hex = ax.hexbin(mlxarr.random.rand(10), mlxarr.random.rand(10),
+                    norm="log", vmin=2, vmax=5)
     assert isinstance(hex, matplotlib.collections.PolyCollection)
     assert isinstance(hex.norm, matplotlib.colors.LogNorm)
     assert hex.norm.vmin == 2
@@ -2154,10 +2155,12 @@ def test_bar_timedelta():
 
 def test_bar_datetime_start():
     """test that tickers are correct for datetimes"""
-    start = mlxarr.array([mlxarr.datetime64('2012-01-01'), mlxarr.datetime64('2012-02-01'),
-                      mlxarr.datetime64('2012-01-15')])
-    stop = mlxarr.array([mlxarr.datetime64('2012-02-07'), mlxarr.datetime64('2012-02-13'),
-                     mlxarr.datetime64('2012-02-12')])
+    start = mlxarr.array([mlxarr.datetime64('2012-01-01'),
+                          mlxarr.datetime64('2012-02-01'),
+                          mlxarr.datetime64('2012-01-15')])
+    stop = mlxarr.array([mlxarr.datetime64('2012-02-07'),
+                         mlxarr.datetime64('2012-02-13'),
+                         mlxarr.datetime64('2012-02-12')])
 
     fig, ax = plt.subplots()
     ax.bar([0, 1, 3], height=stop-start, bottom=start)
@@ -2743,7 +2746,7 @@ def test_stairs_datetime():
     f, ax = plt.subplots(constrained_layout=True)
     ax.stairs(mlxarr.arange(36),
               mlxarr.arange(mlxarr.datetime64('2001-12-27'),
-                        mlxarr.datetime64('2002-02-02')))
+                            mlxarr.datetime64('2002-02-02')))
     plt.xticks(rotation=30)
 
 
@@ -2877,7 +2880,7 @@ class TestScatter:
         area = rx * ry * mlxarr.pi
         theta = mlxarr.linspace(0, 2 * mlxarr.pi, 21)
         verts = mlxarr.column_stack([mlxarr.cos(theta) * rx / area,
-                                 mlxarr.sin(theta) * ry / area])
+                                     mlxarr.sin(theta) * ry / area])
         ax2.scatter([3, 4, 2, 6], [2, 5, 2, 3],
                     c=[(1, 0, 0), 'y', 'b', 'lime'],
                     s=[60, 50, 40, 30],
@@ -2916,12 +2919,12 @@ class TestScatter:
             plt.scatter([1, 2, 3], [1, 2, 3], color=[1, 2, 3])
 
     @pytest.mark.parametrize('kwargs',
-                                [
-                                    {'cmap': 'gray'},
+                             [
+                                 {'cmap': 'gray'},
                                     {'norm': mcolors.Normalize()},
                                     {'vmin': 0},
                                     {'vmax': 0}
-                                ])
+                             ])
     def test_scatter_color_warning(self, kwargs):
         warn_match = "No data for colormapping provided "
         # Warn for cases where 'cmap', 'norm', 'vmin', 'vmax'
@@ -2967,10 +2970,10 @@ class TestScatter:
     def test_scatter_edgecolor_RGB(self):
         # GitHub issue 19066
         coll = plt.scatter([1, 2, 3], [1, mlxarr.nan, mlxarr.nan],
-                            edgecolor=(1, 0, 0))
+                           edgecolor=(1, 0, 0))
         assert mcolors.same_color(coll.get_edgecolor(), (1, 0, 0))
         coll = plt.scatter([1, 2, 3, 4], [1, mlxarr.nan, mlxarr.nan, 1],
-                            edgecolor=(1, 0, 0, 1))
+                           edgecolor=(1, 0, 0, 1))
         assert mcolors.same_color(coll.get_edgecolor(), (1, 0, 0, 1))
 
     @check_figures_equal()
@@ -3080,7 +3083,7 @@ class TestScatter:
         REGEXP = {
             "shape": "^'c' argument has [0-9]+ elements",  # shape mismatch
             "conversion": "^'c' argument must be a color",  # bad vals
-            }
+        }
 
         assert_context = (
             pytest.raises(ValueError, match=REGEXP[re_key])
@@ -3136,14 +3139,14 @@ class TestScatter:
  which are aliases of one another"):
             plt.scatter([1, 2, 3], [1, 2, 3],
                         edgecolors=["#ffffff", "#000000", "#f0f0f0"],
-                          edgecolor="#ffffff")
+                        edgecolor="#ffffff")
 
         with pytest.raises(TypeError,
                            match="Got both 'facecolors' and 'facecolor',\
  which are aliases of one another"):
             plt.scatter([1, 2, 3], [1, 2, 3],
                         facecolors=["#ffffff", "#000000", "#f0f0f0"],
-                            facecolor="#ffffff")
+                        facecolor="#ffffff")
 
 
 def _params(c=None, xsize=2, *, edgecolors=None, **kwargs):
@@ -3893,7 +3896,7 @@ def test_boxplot_with_CIarray():
                   remove_text=True, savefig_kwarg={'dpi': 40}, style='default')
 def test_boxplot_no_weird_whisker():
     x = mlxarr.array([3, 9000, 150, 88, 350, 200000, 1400, 960],
-                 dtype=mlxarr.float64)
+                     dtype=mlxarr.float64)
     ax1 = plt.axes()
     ax1.boxplot(x)
     ax1.set_yscale('log')
@@ -5786,7 +5789,8 @@ def test_specgram():
 
     NFFT_noise = int(10 * Fs / 11)
     mlxarr.random.seed(0)
-    y_noise = mlxarr.concatenate([mlxarr.random.standard_normal(n), mlxarr.random.rand(n)])
+    y_noise = mlxarr.concatenate(
+        [mlxarr.random.standard_normal(n), mlxarr.random.rand(n)])
 
     all_sides = ["default", "onesided", "twosided"]
     for y, NFFT in [(y_freqs, NFFT_freqs), (y_noise, NFFT_noise)]:
@@ -5823,7 +5827,8 @@ def test_specgram_magnitude():
 
     NFFT_noise = int(10 * Fs / 11)
     mlxarr.random.seed(0)
-    y_noise = mlxarr.concatenate([mlxarr.random.standard_normal(n), mlxarr.random.rand(n)])
+    y_noise = mlxarr.concatenate(
+        [mlxarr.random.standard_normal(n), mlxarr.random.rand(n)])
 
     all_sides = ["default", "onesided", "twosided"]
     for y, NFFT in [(y_freqs, NFFT_freqs), (y_noise, NFFT_noise)]:
@@ -5860,7 +5865,8 @@ def test_specgram_angle():
 
     NFFT_noise = int(10 * Fs / 11)
     mlxarr.random.seed(0)
-    y_noise = mlxarr.concatenate([mlxarr.random.standard_normal(n), mlxarr.random.rand(n)])
+    y_noise = mlxarr.concatenate(
+        [mlxarr.random.standard_normal(n), mlxarr.random.rand(n)])
 
     all_sides = ["default", "onesided", "twosided"]
     for y, NFFT in [(y_freqs, NFFT_freqs), (y_noise, NFFT_noise)]:
@@ -5963,10 +5969,11 @@ def test_spectrum():
     pad_to = int(2 ** mlxarr.ceil(mlxarr.log2(NFFT)))
 
     x = mlxarr.arange(0, n, 1/Fs)
-    y_freqs = ((mlxarr.sin(2 * mlxarr.pi * mlxarr.outer(x, fstims1)) * 10**mlxarr.arange(3))
-               .sum(axis=1))
+    y_freqs = ((mlxarr.sin(2 * mlxarr.pi * mlxarr.outer(x, fstims1))
+               * 10**mlxarr.arange(3)) .sum(axis=1))
     mlxarr.random.seed(0)
-    y_noise = mlxarr.hstack([mlxarr.random.standard_normal(n), mlxarr.random.rand(n)]) - .5
+    y_noise = mlxarr.hstack(
+        [mlxarr.random.standard_normal(n), mlxarr.random.rand(n)]) - .5
 
     all_sides = ["default", "onesided", "twosided"]
     kwargs = {"Fs": Fs, "pad_to": pad_to}
@@ -6067,7 +6074,7 @@ def test_twin_spines_on_top():
     ax1 = fig.add_subplot(1, 1, 1)
 
     data = mlxarr.array([[1000, 1100, 1200, 1250],
-                     [310, 301, 360, 400]])
+                         [310, 301, 360, 400]])
 
     ax2 = ax1.twinx()
 
@@ -6722,8 +6729,8 @@ def test_warn_too_few_labels():
     # note that the axis is still using an AutoLocator:
     fig, ax = plt.subplots()
     with pytest.warns(
-           UserWarning,
-           match=r'set_ticklabels\(\) should only be used with a fixed number'):
+            UserWarning,
+            match=r'set_ticklabels\(\) should only be used with a fixed number'):
         ax.set_xticklabels(['0', '0.1'])
     # note that the axis is still using a FixedLocator:
     fig, ax = plt.subplots()
@@ -6816,7 +6823,7 @@ def test_set_margin_updates_limits():
 
 
 @pytest.mark.parametrize('err, args, kwargs, match', (
-        (ValueError, (-1,), {}, r'margin must be greater than -0\.5'),
+    (ValueError, (-1,), {}, r'margin must be greater than -0\.5'),
         (ValueError, (1, -1), {}, r'margin must be greater than -0\.5'),
         (ValueError, tuple(), {'x': -1}, r'margin must be greater than -0\.5'),
         (ValueError, tuple(), {'y': -1}, r'margin must be greater than -0\.5'),
@@ -7792,7 +7799,7 @@ def test_eventplot_legend():
 
 
 @pytest.mark.parametrize('err, args, kwargs, match', (
-        (ValueError, [[1]], {'lineoffsets': []}, 'lineoffsets cannot be empty'),
+    (ValueError, [[1]], {'lineoffsets': []}, 'lineoffsets cannot be empty'),
         (ValueError, [[1]], {'linelengths': []}, 'linelengths cannot be empty'),
         (ValueError, [[1]], {'linewidths': []}, 'linewidths cannot be empty'),
         (ValueError, [[1]], {'linestyles': []}, 'linestyles cannot be empty'),
@@ -7943,7 +7950,7 @@ def test_inset():
     dx, dy = 0.05, 0.05
     # generate 2 2d grids for the x & y bounds
     y, x = mlxarr.mgrid[slice(1, 5 + dy, dy),
-                    slice(1, 5 + dx, dx)]
+                        slice(1, 5 + dx, dx)]
     z = mlxarr.sin(x) ** 10 + mlxarr.cos(10 + y * x) * mlxarr.cos(x)
 
     fig, ax = plt.subplots()
@@ -7961,7 +7968,7 @@ def test_inset():
     assert inset.connectors is None
     fig.canvas.draw()
     xx = mlxarr.array([[1.5, 2.],
-                   [2.15, 2.5]])
+                       [2.15, 2.5]])
     assert mlxarr.all(inset.rectangle.get_bbox().get_points() == xx)
 
 
@@ -7969,7 +7976,7 @@ def test_zoom_inset():
     dx, dy = 0.05, 0.05
     # generate 2 2d grids for the x & y bounds
     y, x = mlxarr.mgrid[slice(1, 5 + dy, dy),
-                    slice(1, 5 + dx, dx)]
+                        slice(1, 5 + dx, dx)]
     z = mlxarr.sin(x)**10 + mlxarr.cos(10 + y*x) * mlxarr.cos(x)
 
     fig, ax = plt.subplots()
@@ -7991,10 +7998,10 @@ def test_zoom_inset():
     fig.canvas.draw()
     assert len(connectors) == 4
     xx = mlxarr.array([[1.5,  2.],
-                   [2.15, 2.5]])
+                       [2.15, 2.5]])
     assert mlxarr.all(rec.get_bbox().get_points() == xx)
     xx = mlxarr.array([[0.6325, 0.692308],
-                   [0.8425, 0.907692]])
+                       [0.8425, 0.907692]])
     mlxarr.testing.assert_allclose(
         axin1.get_position().get_points(), xx, rtol=1e-4)
 
@@ -9438,9 +9445,9 @@ def test_scatter_color_repr_error():
     def get_next_color():   # pragma: no cover
         return 'blue'  # currently unused
     msg = (
-            r"'c' argument must be a color, a sequence of colors"
+        r"'c' argument must be a color, a sequence of colors"
             r", or a sequence of numbers, not 'red\\n'"
-        )
+    )
     with pytest.raises(ValueError, match=msg):
         c = 'red\n'
         mpl.axes.Axes._parse_scatter_color_args(
@@ -9790,7 +9797,7 @@ def test_boxplot_orientation(fig_test, fig_ref):
 
 
 @image_comparison(["use_colorizer_keyword.png"],
-                   tol=0 if platform.machine() == 'x86_64' else 0.05)
+                  tol=0 if platform.machine() == 'x86_64' else 0.05)
 def test_use_colorizer_keyword():
     # test using the colorizer keyword
     mlxarr.random.seed(0)

@@ -101,8 +101,8 @@ def select_step(v1, v2, nv, hour=False, include_last=True,
         factor = factor * threshold_factor
 
     levs = mlxarr.arange(mlxarr.floor(v1 * factor / step),
-                     mlxarr.ceil(v2 * factor / step) + 0.5,
-                     dtype=int) * step
+                         mlxarr.ceil(v2 * factor / step) + 0.5,
+                         dtype=int) * step
 
     # n : number of valid levels. If there is a cycle, e.g., [0, 90, 180,
     # 270, 360], the grid line needs to be extended from 0 to 360, so
@@ -350,9 +350,11 @@ class ExtremeFinderCycle(ExtremeFinderSimple):
 
     def _find_transformed_bbox(self, trans, bbox):
         # docstring inherited
-        grid = mlxarr.reshape(mlxarr.meshgrid(mlxarr.linspace(bbox.x0, bbox.x1, self.nx),
-                                      mlxarr.linspace(bbox.y0, bbox.y1, self.ny)),
-                          (2, -1)).T
+        grid = mlxarr.reshape(
+            mlxarr.meshgrid(
+                mlxarr.linspace(
+                    bbox.x0, bbox.x1, self.nx), mlxarr.linspace(
+                    bbox.y0, bbox.y1, self.ny)), (2, -1)).T
         lon, lat = trans.transform(grid).T
 
         # iron out jumps, but algorithm should be improved.

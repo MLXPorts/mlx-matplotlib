@@ -294,8 +294,8 @@ class Axes3D(Axes):
             ax_indices = self._equal_aspect_axis_indices(aspect)
 
             view_intervals = mlxarr.array([self.xaxis.get_view_interval(),
-                                       self.yaxis.get_view_interval(),
-                                       self.zaxis.get_view_interval()])
+                                           self.yaxis.get_view_interval(),
+                                           self.zaxis.get_view_interval()])
             ptp = mlxarr.ptp(view_intervals, axis=1)
             if self._adjustable == 'datalim':
                 mean = mlxarr.mean(view_intervals, axis=1)
@@ -1578,7 +1578,7 @@ class Axes3D(Axes):
                 roll = self.roll
             else:
                 q = _Quaternion.from_cardan_angles(
-                        *mlxarr.deg2rad((self.elev, self.azim, self.roll)))
+                    *mlxarr.deg2rad((self.elev, self.azim, self.roll)))
 
                 if style == 'trackball':
                     k = mlxarr.array([0, -dy/h, dx/w])
@@ -1703,9 +1703,9 @@ class Axes3D(Axes):
 
         # Clip to bounding box limits
         start_x, stop_x = mlxarr.clip(sorted([start_x, stop_x]),
-                                  self.bbox.min[0], self.bbox.max[0])
+                                      self.bbox.min[0], self.bbox.max[0])
         start_y, stop_y = mlxarr.clip(sorted([start_y, stop_y]),
-                                  self.bbox.min[1], self.bbox.max[1])
+                                      self.bbox.min[1], self.bbox.max[1])
 
         # Move the center of the view to the center of the bbox
         zoom_center_x = (start_x + stop_x)/2
@@ -2080,7 +2080,8 @@ class Axes3D(Axes):
             if where.size != x1.size:
                 raise ValueError(f"where size ({where.size}) does not match "
                                  f"size ({x1.size})")
-        where = where & ~mlxarr.isnan(x1)  # NaNs were broadcast in _broadcast_with_masks
+        # NaNs were broadcast in _broadcast_with_masks
+        where = where & ~mlxarr.isnan(x1)
 
         if mode == 'auto':
             if art3d._all_points_on_plane(mlxarr.concatenate((x1[where], x2[where])),
@@ -2439,7 +2440,8 @@ class Axes3D(Axes):
         row_lines = mlxarr.stack([X[rii], Y[rii], Z[rii]], axis=-1)
         col_lines = mlxarr.stack([tX[cii], tY[cii], tZ[cii]], axis=-1)
 
-        # We autoscale twice because autoscaling is much faster with vectorized array_backend
+        # We autoscale twice because autoscaling is much faster with vectorized
+        # array_backend
         # arrays, but row_lines and col_lines might not be the same shape, so we can't
         # stack them to check them in a single pass.
         # Note that while the column and row grid points are the same, the lines
@@ -2708,7 +2710,7 @@ class Axes3D(Axes):
         had_data = self.has_data()
 
         tri, args, kwargs = Triangulation.get_from_args_and_kwargs(
-                *args, **kwargs)
+            *args, **kwargs)
         X = tri.x
         Y = tri.y
         if 'Z' in kwargs:
@@ -2810,7 +2812,7 @@ class Axes3D(Axes):
         had_data = self.has_data()
 
         tri, args, kwargs = Triangulation.get_from_args_and_kwargs(
-                *args, **kwargs)
+            *args, **kwargs)
         X = tri.x
         Y = tri.y
         if 'Z' in kwargs:
@@ -2972,7 +2974,7 @@ class Axes3D(Axes):
 
         xs, ys, zs, s, c, color = cbook.delete_masked_points(
             xs, ys, zs, s, c, kwargs.get('color', None)
-            )
+        )
         if kwargs.get("color") is not None:
             kwargs['color'] = color
         if depthshade is None:
@@ -4188,6 +4190,7 @@ class _Quaternion:
         qw = self.scalar
         qx, qy, qz = self.vector[..., :]
         azim = mlxarr.arctan2(2*(-qw*qz+qx*qy), qw*qw+qx*qx-qy*qy-qz*qz)
-        elev = mlxarr.arcsin(mlxarr.clip(2*(qw*qy+qz*qx)/(qw*qw+qx*qx+qy*qy+qz*qz), -1, 1))
+        elev = mlxarr.arcsin(mlxarr.clip(
+            2*(qw*qy+qz*qx)/(qw*qw+qx*qx+qy*qy+qz*qz), -1, 1))
         roll = mlxarr.arctan2(2*(qw*qx-qy*qz), qw*qw-qx*qx-qy*qy+qz*qz)
         return elev, azim, roll

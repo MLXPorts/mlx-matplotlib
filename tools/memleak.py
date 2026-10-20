@@ -9,6 +9,8 @@ try:
 except ImportError as err:
     raise ImportError("This script requires psutil") from err
 from matplotlib import _mlx_array as mlxarr
+
+
 def run_memleak_test(bench, iterations, report):
     tracemalloc.start()
 

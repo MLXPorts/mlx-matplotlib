@@ -17,6 +17,8 @@ import sys
 
 import matplotlib.pyplot as plt
 from matplotlib import _mlx_array as mlxarr
+
+
 def on_press(event):
     print('press', event.key)
     sys.stdout.flush()

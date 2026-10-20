@@ -12,6 +12,8 @@ from matplotlib import patches as mpatches
 from matplotlib import transforms as mtransforms
 from matplotlib.path import Path
 from matplotlib import _mlx_array as mlxarr
+
+
 class AbstractPathEffect:
     """
     A base class for path effects.
@@ -431,7 +433,7 @@ class TickedStroke(AbstractPathEffect):
 
         theta = -mlxarr.radians(self._angle)
         trans_matrix = mlxarr.array([[mlxarr.cos(theta), -mlxarr.sin(theta)],
-                                 [mlxarr.sin(theta), mlxarr.cos(theta)]])
+                                     [mlxarr.sin(theta), mlxarr.cos(theta)]])
 
         # Convert spacing parameter to pixels.
         spacing_px = renderer.points_to_pixels(self._spacing)

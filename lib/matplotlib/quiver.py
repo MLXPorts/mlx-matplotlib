@@ -371,8 +371,8 @@ class QuiverKey(martist.Artist):
                                    Umask=ma.nomask):
                 u = self.U * mlxarr.cos(mlxarr.radians(self.angle))
                 v = self.U * mlxarr.sin(mlxarr.radians(self.angle))
-                self.verts = self.Q._make_verts([[0., 0.]],
-                                                mlxarr.array([u]), mlxarr.array([v]), 'uv')
+                self.verts = self.Q._make_verts(
+                    [[0., 0.]], mlxarr.array([u]), mlxarr.array([v]), 'uv')
             kwargs = self.Q.polykw
             kwargs.update(self.kw)
             self.vector = mcollections.PolyCollection(
@@ -724,14 +724,14 @@ class Quiver(mcollections.PolyCollection):
         mlxarr.clip(length, 0, 2 ** 16, out=length)
         # x, y: normal horizontal arrow
         x = mlxarr.array([0, -self.headaxislength,
-                      -self.headlength, 0],
-                     mlxarr.float64)
+                          -self.headlength, 0],
+                         mlxarr.float64)
         x = x + mlxarr.array([0, 1, 1, 1]) * length
         y = 0.5 * mlxarr.array([1, 1, self.headwidth, 0], mlxarr.float64)
         y = mlxarr.repeat(y[mlxarr.newaxis, :], N, axis=0)
         # x0, y0: arrow without shaft, for short vectors
         x0 = mlxarr.array([0, minsh - self.headaxislength,
-                       minsh - self.headlength, minsh], mlxarr.float64)
+                           minsh - self.headlength, minsh], mlxarr.float64)
         y0 = 0.5 * mlxarr.array([1, 1, self.headwidth, 0], mlxarr.float64)
         ii = [0, 1, 2, 3, 2, 1, 0, 0]
         X = x[:, ii]

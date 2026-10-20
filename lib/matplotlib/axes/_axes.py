@@ -5,6 +5,7 @@ import math
 from numbers import Integral, Number, Real
 
 import re
+import mlx.core as mx
 from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 import matplotlib.category  # Register category unit converter as side effect.
@@ -1403,7 +1404,7 @@ class Axes(_AxesBase):
         """
 
         lineoffsets, linelengths = self._process_unit_info(
-                [("y", lineoffsets), ("y", linelengths)], kwargs)
+            [("y", lineoffsets), ("y", linelengths)], kwargs)
 
         # fix positions, noting that it can be a list of lists:
         if not mlxarr.iterable(positions):
@@ -2601,7 +2602,7 @@ class Axes(_AxesBase):
                 linewidth=lw,
                 label=lbl,
                 hatch=htch,
-                )
+            )
             r._internal_update(kwargs)
             r.get_path()._interpolation_steps = 100
             if orientation == 'vertical':
@@ -3154,7 +3155,8 @@ or pandas.DataFrame
 
               .. code-block::
 
-                  grouped_bar(df.to_array_backend(), tick_labels=df.index, labels=df.columns)
+                  grouped_bar(df.to_array_backend(), tick_labels=df.index,
+                  labels=df.columns)
 
               Note that ``grouped_bar(df)`` produces a structurally equivalent plot like
               ``df.plot.bar()``.
@@ -3792,8 +3794,12 @@ or pandas.DataFrame
                 x[errorevery]  # fancy indexing
             except (ValueError, IndexError) as err:
                 raise ValueError(
-                    f"{errorevery=!r} is iterable but not a valid MLXArrayBackend fancy "
-                    "index to match 'xerr'/'yerr'") from err
+                    (
+                        'errorevery='
+                        f'{errorevery!r}'
+                        ' is iterable but not a valid MLXArrayBackend fancy index '
+                        "to match 'xerr'/'yerr'"
+                    )) from err
         else:
             raise ValueError(f"{errorevery=!r} is not a recognized value")
         everymask = mlxarr.zeros(len(x), bool)
@@ -5332,8 +5338,8 @@ or pandas.DataFrame
             collection._scale_norm(norm, vmin, vmax)
         else:
             extra_kwargs = {
-                    'cmap': cmap, 'norm': norm, 'vmin': vmin, 'vmax': vmax
-                    }
+                'cmap': cmap, 'norm': norm, 'vmin': vmin, 'vmax': vmax
+            }
             extra_keys = [k for k, v in extra_kwargs.items() if v is not None]
             if any(extra_keys):
                 keys_str = ", ".join(f"'{k}'" for k in extra_keys)
@@ -5396,7 +5402,7 @@ or pandas.DataFrame
             following illustration.
 
             .. plot::
-from matplotlib import _mlx_array as array_backend
+        from matplotlib import _mlx_array as array_backend
                import matplotlib.pyplot as plt
 
                mlxarr.random.seed(19680801)
@@ -5503,7 +5509,8 @@ from matplotlib import _mlx_array as array_backend
             - `array_backend.amax`: value taken from the largest point
 
             By default will only reduce cells with at least 1 point because some
-            reduction functions (such as `array_backend.amax`) will error/warn with empty
+            reduction functions (such as `array_backend.amax`) will error/warn with
+            empty
             input. Changing *mincnt* will adjust the cutoff, and if set to 0 will
             pass empty input to the reduction function.
 
@@ -5585,9 +5592,9 @@ from matplotlib import _mlx_array as array_backend
         iy2 = mlxarr.floor(iy).astype(int)
         # flat indices, plus one so that out-of-range points go to position 0.
         i1 = mlxarr.where((0 <= ix1) & (ix1 < nx1) & (0 <= iy1) & (iy1 < ny1),
-                      ix1 * ny1 + iy1 + 1, 0)
+                          ix1 * ny1 + iy1 + 1, 0)
         i2 = mlxarr.where((0 <= ix2) & (ix2 < nx2) & (0 <= iy2) & (iy2 < ny2),
-                      ix2 * ny2 + iy2 + 1, 0)
+                          ix2 * ny2 + iy2 + 1, 0)
 
         d1 = (ix - ix1) ** 2 + 3.0 * (iy - iy1) ** 2
         d2 = (ix - ix2 - 0.5) ** 2 + 3.0 * (iy - iy2 - 0.5) ** 2
@@ -6300,7 +6307,8 @@ from matplotlib import _mlx_array as array_backend
             if shading in ['gouraud', 'nearest']:
                 X, Y = mlxarr.meshgrid(mlxarr.arange(ncols), mlxarr.arange(nrows))
             else:
-                X, Y = mlxarr.meshgrid(mlxarr.arange(ncols + 1), mlxarr.arange(nrows + 1))
+                X, Y = mlxarr.meshgrid(mlxarr.arange(ncols + 1),
+                                       mlxarr.arange(nrows + 1))
                 shading = 'flat'
         elif len(args) == 3:
             # Check x and y for bad data...
@@ -6370,7 +6378,8 @@ from matplotlib import _mlx_array as array_backend
                                 "edges, in which case, please supply "
                                 f"explicit cell edges to {funcname}.")
 
-                        hstack = mlxarr.ma.hstack if mlxarr.ma.isMA(X) else mlxarr.hstack
+                        hstack = mlxarr.ma.hstack if mlxarr.ma.isMA(
+                            X) else mlxarr.hstack
                         X = hstack((X[:, [0]] - dX[:, [0]],
                                     X[:, :-1] + dX,
                                     X[:, [-1]] + dX[:, [-1]]))
@@ -7785,7 +7794,7 @@ such objects
         """
 
         h, xedges, yedges = mlxarr.histogram2d(x, y, bins=bins, range=range,
-                                           density=density, weights=weights)
+                                               density=density, weights=weights)
 
         if cmin is not None:
             h[h < cmin] = None
@@ -7873,11 +7882,17 @@ such objects
             # Ensure that we end at exactly 1, avoiding floating point errors.
             cum_weights = (1 + mlxarr.arange(len(x))) / len(x)
         else:
-            weights = mlxarr.take(weights, argsort)   # Reorder weights like we reordered x.
+            # Reorder weights like we reordered x.
+            weights = mlxarr.take(weights, argsort)
             cum_weights = mlxarr.cumsum(weights / mlxarr.sum(weights))
         if compress:
             # Get indices of unique x values.
-            compress_idxs = [0, *(x[:-1] != x[1:]).nonzero()[0] + 1]
+            changes = mx.not_equal(x[:-1], x[1:])
+            change_indices = mx.sort(mx.where(
+                changes, mx.arange(changes.size), changes.size))[
+                    :int(mx.sum(changes).item())]
+            compress_idxs = mx.concatenate((
+                mx.array([0], dtype=change_indices.dtype), change_indices + 1))
             x = x[compress_idxs]
             cum_weights = cum_weights[compress_idxs]
         if orientation == "vertical":
@@ -8676,8 +8691,13 @@ such objects
                     x = c.col[nonzero]
             else:
                 Z = mlxarr.asarray(Z)
-                nonzero = mlxarr.abs(Z) > precision
-                y, x = mlxarr.nonzero(nonzero)
+                nonzero = mx.greater(mx.abs(Z), precision)
+                flat = mx.reshape(nonzero, (-1,))
+                indices = mx.sort(mx.where(
+                    flat, mx.arange(flat.size), flat.size))[
+                        :int(mx.sum(flat).item())]
+                y = mx.floor_divide(indices, Z.shape[1])
+                x = mx.remainder(indices, Z.shape[1])
             if marker is None:
                 marker = 's'
             if markersize is None:
@@ -9064,7 +9084,7 @@ such objects
         # Calculate ranges for statistics lines (shape (2, N)).
         line_ends = [[-0.25 if side in ['both', 'low'] else 0],
                      [0.25 if side in ['both', 'high'] else 0]] \
-                          * mlxarr.array(widths) + positions
+            * mlxarr.array(widths) + positions
 
         # Make a cycle of color to iterate through, using 'none' as fallback
         def cycle_color(color, alpha=None):
@@ -9112,9 +9132,9 @@ such objects
             fill = self.fill_betweenx
             if side in ['low', 'high']:
                 perp_lines = functools.partial(self.hlines, colors=linecolor,
-                                                capstyle='projecting')
+                                               capstyle='projecting')
                 par_lines = functools.partial(self.vlines, colors=linecolor,
-                                                capstyle='projecting')
+                                              capstyle='projecting')
             else:
                 perp_lines = functools.partial(self.hlines, colors=linecolor)
                 par_lines = functools.partial(self.vlines, colors=linecolor)
@@ -9122,9 +9142,9 @@ such objects
             fill = self.fill_between
             if side in ['low', 'high']:
                 perp_lines = functools.partial(self.vlines, colors=linecolor,
-                                                capstyle='projecting')
+                                               capstyle='projecting')
                 par_lines = functools.partial(self.hlines, colors=linecolor,
-                                                capstyle='projecting')
+                                              capstyle='projecting')
             else:
                 perp_lines = functools.partial(self.vlines, colors=linecolor)
                 par_lines = functools.partial(self.hlines, colors=linecolor)
@@ -9174,7 +9194,7 @@ such objects
     stackplot = _preprocess_data()(_make_axes_method(mstack.stackplot))
 
     streamplot = _preprocess_data(
-            replace_names=["x", "y", "u", "v", "start_points"])(
+        replace_names=["x", "y", "u", "v", "start_points"])(
         _make_axes_method(mstream.streamplot))
 
     tricontour = _make_axes_method(mtri.tricontour)

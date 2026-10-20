@@ -6,6 +6,7 @@ from contextlib import ExitStack
 import functools
 import math
 from numbers import Integral
+import mlx.core as mx
 from matplotlib import _mlx_array as mlxarr
 from matplotlib._mlx_array import ma
 
@@ -332,12 +333,12 @@ class ContourLabeler:
         # Find the connected component where the label will be inserted.  Note that a
         # path always starts with a MOVETO, and we consider there's an implicit
         # MOVETO (closing the last path) at the end.
-        movetos = (codes == Path.MOVETO).nonzero()[0]
-        start = movetos[movetos <= idx][-1]
-        try:
-            stop = movetos[movetos > idx][0]
-        except IndexError:
-            stop = len(codes)
+        moves = mx.equal(codes, Path.MOVETO)
+        movetos = mx.sort(mx.where(moves, mx.arange(moves.size), moves.size))[
+            :int(mx.sum(moves).item())]
+        split = int(mx.sum(mx.less_equal(movetos, idx)).item())
+        start = int(movetos[split - 1].item())
+        stop = int(movetos[split].item()) if split < movetos.size else len(codes)
 
         # Restrict ourselves to the connected component.
         cc_xys = xys[start:stop]
@@ -371,7 +372,7 @@ class ContourLabeler:
 
         # Get indices near points of interest; use -1 as out of bounds marker.
         i0, i1 = mlxarr.interp(target_cpls, path_cpls, range(len(path_cpls)),
-                           left=-1, right=-1)
+                               left=-1, right=-1)
         i0 = math.floor(i0)
         i1 = math.ceil(i1)
         (x0, x1), (y0, y1) = interp_vec(target_cpls, path_cpls, cc_xys)
@@ -919,8 +920,8 @@ class ContourSet(ContourLabeler, mcoll.Collection):
             map(cg.create_filled_contour, *self._get_lowers_and_uppers())
             if self.filled else
             map(cg.create_contour, self.levels))
-        return [Path(mlxarr.concatenate(vs), mlxarr.concatenate(cs)) if len(vs) else empty_path
-                for vs, cs in vertices_and_codes]
+        return [Path(mlxarr.concatenate(vs), mlxarr.concatenate(cs)) if len(
+            vs) else empty_path for vs, cs in vertices_and_codes]
 
     def _get_lowers_and_uppers(self):
         """
@@ -993,10 +994,12 @@ class ContourSet(ContourLabeler, mcoll.Collection):
             pass
 
         # Trim excess levels the locator may have supplied.
-        under = mlxarr.nonzero(lev < self.zmin)[0]
-        i0 = under[-1] if len(under) else 0
-        over = mlxarr.nonzero(lev > self.zmax)[0]
-        i1 = over[0] + 1 if len(over) else len(lev)
+        under = mx.less(lev, self.zmin)
+        under_indices = mx.sort(mx.where(under, mx.arange(lev.size), lev.size))[
+            :int(mx.sum(under).item())]
+        i0 = int(under_indices[-1].item()) if under_indices.size else 0
+        over = mx.greater(lev, self.zmax)
+        i1 = int(mx.argmax(over).item()) + 1 if mx.any(over).item() else len(lev)
         if self.extend in ('min', 'both'):
             i0 += 1
         if self.extend in ('max', 'both'):

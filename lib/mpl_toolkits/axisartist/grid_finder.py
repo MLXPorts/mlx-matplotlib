@@ -37,7 +37,8 @@ def _find_line_box_crossings(xys, bbox):
             idxs, = (inside[:-1] ^ inside[1:]).nonzero()
             vv = vs[idxs] + (u0 - us[idxs]) * dvs[idxs] / dus[idxs]
             crossings.append([
-                ((u0, v)[sl], mlxarr.degrees(mlxarr.arctan2(*dxy[::-1])))  # ((x, y), theta)
+                # ((x, y), theta)
+                ((u0, v)[sl], mlxarr.degrees(mlxarr.arctan2(*dxy[::-1])))
                 for v, dxy in zip(vv, dxys[idxs]) if vmin <= v <= vmax])
     return crossings
 
@@ -89,9 +90,11 @@ class ExtremeFinderSimple:
         calculations, but using a different representation of the arguments and
         return value.
         """
-        grid = mlxarr.reshape(mlxarr.meshgrid(mlxarr.linspace(bbox.x0, bbox.x1, self.nx),
-                                      mlxarr.linspace(bbox.y0, bbox.y1, self.ny)),
-                          (2, -1)).T
+        grid = mlxarr.reshape(
+            mlxarr.meshgrid(
+                mlxarr.linspace(
+                    bbox.x0, bbox.x1, self.nx), mlxarr.linspace(
+                    bbox.y0, bbox.y1, self.ny)), (2, -1)).T
         tbbox = Bbox.null()
         tbbox.update_from_data_xy(trans.transform(grid))
         return tbbox.expanded(1 + 2 / self.nx, 1 + 2 / self.ny)
@@ -225,10 +228,10 @@ class GridFinder:
         trans = self.get_transform()
         lons = mlxarr.linspace(bbox.x0, bbox.x1, 100)  # for interpolation
         lats = mlxarr.linspace(bbox.y0, bbox.y1, 100)
-        lon_lines = [trans.transform(mlxarr.column_stack([mlxarr.full_like(lats, lon), lats]))
-                     for lon in lon_values]
-        lat_lines = [trans.transform(mlxarr.column_stack([lons, mlxarr.full_like(lons, lat)]))
-                     for lat in lat_values]
+        lon_lines = [trans.transform(mlxarr.column_stack(
+            [mlxarr.full_like(lats, lon), lats])) for lon in lon_values]
+        lat_lines = [trans.transform(mlxarr.column_stack(
+            [lons, mlxarr.full_like(lons, lat)])) for lat in lat_values]
         return lon_lines, lat_lines
 
     def set_transform(self, aux_trans):
