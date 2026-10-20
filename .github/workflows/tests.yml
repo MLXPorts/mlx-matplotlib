@@ -28,6 +28,7 @@ jobs:
   test:
     name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
     if: >-
       !contains(github.event.head_commit.message, '[ci skip]') &&
       !contains(github.event.head_commit.message, '[skip ci]')
@@ -37,21 +38,26 @@ jobs:
       matrix:
         # MLX is an Apple Silicon tensor backend and is a hard build
         # requirement (src/meson.build links libmlx), so tests run on
-        # macos-14 (arm64) only. ubuntu-latest cannot configure the build.
-        os: [macos-14]
+        # macos-15 (arm64) only. ubuntu-latest cannot configure the build.
+        os: [macos-15]
         python-version: ['3.11', '3.12', '3.13']
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v7.0.0
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
+
+      - name: Verify Apple Silicon runner
+        run: |
+          sw_vers
+          python -c "import platform; assert platform.machine() == 'arm64', platform.machine()"
 
       - name: Install system dependencies (macOS)
         run: |
@@ -60,7 +66,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          python -m pip install -r requirements/testing/all.txt
+          python -m pip install -r requirements/testing/all.txt -r requirements/testing/extra.txt
 
       - name: Install MLX
         run: |
@@ -83,6 +89,7 @@ jobs:
             "setuptools_scm>=7"
 
       - name: Build and install matplotlib
+        id: install
         run: |
           python -m pip install --no-build-isolation --verbose --editable .[dev]
 
@@ -96,14 +103,44 @@ jobs:
           python -c "import mlx.core as mx; print(f'MLX version: {mx.__version__}')"
           python -c "import matplotlib; import mlx.core as mx; print('MLX + Matplotlib imports successfully')"
 
-      - name: Run tests
+      - name: Run native MLX regressions
         run: |
-          python -m pytest -rfEsXR --maxfail=50 --timeout=300 --durations=25 \
-            --color=yes lib/matplotlib/tests
+          python -m pytest -ra --timeout=300 --junitxml=test-results/native.xml \
+            lib/matplotlib/tests/test_axes.py \
+            lib/matplotlib/tests/test_transforms.py \
+            lib/matplotlib/tests/test_cbook.py \
+            lib/matplotlib/tests/test_path.py \
+            lib/matplotlib/tests/test_bezier.py \
+            lib/matplotlib/tests/test_quiver.py \
+            lib/matplotlib/tests/test_streamplot.py \
+            lib/matplotlib/tests/test_text.py \
+            -k 'native or accepts_mlx_stream or bottom_alignment_preserves'
+
+      - name: Run tests
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: |
+          python -m pytest -rfEsXR --timeout=300 --durations=25 \
+            -n 2 --dist=loadfile \
+            --cov=matplotlib --cov=mpl_toolkits --cov-report=xml:coverage.xml \
+            --junitxml=test-results/full.xml --color=yes \
+            lib/matplotlib/tests lib/mpl_toolkits
+
+      - name: Upload test reports and image comparisons
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: test-results-py${{ matrix.python-version }}-${{ matrix.os }}
+          path: |
+            test-results/
+            coverage.xml
+            result_images/
+          if-no-files-found: warn
 
       - name: Upload coverage
-        if: matrix.python-version == '3.12'
-        uses: codecov/codecov-action@v7
+        if: ${{ always() && matrix.python-version == '3.12' }}
+        uses: codecov/codecov-action@v7.1.1
+        with:
+          files: coverage.xml
         continue-on-error: true
 
   lint:
@@ -111,13 +148,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v7.0.0
         with:
           python-version: '3.12'
           cache: 'pip'
