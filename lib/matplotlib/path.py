@@ -383,9 +383,9 @@ class Path:
         Concatenate a list of `Path`\s into a single `Path`, removing all `STOP`\s.
         """
         if not args:
-            return Path(mlxarr.empty([0, 2], dtype=mlxarr.float32))
-        vertices = mlxarr.concatenate([path.vertices for path in args])
-        codes = mlxarr.empty(len(vertices), dtype=cls.code_type)
+            return Path(mx.zeros((0, 2), dtype=mx.float32))
+        vertices = mx.concatenate([path.vertices for path in args])
+        codes = mx.zeros((len(vertices),), dtype=mx.uint8)
         i = 0
         for path in args:
             size = len(path.vertices)
@@ -396,8 +396,11 @@ class Path:
             else:
                 codes[i:i+size] = path.codes
             i += size
-        not_stop_mask = codes != cls.STOP  # Remove STOPs, as internal STOPs are a bug.
-        return cls(vertices[not_stop_mask], codes[not_stop_mask])
+        # Remove STOPs with explicit indices: native MLX has fixed-shape indexing.
+        keep = mx.not_equal(codes, cls.STOP)
+        indices = mx.sort(mx.where(keep, mx.arange(keep.size), keep.size))[
+            :int(mx.sum(keep).item())]
+        return cls(mx.take(vertices, indices, axis=0), mx.take(codes, indices))
 
     def __repr__(self):
         return f"Path({self.vertices!r}, {self.codes!r})"
@@ -659,9 +662,16 @@ class Path:
         """
         if transform is not None:
             transform = transform.frozen()
+        with mx.stream(mx.cpu):
+            points = mx.array(points, dtype=mx.float64)
+        _api.check_shape((None, 2), points=points)
+        if points.shape[0] == 0:
+            return mx.zeros((0,), dtype=mx.bool_)
+        # AGG consumes a host buffer; convert only at this rendering boundary.
         result = _path.points_in_path(
-            points, radius, self, _path_transform_to_memoryview(transform))
-        return result.astype('bool')
+            _path_values_to_memoryview(points), radius, self,
+            _path_transform_to_memoryview(transform))
+        return mx.array(result, dtype=mx.bool_)
 
     def contains_path(self, path, transform=None):
         """
@@ -822,8 +832,11 @@ class Path:
         # Deal with the case where there are curves and/or multiple
         # subpaths (using extension code)
         try:
-            return _path.convert_path_to_polygons(
-                self, transform, width, height, closed_only)
+            polygons = _path.convert_path_to_polygons(
+                self, _path_transform_to_memoryview(transform),
+                width, height, closed_only)
+            with mx.stream(mx.cpu):
+                return [mx.array(polygon, dtype=mx.float64) for polygon in polygons]
         except TypeError:
             polygons = []
             current = []
@@ -1165,7 +1178,8 @@ class Path:
         If *inside* is `True`, clip to the inside of the box, otherwise
         to the outside of the box.
         """
-        verts = _path.clip_path_to_rect(self, bbox, inside)
+        bounds = tuple(float(value) for value in bbox.extents)
+        verts = _path.clip_path_to_rect(self, bounds, inside)
         paths = [Path(poly) for poly in verts]
         return self.make_compound_path(*paths)
 
