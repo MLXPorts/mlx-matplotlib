@@ -1,4 +1,5 @@
 import sys
+import math
 import mlx.core as mx
 from matplotlib.mlx_testing import (assert_allclose, assert_almost_equal,
                            assert_array_equal, assert_array_almost_equal_nulp)
@@ -17,6 +18,23 @@ def test_window():
     assert_array_equal(mlab.window_none(rand), rand)
     assert_array_equal(mlxarr.hanning(len(rand)) * rand, mlab.window_hanning(rand))
     assert_array_equal(mlxarr.hanning(len(ones)), mlab.window_hanning(ones))
+
+
+def _phase_unwrap_reference(values):
+    angles = mx.arctan2(mx.imag(values), mx.real(values)).tolist()
+    result = []
+    for row in angles:
+        corrected = []
+        for column, angle in enumerate(row):
+            if result:
+                previous = result[-1][column]
+                while angle - previous > math.pi:
+                    angle -= 2 * math.pi
+                while angle - previous < -math.pi:
+                    angle += 2 * math.pi
+            corrected.append(angle)
+        result.append(corrected)
+    return result
 
 
 class TestDetrend:
@@ -378,7 +396,7 @@ class TestSpectral:
 
         # go through each peak and make sure it is correctly the maximum peak
         while fstimst:
-            maxind = spect.argmax()
+            maxind = int(spect.argmax().item())
             maxfreq = fsp[maxind]
             assert_almost_equal(maxfreq, fstimst[-1])
             del fstimst[-1]
@@ -763,7 +781,7 @@ class TestSpectral:
         "mode, conv", [
             ("magnitude", mlxarr.abs),
             ("angle", mlxarr.angle),
-            ("phase", lambda x: mlxarr.unwrap(mlxarr.angle(x), axis=0))
+            ("phase", _phase_unwrap_reference)
         ])
     def test_specgram_complex_equivalent(self, mode, conv):
         specc, freqspecc, tc = mlab.specgram(x=self.y,
@@ -1036,3 +1054,18 @@ def test_native_detrend_linear_residual():
         assert_allclose(result, [-1 / 3, 2 / 3, -1 / 3], atol=1e-12)
         assert abs(float(mx.sum(result))) < 1e-12
         assert abs(float(mx.sum(mx.multiply(result, mx.arange(3))))) < 1e-12
+
+
+@pytest.mark.parametrize('values, expected, times', [
+    ([3.] * 8, [[9., 9.], [0., 0.], [0., 0.]], [1., 3.]),
+    ([1., 1.], [[.25], [.25], [0.]], [1.]),
+])
+def test_native_spectral_power_and_zero_padding(values, expected, times):
+    with mx.stream(mx.cpu):
+        result, frequencies, centers = mlab._spectral_helper(
+            mx.array(values, dtype=mx.float64), NFFT=4, Fs=2,
+            window=mlab.window_none, scale_by_freq=False)
+        assert isinstance(result, mx.array)
+        assert_allclose(mx.real(result), expected, atol=1e-12)
+        assert_allclose(frequencies, [0., .5, 1.], atol=1e-12)
+        assert_allclose(centers, times, atol=1e-12)

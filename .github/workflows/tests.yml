@@ -118,11 +118,11 @@ jobs:
             lib/matplotlib/tests/test_text.py \
             -k 'native or accepts_mlx_stream or bottom_alignment_preserves'
 
-      - name: Run spectral fixture regressions
+      - name: Run spectral regressions
         run: |
           python -m pytest -ra --timeout=300 \
-            --junitxml=test-results/spectral-fixture.xml \
-            lib/matplotlib/tests/test_mlab.py -k 'test_spectral_helper_raises'
+            --junitxml=test-results/spectral.xml \
+            lib/matplotlib/tests/test_mlab.py -k 'TestSpectral'
 
       - name: Run tests
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}

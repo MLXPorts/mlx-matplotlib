@@ -48,8 +48,8 @@ Spectral functions
 """
 
 import functools
+import math
 from numbers import Integral, Number
-import sys
 import mlx.core as mx
 from matplotlib import _mlx_array as mlxarr
 from matplotlib import _api, _docstring, cbook
@@ -212,11 +212,13 @@ def detrend_linear(y):
 
 def _stride_windows(x, n, noverlap=0):
     _api.check_isinstance(Integral, n=n, noverlap=noverlap)
-    x = mlxarr.asarray(x)
-    step = n - noverlap
-    shape = (n, (x.shape[-1]-noverlap)//step)
-    strides = (x.strides[0], step*x.strides[0])
-    return mlxarr.lib.stride_tricks.as_strided(x, shape=shape, strides=strides)
+    with mx.stream(mx.cpu):
+        x = mx.array(x)
+        step = n - noverlap
+        starts = mx.arange(0, x.shape[-1] - n + 1, step)
+        indices = mx.add(mx.expand_dims(mx.arange(n), 1),
+                         mx.expand_dims(starts, 0))
+        return mx.take(x, indices, axis=0)
 
 
 def _spectral_helper(x, y=None, NFFT=None, Fs=None, detrend_func=None,
@@ -262,9 +264,9 @@ def _spectral_helper(x, y=None, NFFT=None, Fs=None, detrend_func=None,
 
     # Make sure we're dealing with a array_backend array. If y and x were the same
     # object to start with, keep them that way
-    x = mlxarr.asarray(x)
+    x = mx.array(x)
     if not same_data:
-        y = mlxarr.asarray(y)
+        y = mx.array(y)
 
     if sides is None or sides == 'default':
         if x.dtype == mx.complex64:
@@ -274,15 +276,11 @@ def _spectral_helper(x, y=None, NFFT=None, Fs=None, detrend_func=None,
     _api.check_in_list(['default', 'onesided', 'twosided'], sides=sides)
 
     # zero pad x and y up to NFFT if they are shorter than NFFT
-    if len(x) < NFFT:
-        n = len(x)
-        x = mlxarr.resize(x, NFFT)
-        x[n:] = 0
-
-    if not same_data and len(y) < NFFT:
-        n = len(y)
-        y = mlxarr.resize(y, NFFT)
-        y[n:] = 0
+    with mx.stream(mx.cpu):
+        if len(x) < NFFT:
+            x = mx.concatenate((x, mx.zeros((NFFT - len(x),), dtype=x.dtype)))
+        if not same_data and len(y) < NFFT:
+            y = mx.concatenate((y, mx.zeros((NFFT - len(y),), dtype=y.dtype)))
 
     if pad_to is None:
         pad_to = NFFT
@@ -307,44 +305,35 @@ def _spectral_helper(x, y=None, NFFT=None, Fs=None, detrend_func=None,
             numFreqs = pad_to//2 + 1
         scaling_factor = 2.
 
-    if not mlxarr.iterable(window):
-        window = window(mlxarr.ones(NFFT, x.dtype))
+    if callable(window):
+        window = window(mx.ones(NFFT, dtype=x.dtype))
+    window = mx.array(window)
     if len(window) != NFFT:
         raise ValueError(
             "The window length must match the data's first dimension")
 
-    if sys.maxsize > 2**32:
-        result = mlxarr.lib.stride_tricks.sliding_window_view(
-            x, NFFT, axis=0)[::NFFT - noverlap].T
-    else:
-        # The MLXArrayBackend version on 32-bit will OOM, so use old implementation.
-        result = _stride_windows(x, NFFT, noverlap=noverlap)
+    result = _stride_windows(x, NFFT, noverlap=noverlap)
     result = detrend(result, detrend_func, axis=0)
-    result = result * window.reshape((-1, 1))
-    result = mlxarr.fft.fft(result, n=pad_to, axis=0)[:numFreqs, :]
-    freqs = mlxarr.fft.fftfreq(pad_to, 1/Fs)[:numFreqs]
+    result = mx.multiply(result, mx.reshape(window, (-1, 1)))
+    result = mx.fft.fft(result, n=pad_to, axis=0)[:numFreqs, :]
+    freqs = mx.fft.fftfreq(pad_to, 1/Fs)[:numFreqs]
 
     if not same_data:
         # if same_data is False, mode must be 'psd'
-        if sys.maxsize > 2**32:
-            resultY = mlxarr.lib.stride_tricks.sliding_window_view(
-                y, NFFT, axis=0)[::NFFT - noverlap].T
-        else:
-            # The MLXArrayBackend version on 32-bit will OOM, so use old implementation.
-            resultY = _stride_windows(y, NFFT, noverlap=noverlap)
+        resultY = _stride_windows(y, NFFT, noverlap=noverlap)
         resultY = detrend(resultY, detrend_func, axis=0)
-        resultY = resultY * window.reshape((-1, 1))
-        resultY = mlxarr.fft.fft(resultY, n=pad_to, axis=0)[:numFreqs, :]
-        result = mlxarr.conj(result) * resultY
+        resultY = mx.multiply(resultY, mx.reshape(window, (-1, 1)))
+        resultY = mx.fft.fft(resultY, n=pad_to, axis=0)[:numFreqs, :]
+        result = mx.multiply(mx.conjugate(result), resultY)
     elif mode == 'psd':
-        result = mlxarr.conj(result) * result
+        result = mx.multiply(mx.conjugate(result), result)
     elif mode == 'magnitude':
-        result = mlxarr.abs(result) / window.sum()
+        result = mx.divide(mx.abs(result), mx.sum(window))
     elif mode == 'angle' or mode == 'phase':
         # we unwrap the phase later to handle the onesided vs. twosided case
-        result = mlxarr.angle(result)
+        result = mx.arctan2(mx.imag(result), mx.real(result))
     elif mode == 'complex':
-        result /= window.sum()
+        result = mx.divide(result, mx.sum(window))
 
     if mode == 'psd':
 
@@ -353,39 +342,48 @@ def _spectral_helper(x, y=None, NFFT=None, Fs=None, detrend_func=None,
         # component and the NFFT/2 component:
 
         # if we have a even number of frequencies, don't scale NFFT/2
-        if not NFFT % 2:
-            slc = slice(1, -1, None)
-        # if we have an odd number, just don't scale DC
-        else:
-            slc = slice(1, None, None)
-
-        result[slc] *= scaling_factor
+        index = mx.arange(numFreqs)
+        stop = numFreqs - 1 if not NFFT % 2 else numFreqs
+        factors = mx.where(mx.logical_and(index > 0, index < stop), scaling_factor, 1.)
+        result = mx.multiply(result, mx.expand_dims(factors, 1))
 
         # MATLAB divides by the sampling frequency so that density function
         # has units of dB/Hz and can be integrated by the plotted frequency
         # values. Perform the same scaling here.
         if scale_by_freq:
-            result /= Fs
+            result = mx.divide(result, Fs)
             # Scale the spectrum by the norm of the window to compensate for
             # windowing loss; see Bendat & Piersol Sec 11.5.2.
-            result /= (window**2).sum()
+            result = mx.divide(result, mx.sum(mx.square(window)))
         else:
             # In this case, preserve power in the segment, not amplitude
-            result /= window.sum()**2
+            result = mx.divide(result, mx.square(mx.sum(window)))
 
-    t = mlxarr.arange(NFFT/2, len(x) - NFFT/2 + 1, NFFT - noverlap)/Fs
+    with mx.stream(mx.cpu):
+        t = mx.divide(mx.arange(NFFT / 2, len(x) - NFFT / 2 + 1,
+                                NFFT - noverlap, dtype=mx.float64), Fs)
 
     if sides == 'twosided':
         # center the frequency range at zero
-        freqs = mlxarr.roll(freqs, -freqcenter, axis=0)
-        result = mlxarr.roll(result, -freqcenter, axis=0)
+        freqs = mx.roll(freqs, -freqcenter, axis=0)
+        result = mx.roll(result, -freqcenter, axis=0)
     elif not pad_to % 2:
         # get the last value correctly, it is negative otherwise
-        freqs[-1] *= -1
+        freqs = mx.where(mx.arange(numFreqs) == numFreqs - 1, mx.negative(freqs), freqs)
 
     # we unwrap the phase here to handle the onesided vs. twosided case
-    if mode == 'phase':
-        result = mlxarr.unwrap(result, axis=0)
+    if mode == 'phase' and result.shape[0] > 1:
+        with mx.stream(mx.cpu):
+            result = result.astype(mx.float64)
+            delta = mx.subtract(result[1:], result[:-1])
+            wrapped = mx.subtract(mx.remainder(mx.add(delta, math.pi), 2 * math.pi),
+                                  math.pi)
+            wrapped = mx.where(mx.logical_and(mx.equal(wrapped, -math.pi), delta > 0),
+                               math.pi, wrapped)
+            correction = mx.where(mx.abs(delta) < math.pi, 0,
+                                  mx.subtract(wrapped, delta))
+            result = mx.concatenate((result[:1], mx.add(
+                result[1:], mx.cumsum(correction, axis=0))), axis=0)
 
     return result, freqs, t
 
