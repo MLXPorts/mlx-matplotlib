@@ -1066,3 +1066,13 @@ def test_unfold_native_mlx_preserves_windows(shape, axis):
         source = list(index[:-1])
         source[axis] = index[axis] * 2 + index[-1]
         assert result[index].item() == values[tuple(source)].item()
+
+
+@pytest.mark.parametrize('count', [4, 5])
+def test_native_boxplot_bootstrap_constant_data(count):
+    import mlx.core as mx
+
+    with mx.stream(mx.cpu):
+        values = mx.full((count,), 3., dtype=mx.float64)
+        stats, = cbook.boxplot_stats(values, bootstrap=10000)
+    assert float(stats['cilo']) == float(stats['cihi']) == 3.

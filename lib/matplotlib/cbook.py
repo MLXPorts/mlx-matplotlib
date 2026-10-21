@@ -1254,14 +1254,24 @@ def boxplot_stats(X, whis=1.5, bootstrap=None, labels=None, autorange=False):
     def _bootstrap_median(data, N=5000):
         # determine 95% confidence intervals of the median
         M = len(data)
-        percentiles = [2.5, 97.5]
-
-        bs_index = mlxarr.random.randint(M, size=(N, M))
-        bsData = data[bs_index]
-        estimate = mlxarr.median(bsData, axis=1, overwrite_input=True)
-
-        CI = mlxarr.percentile(estimate, percentiles)
-        return CI
+        with mx.stream(mx.cpu):
+            data = mx.array(data)
+            indices = mx.random.randint(0, M, shape=(N, M))
+            samples = mx.sort(mx.take(data, indices, axis=0), axis=1)
+            if M % 2:
+                estimate = mx.take(samples, M // 2, axis=1)
+            else:
+                estimate = mx.multiply(mx.add(
+                    mx.take(samples, M // 2 - 1, axis=1),
+                    mx.take(samples, M // 2, axis=1)), 0.5)
+            estimate = mx.sort(estimate)
+            position = mx.multiply(mx.array([0.025, 0.975], dtype=mx.float64), N - 1)
+            lower = mx.floor(position).astype(mx.int32)
+            upper = mx.ceil(position).astype(mx.int32)
+            fraction = mx.subtract(position, lower)
+            low = mx.take(estimate, lower)
+            return mx.add(low, mx.multiply(
+                fraction, mx.subtract(mx.take(estimate, upper), low)))
 
     def _compute_conf_interval(data, med, iqr, bootstrap):
         if bootstrap is not None:

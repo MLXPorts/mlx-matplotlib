@@ -1,4 +1,5 @@
 import sys
+import mlx.core as mx
 from matplotlib.mlx_testing import (assert_allclose, assert_almost_equal,
                            assert_array_equal, assert_array_almost_equal_nulp)
 from matplotlib import _mlx_array as mlxarr
@@ -206,7 +207,8 @@ class TestDetrend:
     scope='class')
 class TestSpectral:
     @pytest.fixture(scope='class', autouse=True)
-    def stim(self, request, fstims, iscomplex, sides, len_x, NFFT_density,
+    @classmethod
+    def stim(cls, request, fstims, iscomplex, sides, len_x, NFFT_density,
              nover_density, pad_to_density, pad_to_spectrum):
         Fs = 100.
 
@@ -320,12 +322,7 @@ class TestSpectral:
             y += mlxarr.sin(fstim * x * mlxarr.pi * 2) * 10**i
 
         if iscomplex:
-            y = y.astype('complex')
-
-        # Interestingly, the instance on which this fixture is called is not
-        # the same as the one on which a test is run. So we need to modify the
-        # class itself when using a class-scoped fixture.
-        cls = request.cls
+            y = y.astype(mx.complex64)
 
         cls.Fs = Fs
         cls.sides = sides

@@ -50,6 +50,7 @@ Spectral functions
 import functools
 from numbers import Integral, Number
 import sys
+import mlx.core as mx
 from matplotlib import _mlx_array as mlxarr
 from matplotlib import _api, _docstring, cbook
 
@@ -266,7 +267,7 @@ def _spectral_helper(x, y=None, NFFT=None, Fs=None, detrend_func=None,
         y = mlxarr.asarray(y)
 
     if sides is None or sides == 'default':
-        if mlxarr.iscomplexobj(x):
+        if x.dtype == mx.complex64:
             sides = 'twosided'
         else:
             sides = 'onesided'
