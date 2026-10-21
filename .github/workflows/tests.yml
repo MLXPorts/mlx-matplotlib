@@ -110,12 +110,19 @@ jobs:
             lib/matplotlib/tests/test_axes.py \
             lib/matplotlib/tests/test_transforms.py \
             lib/matplotlib/tests/test_cbook.py \
+            lib/matplotlib/tests/test_mlab.py \
             lib/matplotlib/tests/test_path.py \
             lib/matplotlib/tests/test_bezier.py \
             lib/matplotlib/tests/test_quiver.py \
             lib/matplotlib/tests/test_streamplot.py \
             lib/matplotlib/tests/test_text.py \
             -k 'native or accepts_mlx_stream or bottom_alignment_preserves'
+
+      - name: Run spectral fixture regressions
+        run: |
+          python -m pytest -ra --timeout=300 \
+            --junitxml=test-results/spectral-fixture.xml \
+            lib/matplotlib/tests/test_mlab.py -k 'test_spectral_helper_raises'
 
       - name: Run tests
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}

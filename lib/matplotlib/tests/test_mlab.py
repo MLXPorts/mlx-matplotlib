@@ -1027,3 +1027,12 @@ def test_psd_oversampling():
                     sides='onesided')
     Su_1side = mlxarr.append([Su[0]], Su[1:4] + Su[4:][::-1])
     assert_almost_equal(mlxarr.sum(P), mlxarr.sum(Su_1side))  # same energy
+
+
+def test_native_detrend_linear_residual():
+    with mx.stream(mx.cpu):
+        result = mlab.detrend_linear(mx.array([2., 6., 8.], dtype=mx.float64))
+        assert isinstance(result, mx.array)
+        assert_allclose(result, [-1 / 3, 2 / 3, -1 / 3], atol=1e-12)
+        assert abs(float(mx.sum(result))) < 1e-12
+        assert abs(float(mx.sum(mx.multiply(result, mx.arange(3))))) < 1e-12

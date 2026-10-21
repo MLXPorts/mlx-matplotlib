@@ -191,23 +191,23 @@ def detrend_linear(y):
     detrend_none : Another detrend algorithm.
     detrend : A wrapper around all the detrend algorithms.
     """
-    # This is faster than an algorithm based on linalg.lstsq.
-    y = mlxarr.asarray(y)
-
-    if y.ndim > 1:
-        raise ValueError('y cannot have ndim > 1')
-
-    # short-circuit 0-D array.
-    if not y.ndim:
-        return mlxarr.array(0., dtype=y.dtype)
-
-    x = mlxarr.arange(y.size, dtype=float)
-
-    C = mlxarr.cov(x, y, bias=1)
-    b = C[0, 1]/C[0, 0]
-
-    a = y.mean() - b*x.mean()
-    return y - (b*x + a)
+    with mx.stream(mx.cpu):
+        values = y
+        y = mx.array(values)
+        if y.ndim > 1:
+            raise ValueError('y cannot have ndim > 1')
+        if not y.ndim:
+            return mx.array(0., dtype=y.dtype)
+        if y.size < 2:
+            return mx.zeros_like(y)
+        if y.dtype != mx.complex64:
+            y = mx.array(values, dtype=mx.float64)
+        x = mx.arange(y.size, dtype=mx.float64)
+        centered_x = mx.subtract(x, mx.mean(x))
+        centered_y = mx.subtract(y, mx.mean(y))
+        slope = mx.divide(mx.sum(mx.multiply(centered_x, centered_y)),
+                          mx.sum(mx.square(centered_x)))
+        return mx.subtract(centered_y, mx.multiply(slope, centered_x))
 
 
 def _stride_windows(x, n, noverlap=0):
