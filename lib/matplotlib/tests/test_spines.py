@@ -188,10 +188,12 @@ def test_spine_set_bounds_with_none():
     assert bottom_bound[1] is not None, "Higher bound should be numeric"
     assert mlxarr.isclose(bottom_bound[0], 2), "Lower bound should match provided value"
     assert mlxarr.isclose(bottom_bound[1],
-                       xlim[1]), "Upper bound should match original value"
+                          xlim[1]), "Upper bound should match original value"
 
     left_bound = ax.spines['left'].get_bounds()
     assert (left_bound[0] is not None) and (left_bound[1] is not None), \
         "left bound should be numeric"
-    assert mlxarr.isclose(left_bound[0], ylim[0]), "Lower bound should match original value"
-    assert mlxarr.isclose(left_bound[1], ylim[1]), "Upper bound should match original value"
+    assert mlxarr.isclose(left_bound[0], ylim[0]
+                          ), "Lower bound should match original value"
+    assert mlxarr.isclose(left_bound[1], ylim[1]
+                          ), "Upper bound should match original value"

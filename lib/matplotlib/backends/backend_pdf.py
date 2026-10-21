@@ -21,6 +21,7 @@ import time
 import types
 import warnings
 import zlib
+import mlx.core as mx
 from matplotlib import _mlx_array as mlxarr
 from PIL import Image
 
@@ -635,7 +636,9 @@ def _get_pdf_charprocs(font_path, glyph_ids):
         # re-interpolating them.  Note that occasionally (e.g. with DejaVu Sans
         # glyph "0") a point detected as "implicit" is actually explicit, and
         # will thus be shifted by 1.
-        quads, = mlxarr.nonzero(c == 3)
+        is_quad = mx.equal(c, 3)
+        quads = mx.sort(mx.where(is_quad, mx.arange(c.size), c.size))[
+            :int(mx.sum(is_quad).item())]
         quads_on = quads[1::2]
         quads_mid_on = mlxarr.array(
             sorted({*quads_on} & {*(quads - 1)} & {*(quads + 1)}), int)
@@ -1203,7 +1206,7 @@ end"""
                     'Type': Name('Encoding'),
                     'Differences': differencesArray},
                 'Widths': widthsObject
-                }
+            }
 
             from encodings import cp1252
 
@@ -1322,7 +1325,7 @@ end"""
                 'FontDescriptor': fontdescObject,
                 'W': wObject,
                 'CIDToGIDMap': cidToGidMapObject
-                }
+            }
 
             type0FontDict = {
                 'Type': Name('Font'),
@@ -1331,7 +1334,7 @@ end"""
                 'Encoding': Name('Identity-H'),
                 'DescendantFonts': [cidFontDictObject],
                 'ToUnicode': toUnicodeMapObject
-                }
+            }
 
             # Make fontfile stream
             descriptor['FontFile2'] = fontfileObject
@@ -1472,7 +1475,7 @@ end"""
             'XHeight': cvt(pclt['xHeight']),
             'ItalicAngle': post['italicAngle'][1],  # ???
             'StemV': 0  # ???
-            }
+        }
 
         if fonttype == 3:
             return embedTTFType3(font, characters, descriptor)
@@ -1777,7 +1780,8 @@ end"""
                 # Convert to indexed color if there are 256 colors or fewer. This can
                 # significantly reduce the file size.
                 num_colors = len(img_colors)
-                palette = mlxarr.array([comp for _, color in img_colors for comp in color],
+                palette = mlxarr.array(
+                    [comp for _, color in img_colors for comp in color],
                                    dtype=mlxarr.uint8)
                 palette24 = ((palette[0::3].astype(mlxarr.uint32) << 16) |
                              (palette[1::3].astype(mlxarr.uint32) << 8) |
@@ -1807,7 +1811,7 @@ end"""
             self.reserveObject('length of image stream'),
             obj,
             png=png
-            )
+        )
         if png:
             self.currentstream.write(png_data)
         else:
@@ -2645,9 +2649,11 @@ class GraphicsContextPdf(GraphicsContextBase):
                     else:
                         different = bool(ours != theirs)
                 except (ValueError, DeprecationWarning):
-                    # array_backend version < 1.25 raises DeprecationWarning when array shapes
+                    # array_backend version < 1.25 raises DeprecationWarning when array
+                    # shapes
                     # mismatch, unlike array_backend >= 1.25 which raises ValueError.
-                    # This should be removed when array_backend < 1.25 is no longer supported.
+                    # This should be removed when array_backend < 1.25 is no longer
+                    # supported.
                     ours = mlxarr.asarray(ours)
                     theirs = mlxarr.asarray(theirs)
                     different = (ours.shape != theirs.shape or

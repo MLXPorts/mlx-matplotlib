@@ -48,12 +48,16 @@ Package imports
 
 Import the following modules using the standard scipy conventions::
 
-  from matplotlib import _mlx_array as mlxarr
-  from matplotlib import _mlx_array as array_backend.ma as ma
+  import mlx.core as mx
   import matplotlib as mpl
   import matplotlib.pyplot as plt
   import matplotlib.cbook as cbook
   import matplotlib.patches as mpatches
+
+Use native MLX operations directly at computation sites. Do not introduce
+NumPy-shaped aliases, array compatibility facades, or global monkey-patches of
+``mlx.core``. Keep necessary host conversions explicit at rendering, GUI,
+image-encoding, and external-library boundaries.
 
 In general, Matplotlib modules should **not** import `.rcParams` using ``from
 matplotlib import rcParams``, but rather access it as ``mpl.rcParams``.  This

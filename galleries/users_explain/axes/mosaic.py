@@ -33,6 +33,8 @@ provide a Pythonic API for specifying (nested) Axes layouts.
 """
 import matplotlib.pyplot as plt
 from matplotlib import _mlx_array as mlxarr
+
+
 # Helper function used for visualization in the following examples
 def identify_axes(ax_dict, fontsize=48):
     """

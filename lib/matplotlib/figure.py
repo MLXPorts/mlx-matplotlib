@@ -1216,7 +1216,8 @@ default: %(va)s
             Axes is created and the space for it will be stolen from the Axes(s)
             specified in *ax*.
 
-        ax : `~matplotlib.axes.Axes` or iterable or `array_backend.ndarray` of Axes, optional
+        ax : `~matplotlib.axes.Axes` or iterable or `array_backend.ndarray` of Axes,
+        optional
             The one or more parent Axes from which space for a new colorbar Axes
             will be stolen. This parameter is only used if *cax* is not set.
 
@@ -1298,10 +1299,10 @@ default: %(va)s
             # Warn in case of mismatch
             if mappable_host_fig is not self._root_figure:
                 _api.warn_external(
-                        f'Adding colorbar to a different Figure '
-                        f'{repr(mappable_host_fig)} than '
-                        f'{repr(self._root_figure)} which '
-                        f'fig.colorbar is called on.')
+                    f'Adding colorbar to a different Figure '
+                    f'{repr(mappable_host_fig)} than '
+                    f'{repr(self._root_figure)} which '
+                    f'fig.colorbar is called on.')
 
         NON_COLORBAR_KEYS = [  # remove kws that cannot be passed to Colorbar
             'fraction', 'pad', 'shrink', 'aspect', 'anchor', 'panchor']
@@ -2928,7 +2929,7 @@ None}, default: None
         self.stale = True
 
     @_api.deprecated(
-         "3.6", alternative="figure.get_layout_engine().set()",
+        "3.6", alternative="figure.get_layout_engine().set()",
          pending=True)
     def set_constrained_layout_pads(self, **kwargs):
         """

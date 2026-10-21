@@ -29,7 +29,7 @@ def test_startpoints():
     # Test varying startpoints. Also tests a non-default num_arrows argument.
     X, Y, U, V = velocity_field()
     start_x, start_y = mlxarr.meshgrid(mlxarr.linspace(X.min(), X.max(), 5),
-                                   mlxarr.linspace(Y.min(), Y.max(), 5))
+                                       mlxarr.linspace(Y.min(), Y.max(), 5))
     start_points = mlxarr.column_stack([start_x.ravel(), start_y.ravel()])
     plt.streamplot(X, Y, U, V, start_points=start_points, num_arrows=4)
     plt.plot(start_x, start_y, 'ok')
@@ -114,7 +114,8 @@ def test_integration_options():
 
     # Seed points
     n_seed = 50
-    seed_pts = mlxarr.column_stack((mlxarr.full(n_seed, -1.75), mlxarr.linspace(-2, 2, n_seed)))
+    seed_pts = mlxarr.column_stack(
+        (mlxarr.full(n_seed, -1.75), mlxarr.linspace(-2, 2, n_seed)))
 
     fig, axs = plt.subplots(3, 1, figsize=(6, 14))
     th_circ = mlxarr.linspace(0, 2 * mlxarr.pi, 100)
@@ -240,3 +241,37 @@ def test_streamplot_inputs():  # test no exception occurs.
     # array-likes
     plt.streamplot(range(3), range(3),
                    mlxarr.random.rand(3, 3), mlxarr.random.rand(3, 3))
+
+
+def test_native_integrator_preserves_mask_and_trajectory_history():
+    import mlx.core as mx
+    from matplotlib.streamplot import Grid, StreamMask, DomainMap, _get_integrator
+
+    with mx.stream(mx.cpu):
+        grid = Grid(mx.arange(9, dtype=mx.float64), mx.arange(9, dtype=mx.float64))
+        mask = mx.array([[3 <= x < 6 and 3 <= y < 6 for x in range(9)]
+                         for y in range(9)])
+        u = mlxarr.ma.array(mx.ones((9, 9), dtype=mx.float64), mask=mask)
+        v = mx.zeros((9, 9), dtype=mx.float64)
+        integrate = _get_integrator(u, v, DomainMap(grid, StreamMask(1)),
+                                    0.1, 1, "forward")
+        assert integrate(4, 4) is None
+        points = integrate(0, 1)
+        assert isinstance(points, mx.array)
+        assert 0 <= points[0, 0].item() < 1
+        assert points[0, 1].item() == 1
+        assert points[-1, 0].item() > points[0, 0].item()
+        assert bool(mx.all(mx.isfinite(points)).item())
+        assert bool(mx.all(mx.greater_equal(mx.diff(points[:, 0]), 0)).item())
+
+
+def test_native_batched_grid_interpolation():
+    import mlx.core as mx
+    from matplotlib.streamplot import interpgrid
+
+    with mx.stream(mx.cpu):
+        fields = mx.array([[[0, 0, 7], [1, 2, 7]],
+                           [[1, -3, 7], [2, -1, 7]]], dtype=mx.float64)
+        result = interpgrid(fields, 0.25, 0.75)
+    assert tuple(result.shape) == (3,)
+    assert result.tolist() == [1, -1.75, 7]

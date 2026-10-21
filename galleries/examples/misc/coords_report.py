@@ -9,6 +9,8 @@ in an interactive backend.
 
 import matplotlib.pyplot as plt
 from matplotlib import _mlx_array as mlxarr
+
+
 def millions(x):
     return '$%1.1fM' % (x * 1e-6)
 

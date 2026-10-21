@@ -13,6 +13,7 @@ import copy
 from array import array as _array
 from functools import lru_cache
 from weakref import WeakValueDictionary
+import mlx.core as mx
 from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from . import _api, _path
@@ -382,9 +383,9 @@ class Path:
         Concatenate a list of `Path`\s into a single `Path`, removing all `STOP`\s.
         """
         if not args:
-            return Path(mlxarr.empty([0, 2], dtype=mlxarr.float32))
-        vertices = mlxarr.concatenate([path.vertices for path in args])
-        codes = mlxarr.empty(len(vertices), dtype=cls.code_type)
+            return Path(mx.zeros((0, 2), dtype=mx.float32))
+        vertices = mx.concatenate([path.vertices for path in args])
+        codes = mx.zeros((len(vertices),), dtype=mx.uint8)
         i = 0
         for path in args:
             size = len(path.vertices)
@@ -395,8 +396,11 @@ class Path:
             else:
                 codes[i:i+size] = path.codes
             i += size
-        not_stop_mask = codes != cls.STOP  # Remove STOPs, as internal STOPs are a bug.
-        return cls(vertices[not_stop_mask], codes[not_stop_mask])
+        # Remove STOPs with explicit indices: native MLX has fixed-shape indexing.
+        keep = mx.not_equal(codes, cls.STOP)
+        indices = mx.sort(mx.where(keep, mx.arange(keep.size), keep.size))[
+            :int(mx.sum(keep).item())]
+        return cls(mx.take(vertices, indices, axis=0), mx.take(codes, indices))
 
     def __repr__(self):
         return f"Path({self.vertices!r}, {self.codes!r})"
@@ -505,10 +509,10 @@ class Path:
                 yield BezierSegment(mlxarr.array([prev_vert, verts])), code
             elif code == Path.CURVE3:
                 yield BezierSegment(mlxarr.array([prev_vert, verts[:2],
-                                              verts[2:]])), code
+                                                  verts[2:]])), code
             elif code == Path.CURVE4:
                 yield BezierSegment(mlxarr.array([prev_vert, verts[:2],
-                                              verts[2:4], verts[4:]])), code
+                                                  verts[2:4], verts[4:]])), code
             elif code == Path.CLOSEPOLY:
                 yield BezierSegment(mlxarr.array([prev_vert, first_vert])), code
             elif code == Path.STOP:
@@ -522,7 +526,12 @@ class Path:
         if self.codes is None:
             yield self
         else:
-            idxs = mlxarr.append((self.codes == Path.MOVETO).nonzero()[0], len(self.codes))
+            moves = mx.equal(self.codes, Path.MOVETO)
+            starts = mx.sort(mx.where(
+                moves, mx.arange(moves.size), moves.size))[
+                    :int(mx.sum(moves).item())]
+            idxs = mx.concatenate((
+                starts, mx.array([len(self.codes)], dtype=starts.dtype))).tolist()
             for sl in map(slice, idxs, idxs[1:]):
                 yield Path._fast_from_codes_and_verts(
                     self.vertices[sl], self.codes[sl], self)
@@ -653,9 +662,16 @@ class Path:
         """
         if transform is not None:
             transform = transform.frozen()
+        with mx.stream(mx.cpu):
+            points = mx.array(points, dtype=mx.float64)
+        _api.check_shape((None, 2), points=points)
+        if points.shape[0] == 0:
+            return mx.zeros((0,), dtype=mx.bool_)
+        # AGG consumes a host buffer; convert only at this rendering boundary.
         result = _path.points_in_path(
-            points, radius, self, _path_transform_to_memoryview(transform))
-        return result.astype('bool')
+            _path_values_to_memoryview(points), radius, self,
+            _path_transform_to_memoryview(transform))
+        return mx.array(result, dtype=mx.bool_)
 
     def contains_path(self, path, transform=None):
         """
@@ -696,7 +712,7 @@ class Path:
             # each line segment's end-points
             # (recall that STOP and CLOSEPOLY vertices are ignored)
             xys = self.vertices[mlxarr.isin(self.codes,
-                                        [Path.MOVETO, Path.LINETO])]
+                                            [Path.MOVETO, Path.LINETO])]
         else:
             xys = []
             for curve, code in self.iter_bezier(**kwargs):
@@ -765,7 +781,7 @@ class Path:
         codes = self.codes
         if codes is not None:
             new_codes = mlxarr.full((len(codes) - 1) * steps + 1, Path.LINETO,
-                                dtype=self.code_type)
+                                    dtype=self.code_type)
             new_codes[0::steps] = codes
         else:
             new_codes = None
@@ -816,8 +832,11 @@ class Path:
         # Deal with the case where there are curves and/or multiple
         # subpaths (using extension code)
         try:
-            return _path.convert_path_to_polygons(
-                self, transform, width, height, closed_only)
+            polygons = _path.convert_path_to_polygons(
+                self, _path_transform_to_memoryview(transform),
+                width, height, closed_only)
+            with mx.stream(mx.cpu):
+                return [mx.array(polygon, dtype=mx.float64) for polygon in polygons]
         except TypeError:
             polygons = []
             current = []
@@ -956,40 +975,40 @@ class Path:
 
         vertices = mlxarr.array([[0.0, -1.0],
 
-                             [MAGIC, -1.0],
-                             [SQRTHALF-MAGIC45, -SQRTHALF-MAGIC45],
-                             [SQRTHALF, -SQRTHALF],
+                                 [MAGIC, -1.0],
+                                 [SQRTHALF-MAGIC45, -SQRTHALF-MAGIC45],
+                                 [SQRTHALF, -SQRTHALF],
 
-                             [SQRTHALF+MAGIC45, -SQRTHALF+MAGIC45],
-                             [1.0, -MAGIC],
-                             [1.0, 0.0],
+                                 [SQRTHALF+MAGIC45, -SQRTHALF+MAGIC45],
+                                 [1.0, -MAGIC],
+                                 [1.0, 0.0],
 
-                             [1.0, MAGIC],
-                             [SQRTHALF+MAGIC45, SQRTHALF-MAGIC45],
-                             [SQRTHALF, SQRTHALF],
+                                 [1.0, MAGIC],
+                                 [SQRTHALF+MAGIC45, SQRTHALF-MAGIC45],
+                                 [SQRTHALF, SQRTHALF],
 
-                             [SQRTHALF-MAGIC45, SQRTHALF+MAGIC45],
-                             [MAGIC, 1.0],
-                             [0.0, 1.0],
+                                 [SQRTHALF-MAGIC45, SQRTHALF+MAGIC45],
+                                 [MAGIC, 1.0],
+                                 [0.0, 1.0],
 
-                             [-MAGIC, 1.0],
-                             [-SQRTHALF+MAGIC45, SQRTHALF+MAGIC45],
-                             [-SQRTHALF, SQRTHALF],
+                                 [-MAGIC, 1.0],
+                                 [-SQRTHALF+MAGIC45, SQRTHALF+MAGIC45],
+                                 [-SQRTHALF, SQRTHALF],
 
-                             [-SQRTHALF-MAGIC45, SQRTHALF-MAGIC45],
-                             [-1.0, MAGIC],
-                             [-1.0, 0.0],
+                                 [-SQRTHALF-MAGIC45, SQRTHALF-MAGIC45],
+                                 [-1.0, MAGIC],
+                                 [-1.0, 0.0],
 
-                             [-1.0, -MAGIC],
-                             [-SQRTHALF-MAGIC45, -SQRTHALF+MAGIC45],
-                             [-SQRTHALF, -SQRTHALF],
+                                 [-1.0, -MAGIC],
+                                 [-SQRTHALF-MAGIC45, -SQRTHALF+MAGIC45],
+                                 [-SQRTHALF, -SQRTHALF],
 
-                             [-SQRTHALF+MAGIC45, -SQRTHALF-MAGIC45],
-                             [-MAGIC, -1.0],
-                             [0.0, -1.0],
+                                 [-SQRTHALF+MAGIC45, -SQRTHALF-MAGIC45],
+                                 [-MAGIC, -1.0],
+                                 [0.0, -1.0],
 
-                             [0.0, -1.0]],
-                            dtype=float)
+                                 [0.0, -1.0]],
+                                dtype=float)
 
         codes = [cls.CURVE4] * 26
         codes[0] = cls.MOVETO
@@ -1159,7 +1178,8 @@ class Path:
         If *inside* is `True`, clip to the inside of the box, otherwise
         to the outside of the box.
         """
-        verts = _path.clip_path_to_rect(self, bbox, inside)
+        bounds = tuple(float(value) for value in bbox.extents)
+        verts = _path.clip_path_to_rect(self, bounds, inside)
         paths = [Path(poly) for poly in verts]
         return self.make_compound_path(*paths)
 

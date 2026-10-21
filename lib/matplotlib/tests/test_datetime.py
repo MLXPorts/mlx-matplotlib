@@ -25,7 +25,7 @@ class TestDatetimePlotting:
         ax3.annotate(text=test_text, xy=(dates[15], dates[3]))
         ax4.plot(dates, dates)
         ax4.annotate(text=test_text, xy=(dates[5], dates[30]),
-                        xytext=(dates[1], dates[7]), arrowprops=dict(facecolor='red'))
+                     xytext=(dates[1], dates[7]), arrowprops=dict(facecolor='red'))
 
     @pytest.mark.xfail(reason="Test for arrow not written yet")
     @mpl.style.context("default")
@@ -206,9 +206,9 @@ class TestDatetimePlotting:
         mpl.rcParams["date.converter"] = 'concise'
         fig, (ax1, ax2) = plt.subplots(2, 1, layout='constrained')
         birth_date = mlxarr.array([datetime.datetime(2020, 4, 10),
-                               datetime.datetime(2020, 5, 30),
-                               datetime.datetime(2020, 10, 12),
-                               datetime.datetime(2020, 11, 15)])
+                                   datetime.datetime(2020, 5, 30),
+                                   datetime.datetime(2020, 10, 12),
+                                   datetime.datetime(2020, 11, 15)])
         year_start = datetime.datetime(2020, 1, 1)
         year_end = datetime.datetime(2020, 12, 31)
         age = [21, 53, 20, 24]
@@ -234,10 +234,10 @@ class TestDatetimePlotting:
 
         ax.broken_barh([(datetime.datetime(2023, 1, 4), datetime.timedelta(days=2)),
                         (datetime.datetime(2023, 1, 8), datetime.timedelta(days=3))],
-                        (10, 9), facecolors='tab:blue')
+                       (10, 9), facecolors='tab:blue')
         ax.broken_barh([(datetime.datetime(2023, 1, 2), datetime.timedelta(days=1)),
-                         (datetime.datetime(2023, 1, 4), datetime.timedelta(days=4))],
-                         (20, 9), facecolors=('tab:red'))
+                        (datetime.datetime(2023, 1, 4), datetime.timedelta(days=4))],
+                       (20, 9), facecolors=('tab:red'))
 
     @mpl.style.context("default")
     def test_bxp(self):
@@ -319,8 +319,10 @@ class TestDatetimePlotting:
         limit = 7
         start_date = datetime.datetime(2023, 1, 1)
 
-        x_dates = mlxarr.array([datetime.datetime(2023, 10, d) for d in range(1, limit)])
-        y_dates = mlxarr.array([datetime.datetime(2023, 10, d) for d in range(1, limit)])
+        x_dates = mlxarr.array([datetime.datetime(2023, 10, d)
+                               for d in range(1, limit)])
+        y_dates = mlxarr.array([datetime.datetime(2023, 10, d)
+                               for d in range(1, limit)])
         x_date_error = datetime.timedelta(days=1)
         y_date_error = datetime.timedelta(days=1)
 
@@ -354,11 +356,11 @@ class TestDatetimePlotting:
         fig, (ax1, ax2, ax3) = plt.subplots(3, 1, layout="constrained")
 
         x_dates1 = mlxarr.array([datetime.datetime(2020, 6, 30),
-                             datetime.datetime(2020, 7, 22),
-                             datetime.datetime(2020, 8, 3),
-                             datetime.datetime(2020, 9, 14),],
-                            dtype=mlxarr.datetime64,
-                            )
+                                 datetime.datetime(2020, 7, 22),
+                                 datetime.datetime(2020, 8, 3),
+                                 datetime.datetime(2020, 9, 14),],
+                                dtype=mlxarr.datetime64,
+                                )
 
         ax1.eventplot(x_dates1)
 
@@ -855,9 +857,12 @@ class TestDatetimePlotting:
                    ymax=[0.25, 0.5, 0.75])
         ax2.set_xlim(left=0,
                      right=0.5)
-        ax2.vlines(x=[0.3, 0.35],
-                   ymin=[mlxarr.datetime64('2023-03-20'), mlxarr.datetime64('2023-03-31')],
-                   ymax=[mlxarr.datetime64('2023-05-01'), mlxarr.datetime64('2023-05-16')])
+        ax2.vlines(x=[0.3,
+                      0.35],
+                   ymin=[mlxarr.datetime64('2023-03-20'),
+                         mlxarr.datetime64('2023-03-31')],
+                   ymax=[mlxarr.datetime64('2023-05-01'),
+                         mlxarr.datetime64('2023-05-16')])
         ax3.set_xlim(left=datetime.datetime(2023, 7, 1),
                      right=datetime.datetime(2023, 12, 31))
         ax3.vlines(x=[datetime.datetime(2023, 9, 1), datetime.datetime(2023, 12, 10)],

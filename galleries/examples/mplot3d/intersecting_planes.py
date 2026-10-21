@@ -21,6 +21,8 @@ arbitrary intersecting planes, which you can copy-and-paste as is.
 """
 import matplotlib.pyplot as plt
 from matplotlib import _mlx_array as mlxarr
+
+
 def plot_quadrants(ax, array, fixed_coord, cmap):
     """For a given 3d *array* plot a plane with *fixed_coord*, using four quadrants."""
     nx, ny, nz = array.shape

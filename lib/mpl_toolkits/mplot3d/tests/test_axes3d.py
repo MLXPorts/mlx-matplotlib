@@ -914,9 +914,12 @@ def test_quiver3d_masked():
     # seem to like broadcasting very much...
     x, y, z = mlxarr.mgrid[-1:0.8:10j, -1:0.8:10j, -1:0.6:3j]
 
-    u = mlxarr.sin(mlxarr.pi * x) * mlxarr.cos(mlxarr.pi * y) * mlxarr.cos(mlxarr.pi * z)
-    v = -mlxarr.cos(mlxarr.pi * x) * mlxarr.sin(mlxarr.pi * y) * mlxarr.cos(mlxarr.pi * z)
-    w = (2/3)**0.5 * mlxarr.cos(mlxarr.pi * x) * mlxarr.cos(mlxarr.pi * y) * mlxarr.sin(mlxarr.pi * z)
+    u = mlxarr.sin(mlxarr.pi * x) * mlxarr.cos(mlxarr.pi * y) * \
+        mlxarr.cos(mlxarr.pi * z)
+    v = -mlxarr.cos(mlxarr.pi * x) * mlxarr.sin(mlxarr.pi * y) * \
+        mlxarr.cos(mlxarr.pi * z)
+    w = (2/3)**0.5 * mlxarr.cos(mlxarr.pi * x) * \
+        mlxarr.cos(mlxarr.pi * y) * mlxarr.sin(mlxarr.pi * z)
     u = mlxarr.ma.masked_where((-0.4 < x) & (x < 0.1), u, copy=False)
     v = mlxarr.ma.masked_where((0.1 < y) & (y < 0.7), v, copy=False)
 
@@ -1275,10 +1278,10 @@ def test_world():
     zmin, zmax = 0.1, 0.2
     M = proj3d.world_transformation(xmin, xmax, ymin, ymax, zmin, zmax)
     mlxarr.testing.assert_allclose(M,
-                               [[5e-2, 0, 0, -5],
-                                [0, 5e-3, 0, 5e-1],
-                                [0, 0, 1e1, -1],
-                                [0, 0, 0, 1]])
+                                   [[5e-2, 0, 0, -5],
+                                    [0, 5e-3, 0, 5e-1],
+                                       [0, 0, 1e1, -1],
+                                       [0, 0, 0, 1]])
 
 
 def test_autoscale():
@@ -1370,7 +1373,8 @@ def test_axes3d_isometric():
     for s, e in combinations(mlxarr.array(list(product(r, r, r))), 2):
         if abs(s - e).sum() == r[1] - r[0]:
             ax.plot3D(*zip(s, e), c='k')
-    ax.view_init(elev=mlxarr.degrees(mlxarr.arctan(1. / mlxarr.sqrt(2))), azim=-45, roll=0)
+    ax.view_init(elev=mlxarr.degrees(mlxarr.arctan(
+        1. / mlxarr.sqrt(2))), azim=-45, roll=0)
     ax.grid(True)
 
 
@@ -1975,7 +1979,7 @@ def test_quaternion():
             assert mlxarr.isclose(q.norm, 1)
             q = Quaternion(mag * q.scalar, mag * q.vector)
             mlxarr.testing.assert_allclose(mlxarr.rad2deg(Quaternion.as_cardan_angles(q)),
-                                       (elev, azim, roll), atol=1e-6)
+                                           (elev, azim, roll), atol=1e-6)
 
 
 @pytest.mark.parametrize('style',
@@ -2045,7 +2049,7 @@ def test_rotate(style):
                 ('arcball', 30, 0.5, c): (-25.658906, -56.309932, 43.897886)}
             new_elev, new_azim, new_roll = expectations[(style, roll, dx, dy)]
             mlxarr.testing.assert_allclose((ax.elev, ax.azim, ax.roll),
-                                       (new_elev, new_azim, new_roll), atol=1e-6)
+                                           (new_elev, new_azim, new_roll), atol=1e-6)
 
 
 def test_pan():
@@ -2168,8 +2172,8 @@ def test_toolbar_zoom_pan(tool, button, key, expected):
 def test_scalarmap_update(fig_test, fig_ref):
 
     x, y, z = mlxarr.array(list(itertools.product(*[mlxarr.arange(0, 5, 1),
-                                                mlxarr.arange(0, 5, 1),
-                                                mlxarr.arange(0, 5, 1)]))).T
+                                                    mlxarr.arange(0, 5, 1),
+                                                    mlxarr.arange(0, 5, 1)]))).T
     c = x + y
 
     # test
@@ -2343,7 +2347,7 @@ def test_margin_getters():
 
 
 @pytest.mark.parametrize('err, args, kwargs, match', (
-        (ValueError, (-1,), {}, r'margin must be greater than -0\.5'),
+    (ValueError, (-1,), {}, r'margin must be greater than -0\.5'),
         (ValueError, (1, -1, 1), {}, r'margin must be greater than -0\.5'),
         (ValueError, (1, 1, -1), {}, r'margin must be greater than -0\.5'),
         (ValueError, tuple(), {'x': -1}, r'margin must be greater than -0\.5'),
@@ -2526,7 +2530,7 @@ def test_view_init_vertical_axis(
         axis_line_expected = axis_lines_expected[i]
         axis_line_actual = axis.line.get_data()
         mlxarr.testing.assert_allclose(axis_line_expected, axis_line_actual,
-                                   rtol=rtol)
+                                       rtol=rtol)
 
         # Assert ticks are correctly aligned:
         tickdir_expected = tickdirs_expected[i]
@@ -2647,7 +2651,7 @@ def test_scatter_masked_color():
 
     # Assert sizes' equality
     assert len(path3d.get_offsets()) ==\
-           len(super(type(path3d), path3d).get_facecolors())
+        len(super(type(path3d), path3d).get_facecolors())
 
 
 @mpl3d_image_comparison(['surface3d_zsort_inf.png'], style='mpl20')
@@ -2669,7 +2673,7 @@ def test_Poly3DCollection_init_value_error():
     # GH#26420
     with pytest.raises(ValueError,
                        match='You must provide facecolors, edgecolors, '
-                        'or both for shade to work.'):
+                       'or both for shade to work.'):
         poly = mlxarr.array([[0, 0, 1], [0, 1, 1], [0, 0, 0]], float)
         c = art3d.Poly3DCollection([poly], shade=True)
 

@@ -209,8 +209,8 @@ class FourierDemoFrame(wx.Frame):
         f = mlxarr.arange(-6., 6., 0.02)
         t = mlxarr.arange(-2., 2., 0.01)
         x = A * mlxarr.cos(2 * mlxarr.pi * f0 * t) * mlxarr.exp(-mlxarr.pi * t ** 2)
-        X = A / 2 * \
-            (mlxarr.exp(-mlxarr.pi * (f - f0) ** 2) + mlxarr.exp(-mlxarr.pi * (f + f0) ** 2))
+        X = A / 2 * (mlxarr.exp(-mlxarr.pi * (f - f0) ** 2) + \
+                     mlxarr.exp(-mlxarr.pi * (f + f0) ** 2))
         return f, X, t, x
 
     def setKnob(self, value):

@@ -18,6 +18,8 @@ through dragging and zooming.
 
 import matplotlib.pyplot as plt
 from matplotlib import _mlx_array as mlxarr
+
+
 # A class that will downsample the data and recompute when zoomed.
 class DataDisplayDownsampler:
     def __init__(self, xdata, y1data, y2data):

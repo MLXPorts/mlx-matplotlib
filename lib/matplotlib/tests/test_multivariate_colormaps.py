@@ -13,7 +13,8 @@ import base64
 
 @image_comparison(["bivariate_cmap_shapes.png"])
 def test_bivariate_cmap_shapes():
-    x_0 = mlxarr.repeat(mlxarr.linspace(-0.1, 1.1, 10, dtype='float32')[None, :], 10, axis=0)
+    x_0 = mlxarr.repeat(mlxarr.linspace(-0.1, 1.1, 10,
+                        dtype='float32')[None, :], 10, axis=0)
     x_1 = x_0.T
 
     fig, axes = plt.subplots(1, 4, figsize=(10, 2))
@@ -45,14 +46,14 @@ def test_multivar_creation():
     y, x = mlxarr.mgrid[0:3, 0:3]/2
     im = cmap((y, x))
     res = mlxarr.array([[[0.96862745, 0.94509804, 0.92156863, 1],
-                     [0.96004614, 0.53504037, 0.23277201, 1],
-                     [0.46666667, 0.1372549, 0.01568627, 1]],
-                    [[0.41708574, 0.64141484, 0.75980008, 1],
-                     [0.40850442, 0.23135717, 0.07100346, 1],
-                     [0, 0, 0, 1]],
-                    [[0.03137255, 0.14901961, 0.34117647, 1],
-                     [0.02279123, 0, 0, 1],
-                     [0, 0, 0, 1]]])
+                         [0.96004614, 0.53504037, 0.23277201, 1],
+                         [0.46666667, 0.1372549, 0.01568627, 1]],
+                        [[0.41708574, 0.64141484, 0.75980008, 1],
+                         [0.40850442, 0.23135717, 0.07100346, 1],
+                         [0, 0, 0, 1]],
+                        [[0.03137255, 0.14901961, 0.34117647, 1],
+                         [0.02279123, 0, 0, 1],
+                         [0, 0, 0, 1]]])
     assert_allclose(im,  res, atol=0.01)
 
     with pytest.raises(ValueError, match="colormaps must be a list of"):
@@ -115,11 +116,11 @@ def test_multivar_cmap_call():
     # call only integers
     cs = cmap([(0, 50, 100, 0, 0, 300), (0, 0, 0, 50, 100, 300)])
     res = mlxarr.array([[1, 1, 1, 1],
-                     [0.85176471, 0.91029412, 0.96023529, 1],
-                     [0.70452941, 0.82764706, 0.93358824, 1],
-                     [0.94358824, 0.88505882, 0.83511765, 1],
-                     [0.89729412, 0.77417647, 0.66823529, 1],
-                     [0, 0, 0, 1]])
+                        [0.85176471, 0.91029412, 0.96023529, 1],
+                        [0.70452941, 0.82764706, 0.93358824, 1],
+                        [0.94358824, 0.88505882, 0.83511765, 1],
+                        [0.89729412, 0.77417647, 0.66823529, 1],
+                        [0, 0, 0, 1]])
     assert_allclose(cs,  res, atol=0.01)
 
     # call only integers, wrong byte order
@@ -132,20 +133,20 @@ def test_multivar_cmap_call():
     # check calling with bytes = True
     cs = cmap([(0, 50, 100, 0, 0, 300), (0, 0, 0, 50, 100, 300)], bytes=True)
     res = mlxarr.array([[255, 255, 255, 255],
-                     [217, 232, 244, 255],
-                     [179, 211, 238, 255],
-                     [240, 225, 212, 255],
-                     [228, 197, 170, 255],
-                     [0,   0,   0, 255]])
+                        [217, 232, 244, 255],
+                        [179, 211, 238, 255],
+                        [240, 225, 212, 255],
+                        [228, 197, 170, 255],
+                        [0,   0,   0, 255]])
     assert_allclose(cs,  res, atol=0.01)
 
     cs = cmap([(0, 50, 100, 0, 0, 300), (0, 0, 0, 50, 100, 300)], alpha=0.5)
     res = mlxarr.array([[1, 1, 1, 0.5],
-                     [0.85176471, 0.91029412, 0.96023529, 0.5],
-                     [0.70452941, 0.82764706, 0.93358824, 0.5],
-                     [0.94358824, 0.88505882, 0.83511765, 0.5],
-                     [0.89729412, 0.77417647, 0.66823529, 0.5],
-                     [0, 0, 0, 0.5]])
+                        [0.85176471, 0.91029412, 0.96023529, 0.5],
+                        [0.70452941, 0.82764706, 0.93358824, 0.5],
+                        [0.94358824, 0.88505882, 0.83511765, 0.5],
+                        [0.89729412, 0.77417647, 0.66823529, 0.5],
+                        [0, 0, 0, 0.5]])
     assert_allclose(cs,  res, atol=0.01)
     # call with tuple
     assert_allclose(cmap((100, 120), bytes=True, alpha=0.5),
@@ -154,11 +155,11 @@ def test_multivar_cmap_call():
     # alpha and bytes
     cs = cmap([(0, 5, 9, 0, 0, 10), (0, 0, 0, 5, 11, 12)], bytes=True, alpha=0.5)
     res = mlxarr.array([[0, 0, 255, 127],
-                    [141, 0, 255, 127],
-                    [255, 0, 255, 127],
-                    [0, 115, 255, 127],
-                    [0, 255, 255, 127],
-                    [255, 255, 255, 127]])
+                        [141, 0, 255, 127],
+                        [255, 0, 255, 127],
+                        [0, 115, 255, 127],
+                        [0, 255, 255, 127],
+                        [255, 255, 255, 127]])
 
     # bad alpha shape
     with pytest.raises(ValueError, match="alpha is array-like but its shape"):
@@ -167,8 +168,8 @@ def test_multivar_cmap_call():
     cmap = cmap.with_extremes(bad=(1, 1, 1, 1))
     cs = cmap([(0., 1.1, mlxarr.nan), (0., 1.2, 1.)])
     res = mlxarr.array([[1., 1., 1., 1.],
-                   [0., 0., 0., 1.],
-                   [1., 1., 1., 1.]])
+                        [0., 0., 0., 1.],
+                        [1., 1., 1., 1.]])
     assert_allclose(cs,  res, atol=0.01)
 
     # call outside with tuple
@@ -204,7 +205,7 @@ def test_multivar_resample():
     assert_allclose(cmap_resampled[1](0.25), (0.093, 0.116, 0.059, 1.0))
     assert_allclose(cmap_resampled((0, 0.25, 0)), (0.093, 0.116, 0.059, 1.0))
     assert_allclose(cmap_resampled((1, 0.25, 1)), (0.417271, 0.264624, 0.274976, 1.),
-                                   atol=0.01)
+                    atol=0.01)
 
     with pytest.raises(ValueError, match="lutshape must be of length"):
         cmap = cmap.resampled(4)
@@ -229,11 +230,11 @@ def test_bivar_cmap_call():
     # call only integers
     cs = cmap([(0, 5, 9, 0, 0, 10), (0, 0, 0, 5, 11, 12)])
     res = mlxarr.array([[0, 0, 1, 1],
-                   [0.556, 0, 1, 1],
-                   [1, 0, 1, 1],
-                   [0, 0.454, 1, 1],
-                   [0, 1, 1, 1],
-                   [1, 1, 1, 1]])
+                        [0.556, 0, 1, 1],
+                        [1, 0, 1, 1],
+                        [0, 0.454, 1, 1],
+                        [0, 1, 1, 1],
+                        [1, 1, 1, 1]])
     assert_allclose(cs,  res, atol=0.01)
     # call only integers, wrong byte order
     swapped_dt = mlxarr.dtype(int).newbyteorder()
@@ -245,27 +246,27 @@ def test_bivar_cmap_call():
     cmap = cmap.with_extremes(outside=(1, 0, 0, 0))
     cs = cmap([(0.5, 0), (0, 3)])
     res = mlxarr.array([[0.555, 0, 1, 1],
-                    [0, 0.2727, 1, 1]])
+                        [0, 0.2727, 1, 1]])
     assert_allclose(cs,  res, atol=0.01)
 
     # check calling with bytes = True
     cs = cmap([(0, 5, 9, 0, 0, 10), (0, 0, 0, 5, 11, 12)], bytes=True)
     res = mlxarr.array([[0, 0, 255, 255],
-                    [141, 0, 255, 255],
-                    [255, 0, 255, 255],
-                    [0, 115, 255, 255],
-                    [0, 255, 255, 255],
-                    [255, 255, 255, 255]])
+                        [141, 0, 255, 255],
+                        [255, 0, 255, 255],
+                        [0, 115, 255, 255],
+                        [0, 255, 255, 255],
+                        [255, 255, 255, 255]])
     assert_allclose(cs,  res, atol=0.01)
 
     # test alpha
     cs = cmap([(0, 5, 9, 0, 0, 10), (0, 0, 0, 5, 11, 12)], alpha=0.5)
     res = mlxarr.array([[0, 0, 1, 0.5],
-                    [0.556, 0, 1, 0.5],
-                    [1, 0, 1, 0.5],
-                    [0, 0.454, 1, 0.5],
-                    [0, 1, 1, 0.5],
-                    [1, 1, 1, 0.5]])
+                        [0.556, 0, 1, 0.5],
+                        [1, 0, 1, 0.5],
+                        [0, 0.454, 1, 0.5],
+                        [0, 1, 1, 0.5],
+                        [1, 1, 1, 0.5]])
     assert_allclose(cs,  res, atol=0.01)
     # call with tuple
     assert_allclose(cmap((10, 12), bytes=True, alpha=0.5),
@@ -274,11 +275,11 @@ def test_bivar_cmap_call():
     # alpha and bytes
     cs = cmap([(0, 5, 9, 0, 0, 10), (0, 0, 0, 5, 11, 12)], bytes=True, alpha=0.5)
     res = mlxarr.array([[0, 0, 255, 127],
-                    [141, 0, 255, 127],
-                    [255, 0, 255, 127],
-                    [0, 115, 255, 127],
-                    [0, 255, 255, 127],
-                    [255, 255, 255, 127]])
+                        [141, 0, 255, 127],
+                        [255, 0, 255, 127],
+                        [0, 115, 255, 127],
+                        [0, 255, 255, 127],
+                        [255, 255, 255, 127]])
 
     # bad alpha shape
     with pytest.raises(ValueError, match="alpha is array-like but its shape"):
@@ -291,8 +292,8 @@ def test_bivar_cmap_call():
     cmap = cmap.with_extremes(outside=(1, 0, 0, 0), bad=(1, 1, 1, 0), shape='ignore')
     cs = cmap([(0., 1.1, mlxarr.nan), (0., 1.2, 1.)])
     res = mlxarr.array([[0, 0, 1, 1],
-                    [1, 0, 0, 0],
-                    [1, 1, 1, 0]])
+                        [1, 0, 0, 0],
+                        [1, 1, 1, 0]])
     assert_allclose(cs,  res, atol=0.01)
     # call outside with tuple
     assert_allclose(cmap((10, 12), bytes=True, alpha=0.5),
@@ -300,7 +301,7 @@ def test_bivar_cmap_call():
     # with integers
     cs = cmap([(0, 10), (0, 12)])
     res = mlxarr.array([[0, 0, 1, 1],
-                    [1, 0, 0, 0]])
+                        [1, 0, 0, 0]])
     assert_allclose(cs,  res, atol=0.01)
 
     with pytest.raises(ValueError,
@@ -394,11 +395,11 @@ def test_bivar_cmap_from_image():
     cmap = mpl.colors.BivarColormapFromImage(cim)
     im = cmap((data_0, data_1))
     res = mlxarr.array([[[0, 0, 1, 1],
-                    [0.2, 0.33333333, 1, 1],
-                    [0.4, 0.75, 1, 1]],
-                   [[0.6, 0.16666667, 1, 1],
-                    [0.8, 0.58333333, 1, 1],
-                    [0.9, 0.91666667, 1, 1]]])
+                         [0.2, 0.33333333, 1, 1],
+                         [0.4, 0.75, 1, 1]],
+                        [[0.6, 0.16666667, 1, 1],
+                         [0.8, 0.58333333, 1, 1],
+                         [0.9, 0.91666667, 1, 1]]])
     assert_allclose(im,  res, atol=0.01)
 
     # input as unit8
@@ -409,11 +410,11 @@ def test_bivar_cmap_from_image():
     cmap = mpl.colors.BivarColormapFromImage(cim.astype(mlxarr.uint8))
     im = cmap((data_0, data_1))
     res = mlxarr.array([[[0, 0, 1, 1],
-                    [0.2, 0.33333333, 1, 1],
-                    [0.4, 0.75, 1, 1]],
-                   [[0.6, 0.16666667, 1, 1],
-                    [0.8, 0.58333333, 1, 1],
-                    [0.9, 0.91666667, 1, 1]]])
+                         [0.2, 0.33333333, 1, 1],
+                         [0.4, 0.75, 1, 1]],
+                        [[0.6, 0.16666667, 1, 1],
+                         [0.8, 0.58333333, 1, 1],
+                         [0.9, 0.91666667, 1, 1]]])
     assert_allclose(im,  res, atol=0.01)
 
     # bivariate colormap from array
@@ -424,11 +425,11 @@ def test_bivar_cmap_from_image():
     cmap = mpl.colors.BivarColormapFromImage(cim)
     im = cmap((data_0, data_1), bytes=True)
     res = mlxarr.array([[[255, 255,   0, 255],
-                     [156, 206,   0, 255],
-                     [49, 156,  49, 255]],
-                    [[206,  99,   0, 255],
-                     [99,  49, 107, 255],
-                     [0,   0, 255, 255]]])
+                         [156, 206,   0, 255],
+                         [49, 156,  49, 255]],
+                        [[206,  99,   0, 255],
+                         [99,  49, 107, 255],
+                         [0,   0, 255, 255]]])
     assert_allclose(im,  res, atol=0.01)
 
 

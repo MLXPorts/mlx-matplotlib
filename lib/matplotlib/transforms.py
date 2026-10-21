@@ -40,14 +40,13 @@ import itertools
 import textwrap
 import weakref
 import math
+import mlx.core as mx
 from array import array as _array
 from matplotlib import _mlx_array as mlxarr
-inv = mlxarr.linalg.inv
 
 from matplotlib import _api
 from matplotlib._path import (
     affine_transform as _path_affine_transform,
-    count_bboxes_overlapping_bbox,
 )
 from .path import Path
 
@@ -83,9 +82,10 @@ def _as_float_memoryview(values):
 
 
 def affine_transform(values, mtx):
-    result = _path_affine_transform(
-        mlxarr.asarray(values, dtype=float), mlxarr.asarray(mtx, dtype=float))
-    return mlxarr.array(result.tolist(), dtype=float)
+    # Matplotlib geometry requires float64, which MLX supports on the CPU device.
+    with mx.stream(mx.cpu):
+        return _path_affine_transform(mx.array(values, dtype=mx.float64),
+                                      mx.array(mtx, dtype=mx.float64), stream=mx.cpu)
 
 
 def _maybe_scalar(value):
@@ -625,7 +625,21 @@ class BboxBase(TransformNode):
         ----------
         bboxes : sequence of `.BboxBase`
         """
-        return count_bboxes_overlapping_bbox(self, bboxes)
+        bboxes = list(bboxes)
+        if not bboxes:
+            return 0
+        with mx.stream(mx.cpu):
+            points = mx.array(self.get_points(), dtype=mx.float64)
+            boxes = mx.stack([mx.array(bbox.get_points(), dtype=mx.float64)
+                              for bbox in bboxes])
+            lower = mx.minimum(points[0], points[1])
+            upper = mx.maximum(points[0], points[1])
+            other_lower = mx.minimum(boxes[:, 0], boxes[:, 1])
+            other_upper = mx.maximum(boxes[:, 0], boxes[:, 1])
+            separated = mx.any(mx.logical_or(
+                mx.less_equal(other_upper, lower),
+                mx.greater_equal(other_lower, upper)), axis=1)
+            return int(mx.sum(mx.logical_not(separated)).item())
 
     def expanded(self, sw, sh):
         """
@@ -912,7 +926,8 @@ class Bbox(BboxBase):
             return
 
         if ignore:
-            points = mlxarr.array([[mlxarr.inf, mlxarr.inf], [-mlxarr.inf, -mlxarr.inf]])
+            points = mlxarr.array(
+                [[mlxarr.inf, mlxarr.inf], [-mlxarr.inf, -mlxarr.inf]])
             minpos = mlxarr.array([mlxarr.inf, mlxarr.inf])
         else:
             points = self._points.copy()
@@ -1247,9 +1262,8 @@ class LockableBbox(BboxBase):
         self._bbox = bbox
         self.set_children(bbox)
         self._points = None
-        fp = [x0, y0, x1, y1]
-        mask = [val is None for val in fp]
-        self._locked_points = mlxarr.ma.array(fp, float, mask=mask).reshape((2, 2))
+        # Locks are optional scalar metadata, not masked numerical arrays.
+        self._locked_points = [[x0, y0], [x1, y1]]
 
     __str__ = _make_str_method("_bbox", "_locked_points")
 
@@ -1257,9 +1271,12 @@ class LockableBbox(BboxBase):
         # docstring inherited
         if self._invalid:
             points = self._bbox.get_points()
-            self._points = mlxarr.where(self._locked_points.mask,
-                                    points,
-                                    self._locked_points)
+            with mx.stream(mx.cpu):
+                unlocked = mx.array([[value is None for value in row]
+                                     for row in self._locked_points])
+                locked = mx.array([[0 if value is None else value for value in row]
+                                   for row in self._locked_points], dtype=points.dtype)
+                self._points = mx.where(unlocked, points, locked)
             self._invalid = 0
         return self._points
 
@@ -1276,15 +1293,11 @@ class LockableBbox(BboxBase):
         """
         float or None: The value used for the locked x0.
         """
-        if self._locked_points.mask[0, 0]:
-            return None
-        else:
-            return self._locked_points[0, 0]
+        return self._locked_points[0][0]
 
     @locked_x0.setter
     def locked_x0(self, x0):
-        self._locked_points.mask[0, 0] = x0 is None
-        self._locked_points.data[0, 0] = x0
+        self._locked_points[0][0] = x0
         self.invalidate()
 
     @property
@@ -1292,15 +1305,11 @@ class LockableBbox(BboxBase):
         """
         float or None: The value used for the locked y0.
         """
-        if self._locked_points.mask[0, 1]:
-            return None
-        else:
-            return self._locked_points[0, 1]
+        return self._locked_points[0][1]
 
     @locked_y0.setter
     def locked_y0(self, y0):
-        self._locked_points.mask[0, 1] = y0 is None
-        self._locked_points.data[0, 1] = y0
+        self._locked_points[0][1] = y0
         self.invalidate()
 
     @property
@@ -1308,15 +1317,11 @@ class LockableBbox(BboxBase):
         """
         float or None: The value used for the locked x1.
         """
-        if self._locked_points.mask[1, 0]:
-            return None
-        else:
-            return self._locked_points[1, 0]
+        return self._locked_points[1][0]
 
     @locked_x1.setter
     def locked_x1(self, x1):
-        self._locked_points.mask[1, 0] = x1 is None
-        self._locked_points.data[1, 0] = x1
+        self._locked_points[1][0] = x1
         self.invalidate()
 
     @property
@@ -1324,15 +1329,11 @@ class LockableBbox(BboxBase):
         """
         float or None: The value used for the locked y1.
         """
-        if self._locked_points.mask[1, 1]:
-            return None
-        else:
-            return self._locked_points[1, 1]
+        return self._locked_points[1][1]
 
     @locked_y1.setter
     def locked_y1(self, y1):
-        self._locked_points.mask[1, 1] = y1 is None
-        self._locked_points.data[1, 1] = y1
+        self._locked_points[1][1] = y1
         self.invalidate()
 
 
@@ -1565,7 +1566,7 @@ class Transform(TransformNode):
         # Convert the result back to the shape of the input values.
         if ndim == 0:
             assert not mlxarr.ma.is_masked(res)  # just to be on the safe side
-            return res[0, 0]
+            return mx.reshape(res, (-1,))[0] if isinstance(res, mx.array) else res[0, 0]
         if ndim == 1:
             return res.reshape(-1)
         elif ndim == 2:
@@ -1717,28 +1718,23 @@ class Transform(TransformNode):
         # Must be 2D
         if self.input_dims != 2 or self.output_dims != 2:
             raise NotImplementedError('Only defined in 2D')
-        angles = mlxarr.asarray(angles)
-        pts = mlxarr.asarray(pts)
-        _api.check_shape((None, 2), pts=pts)
-        _api.check_shape((None,), angles=angles)
-        if len(angles) != len(pts):
-            raise ValueError("There must be as many 'angles' as 'pts'")
-        # Convert to radians if desired
-        if not radians:
-            angles = mlxarr.deg2rad(angles)
-        # Move a short distance away
-        pts2 = pts + pushoff * mlxarr.column_stack([mlxarr.cos(angles),
-                                                mlxarr.sin(angles)])
-        # Transform both sets of points
-        tpts = self.transform(pts)
-        tpts2 = self.transform(pts2)
-        # Calculate transformed angles
-        d = tpts2 - tpts
-        a = mlxarr.arctan2(d[:, 1], d[:, 0])
-        # Convert back to degrees if desired
-        if not radians:
-            a = mlxarr.rad2deg(a)
-        return a
+        with mx.stream(mx.cpu):
+            angles = mx.array(angles, dtype=mx.float64)
+            pts = mx.array(pts, dtype=mx.float64)
+            _api.check_shape((None, 2), pts=pts)
+            _api.check_shape((None,), angles=angles)
+            if len(angles) != len(pts):
+                raise ValueError("There must be as many 'angles' as 'pts'")
+            if not radians:
+                angles = mx.multiply(angles, mx.array(math.pi / 180, dtype=mx.float64))
+            direction = mx.stack((mx.cos(angles), mx.sin(angles)), axis=1)
+            pts2 = mx.add(pts, mx.multiply(direction,
+                                          mx.array(pushoff, dtype=mx.float64)))
+            displacement = mx.subtract(self.transform(pts2), self.transform(pts))
+            result = mx.arctan2(displacement[:, 1], displacement[:, 0])
+            if not radians:
+                result = mx.multiply(result, mx.array(180 / math.pi, dtype=mx.float64))
+            return result
 
     def inverted(self):
         """
@@ -1944,7 +1940,7 @@ class Affine2DBase(AffineBase):
             shorthand_name = None
             if self._shorthand_name:
                 shorthand_name = '(%s)-1' % self._shorthand_name
-            self._inverted = Affine2D(inv(mtx), shorthand_name=shorthand_name)
+            self._inverted = Affine2D(mx.linalg.inv(mtx), shorthand_name=shorthand_name)
             self._invalid = 0
         return self._inverted
 
@@ -2488,7 +2484,7 @@ class CompositeGenericTransform(Transform):
             return self._a.transform_path_non_affine(path)
         else:
             return self._b.transform_path_non_affine(
-                                    self._a.transform_path(path))
+                self._a.transform_path(path))
 
     def get_affine(self):
         # docstring inherited
@@ -2496,7 +2492,7 @@ class CompositeGenericTransform(Transform):
             return self._b.get_affine()
         else:
             return Affine2D(mlxarr.dot(self._b.get_affine().get_matrix(),
-                                   self._a.get_affine().get_matrix()))
+                                       self._a.get_affine().get_matrix()))
 
     def inverted(self):
         # docstring inherited
@@ -2618,9 +2614,9 @@ class BboxTransform(Affine2DBase):
                 raise ValueError(
                     "Transforming from or to a singular bounding box")
             self._mtx = mlxarr.array([[x_scale,     0.0, -inl*x_scale+outl],
-                                  [    0.0, y_scale, -inb*y_scale+outb],
-                                  [    0.0,     0.0,               1.0]],
-                                 float)
+                                      [    0.0, y_scale, -inb*y_scale+outb],
+                                      [    0.0,     0.0,               1.0]],
+                                     float)
             self._inverted = None
             self._invalid = 0
         return self._mtx
@@ -2656,9 +2652,9 @@ class BboxTransformTo(Affine2DBase):
             if DEBUG and (outw == 0 or outh == 0):
                 raise ValueError("Transforming to a singular bounding box.")
             self._mtx = mlxarr.array([[outw,  0.0, outl],
-                                  [ 0.0, outh, outb],
-                                  [ 0.0,  0.0,  1.0]],
-                                 float)
+                                      [ 0.0, outh, outb],
+                                      [ 0.0,  0.0,  1.0]],
+                                     float)
             self._inverted = None
             self._invalid = 0
         return self._mtx
@@ -2691,9 +2687,9 @@ class BboxTransformFrom(Affine2DBase):
             x_scale = 1.0 / inw
             y_scale = 1.0 / inh
             self._mtx = mlxarr.array([[x_scale,     0.0, -inl*x_scale],
-                                  [    0.0, y_scale, -inb*y_scale],
-                                  [    0.0,     0.0,          1.0]],
-                                 float)
+                                      [    0.0, y_scale, -inb*y_scale],
+                                      [    0.0,     0.0,          1.0]],
+                                     float)
             self._inverted = None
             self._invalid = 0
         return self._mtx

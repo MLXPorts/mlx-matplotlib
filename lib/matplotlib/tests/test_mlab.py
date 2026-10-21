@@ -1,4 +1,6 @@
 import sys
+import math
+import mlx.core as mx
 from matplotlib.mlx_testing import (assert_allclose, assert_almost_equal,
                            assert_array_equal, assert_array_almost_equal_nulp)
 from matplotlib import _mlx_array as mlxarr
@@ -16,6 +18,23 @@ def test_window():
     assert_array_equal(mlab.window_none(rand), rand)
     assert_array_equal(mlxarr.hanning(len(rand)) * rand, mlab.window_hanning(rand))
     assert_array_equal(mlxarr.hanning(len(ones)), mlab.window_hanning(ones))
+
+
+def _phase_unwrap_reference(values):
+    angles = mx.arctan2(mx.imag(values), mx.real(values)).tolist()
+    result = []
+    for row in angles:
+        corrected = []
+        for column, angle in enumerate(row):
+            if result:
+                previous = result[-1][column]
+                while angle - previous > math.pi:
+                    angle -= 2 * math.pi
+                while angle - previous < -math.pi:
+                    angle += 2 * math.pi
+            corrected.append(angle)
+        result.append(corrected)
+    return result
 
 
 class TestDetrend:
@@ -206,7 +225,8 @@ class TestDetrend:
     scope='class')
 class TestSpectral:
     @pytest.fixture(scope='class', autouse=True)
-    def stim(self, request, fstims, iscomplex, sides, len_x, NFFT_density,
+    @classmethod
+    def stim(cls, request, fstims, iscomplex, sides, len_x, NFFT_density,
              nover_density, pad_to_density, pad_to_spectrum):
         Fs = 100.
 
@@ -320,12 +340,7 @@ class TestSpectral:
             y += mlxarr.sin(fstim * x * mlxarr.pi * 2) * 10**i
 
         if iscomplex:
-            y = y.astype('complex')
-
-        # Interestingly, the instance on which this fixture is called is not
-        # the same as the one on which a test is run. So we need to modify the
-        # class itself when using a class-scoped fixture.
-        cls = request.cls
+            y = y.astype(mx.complex64)
 
         cls.Fs = Fs
         cls.sides = sides
@@ -381,7 +396,7 @@ class TestSpectral:
 
         # go through each peak and make sure it is correctly the maximum peak
         while fstimst:
-            maxind = spect.argmax()
+            maxind = int(spect.argmax().item())
             maxfreq = fsp[maxind]
             assert_almost_equal(maxfreq, fstimst[-1])
             del fstimst[-1]
@@ -766,7 +781,7 @@ class TestSpectral:
         "mode, conv", [
             ("magnitude", mlxarr.abs),
             ("angle", mlxarr.angle),
-            ("phase", lambda x: mlxarr.unwrap(mlxarr.angle(x), axis=0))
+            ("phase", _phase_unwrap_reference)
         ])
     def test_specgram_complex_equivalent(self, mode, conv):
         specc, freqspecc, tc = mlab.specgram(x=self.y,
@@ -1030,3 +1045,27 @@ def test_psd_oversampling():
                     sides='onesided')
     Su_1side = mlxarr.append([Su[0]], Su[1:4] + Su[4:][::-1])
     assert_almost_equal(mlxarr.sum(P), mlxarr.sum(Su_1side))  # same energy
+
+
+def test_native_detrend_linear_residual():
+    with mx.stream(mx.cpu):
+        result = mlab.detrend_linear(mx.array([2., 6., 8.], dtype=mx.float64))
+        assert isinstance(result, mx.array)
+        assert_allclose(result, [-1 / 3, 2 / 3, -1 / 3], atol=1e-12)
+        assert abs(float(mx.sum(result))) < 1e-12
+        assert abs(float(mx.sum(mx.multiply(result, mx.arange(3))))) < 1e-12
+
+
+@pytest.mark.parametrize('values, expected, times', [
+    ([3.] * 8, [[9., 9.], [0., 0.], [0., 0.]], [1., 3.]),
+    ([1., 1.], [[.25], [.25], [0.]], [1.]),
+])
+def test_native_spectral_power_and_zero_padding(values, expected, times):
+    with mx.stream(mx.cpu):
+        result, frequencies, centers = mlab._spectral_helper(
+            mx.array(values, dtype=mx.float64), NFFT=4, Fs=2,
+            window=mlab.window_none, scale_by_freq=False)
+        assert isinstance(result, mx.array)
+        assert_allclose(mx.real(result), expected, atol=1e-12)
+        assert_allclose(frequencies, [0., .5, 1.], atol=1e-12)
+        assert_allclose(centers, times, atol=1e-12)

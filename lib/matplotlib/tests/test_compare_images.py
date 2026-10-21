@@ -1,6 +1,6 @@
 from pathlib import Path
 import shutil
-from matplotlib import _mlx_array as mlxarr
+import mlx.core as mx
 import pytest
 from pytest import approx
 
@@ -76,14 +76,14 @@ def test_image_comparison_expect_rms(im1, im2, tol, expect_rms, tmp_path,
 
 
 def test_invalid_input():
-    img = mlxarr.zeros((16, 16, 4), dtype=mlxarr.uint8)
+    img = mx.zeros((16, 16, 4), dtype=mx.uint8)
 
     with pytest.raises(ImageComparisonFailure,
                        match='must be 3-dimensional, but is 2-dimensional'):
         _image.calculate_rms_and_diff(img[:, :, 0], img)
     with pytest.raises(ImageComparisonFailure,
                        match='must be 3-dimensional, but is 5-dimensional'):
-        _image.calculate_rms_and_diff(img, img[:, :, :, mlxarr.newaxis, mlxarr.newaxis])
+        _image.calculate_rms_and_diff(img, img[:, :, :, None, None])
     with pytest.raises(ImageComparisonFailure,
                        match='must be RGB or RGBA but has depth 2'):
         _image.calculate_rms_and_diff(img[:, :, :2], img)
@@ -101,17 +101,15 @@ def test_invalid_input():
 
 @pytest.mark.parametrize("device_name", ["cpu", "gpu"])
 def test_calculate_rms_and_diff_accepts_mlx_stream(device_name):
-    import mlx.core as mx
-
     device_type = getattr(mx, device_name)
     if not mx.is_available(device_type):
         pytest.skip(f"MLX {device_name} device is not available")
 
-    expected = mlxarr.zeros((2, 2, 3), dtype=mlxarr.uint8)
-    actual = mlxarr.array(
+    expected = mx.zeros((2, 2, 3), dtype=mx.uint8)
+    actual = mx.array(
         [[[12, 0, 0], [0, 0, 0]],
          [[0, 0, 0], [0, 0, 0]]],
-        dtype=mlxarr.uint8)
+        dtype=mx.uint8)
 
     rms, abs_diff = _image.calculate_rms_and_diff(
         expected, actual, stream=device_type)
@@ -121,3 +119,14 @@ def test_calculate_rms_and_diff_accepts_mlx_stream(device_name):
     assert abs_diff.shape == (2, 2, 3)
     assert abs_diff.tobytes() == bytes(
         [12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+
+
+def test_calculate_rms_and_diff_strided_host_input():
+    expected = memoryview(bytearray([255] + [0] * 11)).cast("B", (2, 2, 3))[::-1]
+    actual = memoryview(bytearray(12)).cast("B", (2, 2, 3))[::-1]
+
+    rms, difference = _image.calculate_rms_and_diff(expected, actual)
+
+    assert rms == approx(255 / 12 ** 0.5)
+    assert difference.shape == (2, 2, 3)
+    assert difference.tobytes() == bytes([0] * 6 + [255] + [0] * 5)

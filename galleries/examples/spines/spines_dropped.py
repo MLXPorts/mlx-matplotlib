@@ -7,6 +7,8 @@ Demo of spines offset from the axes (a.k.a. "dropped spines").
 """
 import matplotlib.pyplot as plt
 from matplotlib import _mlx_array as mlxarr
+
+
 def adjust_spines(ax, visible_spines):
     ax.label_outer(remove_inner_ticks=True)
     ax.grid(color='0.9')

@@ -9,6 +9,8 @@ labels.
 """
 import matplotlib.pyplot as plt
 from matplotlib import _mlx_array as mlxarr
+
+
 def hat_graph(ax, xlabels, values, group_labels):
     """
     Create a hat graph.

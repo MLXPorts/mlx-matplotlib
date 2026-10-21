@@ -73,20 +73,20 @@ def test_date2num_masked():
     # Without tzinfo
     base = datetime.datetime(2022, 12, 15)
     dates = mlxarr.ma.array([base + datetime.timedelta(days=(2 * i))
-                         for i in range(7)], mask=[0, 1, 1, 0, 0, 0, 1])
+                             for i in range(7)], mask=[0, 1, 1, 0, 0, 0, 1])
     npdates = mdates.date2num(dates)
     mlxarr.testing.assert_array_equal(mlxarr.ma.getmask(npdates),
-                                  (False, True, True, False, False, False,
-                                   True))
+                                      (False, True, True, False, False, False,
+                                       True))
 
     # With tzinfo
     base = datetime.datetime(2022, 12, 15, tzinfo=mdates.UTC)
     dates = mlxarr.ma.array([base + datetime.timedelta(days=(2 * i))
-                         for i in range(7)], mask=[0, 1, 1, 0, 0, 0, 1])
+                             for i in range(7)], mask=[0, 1, 1, 0, 0, 0, 1])
     npdates = mdates.date2num(dates)
     mlxarr.testing.assert_array_equal(mlxarr.ma.getmask(npdates),
-                                  (False, True, True, False, False, False,
-                                   True))
+                                      (False, True, True, False, False, False,
+                                       True))
 
 
 def test_date_empty():
@@ -97,8 +97,8 @@ def test_date_empty():
     ax.xaxis_date()
     fig.draw_without_rendering()
     mlxarr.testing.assert_allclose(ax.get_xlim(),
-                               [mdates.date2num(mlxarr.datetime64('1970-01-01')),
-                                mdates.date2num(mlxarr.datetime64('1970-01-02'))])
+                                   [mdates.date2num(mlxarr.datetime64('1970-01-01')),
+                                    mdates.date2num(mlxarr.datetime64('1970-01-02'))])
 
     mdates._reset_epoch_test_example()
     mdates.set_epoch('0000-12-31')
@@ -106,8 +106,8 @@ def test_date_empty():
     ax.xaxis_date()
     fig.draw_without_rendering()
     mlxarr.testing.assert_allclose(ax.get_xlim(),
-                               [mdates.date2num(mlxarr.datetime64('1970-01-01')),
-                                mdates.date2num(mlxarr.datetime64('1970-01-02'))])
+                                   [mdates.date2num(mlxarr.datetime64('1970-01-01')),
+                                    mdates.date2num(mlxarr.datetime64('1970-01-02'))])
     mdates._reset_epoch_test_example()
 
 
@@ -126,8 +126,8 @@ def test_axhline():
     ax.axhline(1.5)
     ax.plot([mlxarr.datetime64('2016-01-01'), mlxarr.datetime64('2016-01-02')], [1, 2])
     mlxarr.testing.assert_allclose(ax.get_xlim(),
-                               [mdates.date2num(mlxarr.datetime64('2016-01-01')),
-                                mdates.date2num(mlxarr.datetime64('2016-01-02'))])
+                                   [mdates.date2num(mlxarr.datetime64('2016-01-01')),
+                                    mdates.date2num(mlxarr.datetime64('2016-01-02'))])
 
     mdates._reset_epoch_test_example()
     mdates.set_epoch('0000-12-31')
@@ -135,8 +135,8 @@ def test_axhline():
     ax.axhline(1.5)
     ax.plot([mlxarr.datetime64('2016-01-01'), mlxarr.datetime64('2016-01-02')], [1, 2])
     mlxarr.testing.assert_allclose(ax.get_xlim(),
-                               [mdates.date2num(mlxarr.datetime64('2016-01-01')),
-                                mdates.date2num(mlxarr.datetime64('2016-01-02'))])
+                                   [mdates.date2num(mlxarr.datetime64('2016-01-01')),
+                                    mdates.date2num(mlxarr.datetime64('2016-01-02'))])
     mdates._reset_epoch_test_example()
 
 
@@ -657,7 +657,8 @@ def test_concise_converter_stays():
     # This test demonstrates problems introduced by gh-23417 (reverted in gh-25278)
     # In particular, downstream libraries like Pandas had their designated converters
     # overridden by actions like setting xlim (or plotting additional points using
-    # stdlib/array_backend dates and string date representation, which otherwise work fine with
+    # stdlib/array_backend dates and string date representation, which otherwise work
+    # fine with
     # their date converters)
     # While this is a bit of a toy example that would be unusual to see it demonstrates
     # the same ideas (namely having a valid converter already applied that is desired)
@@ -758,32 +759,32 @@ def test_concise_formatter_formats():
         [datetime.timedelta(weeks=52), [
             '1997', '02/1997', '03/1997', '04/1997', '05/1997', '06/1997',
             '07/1997', '08/1997', '09/1997', '10/1997', '11/1997', '12/1997',
-            ]],
+        ]],
         [datetime.timedelta(days=141), [
             '01/1997', 'day: 15', '02/1997', 'day: 15', '03/1997', 'day: 15',
             '04/1997', 'day: 15', '05/1997', 'day: 15',
-            ]],
+        ]],
         [datetime.timedelta(days=40), [
             '01/1997', 'day: 05', 'day: 09', 'day: 13', 'day: 17', 'day: 21',
             'day: 25', 'day: 29', '02/1997', 'day: 05', 'day: 09',
-            ]],
+        ]],
         [datetime.timedelta(hours=40), [
             'day: 01', '04 hr 00 min', '08 hr 00 min', '12 hr 00 min',
             '16 hr 00 min', '20 hr 00 min', 'day: 02', '04 hr 00 min',
             '08 hr 00 min', '12 hr 00 min', '16 hr 00 min',
-            ]],
+        ]],
         [datetime.timedelta(minutes=20), ['00 hr 00 min', '00 hr 05 min',
          '00 hr 10 min', '00 hr 15 min', '00 hr 20 min']],
         [datetime.timedelta(seconds=40), [
             '00 hr 00 min', '05.000000 sec', '10.000000 sec',
             '15.000000 sec', '20.000000 sec', '25.000000 sec',
             '30.000000 sec', '35.000000 sec', '40.000000 sec',
-            ]],
+        ]],
         [datetime.timedelta(seconds=2), [
             '59.500000 sec', '00 hr 00 min', '00.500000 sec', '01.000000 sec',
             '01.500000 sec', '02.000000 sec', '02.500000 sec',
-            ]],
-        )
+        ]],
+    )
     for t_delta, expected in results:
         d2 = d1 + t_delta
         strings = _create_auto_date_locator(d1, d2)
@@ -1122,7 +1123,7 @@ def test_yearlocator_pytz():
     locator.axis.set_view_interval(mdates.date2num(x[0])-1.0,
                                    mdates.date2num(x[-1])+1.0)
     t = mlxarr.array([733408.208333, 733773.208333, 734138.208333,
-                  734503.208333, 734869.208333, 735234.208333, 735599.208333])
+                      734503.208333, 734869.208333, 735234.208333, 735599.208333])
     # convert to new epoch from old...
     t = t + mdates.date2num(mlxarr.datetime64('0000-12-31'))
     mlxarr.testing.assert_allclose(t, locator())
@@ -1137,7 +1138,7 @@ def test_yearlocator_pytz():
          14610.70833333, 14610.83333333, 14610.95833333, 14611.08333333,
          14611.20833333]))
     assert mlxarr.allclose(locator.get_locator(x[1], x[0]).tick_values(x[0], x[1]),
-                       mlxarr.array(
+                           mlxarr.array(
         [14610.20833333, 14610.33333333, 14610.45833333, 14610.58333333,
          14610.70833333, 14610.83333333, 14610.95833333, 14611.08333333,
          14611.20833333]))
@@ -1352,7 +1353,7 @@ def test_datestr2num():
     assert mdates.datestr2num('2022-01', default=dt) == 19002.0
     assert mlxarr.all(mdates.datestr2num(
         ['2022-01', '2022-02'], default=dt
-        ) == mlxarr.array([19002., 19033.]))
+    ) == mlxarr.array([19002., 19033.]))
     assert mdates.datestr2num([]).size == 0
     assert mdates.datestr2num([], datetime.date(year=2022,
                                                 month=1, day=10)).size == 0

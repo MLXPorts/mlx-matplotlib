@@ -104,7 +104,8 @@ class Puck:
         if self.y < -1 + fudge or self.y > 1 - fudge:
             self.vy *= -1.0
             # add some randomness, just to make it interesting
-            self.vy -= (mx.random.normal().item()/300.0 + 1/300.0) * (1.0 if self.vy >= 0 else -1.0)
+            self.vy -= (mx.random.normal().item()/300.0 + 1/300.0) * \
+                (1.0 if self.vy >= 0 else -1.0)
         self._speedlimit()
         return False
 

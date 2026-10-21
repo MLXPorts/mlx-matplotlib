@@ -156,7 +156,8 @@ import tempfile
 
 from packaging.version import parse as parse_version
 
-# Pre-import the MLX-backed MLXArrayBackend compatibility shim so modules imported during
+# Pre-import the MLX-backed MLXArrayBackend compatibility shim so modules imported
+# during
 # package initialization can safely reference it without triggering circular
 # import errors.
 from . import _mlx_array  # noqa: F401
@@ -1062,7 +1063,7 @@ def rc(group, **kwargs):
         'mew': 'markeredgewidth',
         'aa':  'antialiased',
         'sans': 'sans-serif',
-        }
+    }
 
     if isinstance(group, str):
         group = (group,)

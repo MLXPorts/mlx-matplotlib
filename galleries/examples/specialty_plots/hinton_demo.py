@@ -12,6 +12,8 @@ Initial idea from David Warde-Farley on the SciPy Cookbook
 """
 import matplotlib.pyplot as plt
 from matplotlib import _mlx_array as mlxarr
+
+
 def hinton(matrix, max_weight=None, ax=None):
     """Draw Hinton diagram for visualizing a weight matrix."""
     ax = ax if ax is not None else plt.gca()

@@ -18,6 +18,8 @@ from datetime import datetime
 
 import matplotlib.pyplot as plt
 from matplotlib import _mlx_array as mlxarr
+
+
 def update_title(axes):
     axes.set_title(datetime.now())
     axes.figure.canvas.draw()

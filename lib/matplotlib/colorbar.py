@@ -529,7 +529,7 @@ class Colorbar:
             if mpl.rcParams['xtick.minor.visible']:
                 self.minorticks_on()
         self.long_axis.set(label_position=self.ticklocation,
-                              ticks_position=self.ticklocation)
+                           ticks_position=self.ticklocation)
         self._short_axis().set_ticks([])
         self._short_axis().set_ticks([], minor=True)
 
@@ -623,9 +623,9 @@ class Colorbar:
         patches = []
         for i in range(len(X) - 1):
             xy = mlxarr.array([[X[i, 0], Y[i, 1]],
-                           [X[i, 1], Y[i, 0]],
-                           [X[i + 1, 1], Y[i + 1, 0]],
-                           [X[i + 1, 0], Y[i + 1, 1]]])
+                               [X[i, 1], Y[i, 0]],
+                               [X[i + 1, 1], Y[i + 1, 0]],
+                               [X[i + 1, 0], Y[i + 1, 1]]])
             patch = mpatches.PathPatch(mpath.Path(xy),
                                        facecolor=self.cmap(self.norm(C[i][0])),
                                        hatch=hatches[i], linewidth=0,
@@ -654,12 +654,12 @@ class Colorbar:
         if not self.extendrect:
             # triangle:
             xyout = mlxarr.array([[0, 0], [0.5, bot], [1, 0],
-                              [1, 1], [0.5, top], [0, 1], [0, 0]])
+                                  [1, 1], [0.5, top], [0, 1], [0, 0]])
         else:
             # rectangle:
             xyout = mlxarr.array([[0, 0], [0, bot], [1, bot], [1, 0],
-                              [1, 1], [1, top], [0, top], [0, 1],
-                              [0, 0]])
+                                  [1, 1], [1, top], [0, top], [0, 1],
+                                  [0, 0]])
 
         if self.orientation == 'horizontal':
             xyout = xyout[:, ::-1]
@@ -884,7 +884,7 @@ class Colorbar:
         """
         if mlxarr.iterable(ticks):
             self.long_axis.set_ticks(ticks, labels=labels, minor=minor,
-                                        **kwargs)
+                                     **kwargs)
             self._locator = self.long_axis.get_major_locator()
         else:
             self._locator = ticks
@@ -1257,7 +1257,7 @@ class Colorbar:
         extendlength = [0, 0]
         if self._extend_lower() or self._extend_upper():
             extendlength = self._get_extension_lengths(
-                    self.extendfrac, automin, automax, default=0.05)
+                self.extendfrac, automin, automax, default=0.05)
         return y, extendlength
 
     def _get_extension_lengths(self, frac, automin, automax, default=0.05):
@@ -1378,7 +1378,8 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
 
     Parameters
     ----------
-    parents : `~matplotlib.axes.Axes` or iterable or `array_backend.ndarray` of `~.axes.Axes`
+    parents : `~matplotlib.axes.Axes` or iterable or `array_backend.ndarray` of
+    `~.axes.Axes`
         The Axes to use as parents for placing the colorbar.
     %(_make_axes_kw_doc)s
 

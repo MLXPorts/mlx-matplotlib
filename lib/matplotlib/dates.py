@@ -356,7 +356,8 @@ def _python_dt_to_ordinalf(value):
             value = value.astimezone(UTC).replace(tzinfo=None)
         epoch_text = get_epoch()
         if epoch_text.startswith('0000-12-31'):
-            return (value - datetime.datetime(1, 1, 1)).total_seconds() / SEC_PER_DAY + 1
+            return (value - datetime.datetime(1, 1, 1)
+                    ).total_seconds() / SEC_PER_DAY + 1
         epoch = datetime.datetime.fromisoformat(epoch_text)
         if epoch.tzinfo is not None:
             epoch = epoch.astimezone(UTC).replace(tzinfo=None)
@@ -388,7 +389,7 @@ def _from_ordinalf(x, tz=None):
     if dt < datetime.datetime(1, 1, 1) or dt > datetime.datetime.max:
         raise ValueError(f'Date ordinal {x} converts to {dt} (using '
                          f'epoch {get_epoch()}), but Matplotlib dates must be '
-                          'between year 0001 and 9999.')
+                         'between year 0001 and 9999.')
     # convert from datetime64 to datetime:
     if hasattr(dt, "tolist"):
         dt = dt.tolist()
@@ -1356,7 +1357,7 @@ class AutoDateLocator(DateLocator):
             MICROSECONDLY: [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000,
                             5000, 10000, 20000, 50000, 100000, 200000, 500000,
                             1000000],
-                            }
+        }
         if interval_multiples:
             # Swap "3" for "4" in the DAILY list; If we use 3 we get bad
             # tick loc for months w/ 31 days: 1, 4, ..., 28, 31, 1

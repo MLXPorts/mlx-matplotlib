@@ -11,6 +11,8 @@ The ``maxiter`` gives the precision of the computation. ``maxiter=200`` should
 take a few seconds on most modern laptops.
 """
 from matplotlib import _mlx_array as mlxarr
+
+
 def mandelbrot_set(xmin, xmax, ymin, ymax, xn, yn, maxiter, horizon=2.0):
     X = mlxarr.linspace(xmin, xmax, xn).astype(mlxarr.float32)
     Y = mlxarr.linspace(ymin, ymax, yn).astype(mlxarr.float32)

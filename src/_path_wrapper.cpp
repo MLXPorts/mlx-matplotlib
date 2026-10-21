@@ -126,10 +126,9 @@ static mx::array as_mlx_array(py::handle obj)
 static mx::array evaluated_mlx_array(py::handle obj,
                                     const mx::StreamOrDevice& stream)
 {
-    auto array = as_mlx_array(obj);
-    if (has_explicit_stream(stream)) {
-        array = mx::contiguous(array, false, stream);
-    }
+    // Lazy arrays do not necessarily expose their final layout flags yet.
+    // contiguous() is a no-op for row-major inputs and materializes other views.
+    auto array = mx::contiguous(as_mlx_array(obj), false, stream);
     {
         py::gil_scoped_release release;
         array.eval();
@@ -280,13 +279,39 @@ static py::list Py_clip_path_to_rect(mpl::PathIterator path, agg::rect_d rect, b
     return convert_polygon_vector(result);
 }
 
-static py::memoryview Py_affine_transform(py::object vertices_obj,
+static py::object Py_affine_transform(py::object vertices_obj,
                                           py::object transform_obj,
                                           py::object stream)
 {
+    auto stream_or_device = as_stream_or_device(stream);
+    if (is_mlx_array_like(vertices_obj) && is_mlx_array_like(transform_obj)) {
+        auto vertices = as_mlx_array(vertices_obj);
+        auto matrix = as_mlx_array(transform_obj);
+        if (vertices.ndim() == 1 && vertices.shape(0) != 2) {
+            throw std::runtime_error("vertices must have shape (2,)");
+        }
+        if ((vertices.ndim() != 1 && vertices.ndim() != 2) ||
+                vertices.shape(-1) != 2) {
+            throw py::value_error("vertices must have shape (2,) or (N, 2)");
+        }
+        if (matrix.ndim() != 2 || matrix.shape(0) != 3 || matrix.shape(1) != 3) {
+            throw py::value_error("Invalid affine transformation matrix");
+        }
+        // Keep native MLX inputs, arithmetic, and results on the requested stream.
+        // AGG host-buffer staging is only needed by the buffer-input path below.
+        auto linear = mx::slice(matrix, {0, 0}, {2, 2}, stream_or_device);
+        auto offset = mx::squeeze(
+            mx::slice(matrix, {0, 2}, {2, 3}, stream_or_device), 1, stream_or_device);
+        auto result = mx::add(
+            mx::matmul(vertices, mx::transpose(linear, {1, 0}, stream_or_device),
+                       stream_or_device),
+            offset, stream_or_device);
+        nb::object output = nb::cast(result);
+        return py::reinterpret_borrow<py::object>(py::handle(output.ptr()));
+    }
+
     agg::trans_affine trans;
     convert_trans_affine_with_stream(transform_obj, trans, stream);
-    auto stream_or_device = as_stream_or_device(stream);
 
     if (is_mlx_array_like(vertices_obj)) {
         auto vertices = evaluated_mlx_array(vertices_obj, stream_or_device);
@@ -593,7 +618,11 @@ static bool Py_is_sorted_and_has_non_nan(py::object obj)
 
 PYBIND11_MODULE(_path, m, py::mod_gil_not_used())
 {
-#if NB_VERSION_MAJOR > 2 || (NB_VERSION_MAJOR == 2 && NB_VERSION_MINOR >= 12)
+#if NB_VERSION_MAJOR >= 3
+    if (!nb::register_module(nb::handle(m.ptr()))) {
+        throw py::error_already_set();
+    }
+#elif NB_VERSION_MAJOR == 2 && NB_VERSION_MINOR >= 12
     nb::detail::nb_module_exec(NB_DOMAIN_STR, m.ptr());
 #else
     nb::detail::init(NB_DOMAIN_STR);

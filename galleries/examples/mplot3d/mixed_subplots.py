@@ -8,6 +8,8 @@ This example shows a how to plot a 2D and a 3D plot on the same figure.
 
 import matplotlib.pyplot as plt
 from matplotlib import _mlx_array as mlxarr
+
+
 def f(t):
     return mlxarr.cos(2*mlxarr.pi*t) * mlxarr.exp(-t)
 

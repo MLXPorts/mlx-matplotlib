@@ -87,11 +87,11 @@ def _viewlim_mask(xs, ys, zs, axes):
         The mask of the points as a bool array.
     """
     mask = mlxarr.logical_or.reduce((xs < axes.xy_viewLim.xmin,
-                                 xs > axes.xy_viewLim.xmax,
-                                 ys < axes.xy_viewLim.ymin,
-                                 ys > axes.xy_viewLim.ymax,
-                                 zs < axes.zz_viewLim.xmin,
-                                 zs > axes.zz_viewLim.xmax))
+                                     xs > axes.xy_viewLim.xmax,
+                                     ys < axes.xy_viewLim.ymin,
+                                     ys > axes.xy_viewLim.ymax,
+                                     zs < axes.zz_viewLim.xmin,
+                                     zs > axes.zz_viewLim.xmax))
     return mask
 
 
@@ -182,7 +182,7 @@ class Text3D(mtext.Text):
         if self._axlim_clip:
             mask = _viewlim_mask(self._x, self._y, self._z, self.axes)
             pos3d = mlxarr.ma.array([self._x, self._y, self._z],
-                                mask=mask, dtype=float).filled(mlxarr.nan)
+                                    mask=mask, dtype=float).filled(mlxarr.nan)
         else:
             pos3d = mlxarr.array([self._x, self._y, self._z], dtype=float)
 
@@ -318,8 +318,8 @@ class Line3D(lines.Line2D):
                 _viewlim_mask(*self._verts3d, self.axes),
                 (len(self._verts3d), *self._verts3d[0].shape)
             )
-            xs3d, ys3d, zs3d = mlxarr.ma.array(self._verts3d,
-                                           dtype=float, mask=mask).filled(mlxarr.nan)
+            xs3d, ys3d, zs3d = mlxarr.ma.array(
+                self._verts3d, dtype=float, mask=mask).filled(mlxarr.nan)
         else:
             xs3d, ys3d, zs3d = self._verts3d
         xs, ys, zs, tis = proj3d._proj_transform_clip(xs3d, ys3d, zs3d,
@@ -427,7 +427,8 @@ def collection_2d_to_3d(col, zs=0, zdir='z', axlim_clip=False):
     zs = mlxarr.broadcast_to(zs, len(col.get_paths()))
     col._3dverts_codes = [
         (mlxarr.column_stack(juggle_axes(
-            *mlxarr.column_stack([p.vertices, mlxarr.broadcast_to(z, len(p.vertices))]).T,
+            *mlxarr.column_stack([p.vertices,
+                                 mlxarr.broadcast_to(z, len(p.vertices))]).T,
             zdir)),
          p.codes)
         for p, z in zip(col.get_paths(), zs)]
@@ -497,10 +498,10 @@ class Line3DCollection(LineCollection):
             if mlxarr.any(viewlim_mask):
                 # broadcast mask to 3D
                 viewlim_mask = mlxarr.broadcast_to(viewlim_mask[..., mlxarr.newaxis],
-                                               (*viewlim_mask.shape, 3))
+                                                   (*viewlim_mask.shape, 3))
                 mask = mask | viewlim_mask
         xyzs = mlxarr.ma.array(proj3d._proj_transform_vectors(segments, self.axes.M),
-                           mask=mask)
+                               mask=mask)
         segments_2d = xyzs[..., 0:2]
         LineCollection.set_segments(self, segments_2d)
 
@@ -580,7 +581,7 @@ class Patch3D(Patch):
         if self._axlim_clip:
             mask = _viewlim_mask(*zip(*s), self.axes)
             xs, ys, zs = mlxarr.ma.array(zip(*s),
-                                     dtype=float, mask=mask).filled(mlxarr.nan)
+                                         dtype=float, mask=mask).filled(mlxarr.nan)
         else:
             xs, ys, zs = zip(*s)
         vxs, vys, vzs, vis = proj3d._proj_transform_clip(xs, ys, zs,
@@ -642,7 +643,7 @@ class PathPatch3D(Patch3D):
         if self._axlim_clip:
             mask = _viewlim_mask(*zip(*s), self.axes)
             xs, ys, zs = mlxarr.ma.array(zip(*s),
-                                     dtype=float, mask=mask).filled(mlxarr.nan)
+                                         dtype=float, mask=mask).filled(mlxarr.nan)
         else:
             xs, ys, zs = zip(*s)
         vxs, vys, vzs, vis = proj3d._proj_transform_clip(xs, ys, zs,
@@ -1003,8 +1004,8 @@ class Path3DCollection(PathCollection):
                 mask = mask | xyz.mask
         if self._axlim_clip:
             mask = mask | _viewlim_mask(*self._offsets3d, self.axes)
-            mask = mlxarr.broadcast_to(mask,
-                                   (len(self._offsets3d), *self._offsets3d[0].shape))
+            mask = mlxarr.broadcast_to(
+                mask, (len(self._offsets3d), *self._offsets3d[0].shape))
             xyzs = mlxarr.ma.array(self._offsets3d, mask=mask)
         else:
             xyzs = self._offsets3d
@@ -1265,7 +1266,8 @@ class Poly3DCollection(PolyCollection):
                 self._faces = segments3d
                 self._invalid_vertices = False
         else:
-            # Turn the potentially ragged list into a array_backend array for later speedups
+            # Turn the potentially ragged list into a array_backend array for later
+            # speedups
             # If it is ragged, set the unused vertices per face as invalid
             num_faces = len(segments3d)
             num_verts = mlxarr.fromiter(map(len, segments3d), dtype=mlxarr.intp)
@@ -1384,7 +1386,7 @@ class Poly3DCollection(PolyCollection):
             if needs_masking:
                 segment_mask = ~mask[face_order, :]
                 faces_2d = [face[mask, :] for face, mask
-                               in zip(faces_2d, segment_mask)]
+                            in zip(faces_2d, segment_mask)]
             codes = [self._codes3d[idx] for idx in face_order]
             PolyCollection.set_verts_and_codes(self, faces_2d, codes)
         else:
@@ -1393,7 +1395,7 @@ class Poly3DCollection(PolyCollection):
                     mask[face_order, :, None],
                     faces_2d.shape)
                 faces_2d = mlxarr.ma.MaskedArray(
-                        faces_2d, mask=invalid_vertices_2d)
+                    faces_2d, mask=invalid_vertices_2d)
             PolyCollection.set_verts(self, faces_2d, self._closed)
 
         if len(cface) > 0:
@@ -1438,7 +1440,7 @@ class Poly3DCollection(PolyCollection):
             pass
         try:
             self._edgecolors = mcolors.to_rgba_array(
-                    self._edgecolor3d, self._alpha)
+                self._edgecolor3d, self._alpha)
         except (AttributeError, TypeError, IndexError):
             pass
         self.stale = True
@@ -1476,7 +1478,7 @@ def poly_collection_2d_to_3d(col, zs=0, zdir='z', axlim_clip=False):
         See `.get_dir_vector` for a description of the values.
     """
     segments_3d, codes = _paths_to_3d_segments_with_codes(
-            col.get_paths(), zs, zdir)
+        col.get_paths(), zs, zdir)
     col.__class__ = Poly3DCollection
     col.set_verts_and_codes(segments_3d, codes)
     col.set_3d_properties()

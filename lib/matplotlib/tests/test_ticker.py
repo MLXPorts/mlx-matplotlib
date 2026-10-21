@@ -94,13 +94,13 @@ class TestMultipleLocator:
     def test_basic(self):
         loc = mticker.MultipleLocator(base=3.147)
         test_value = mlxarr.array([-9.441, -6.294, -3.147, 0., 3.147, 6.294,
-                               9.441, 12.588])
+                                   9.441, 12.588])
         assert_almost_equal(loc.tick_values(-7, 10), test_value)
 
     def test_basic_with_offset(self):
         loc = mticker.MultipleLocator(base=3.147, offset=1.2)
         test_value = mlxarr.array([-8.241, -5.094, -1.947, 1.2, 4.347, 7.494,
-                               10.641])
+                                   10.641])
         assert_almost_equal(loc.tick_values(-7, 10), test_value)
 
     def test_view_limits(self):
@@ -155,8 +155,8 @@ class TestAutoMinorLocator:
         ax.set_xlim(0, 1.39)
         ax.minorticks_on()
         test_value = mlxarr.array([0.05, 0.1, 0.15, 0.25, 0.3, 0.35, 0.45,
-                               0.5, 0.55, 0.65, 0.7, 0.75, 0.85, 0.9,
-                               0.95, 1.05, 1.1, 1.15, 1.25, 1.3, 1.35])
+                                   0.5, 0.55, 0.65, 0.7, 0.75, 0.85, 0.9,
+                                   0.95, 1.05, 1.1, 1.15, 1.25, 1.3, 1.35])
         assert_almost_equal(ax.xaxis.get_ticklocs(minor=True), test_value)
 
     # NB: the following values are assuming that *xlim* is [0, 5]
@@ -174,14 +174,14 @@ class TestAutoMinorLocator:
         ax.set_xlim(-1.9, 1.9)
         ax.xaxis.set_minor_locator(mticker.AutoMinorLocator())
         test_value = mlxarr.array([-1.9, -1.8, -1.7, -1.6, -1.4, -1.3, -1.2, -1.1,
-                               -0.9, -0.8, -0.7, -0.6, -0.4, -0.3, -0.2, -0.1,
-                               0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9, 1.1,
-                               1.2, 1.3, 1.4, 1.6, 1.7, 1.8, 1.9])
+                                   -0.9, -0.8, -0.7, -0.6, -0.4, -0.3, -0.2, -0.1,
+                                   0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9, 1.1,
+                                   1.2, 1.3, 1.4, 1.6, 1.7, 1.8, 1.9])
         assert_almost_equal(ax.xaxis.get_ticklocs(minor=True), test_value)
 
         ax.set_xlim(-5, 5)
         test_value = mlxarr.array([-5.0, -4.5, -3.5, -3.0, -2.5, -1.5, -1.0, -0.5,
-                               0.5, 1.0, 1.5, 2.5, 3.0, 3.5, 4.5, 5.0])
+                                   0.5, 1.0, 1.5, 2.5, 3.0, 3.5, 4.5, 5.0])
         assert_almost_equal(ax.xaxis.get_ticklocs(minor=True), test_value)
 
     @pytest.mark.parametrize('nb_majorticks, expected_nb_minorticks', params)
@@ -208,7 +208,7 @@ class TestAutoMinorLocator:
         with mpl.rc_context({'_internal.classic_mode': False}):
             majorsteps = [x[0] for x in self.majorstep_minordivisions]
             mlxarr.testing.assert_allclose(majorsteps,
-                                       mticker.AutoLocator()._steps)
+                                           mticker.AutoLocator()._steps)
 
     @pytest.mark.parametrize('major_step, expected_nb_minordivisions',
                              majorstep_minordivisions)
@@ -375,20 +375,20 @@ class TestLogLocator:
     def test_tick_values_correct(self):
         ll = mticker.LogLocator(subs=(1, 2, 5))
         test_value = mlxarr.array([1.e-01, 2.e-01, 5.e-01, 1.e+00, 2.e+00, 5.e+00,
-                               1.e+01, 2.e+01, 5.e+01, 1.e+02, 2.e+02, 5.e+02,
-                               1.e+03, 2.e+03, 5.e+03, 1.e+04, 2.e+04, 5.e+04,
-                               1.e+05, 2.e+05, 5.e+05, 1.e+06, 2.e+06, 5.e+06,
-                               1.e+07, 2.e+07, 5.e+07])
+                                   1.e+01, 2.e+01, 5.e+01, 1.e+02, 2.e+02, 5.e+02,
+                                   1.e+03, 2.e+03, 5.e+03, 1.e+04, 2.e+04, 5.e+04,
+                                   1.e+05, 2.e+05, 5.e+05, 1.e+06, 2.e+06, 5.e+06,
+                                   1.e+07, 2.e+07, 5.e+07])
         assert_almost_equal(ll.tick_values(1, 1e7), test_value)
 
     def test_tick_values_not_empty(self):
         mpl.rcParams['_internal.classic_mode'] = False
         ll = mticker.LogLocator(subs=(1, 2, 5))
         test_value = mlxarr.array([1.e-01, 2.e-01, 5.e-01, 1.e+00, 2.e+00, 5.e+00,
-                               1.e+01, 2.e+01, 5.e+01, 1.e+02, 2.e+02, 5.e+02,
-                               1.e+03, 2.e+03, 5.e+03, 1.e+04, 2.e+04, 5.e+04,
-                               1.e+05, 2.e+05, 5.e+05, 1.e+06, 2.e+06, 5.e+06,
-                               1.e+07, 2.e+07, 5.e+07, 1.e+08, 2.e+08, 5.e+08])
+                                   1.e+01, 2.e+01, 5.e+01, 1.e+02, 2.e+02, 5.e+02,
+                                   1.e+03, 2.e+03, 5.e+03, 1.e+04, 2.e+04, 5.e+04,
+                                   1.e+05, 2.e+05, 5.e+05, 1.e+06, 2.e+06, 5.e+06,
+                                   1.e+07, 2.e+07, 5.e+07, 1.e+08, 2.e+08, 5.e+08])
         assert_almost_equal(ll.tick_values(1, 1e8), test_value)
 
     def test_multiple_shared_axes(self):
@@ -460,7 +460,7 @@ class TestLogitLocator:
 
     @pytest.mark.parametrize(
         "lims, expected_low_ticks",
-        zip(ref_basic_limits, ref_basic_major_ticks),
+        list(zip(ref_basic_limits, ref_basic_major_ticks)),
     )
     def test_basic_major(self, lims, expected_low_ticks):
         """
@@ -505,7 +505,7 @@ class TestLogitLocator:
 
     @pytest.mark.parametrize(
         "lims, expected_low_ticks",
-        zip(ref_basic_limits, ref_basic_major_ticks),
+        list(zip(ref_basic_limits, ref_basic_major_ticks)),
     )
     def test_minor(self, lims, expected_low_ticks):
         """
@@ -618,7 +618,7 @@ class TestSymmetricalLogLocator:
         assert sym.numticks == 8
 
     @pytest.mark.parametrize(
-            'vmin, vmax, expected',
+        'vmin, vmax, expected',
             [
                 (0, 1, [0, 1]),
                 (-1, 1, [-1, 0, 1]),
@@ -987,7 +987,7 @@ class TestLogFormatterExponent:
     base_data = [2.0, 5.0, 10.0, mlxarr.pi, mlxarr.e]
 
     @pytest.mark.parametrize(
-            'labelOnlyBase, exponent, locs, positions, expected', param_data)
+        'labelOnlyBase, exponent, locs, positions, expected', param_data)
     @pytest.mark.parametrize('base', base_data)
     def test_basic(self, labelOnlyBase, base, exponent, locs, positions,
                    expected):
@@ -1363,7 +1363,8 @@ class TestLogitFormatter:
         s = formatter(x)
         assert s == ""
 
-    @pytest.mark.parametrize("x", 1 / (1 + mlxarr.exp(-mlxarr.linspace(-7, 7, 10))))
+    @pytest.mark.parametrize(
+        "x", list(1 / (1 + mlxarr.exp(-mlxarr.linspace(-7, 7, 10)))))
     def test_variablelength(self, x):
         """
         The format length should change depending on the neighbor labels.
@@ -1733,7 +1734,7 @@ class TestPercentFormatter:
     ]
 
     @pytest.mark.parametrize(
-            'xmax, decimals, symbol, x, display_range, expected',
+        'xmax, decimals, symbol, x, display_range, expected',
             percent_data, ids=percent_ids)
     def test_basic(self, xmax, decimals, symbol,
                    x, display_range, expected):

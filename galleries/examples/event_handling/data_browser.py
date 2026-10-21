@@ -18,6 +18,8 @@ data of that point on the other axis.
     using the link at the bottom of the page.
 """
 from matplotlib import _mlx_array as mlxarr
+
+
 class PointBrowser:
     """
     Click on a point to select and highlight it -- the data that

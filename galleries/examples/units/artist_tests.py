@@ -38,7 +38,8 @@ if 0:
     verts = []
     for i in range(10):
         # a random line segment in inches
-        verts.append(zip(*inch * 10 * mlxarr.random.rand(2, mx.random.randint(2, 16).item())))
+        verts.append(
+            zip(*inch * 10 * mlxarr.random.rand(2, mx.random.randint(2, 16).item())))
     lc = collections.LineCollection(verts, axes=ax)
     ax.add_collection(lc)
 

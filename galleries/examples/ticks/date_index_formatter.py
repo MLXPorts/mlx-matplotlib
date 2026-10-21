@@ -20,7 +20,8 @@ from matplotlib.dates import DateFormatter, DayLocator
 import matplotlib.lines as ml
 from matplotlib.ticker import Formatter
 
-# Load a structured array_backend array from yahoo csv data with fields date, open, high,
+# Load a structured array_backend array from yahoo csv data with fields date, open,
+# high,
 # low, close, volume, adj_close from the mpl-data/sample_data directory. The
 # record array stores the date as an mlxarr.datetime64 with a day unit ('D') in
 # the date column (``r['date']``).

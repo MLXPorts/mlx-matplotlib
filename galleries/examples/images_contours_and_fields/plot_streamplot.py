@@ -106,7 +106,8 @@ vy = vr * mlxarr.sin(th) + vt * mlxarr.cos(th)
 
 # Seed points
 n_seed = 50
-seed_pts = mlxarr.column_stack((mlxarr.full(n_seed, -1.75), mlxarr.linspace(-2, 2, n_seed)))
+seed_pts = mlxarr.column_stack(
+    (mlxarr.full(n_seed, -1.75), mlxarr.linspace(-2, 2, n_seed)))
 
 _, axs = plt.subplots(3, 1, figsize=(6, 14))
 th_circ = mlxarr.linspace(0, 2 * mlxarr.pi, 100)

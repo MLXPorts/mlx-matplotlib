@@ -25,6 +25,7 @@ import itertools
 import logging
 import numbers
 import time
+import mlx.core as mx
 from matplotlib import _mlx_array as mlxarr
 import matplotlib as mpl
 from matplotlib import _api, _docstring, cbook, colors, offsetbox
@@ -472,7 +473,7 @@ class Legend(Artist):
             self._scatteryoffsets = mlxarr.asarray(scatteryoffsets)
         reps = self.scatterpoints // len(self._scatteryoffsets) + 1
         self._scatteryoffsets = mlxarr.tile(self._scatteryoffsets,
-                                        reps)[:self.scatterpoints]
+                                            reps)[:self.scatterpoints]
 
         # _legend_box is a VPacker instance that contains all
         # legend items and will be initialized from _init_legend_box()
@@ -602,7 +603,8 @@ class Legend(Artist):
                     if isinstance(color, mlxarr.ndarray):
                         if color.size == 0:
                             continue
-                        elif (color.shape[0] == 1 or mlxarr.isclose(color, color[0]).all()):
+                        elif (color.shape[0] == 1
+                              or mx.all(mx.isclose(color, color[0])).item()):
                             text.set_color(color[0])
                         else:
                             pass
@@ -787,7 +789,7 @@ class Legend(Artist):
         tuple: legend_handler.HandlerTuple(),
         PathCollection: legend_handler.HandlerPathCollection(),
         PolyCollection: legend_handler.HandlerPolyCollection()
-        }
+    }
 
     # (get|set|update)_default_handler_maps are public interfaces to
     # modify the default handler map.
@@ -877,7 +879,7 @@ class Legend(Artist):
             handler = self.get_legend_handler(legend_handler_map, orig_handle)
             if handler is None:
                 _api.warn_external(
-                             "Legend does not support handles for "
+                    "Legend does not support handles for "
                              f"{type(orig_handle).__name__} "
                              "instances.\nA proxy artist may be used "
                              "instead.\nSee: https://matplotlib.org/"
@@ -1258,7 +1260,7 @@ def _get_legend_handles(axs, legend_handler_map=None):
         elif (label and not label.startswith('_') and
                 not has_handler(handler_map, handle)):
             _api.warn_external(
-                             "Legend does not support handles for "
+                "Legend does not support handles for "
                              f"{type(handle).__name__} "
                              "instances.\nSee: https://matplotlib.org/stable/"
                              "tutorials/intermediate/legend_guide.html"

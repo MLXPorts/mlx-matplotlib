@@ -2,22 +2,11 @@
 A module providing some utility functions regarding Bézier path manipulation.
 """
 
-from functools import lru_cache
 import math
 import warnings
+import mlx.core as mx
 from matplotlib import _mlx_array as mlxarr
 from matplotlib import _api
-
-
-# same algorithm as 3.8's math.comb
-@mlxarr.vectorize
-@lru_cache(maxsize=128)
-def _comb(n, k):
-    if k > n:
-        return 0
-    k = min(k, n - k)
-    i = mlxarr.arange(1, k + 1)
-    return mlxarr.prod((n + 1 - i)/i).astype(int)
 
 
 class NonIntersectingPathException(ValueError):
@@ -198,13 +187,14 @@ class BezierSegment:
     """
 
     def __init__(self, control_points):
-        self._cpoints = mlxarr.asarray(control_points)
-        self._N, self._d = self._cpoints.shape
-        self._orders = mlxarr.arange(self._N)
-        coeff = [math.factorial(self._N - 1)
-                 // (math.factorial(i) * math.factorial(self._N - 1 - i))
-                 for i in range(self._N)]
-        self._px = (self._cpoints.T * coeff).T
+        # Geometry uses float64 on MLX's CPU device, which supports this dtype.
+        with mx.stream(mx.cpu):
+            self._cpoints = mx.array(control_points, dtype=mx.float64)
+            self._N, self._d = self._cpoints.shape
+            self._orders = mx.arange(self._N)
+            coeff = mx.array([math.comb(self._N - 1, i)
+                              for i in range(self._N)], dtype=mx.float64)
+            self._px = mx.multiply(self._cpoints, mx.expand_dims(coeff, -1))
 
     def __call__(self, t):
         """
@@ -220,9 +210,12 @@ class BezierSegment:
         (k, d) array
             Value of the curve for each point in *t*.
         """
-        t = mlxarr.asarray(t)
-        return (mlxarr.power.outer(1 - t, self._orders[::-1])
-                * mlxarr.power.outer(t, self._orders)) @ self._px
+        with mx.stream(mx.cpu):
+            t = mx.array(t, dtype=self._cpoints.dtype)
+            weights = mx.multiply(
+                mx.power(mx.expand_dims(mx.subtract(1, t), -1), self._orders[::-1]),
+                mx.power(mx.expand_dims(t, -1), self._orders))
+            return mx.matmul(weights, self._px)
 
     @_api.deprecated(
         "3.11", alternative="Call the BezierSegment object with an argument.")
@@ -277,11 +270,14 @@ class BezierSegment:
         if n > 10:
             warnings.warn("Polynomial coefficients formula unstable for high "
                           "order Bezier curves!", RuntimeWarning)
-        P = self.control_points
-        j = mlxarr.arange(n+1)[:, None]
-        i = mlxarr.arange(n+1)[None, :]  # _comb is non-zero for i <= j
-        prefactor = (-1)**(i + j) * _comb(j, i)  # j on axis 0, i on axis 1
-        return _comb(n, j) * prefactor @ P  # j on axis 0, self.dimension on 1
+        # Degree-dependent coefficients are small, exact integer constants.
+        # The multiplication by all control points is performed in MLX.
+        coefficients = [[math.comb(n, j) * (-1)**(i + j) * math.comb(j, i)
+                         if i <= j else 0 for i in range(n + 1)]
+                        for j in range(n + 1)]
+        with mx.stream(mx.cpu):
+            return mx.matmul(mx.array(coefficients, dtype=self._cpoints.dtype),
+                             self._cpoints)
 
     def axis_aligned_extrema(self):
         """
@@ -300,20 +296,37 @@ class BezierSegment:
             0`
         """
         n = self.degree
-        if n <= 1:
-            return mlxarr.array([]), mlxarr.array([])
-        Cj = self.polynomial_coefficients
-        dCj = mlxarr.arange(1, n+1)[:, None] * Cj[1:]
-        dims = []
-        roots = []
-        for i, pi in enumerate(dCj.T):
-            r = mlxarr.roots(pi[::-1])
-            roots.append(r)
-            dims.append(mlxarr.full_like(r, i))
-        roots = mlxarr.concatenate(roots)
-        dims = mlxarr.concatenate(dims)
-        in_range = mlxarr.isreal(roots) & (roots >= 0) & (roots <= 1)
-        return dims[in_range], mlxarr.real(roots)[in_range]
+        with mx.stream(mx.cpu):
+            if n <= 1:
+                return mx.zeros((0,), dtype=mx.int32), mx.zeros((0,), dtype=mx.float64)
+            if n > 3:
+                raise NotImplementedError("Extrema are supported through cubic curves")
+            coefficients = self.polynomial_coefficients
+            c = coefficients[1]
+            b = mx.multiply(2, coefficients[2])
+            # A quadratic curve has a linear derivative. A cubic can have
+            # either a quadratic or a degenerate linear derivative per axis.
+            a = (mx.multiply(3, coefficients[3]) if n == 3
+                 else mx.zeros_like(b))
+            quadratic = mx.not_equal(a, 0)
+            linear = mx.logical_and(mx.logical_not(quadratic), mx.not_equal(b, 0))
+            discriminant = mx.subtract(mx.square(b), mx.multiply(4, mx.multiply(a, c)))
+            root = mx.sqrt(mx.maximum(discriminant, 0))
+            denominator = mx.where(quadratic, mx.multiply(2, a), 1)
+            first = mx.where(linear, mx.divide(mx.negative(c), mx.where(linear, b, 1)),
+                             mx.divide(mx.add(mx.negative(b), root), denominator))
+            second = mx.divide(mx.subtract(mx.negative(b), root), denominator)
+            roots = mx.stack((first, second)).reshape(-1)
+            valid_quadratic = mx.logical_and(
+                quadratic, mx.greater_equal(discriminant, 0))
+            valid = mx.stack((mx.logical_or(linear, valid_quadratic), valid_quadratic))
+            valid = mx.logical_and(valid.reshape(-1),
+                                   mx.logical_and(mx.greater_equal(roots, 0),
+                                                  mx.less_equal(roots, 1)))
+            indices = mx.sort(mx.where(valid, mx.arange(valid.size), valid.size))[
+                :int(mx.sum(valid).item())]
+            dims = mx.tile(mx.arange(self.dimension), 2)
+            return mx.take(dims, indices), mx.take(roots, indices)
 
 
 def split_bezier_intersecting_with_closedpath(

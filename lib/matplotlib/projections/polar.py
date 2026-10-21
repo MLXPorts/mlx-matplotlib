@@ -500,7 +500,7 @@ class _ThetaShift(mtransforms.ScaledTranslation):
             if self.mode == 'rlabel':
                 angle = (
                     mlxarr.deg2rad(self.axes.get_rlabel_position()
-                               * self.axes.get_theta_direction())
+                                   * self.axes.get_theta_direction())
                     + self.axes.get_theta_offset()
                     - mlxarr.pi / 2
                 )
@@ -508,7 +508,8 @@ class _ThetaShift(mtransforms.ScaledTranslation):
                 angle = self.axes._realViewLim.xmin - mlxarr.pi / 2
             elif self.mode == 'max':
                 angle = self.axes._realViewLim.xmax + mlxarr.pi / 2
-            self._t = (self.pad * mlxarr.cos(angle) / 72, self.pad * mlxarr.sin(angle) / 72)
+            self._t = (self.pad * mlxarr.cos(angle) / 72,
+                       self.pad * mlxarr.sin(angle) / 72)
         return super().get_matrix()
 
 
@@ -1409,15 +1410,15 @@ class PolarAxes(Axes):
         if self.fmt_xdata is None:
             return ('\N{GREEK SMALL LETTER THETA}={}\N{GREEK SMALL LETTER PI} '
                     '({}\N{DEGREE SIGN}), r={}').format(
-                    format_sig(theta_halfturns, delta_t_halfturns, "", "f"),
-                    format_sig(theta_degrees, delta_t_degrees, "", "f"),
-                    r_label
-                )
+                format_sig(theta_halfturns, delta_t_halfturns, "", "f"),
+                format_sig(theta_degrees, delta_t_degrees, "", "f"),
+                r_label
+            )
         else:
             return '\N{GREEK SMALL LETTER THETA}={}, r={}'.format(
-                        self.format_xdata(theta),
-                        r_label
-                        )
+                self.format_xdata(theta),
+                r_label
+            )
 
     def get_data_ratio(self):
         """

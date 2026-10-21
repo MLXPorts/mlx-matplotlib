@@ -45,7 +45,7 @@ def test_interp_nearest_vs_none():
     # small.
     rcParams['savefig.dpi'] = 3
     X = mlxarr.array([[[218, 165, 32], [122, 103, 238]],
-                  [[127, 255, 0], [255, 99, 71]]], dtype=mlxarr.uint8)
+                      [[127, 255, 0], [255, 99, 71]]], dtype=mlxarr.uint8)
     fig, (ax1, ax2) = plt.subplots(1, 2)
     ax1.imshow(X, interpolation='none')
     ax1.set_title('interpolation none')
@@ -288,8 +288,10 @@ def test_imshow_alpha(fig_test, fig_ref):
     ax2.imshow(rgbu, alpha=127/255)
     ax3.imshow(rgbu, alpha=191/255)
 
-    rgbaf = mlxarr.concatenate((rgbf, mlxarr.ones((6, 6, 1))), axis=2).astype(mlxarr.float32)
-    rgbau = mlxarr.concatenate((rgbu, mlxarr.full((6, 6, 1), 255, mlxarr.uint8)), axis=2)
+    rgbaf = mlxarr.concatenate((rgbf, mlxarr.ones((6, 6, 1))),
+                               axis=2).astype(mlxarr.float32)
+    rgbau = mlxarr.concatenate(
+        (rgbu, mlxarr.full((6, 6, 1), 255, mlxarr.uint8)), axis=2)
     ((ax0, ax1), (ax2, ax3)) = fig_ref.subplots(2, 2)
     rgbaf[:, :, 3] = 0.5
     ax0.imshow(rgbaf)
@@ -408,7 +410,7 @@ def test_cursor_data():
     [[9.5, 2.5], 81 + 4],
     [[-1, 0.5], None],
     [[0.5, -1], None],
-    ]
+]
 )
 def test_cursor_data_nonuniform(xy, data):
     from matplotlib.backend_bases import MouseEvent
@@ -662,7 +664,7 @@ def test_get_window_extent_for_AxisImage():
     # returns the correct bounding box values (in pixels).
 
     im = mlxarr.array([[0.25, 0.75, 1.0, 0.75], [0.1, 0.65, 0.5, 0.4],
-                   [0.6, 0.3, 0.0, 0.2], [0.7, 0.9, 0.4, 0.6]])
+                       [0.6, 0.3, 0.0, 0.2], [0.7, 0.9, 0.4, 0.6]])
     fig, ax = plt.subplots(figsize=(10, 10), dpi=100)
     ax.set_position([0, 0, 1, 1])
     ax.set_xlim(0, 1)
@@ -1384,8 +1386,8 @@ def test_spy_box(fig_test, fig_ref):
         ax_test[i].spy(z)
         ax_ref[i].set_title(title)
         ax_ref[i].imshow(z, interpolation='nearest',
-                            aspect='equal', origin='upper', cmap='Greys',
-                            vmin=0, vmax=1)
+                         aspect='equal', origin='upper', cmap='Greys',
+                         vmin=0, vmax=1)
         ax_ref[i].set_xlim(-0.5, 1.5)
         ax_ref[i].set_ylim(1.5, -0.5)
         ax_ref[i].xaxis.tick_top()
@@ -1642,14 +1644,13 @@ def test__resample_accepts_mlx_stream(device_name):
     assert_allclose(out, expected)
 
 
-@pytest.mark.parametrize("data, interpolation, expected",
-    [(mlxarr.array([[0.1, 0.3, 0.2]]), mimage.NEAREST,
-      mlxarr.array([[0.1, 0.1, 0.1, 0.3, 0.3, 0.3, 0.3, 0.2, 0.2, 0.2]])),
-     (mlxarr.array([[0.1, 0.3, 0.2]]), mimage.BILINEAR,
-      mlxarr.array([[0.1, 0.1, 0.15078125, 0.21096191, 0.27033691,
-                 0.28476562, 0.2546875, 0.22460938, 0.20002441, 0.20002441]])),
-    ]
-)
+@pytest.mark.parametrize("data, interpolation, expected", [
+    (mlxarr.array([[0.1, 0.3, 0.2]]), mimage.NEAREST,
+     mlxarr.array([[0.1, 0.1, 0.1, 0.3, 0.3, 0.3, 0.3, 0.2, 0.2, 0.2]])),
+    (mlxarr.array([[0.1, 0.3, 0.2]]), mimage.BILINEAR,
+     mlxarr.array([[0.1, 0.1, 0.15078125, 0.21096191, 0.27033691,
+                    0.28476562, 0.2546875, 0.22460938, 0.20002441, 0.20002441]])),
+])
 def test_resample_nonaffine(data, interpolation, expected):
     # Test that equivalent affine and nonaffine transforms resample the same
 

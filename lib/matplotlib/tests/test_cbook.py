@@ -1046,3 +1046,33 @@ def test_unpack_to_array_backend_from_tensorflow():
     # if not mocked, and the implementation does not guarantee it
     # is the same Python object, just the same values.
     assert_array_equal(result, data)
+
+
+@pytest.mark.parametrize("shape", [(3, 7), (2, 3, 7)])
+@pytest.mark.parametrize("axis", [0, -1])
+def test_unfold_native_mlx_preserves_windows(shape, axis):
+    import itertools
+    import math
+    import mlx.core as mx
+
+    values = mx.arange(math.prod(shape), dtype=mx.int32).reshape(shape)
+    result = cbook._unfold(values, axis=axis, size=2, step=2)
+    axis %= len(shape)
+    expected_shape = list(shape)
+    expected_shape[axis] = (shape[axis] - 2) // 2 + 1
+    expected_shape.append(2)
+    assert tuple(result.shape) == tuple(expected_shape)
+    for index in itertools.product(*(range(n) for n in expected_shape)):
+        source = list(index[:-1])
+        source[axis] = index[axis] * 2 + index[-1]
+        assert result[index].item() == values[tuple(source)].item()
+
+
+@pytest.mark.parametrize('count', [4, 5])
+def test_native_boxplot_bootstrap_constant_data(count):
+    import mlx.core as mx
+
+    with mx.stream(mx.cpu):
+        values = mx.full((count,), 3., dtype=mx.float64)
+        stats, = cbook.boxplot_stats(values, bootstrap=10000)
+    assert float(stats['cilo']) == float(stats['cihi']) == 3.

@@ -44,10 +44,11 @@ from matplotlib import cbook, mlab, pyplot as plt
 from matplotlib.pyplot import *
 from matplotlib._mlx_array import *
 from matplotlib import _mlx_array as mlxarr
-ma = mlxarr.ma
 
 # don't let backend datetime helpers hide stdlib
 import datetime
+
+ma = mlxarr.ma
 
 # This is needed, or bytes will come from the backend wildcard import above.
 bytes = __import__("builtins").bytes

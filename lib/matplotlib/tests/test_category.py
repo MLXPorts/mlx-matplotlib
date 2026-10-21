@@ -94,8 +94,8 @@ class TestStrCategoryConverter:
     @pytest.mark.parametrize("vals", values, ids=ids)
     def test_convert(self, vals):
         mlxarr.testing.assert_allclose(self.cc.convert(vals, self.ax.units,
-                                                   self.ax),
-                                   range(len(vals)))
+                                                       self.ax),
+                                       range(len(vals)))
 
     @pytest.mark.parametrize("value", ["hi", "мир"], ids=["ascii", "unicode"])
     def test_convert_one_string(self, value):
@@ -321,7 +321,8 @@ def test_hist():
 
 
 def test_set_lim():
-    # MLXArrayBackend 1.25 deprecated casting [2.] to float, catch_warnings added to error
+    # MLXArrayBackend 1.25 deprecated casting [2.] to float, catch_warnings added to
+    # error
     # with array_backend 1.25 and prior to the change from gh-26597
     # can be removed once the minimum array_backend version has expired the warning
     f, ax = plt.subplots()

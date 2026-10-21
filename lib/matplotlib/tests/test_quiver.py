@@ -384,3 +384,16 @@ def draw_quiverkey_setzorder(fig, zorder=None):
 def test_quiverkey_zorder(fig_test, fig_ref, zorder):
     draw_quiverkey_zorder_argument(fig_test, zorder=zorder)
     draw_quiverkey_setzorder(fig_ref, zorder=zorder)
+
+
+def test_quiver_native_geometry_masks_invalid_vectors():
+    import mlx.core as mx
+
+    _, ax = plt.subplots()
+    arrows = ax.quiver([0, 1], [0, 1], [1, float("nan")], [0, 1], scale=1)
+    arrows._init()
+    vertices = arrows._make_verts(arrows.XY, arrows.U, arrows.V, "uv")
+    assert isinstance(vertices, mx.array)
+    assert tuple(vertices.shape) == (2, 8, 2)
+    assert bool(mx.all(mx.isfinite(vertices[0])).item())
+    assert bool(mx.all(mx.isnan(vertices[1])).item())

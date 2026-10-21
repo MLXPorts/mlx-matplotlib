@@ -8,6 +8,8 @@ Demonstrates using `.Axes3D.voxels` with uneven coordinates.
 
 import matplotlib.pyplot as plt
 from matplotlib import _mlx_array as mlxarr
+
+
 def explode(data):
     size = mlxarr.array(data.shape)*2
     data_e = mlxarr.zeros(size - 1, dtype=data.dtype)

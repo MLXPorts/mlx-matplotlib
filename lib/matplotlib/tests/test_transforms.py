@@ -1,7 +1,7 @@
 import copy
 from matplotlib import _mlx_array as mlxarr
 from matplotlib.mlx_testing import (assert_allclose, assert_almost_equal,
-                           assert_array_equal, assert_array_almost_equal)
+                                    assert_array_equal, assert_array_almost_equal)
 import pytest
 
 from matplotlib import scale
@@ -62,18 +62,34 @@ def test_path_affine_transform_accepts_mlx_stream(device_name):
     if not mx.is_available(device_type):
         pytest.skip(f"MLX {device_name} device is not available")
 
-    values = mlxarr.array([[1.0, 2.0], [3.0, 4.0]], dtype=float)
-    matrix = mlxarr.array(
-        [[2.0, 0.0, 1.0],
-         [0.0, 3.0, -1.0],
-         [0.0, 0.0, 1.0]],
-        dtype=float)
+    dtype = mx.float32 if device_name == "gpu" else mx.float64
+    with mx.stream(device_type):
+        values = mx.array([[1., 2.], [3., 4.]], dtype=dtype)
+        matrix = mx.array([[2., 0., 1.], [0., 3., -1.], [0., 0., 1.]], dtype=dtype)
+        result = _path.affine_transform(values, matrix, stream=device_type)
 
-    result = _path.affine_transform(values, matrix, stream=device_type)
+    assert isinstance(result, mx.array)
+    assert result.dtype == dtype
+    assert result.tolist() == [[3., 5.], [7., 11.]]
 
-    assert result.shape == (2, 2)
-    assert_allclose(mlxarr.array(result.tolist(), dtype=float),
-                    [[3.0, 5.0], [7.0, 11.0]])
+
+@pytest.mark.parametrize("reverse", [False, True])
+def test_path_affine_transform_strided_native_mlx(reverse):
+    import mlx.core as mx
+    from matplotlib import _path
+
+    with mx.stream(mx.cpu):
+        matrix = mx.transpose(mx.array(
+            [[2., 0., 0.], [0., 3., 0.], [1., -1., 1.]],
+            dtype=mx.float64))
+        points = mx.transpose(mx.array(
+            [[1., 3.], [2., 4.]], dtype=mx.float64))
+        if reverse:
+            points = points[::-1]
+        result = _path.affine_transform(points, matrix)
+
+    expected = [[3., 5.], [7., 11.]]
+    assert result.tolist() == (expected[::-1] if reverse else expected)
 
 
 class TestAffine2D:
@@ -406,11 +422,11 @@ class TestAffine2D:
 class TestAffineDeltaTransform:
     def test_invalidate(self):
         before = mlxarr.array([[1.0, 4.0, 0.0],
-                           [5.0, 1.0, 0.0],
-                           [0.0, 0.0, 1.0]])
+                               [5.0, 1.0, 0.0],
+                               [0.0, 0.0, 1.0]])
         after = mlxarr.array([[1.0, 3.0, 0.0],
-                          [5.0, 1.0, 0.0],
-                          [0.0, 0.0, 1.0]])
+                              [5.0, 1.0, 0.0],
+                              [0.0, 0.0, 1.0]])
 
         # Translation and skew present
         base = mtransforms.Affine2D.from_values(1, 5, 4, 1, 2, 3)
@@ -523,36 +539,39 @@ def test_pre_transform_plotting():
 
 def test_contour_pre_transform_limits():
     ax = plt.axes()
-    xs, ys = mlxarr.meshgrid(mlxarr.linspace(15, 20, 15), mlxarr.linspace(12.4, 12.5, 20))
+    xs, ys = mlxarr.meshgrid(mlxarr.linspace(15, 20, 15),
+                             mlxarr.linspace(12.4, 12.5, 20))
     ax.contourf(xs, ys, mlxarr.log(xs * ys),
                 transform=mtransforms.Affine2D().scale(0.1) + ax.transData)
 
     expected = mlxarr.array([[1.5, 1.24],
-                         [2., 1.25]])
+                             [2., 1.25]])
     assert_almost_equal(expected, ax.dataLim.get_points())
 
 
 def test_pcolor_pre_transform_limits():
     # Based on test_contour_pre_transform_limits()
     ax = plt.axes()
-    xs, ys = mlxarr.meshgrid(mlxarr.linspace(15, 20, 15), mlxarr.linspace(12.4, 12.5, 20))
+    xs, ys = mlxarr.meshgrid(mlxarr.linspace(15, 20, 15),
+                             mlxarr.linspace(12.4, 12.5, 20))
     ax.pcolor(xs, ys, mlxarr.log(xs * ys)[:-1, :-1],
               transform=mtransforms.Affine2D().scale(0.1) + ax.transData)
 
     expected = mlxarr.array([[1.5, 1.24],
-                         [2., 1.25]])
+                             [2., 1.25]])
     assert_almost_equal(expected, ax.dataLim.get_points())
 
 
 def test_pcolormesh_pre_transform_limits():
     # Based on test_contour_pre_transform_limits()
     ax = plt.axes()
-    xs, ys = mlxarr.meshgrid(mlxarr.linspace(15, 20, 15), mlxarr.linspace(12.4, 12.5, 20))
+    xs, ys = mlxarr.meshgrid(mlxarr.linspace(15, 20, 15),
+                             mlxarr.linspace(12.4, 12.5, 20))
     ax.pcolormesh(xs, ys, mlxarr.log(xs * ys)[:-1, :-1],
                   transform=mtransforms.Affine2D().scale(0.1) + ax.transData)
 
     expected = mlxarr.array([[1.5, 1.24],
-                         [2., 1.25]])
+                             [2., 1.25]])
     assert_almost_equal(expected, ax.dataLim.get_points())
 
 
@@ -577,9 +596,9 @@ def test_pcolormesh_gouraud_nans():
 
 def test_Affine2D_from_values():
     points = mlxarr.array([[0, 0],
-                       [10, 20],
-                       [-1, 0],
-                       ])
+                           [10, 20],
+                           [-1, 0],
+                           ])
 
     t = mtransforms.Affine2D.from_values(1, 0, 0, 0, 0, 0)
     actual = t.transform(points)
@@ -766,28 +785,35 @@ class TestBasicTransform:
         # necessary "non-affine" allowing the best possible optimization with
         # complex transformation stacks.
         points = mlxarr.array([[0, 0], [10, 20], [mlxarr.nan, 1], [-1, 0]],
-                          dtype=mlxarr.float64)
+                              dtype=mlxarr.float64)
         na_pts = self.stack1.transform_non_affine(points)
         all_pts = self.stack1.transform(points)
 
         na_expected = mlxarr.array([[1., 2.], [-19., 12.],
-                                [mlxarr.nan, mlxarr.nan], [1., 1.]], dtype=mlxarr.float64)
+                                    [mlxarr.nan, mlxarr.nan], [1., 1.]],
+                                   dtype=mlxarr.float64)
         all_expected = mlxarr.array([[11., 4.], [-9., 24.],
-                                 [mlxarr.nan, mlxarr.nan], [11., 2.]],
-                                dtype=mlxarr.float64)
+                                     [mlxarr.nan, mlxarr.nan], [11., 2.]],
+                                    dtype=mlxarr.float64)
 
         # check we have the expected results from doing the affine part only
-        assert_array_almost_equal(na_pts, na_expected)
+        import mlx.core as mx
+
+        assert bool(mx.all(mx.isclose(na_pts, na_expected, atol=1e-6,
+                                      rtol=1e-6, equal_nan=True)).item())
         # check we have the expected results from a full transformation
-        assert_array_almost_equal(all_pts, all_expected)
+        assert bool(mx.all(mx.isclose(all_pts, all_expected, atol=1e-6,
+                                      rtol=1e-6, equal_nan=True)).item())
         # check we have the expected results from doing the transformation in
         # two steps
-        assert_array_almost_equal(self.stack1.transform_affine(na_pts),
-                                  all_expected)
+        assert bool(mx.all(mx.isclose(self.stack1.transform_affine(na_pts),
+                                      all_expected, atol=1e-6,
+                                      rtol=1e-6, equal_nan=True)).item())
         # check that getting the affine transformation first, then fully
         # transforming using that yields the same result as before.
-        assert_array_almost_equal(self.stack1.get_affine().transform(na_pts),
-                                  all_expected)
+        assert bool(mx.all(mx.isclose(self.stack1.get_affine().transform(na_pts),
+                                      all_expected, atol=1e-6,
+                                      rtol=1e-6, equal_nan=True)).item())
 
         # check that the affine part of stack1 & stack2 are equivalent
         # (i.e. the optimization is working)
@@ -806,7 +832,7 @@ class TestTransformPlotInterface:
         ax.plot([0.1, 1.2, 0.8], [0.9, 0.5, 0.8], transform=ax.transAxes)
         assert_array_equal(ax.dataLim.get_points(),
                            mlxarr.array([[mlxarr.inf, mlxarr.inf],
-                                     [-mlxarr.inf, -mlxarr.inf]]))
+                                         [-mlxarr.inf, -mlxarr.inf]]))
 
     def test_line_extent_data_coords(self):
         # a simple line in data coordinates
@@ -824,7 +850,7 @@ class TestTransformPlotInterface:
         ax.plot([0.1, 1.2, 0.8], [35, -5, 18], transform=trans)
         assert_array_equal(ax.dataLim.get_points(),
                            mlxarr.array([[mlxarr.inf, -5.],
-                                     [-mlxarr.inf, 35.]]))
+                                         [-mlxarr.inf, 35.]]))
 
     def test_line_extent_predata_transform_coords(self):
         # a simple line in (offset + data) coordinates
@@ -962,8 +988,7 @@ CompositeGenericTransform(
                         IdentityTransform())),
                 LockableBbox(
                     Bbox(x0=0.0, y0=0.0, x1=6.283185307179586, y1=1.0),
-                    [[-- --]
-                     [-- --]])),
+                    [[None, None], [None, None]])),
             BboxTransformFrom(
                 _WedgeBbox(
                     (0.5, 0.5),
@@ -974,8 +999,7 @@ CompositeGenericTransform(
                             Affine2D().scale(1.0))),
                     LockableBbox(
                         Bbox(x0=0.0, y0=0.0, x1=6.283185307179586, y1=1.0),
-                        [[-- --]
-                         [-- --]])))),
+                        [[None, None], [None, None]])))),
         BboxTransformTo(
             TransformedBbox(
                 Bbox(x0=0.125, y0=0.09999999999999998, x1=0.9, y1=0.9),
@@ -1180,6 +1204,36 @@ def test_scaledrotation_get_matrix_invalid():
     matrix = scaled_rot.get_matrix()
     trans_shift.transform.assert_called_once_with([[theta, 0]])
     expected_rotation = mlxarr.array([[0, -1],
-                                  [1,  0]])
+                                      [1,  0]])
     assert matrix is not None
     assert_allclose(matrix[:2, :2], expected_rotation, atol=1e-15)
+
+
+@pytest.mark.parametrize("points, shape", [([1., 2.], (2,)), ([], (0, 2))])
+def test_native_affine_result_preserves_shape(points, shape):
+    import mlx.core as mx
+    from matplotlib import _path
+
+    with mx.stream(mx.cpu):
+        values = mx.array(points, dtype=mx.float64).reshape(shape)
+        result = _path.affine_transform(
+            values, mx.eye(3, dtype=mx.float64), stream=mx.cpu)
+    assert isinstance(result, mx.array)
+    assert tuple(result.shape) == shape
+    assert result.tolist() == values.tolist()
+
+
+def test_native_bbox_overlap_uses_strict_edges_and_normalizes_bounds():
+    bbox = Bbox([[2, 2], [0, 0]])
+    assert bbox.count_overlaps([]) == 0
+    others = [Bbox([[1, 1], [3, 3]]), Bbox([[1, 1], [0.5, 0.5]]),
+              Bbox([[2, 0], [3, 1]]), Bbox([[3, 3], [4, 4]])]
+    assert bbox.count_overlaps(others) == 2
+
+
+def test_native_scalar_function_transform_accepts_flat_result():
+    import mlx.core as mx
+
+    transform = scale.FuncTransform(lambda values: mx.reshape(values, (-1,)),
+                                    lambda values: mx.reshape(values, (-1,)))
+    assert float(transform.transform(0.5)) == 0.5

@@ -15,6 +15,8 @@ section: https://scikit-learn.org/stable/modules/density.html
 
 import matplotlib.pyplot as plt
 from matplotlib import _mlx_array as mlxarr
+
+
 def adjacent_values(vals, q1, q3):
     upper_adjacent_value = q3 + (q3 - q1) * 1.5
     upper_adjacent_value = mlxarr.clip(upper_adjacent_value, q3, vals[-1])
@@ -52,8 +54,8 @@ ax2.violinplot(
 
 ax3.set_title('Customized violin plot')
 parts = ax3.violinplot(
-        data, showmeans=False, showmedians=False, showextrema=False,
-        facecolor='#D43F3A', linecolor='black')
+    data, showmeans=False, showmedians=False, showextrema=False,
+    facecolor='#D43F3A', linecolor='black')
 
 for pc in parts['bodies']:
     pc.set_edgecolor('black')
